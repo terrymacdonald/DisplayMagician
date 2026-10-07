@@ -1,12 +1,24 @@
-﻿<Project Sdk="WixToolset.Sdk/7.0.0">
+<Project Sdk="WixToolset.Sdk/7.0.0">
+  <!-- Optional, local-only signing settings created by prepare_displaymagician.ps1. -->
+  <Import Project="..\SigningConfig.props" Condition="Exists('..\SigningConfig.props')" />
+  <Import Project="RuntimeConfig.props"
+        Condition="Exists('RuntimeConfig.props')" />
   <PropertyGroup>
     <OutputType>Bundle</OutputType>
     <OutputName>DisplayMagicianSetup</OutputName>
     <AcceptEula>wix7</AcceptEula>
     <DmPackageDir>$(MSBuildThisFileDirectory)..\DisplayMagicianPackage\bin\$(Platform)\$(Configuration)\en-US\</DmPackageDir>
-    <DefineConstants>DmPackageDir=$(DmPackageDir)</DefineConstants>
+    <DefineConstants>
+      DmPackageDir=$(DmPackageDir);
+      DotNetDesktopRuntimeVersion=$(DotNetDesktopRuntimeVersion);
+      DotNetDesktopRuntimeFilename=$(DotNetDesktopRuntimeFilename);
+      AspNetCoreRuntimeVersion=$(AspNetCoreRuntimeVersion);
+      AspNetCoreRuntimeFilename=$(AspNetCoreRuntimeFilename)
+    </DefineConstants>
     <!-- Suppress ICE validation to avoid WIX1105 warning when not running as admin -->
     <SuppressValidation>true</SuppressValidation>
+    <_LocalSigningConfigured Condition="'$(SigningCertificatePfx)' != '' and Exists('$(SigningCertificatePfx)')">true</_LocalSigningConfigured>
+    <SignOutput Condition="'$(_LocalSigningConfigured)' == 'true'">true</SignOutput>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="DisplayMagician.ico" />
@@ -19,13 +31,98 @@
     <ProjectReference Include="..\DisplayMagicianPackage\DisplayMagicianPackage.wixproj" Condition="'$(UseExistingMsiPackage)' != 'true'" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning"
+                    Version="3.9.50"
+                    PrivateAssets="all" />
     <PackageReference Include="WixToolset.Bal.wixext" Version="7.0.0" />
     <PackageReference Include="WixToolset.Netfx.wixext" Version="7.0.0" />
   </ItemGroup>
-  <Target Name="RenameBundleFile" AfterTargets="Build">
-    <!-- Use PowerShell to rename the bundle output file after the build -->
-    <Exec Command="powershell -ExecutionPolicy Bypass -File .\renamedisplaymagician.ps1 -outputDir $(ProjectDir)$(OutputPath) -Configuration $(Configuration)" />
+  <Target Name="ValidateRuntimeConfig" BeforeTargets="Build">
+    <Error
+        Condition="'$(DotNetDesktopRuntimeVersion)' == ''"
+        Text="The .NET Desktop Runtime configuration is missing. Run prepare_displaymagician.ps1 first." />
+
+    <Error
+        Condition="'$(DotNetDesktopRuntimeFilename)' == ''"
+        Text="The .NET Desktop Runtime filename is missing. Run prepare_displaymagician.ps1 first." />
+
+    <Error
+        Condition="'$(AspNetCoreRuntimeVersion)' == ''"
+        Text="The ASP.NET Core Runtime configuration is missing. Run prepare_displaymagician.ps1 first." />
+
+    <Error
+        Condition="'$(AspNetCoreRuntimeFilename)' == ''"
+        Text="The ASP.NET Core Runtime filename is missing. Run prepare_displaymagician.ps1 first." />
   </Target>
   <!-- Added as workaround for FireGiant HeatWave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
   <Target Name="CollectSuggestedVisualStudioComponentIds" />
+
+  <Target Name="CreateVersionedBundle"
+        AfterTargets="Build"
+        DependsOnTargets="GetBuildVersion">
+
+    <PropertyGroup>
+      <VersionedBundlePath>
+        $(TargetDir)DisplayMagicianSetup_v$(BuildVersion).exe
+      </VersionedBundlePath>
+    </PropertyGroup>
+
+    <Copy
+        SourceFiles="$(TargetPath)"
+        DestinationFiles="$(VersionedBundlePath)"
+        SkipUnchangedFiles="false" />
+
+    <Delete Files="$(TargetPath)" />
+
+    <Message
+      Importance="High"
+      Text="" />
+
+    <Message
+        Importance="High"
+        Text="=== Renaming generated DisplayMagician setup bundle ===" />
+
+    <Message
+        Importance="High"
+        Text="$(VersionedBundlePath)" />
+
+    <Message
+        Importance="High"
+        Text="" />
+
+  </Target>
+
+  <!-- Burn requires its engine to be signed before it is reattached, then the
+       complete bundle to be signed. Do not sign a completed bundle directly. -->
+  <Target Name="ResolveLocalSigningTool"
+          BeforeTargets="SignBundleEngine;SignBundle"
+          Condition="'$(_LocalSigningConfigured)' == 'true'">
+    <PropertyGroup>
+      <_LocalSigningTimestampArgument Condition="'$(SigningTimestampUrl)' != ''">/tr $(SigningTimestampUrl) /td sha256</_LocalSigningTimestampArgument>
+      <_WindowsKitRoot>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot10', null, RegistryView.Registry32, RegistryView.Default))</_WindowsKitRoot>
+    </PropertyGroup>
+
+    <Exec Command="powershell -NoProfile -Command &quot;(Get-ChildItem '$(_WindowsKitRoot)bin' -Filter '10.*' -Directory | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName)&quot;"
+          ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_WindowsKitVersionDirectory" />
+    </Exec>
+    <PropertyGroup>
+      <_LocalSignToolExe>$(_WindowsKitVersionDirectory.Trim())\x64\signtool.exe</_LocalSignToolExe>
+    </PropertyGroup>
+
+    <Error Condition="!Exists('$(_LocalSignToolExe)')"
+           Text="signtool.exe was not found. Install the Windows SDK before building a locally signed bundle." />
+  </Target>
+
+  <Target Name="SignBundleEngine" Condition="'$(_LocalSigningConfigured)' == 'true'">
+    <Exec Command="&quot;$(_LocalSignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_LocalSigningTimestampArgument) &quot;%(SignBundleEngine.FullPath)&quot;"
+          ConsoleToMsBuild="true"
+          EchoOff="true" />
+  </Target>
+
+  <Target Name="SignBundle" Condition="'$(_LocalSigningConfigured)' == 'true'">
+    <Exec Command="&quot;$(_LocalSignToolExe)&quot; sign /fd SHA256 /f &quot;$(SigningCertificatePfx)&quot; /p &quot;$(SigningCertificatePassword)&quot; $(_LocalSigningTimestampArgument) &quot;%(SignBundle.FullPath)&quot;"
+          ConsoleToMsBuild="true"
+          EchoOff="true" />
+  </Target>
 </Project>

@@ -1,5 +1,4 @@
 //using DisplayMagician.Resources;
-using DisplayMagicianShared.UserControls;
 
 namespace DisplayMagician.UIForms
 {
@@ -40,7 +39,7 @@ namespace DisplayMagician.UIForms
             tabp_display = new System.Windows.Forms.TabPage();
             ilv_saved_profiles = new Manina.Windows.Forms.ImageListView();
             p_profiles = new System.Windows.Forms.Panel();
-            dv_profile = new DisplayView();
+            dv_profile = new System.Windows.Forms.PictureBox();
             pbLogo = new System.Windows.Forms.PictureBox();
             lbl_profile_shown_subtitle = new System.Windows.Forms.Label();
             lbl_profile_shown = new System.Windows.Forms.Label();
@@ -281,13 +280,13 @@ namespace DisplayMagician.UIForms
             dv_profile.BackColor = System.Drawing.Color.DimGray;
             dv_profile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             dv_profile.Dock = System.Windows.Forms.DockStyle.Fill;
-            dv_profile.Font = new System.Drawing.Font("Consolas", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            dv_profile.ForeColor = System.Drawing.Color.MidnightBlue;
             dv_profile.Location = new System.Drawing.Point(0, 0);
             dv_profile.Margin = new System.Windows.Forms.Padding(21);
             dv_profile.Name = "dv_profile";
             dv_profile.Size = new System.Drawing.Size(1256, 548);
+            dv_profile.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             dv_profile.TabIndex = 0;
+            dv_profile.TabStop = false;
             // 
             // pbLogo
             // 
@@ -1671,7 +1670,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label lbl_profile_shown_subtitle;
         private System.Windows.Forms.Label lbl_profile_shown;
         private Manina.Windows.Forms.ImageListView ilv_saved_profiles;
-        private DisplayView dv_profile;
+        private System.Windows.Forms.PictureBox dv_profile;
         private System.Windows.Forms.TabPage tabp_game;
         private System.Windows.Forms.TabPage tabp_after;
         private System.Windows.Forms.TextBox txt_shortcut_save_name;

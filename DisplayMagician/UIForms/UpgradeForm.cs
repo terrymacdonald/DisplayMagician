@@ -1,4 +1,3 @@
-using DisplayMagician.Processes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -96,7 +95,7 @@ namespace DisplayMagician.UIForms
 
         private void lnk_changelog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            ProcessUtils.StartProcess(ChangelogURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(ChangelogURL);
         }
     }
 }

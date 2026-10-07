@@ -1,0 +1,516 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using IconLib;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using DisplayMagician.UserAgent.Runtime.Windows;
+
+namespace DisplayMagician.UserAgent.Runtime
+{
+    public class ProfileIcon
+    {
+
+        private ProfileItem _profile;
+
+        public ProfileIcon(ProfileItem profile, int paddingX = 100, int paddingY = 100)
+        {
+            _profile = profile;
+            PaddingX = paddingX;
+            PaddingY = paddingY;
+        }
+
+        public int PaddingX { get; }
+        public int PaddingY { get; }
+
+        //public Profile Profile { get; }
+
+        // ReSharper disable once TooManyArguments
+        public static RectangleF CalculateViewSize(
+            List<ScreenPosition> screens,
+            int outsidePaddingSides = 0,
+            int outsidePaddingTopBottom = 0)
+        {
+            var minX = 0;
+            var maxX = 0;
+            var minY = 0;
+            var maxY = 0;
+
+            // If there aren't any screens provided then return a blank rectangle
+            if (screens.Count == 0)
+            {
+                return new RectangleF(0, 0, 0, 0);
+            }
+
+            foreach (var screen in screens)
+            {
+                //var res = GetLargestResolution(screens);
+                minX = Math.Min(minX, screen.ScreenX);
+                maxX = Math.Max(maxX, screen.ScreenX + screen.ScreenWidth);
+                minY = Math.Min(minY, screen.ScreenY);
+                maxY = Math.Max(maxY, screen.ScreenY + screen.ScreenHeight);
+            }
+
+            if (outsidePaddingSides != 0)
+            {
+                minX -= outsidePaddingSides;
+                maxX += outsidePaddingSides;
+            }
+
+            if (outsidePaddingTopBottom != 0)
+            {
+                minY -= outsidePaddingTopBottom;
+                maxY += outsidePaddingTopBottom;
+            }
+
+            var width = Math.Abs(maxX - minX);
+            var height = Math.Abs(maxY - minY);
+
+            var size = new SizeF(width, height);
+            var rect = new RectangleF(new PointF(minX, minY), size);
+
+            return rect;
+        }
+       
+
+        /// <summary>
+        ///     Creates a rounded rectangle path
+        ///     By @taffer
+        ///     https://stackoverflow.com/questions/33853434/how-to-draw-a-rounded-rectangle-in-c-sharp
+        /// </summary>
+        public static GraphicsPath RoundedRect(RectangleF bounds, float radius)
+        {
+            var diameter = radius * 2;
+            var size = new SizeF(diameter, diameter);
+            var arc = new RectangleF(bounds.Location, size);
+            var path = new GraphicsPath();
+
+            if (radius < 0.01)
+            {
+                path.AddRectangle(bounds);
+
+                return path;
+            }
+
+            // top left arc  
+            path.AddArc(arc, 180, 90);
+
+            // top right arc  
+            arc.X = bounds.Right - diameter;
+            path.AddArc(arc, 270, 90);
+
+            // bottom right arc  
+            arc.Y = bounds.Bottom - diameter;
+            path.AddArc(arc, 0, 90);
+
+            // bottom left arc 
+            arc.X = bounds.Left;
+            path.AddArc(arc, 90, 90);
+
+            path.CloseFigure();
+
+            return path;
+        }
+
+        public Bitmap ToBitmap(int width = 256, int height = 256, PixelFormat format = PixelFormat.Format32bppArgb)
+        {
+            var bitmap = new Bitmap(width, height, format);
+            bitmap.MakeTransparent();
+
+            using (var g = Graphics.FromImage(bitmap))
+            {
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                DrawDisplayLayout(g, width, height);
+            }
+
+            return bitmap;
+        }
+
+        public Bitmap ToDetailedBitmap(int width = 1200, int height = 563)
+        {
+            var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            using Graphics g = Graphics.FromImage(bitmap);
+            g.Clear(Color.Transparent);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+
+            List<ScreenPosition> screens = _profile.Screens.Where(screen => screen.ScreenWidth > 0 && screen.ScreenHeight > 0).ToList();
+            if (screens.Count == 0) return bitmap;
+
+            int minX = screens.Min(screen => screen.ScreenX);
+            int minY = screens.Min(screen => screen.ScreenY);
+            int maxX = screens.Max(screen => screen.ScreenX + screen.ScreenWidth);
+            int maxY = screens.Max(screen => screen.ScreenY + screen.ScreenHeight);
+            const float margin = 24f;
+            float scale = Math.Min((width - margin * 2) / (maxX - minX), (height - margin * 2) / (maxY - minY));
+            float offsetX = (width - (maxX - minX) * scale) / 2f;
+            float offsetY = (height - (maxY - minY) * scale) / 2f;
+
+            foreach (ScreenPosition screen in screens)
+            {
+                RectangleF outline = new RectangleF(offsetX + (screen.ScreenX - minX) * scale,
+                    offsetY + (screen.ScreenY - minY) * scale, screen.ScreenWidth * scale, screen.ScreenHeight * scale);
+                float bezel = Math.Max(3f, Math.Min(outline.Width, outline.Height) * 0.025f);
+                RectangleF display = RectangleF.Inflate(outline, -bezel, -bezel);
+                using (var frameBrush = new SolidBrush(Color.FromArgb(33, 33, 33))) g.FillRectangle(frameBrush, outline);
+                Color backgroundColour = screen.Colour;
+                bool wallpaperDrawn = false;
+                if (_profile.WallpaperConfiguration?.WallpaperMode == Wallpaper.Mode.Apply)
+                {
+                    foreach (var monitor in _profile.WallpaperConfiguration.MonitorWallpapers)
+                    {
+                        var bounds = monitor.MonitorBounds;
+                        if (bounds.left != screen.ScreenX || bounds.top != screen.ScreenY ||
+                            bounds.right - bounds.left != screen.ScreenWidth || bounds.bottom - bounds.top != screen.ScreenHeight)
+                            continue;
+
+                        if (!string.IsNullOrWhiteSpace(monitor.WallpaperFilePath))
+                        {
+                            try
+                            {
+                                using Image wallpaper = Image.FromFile(monitor.WallpaperFilePath);
+                                g.DrawImage(wallpaper, display);
+                                using Bitmap average = new Bitmap(1, 1);
+                                using (Graphics averageGraphics = Graphics.FromImage(average))
+                                {
+                                    averageGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                    averageGraphics.DrawImage(wallpaper, 0, 0, 1, 1);
+                                }
+                                backgroundColour = average.GetPixel(0, 0);
+                                wallpaperDrawn = true;
+                            }
+                            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is OutOfMemoryException)
+                            {
+                                SharedLogger.logger.Warn(ex, $"ProfileIcon/ToDetailedBitmap: Could not draw saved wallpaper for display '{screen.Name}' from '{monitor.WallpaperFilePath}'.");
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (!wallpaperDrawn)
+                    using (var displayBrush = new SolidBrush(screen.Colour)) g.FillRectangle(displayBrush, display);
+                using (var borderPen = new Pen(Color.Black, 2f)) g.DrawRectangle(borderPen, outline.X, outline.Y, outline.Width, outline.Height);
+
+                float taskbarSize = Math.Max(2f, display.Height * 0.05f);
+                RectangleF taskbar = screen.TaskbarPosition switch
+                {
+                    TaskbarPosition.Left => new RectangleF(display.Left, display.Top, taskbarSize, display.Height),
+                    TaskbarPosition.Top => new RectangleF(display.Left, display.Top, display.Width, taskbarSize),
+                    TaskbarPosition.Right => new RectangleF(display.Right - taskbarSize, display.Top, taskbarSize, display.Height),
+                    _ => new RectangleF(display.Left, display.Bottom - taskbarSize, display.Width, taskbarSize)
+                };
+                using (var taskbarBrush = new SolidBrush(Color.FromArgb(200, 200, 200))) g.FillRectangle(taskbarBrush, taskbar);
+                float startButtonSize = Math.Max(2f, taskbarSize * 0.5f);
+                RectangleF startButton = new RectangleF(taskbar.Left + taskbarSize * 0.25f, taskbar.Top + taskbarSize * 0.25f, startButtonSize, startButtonSize);
+                using (var startButtonBrush = new SolidBrush(Color.FromArgb(3, 194, 252))) g.FillRectangle(startButtonBrush, startButton);
+
+                var lines = new List<string> { screen.IsPrimary ? $"{screen.Library} Primary Display" : $"{screen.Library} Display" };
+                if (!string.IsNullOrWhiteSpace(screen.AdapterName)) lines.Add($"({screen.AdapterName})");
+                if (!string.IsNullOrWhiteSpace(screen.Name)) lines.Add(screen.Name);
+                lines.Add(screen.RefreshRateHz > 0
+                    ? $"{screen.ScreenWidth}×{screen.ScreenHeight} @ {screen.RefreshRateHz:0.###}Hz"
+                    : $"{screen.ScreenWidth}×{screen.ScreenHeight}");
+                if (!string.IsNullOrWhiteSpace(screen.ColorEncoding) && screen.BitsPerColorChannel > 0)
+                    lines.Add($"{screen.ColorEncoding} {screen.BitsPerColorChannel * 3}-bit");
+                if (!string.IsNullOrWhiteSpace(screen.DisplayConnector)) lines.Add(screen.DisplayConnector);
+                if (screen.IsClone) lines.Add($"(+{screen.ClonedCopies - 1} Clone)");
+
+                RectangleF textBounds = RectangleF.Inflate(display, -display.Width * 0.04f, -display.Height * 0.08f);
+                float fontSize = Math.Clamp(Math.Min(textBounds.Height / (lines.Count + 1) * 0.72f, textBounds.Width / 21f), 8f, 38f);
+                using var font = new Font("Segoe UI", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
+                using var textBrush = new SolidBrush(backgroundColour.R * 0.299 + backgroundColour.G * 0.587 + backgroundColour.B * 0.114 > 186 ? Color.Black : Color.White);
+                using var centered = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter };
+                g.DrawString(string.Join(Environment.NewLine, lines), font, textBrush, textBounds, centered);
+                using var positionFont = new Font("Segoe UI", Math.Max(8f, fontSize * 0.8f), FontStyle.Regular, GraphicsUnit.Pixel);
+                g.DrawString($"[{screen.ScreenX},{screen.ScreenY}]", positionFont, textBrush,
+                    new RectangleF(textBounds.Left, textBounds.Top, textBounds.Width, positionFont.Height * 1.3f));
+            }
+
+            return bitmap;
+        }
+
+        public Bitmap ToTightestBitmap(PixelFormat format = PixelFormat.Format32bppArgb)
+        {
+            if (_profile.Screens.Count == 0)
+            {
+                return new Bitmap(0, 0);
+            }
+
+            var viewSize = CalculateViewSize(_profile.Screens, 0, 0);
+
+            var bitmap = new Bitmap((int)viewSize.Width, (int)viewSize.Height, format);
+            bitmap.MakeTransparent();
+
+            using (var g = Graphics.FromImage(bitmap))
+            {
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                DrawDisplayLayout(g, (int)viewSize.Width, (int)viewSize.Height, false);
+            }
+
+            return bitmap;
+        }
+
+        public Bitmap ToTightestBitmap(int width, int height, PixelFormat format = PixelFormat.Format32bppArgb)
+        {
+            if (_profile.Screens.Count == 0)
+            {
+                return new Bitmap(0, 0);
+            }
+            
+            var bitmap = new Bitmap(width, height, format);
+            bitmap.MakeTransparent();
+
+            using (var g = Graphics.FromImage(bitmap))
+            {
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                DrawDisplayLayout(g, width, height, false);                
+            }
+
+            return bitmap;
+        }
+
+        /*public Bitmap ToBitmapOverlay(Bitmap bitmap)
+        {
+            if (_profile.Screens.Count == 0)
+            {
+                return new Bitmap(0, 0);
+            }
+
+            var viewSize = CalculateViewSize(_profile.Screens, PaddingX, PaddingY);
+            var width = bitmap.Width * 0.7f;
+            var height = width / viewSize.Width * viewSize.Height;
+
+            using (var g = Graphics.FromImage(bitmap))
+            {
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                g.TranslateTransform(bitmap.Width - width, bitmap.Height - height * 1.1f);
+                DrawDisplayLayout(g, width, height);
+            }
+
+            return bitmap;
+        }*/
+
+        public MultiIcon ToIcon()
+        {
+            var iconSizes = new[]
+            {
+                new Size(256, 256),
+                new Size(64, 64),
+                new Size(48, 48),
+                new Size(32, 32),
+                new Size(24, 24),
+                new Size(16, 16)
+            };
+            var multiIcon = new MultiIcon();
+            var icon = multiIcon.Add("Icon1");
+
+            foreach (var size in iconSizes)
+            {
+                icon.Add(ToBitmap(size.Width, size.Height));
+
+                if (size.Width >= 256 && size.Height >= 256)
+                {
+                    icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
+                }
+            }
+
+            multiIcon.SelectedIndex = 0;
+
+            return multiIcon;
+        }
+
+        /*public MultiIcon ToIconOverlay(string iconAddress)
+        {
+            var multiIcon = new MultiIcon();
+            var icon = multiIcon.Add("Icon1");
+            var mainIcon = new MultiIcon();
+            mainIcon.Load(iconAddress);
+
+            foreach (var singleIcon in mainIcon[0].Where(image =>
+                    image.PixelFormat == PixelFormat.Format16bppRgb565 ||
+                    image.PixelFormat == PixelFormat.Format24bppRgb ||
+                    image.PixelFormat == PixelFormat.Format32bppArgb)
+                .OrderByDescending(
+                    image =>
+                        image.PixelFormat == PixelFormat.Format16bppRgb565
+                            ? 1
+                            : image.PixelFormat == PixelFormat.Format24bppRgb
+                                ? 2
+                                : 3)
+                .ThenByDescending(image => image.Size.Width * image.Size.Height))
+            {
+                if (!icon.All(i => singleIcon.Size != i.Size || singleIcon.PixelFormat != i.PixelFormat))
+                {
+                    continue;
+                }
+
+                var bitmap = singleIcon.Icon.ToBitmap();
+
+                if (bitmap.PixelFormat != singleIcon.PixelFormat)
+                {
+                    var clone = new Bitmap(bitmap.Width, bitmap.Height, singleIcon.PixelFormat);
+
+                    using (var gr = Graphics.FromImage(clone))
+                    {
+                        gr.DrawImage(bitmap, new Rectangle(0, 0, clone.Width, clone.Height));
+                    }
+
+                    bitmap.Dispose();
+                    bitmap = clone;
+                }
+
+                icon.Add(singleIcon.Size.Height * singleIcon.Size.Width < 24 * 24 ? bitmap : ToBitmapOverlay(bitmap));
+
+                if (singleIcon.Size.Width >= 256 && singleIcon.Size.Height >= 256)
+                {
+                    icon[icon.Count - 1].IconImageFormat = IconImageFormat.PNG;
+                }
+
+                bitmap.Dispose();
+            }
+
+            if (icon.Count == 0)
+            {
+                throw new ArgumentException();
+            }
+
+            multiIcon.SelectedIndex = 0;
+
+            return multiIcon;
+        }*/
+
+
+        private void DrawDisplayLayout(Graphics g, float maxWidth, float maxHeight, bool drawStand = true)
+        {
+            // If we don't have any screens, then we can't draw them!
+            if (_profile.Screens.Count == 0)
+            {
+                return;
+            }
+
+            // Figure out the sizes we need based on the total size of the screens
+            var viewSize = ProfileIcon.CalculateViewSize(_profile.Screens, PaddingX, PaddingY);            
+
+            var standPadding = maxHeight * 0.005f;
+            maxHeight -= standPadding * 8;
+            var factor = Math.Min((maxWidth - 2 * standPadding - 1) / viewSize.Width,
+                (maxHeight - 2 * standPadding - 1) / viewSize.Height);
+            g.ScaleTransform(factor, factor);
+
+            // Make space for the stand
+            var xOffset = ((maxWidth - 1) / factor - viewSize.Width) / 2f;
+            var yOffset = ((maxHeight - 1) / factor - viewSize.Height) / 2f;
+            g.TranslateTransform(-viewSize.X + xOffset, -viewSize.Y + yOffset);
+
+            // How wide the Bezel is on the screen graphics
+            int screenBezel = 60;
+            //int screenWordBuffer = 30;
+
+            // Draw the stand if needed
+            if (drawStand)
+            {
+                if (standPadding * 6 >= 1)
+                {
+                    using (
+                        var boundRect =
+                            RoundedRect(
+                                new RectangleF(viewSize.Width * 0.375f + viewSize.X,
+                                    viewSize.Height + standPadding / factor,
+                                    viewSize.Width / 4, standPadding * 7 / factor), 2 * standPadding / factor))
+                    using (var standBrush = new SolidBrush(Color.FromArgb(250, 50, 50, 50)))
+                    using (var standPen = new Pen(Color.FromArgb(50, 255, 255, 255), 2 / factor))
+                    {
+                        g.FillPath(standBrush, boundRect);
+                        g.DrawPath(standPen, boundRect);
+                    }
+                }
+                else
+                {
+                    using (var fallbackBrush = new SolidBrush(Color.FromArgb(200, 255, 255, 255)))
+                    using (var fallbackPen = new Pen(Color.FromArgb(170, 50, 50, 50), standPadding / factor))
+                    {
+                        g.FillRectangle(fallbackBrush, viewSize);
+                        g.DrawRectangle(fallbackPen, viewSize.X, viewSize.Y, viewSize.Width, viewSize.Height);
+                    }
+                }
+            }            
+
+            // Now go through and draw the screens
+            foreach (ScreenPosition screen in _profile.Screens)
+            {
+                Rectangle outlineRect;
+                Rectangle screenRect;
+                // draw the screen 
+
+                // Draw the outline of the monitor
+                outlineRect = new Rectangle(screen.ScreenX, screen.ScreenY, screen.ScreenWidth, screen.ScreenHeight);
+                using (var outlineBrush = new SolidBrush(Color.FromArgb(255, 33, 33, 33)))
+                    g.FillRectangle(outlineBrush, outlineRect);
+                g.DrawRectangle(Pens.Black, outlineRect);
+
+                // Draw the screen of the monitor
+                screenRect = new Rectangle(screen.ScreenX + screenBezel, screen.ScreenY + screenBezel, screen.ScreenWidth - (screenBezel * 2), screen.ScreenHeight - (screenBezel * 2));
+
+                using (var screenBrush = new SolidBrush(screen.Colour))
+                    g.FillRectangle(screenBrush, screenRect);
+                g.DrawRectangle(Pens.Black, screenRect);
+
+
+                // Draw the location of the taskbar for this screen
+                Rectangle taskBarRect;
+                //Rectangle startButtonRect;
+                int taskBarWidth = (int)(0.15 * screenRect.Height);
+                //int startButtonSpacer = (int)(0.25 * taskBarWidth);
+                //int startButtonSize = 2 * startButtonSpacer;
+                switch (screen.TaskbarPosition)
+                {
+                    case TaskbarPosition.Left:
+                        taskBarRect = new Rectangle(screenRect.X, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
+                        break;
+                    case TaskbarPosition.Top:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y, screenRect.Width - 4, taskBarWidth);
+                        break;
+                    case TaskbarPosition.Right:
+                        taskBarRect = new Rectangle(screenRect.X + screenRect.Width - taskBarWidth, screenRect.Y + 2, taskBarWidth, screenRect.Height - 4);
+                        break;
+                    case TaskbarPosition.Bottom:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
+                        break;
+                    default:
+                        taskBarRect = new Rectangle(screenRect.X + 2, screenRect.Y + screenRect.Height - taskBarWidth, screenRect.Width - 4, taskBarWidth);
+                        break;
+                }
+                using (var taskBarBrush = new SolidBrush(Color.FromArgb(255, 200, 200, 200)))
+                    g.FillRectangle(taskBarBrush, taskBarRect);
+            }
+        }
+
+
+        private Color pickTextColorBasedOnBgColour(Color bgColour, Color lightColour, Color darkColour)
+        {
+            if ((bgColour.R * 0.299 + bgColour.G * 0.587 + bgColour.B * 0.114) > 186)
+            {
+                return darkColour;
+            }
+            else
+            {
+                return lightColour;
+            }
+        }
+
+        private Bitmap pickBitmapBasedOnBgColour(Color bgColour, Bitmap lightBitmap, Bitmap darkBitmap)
+        {
+            if ((bgColour.R * 0.299 + bgColour.G * 0.587 + bgColour.B * 0.114) > 186)
+            {
+                return darkBitmap;
+            }
+            else
+            {
+                return lightBitmap;
+            }
+        }
+    }
+}

@@ -9,9 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DisplayMagician;
-using DisplayMagician.Processes;
-using DisplayMagicianShared;
-using DisplayMagicianShared.Windows;
 using Microsoft.WindowsAPICodePack.Win32Native;
 using static DisplayMagician.WindowsThumbnailProvider;
 
@@ -331,7 +328,9 @@ namespace DisplayMagician.UIForms
             // Use the profiles to populate the form based on the current config
             // If there is 3 or more screens connected, then assume its a triple screen
 
-            if (ProfileRepository.CurrentProfile.WindowsDisplayConfig.DisplayIdentifiers.Count >= 3)
+            DesktopProfileViewCache.Refresh();
+            DisplayProfileView currentLayout = DesktopProfileViewCache.CurrentLayout;
+            if (currentLayout?.ConnectedDisplayCount >= 3)
             {
                 btn_triple_screens.PerformClick();
             }
@@ -342,8 +341,9 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                GDI_DISPLAY_SETTING gdiDevice = ProfileRepository.CurrentProfile.WindowsDisplayConfig.GdiDisplaySettings.Where(dp => dp.Value.IsPrimary).First().Value;
-                double aspectRatio = gdiDevice.DeviceMode.PixelsWidth / gdiDevice.DeviceMode.PixelsHeight;
+                int primaryWidth = currentLayout?.PrimaryDisplayWidth ?? 0;
+                int primaryHeight = currentLayout?.PrimaryDisplayHeight ?? 0;
+                double aspectRatio = (double)primaryWidth / primaryHeight;
                 if (aspectRatio == (16 / 9)) {
                     cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.SixteenByNine;
                 }
@@ -372,8 +372,8 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     cmb_aspect_ratio.SelectedValue = ScreenAspectRatio.Custom;
-                    txt_aspect_ratio_x.Text = gdiDevice.DeviceMode.PixelsWidth.ToString(); 
-                    txt_aspect_ratio_y.Text = gdiDevice.DeviceMode.PixelsHeight.ToString();
+                    txt_aspect_ratio_x.Text = primaryWidth.ToString(); 
+                    txt_aspect_ratio_y.Text = primaryHeight.ToString();
                 }
 
             }
@@ -518,7 +518,7 @@ namespace DisplayMagician.UIForms
 
         private void llbl_markus_ewert_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {        
-            ProcessUtils.StartProcess("https://github.com/dinex86/FOV-Calculator", "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl("https://github.com/dinex86/FOV-Calculator");
         }
     }
 }

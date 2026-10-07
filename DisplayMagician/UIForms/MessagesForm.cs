@@ -1,4 +1,4 @@
-using DisplayMagician.Messaging;
+using DisplayMagician.Contracts;
 using Markdig;
 using Microsoft.Web.WebView2.WinForms;
 using Microsoft.Web.WebView2.Core;
@@ -15,13 +15,13 @@ namespace DisplayMagician.UIForms
 {
     public partial class MessagesForm : DisplayMagicianForm
     {
+        private const string MessageContentBaseUrl = "https://sync.displaymagician.com/";
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        private const string MessagesVirtualHost = "displaymagician-messages.local";
-
         private WebView2 webView;
         private readonly bool _selectNewestUnreadOnLoad;
+        private readonly ControlServicePipeClient _controlServicePipeClient = new ControlServicePipeClient();
 
-        private List<LocalMessage> _messages = new List<LocalMessage>();
+        private List<MessageView> _messages = new List<MessageView>();
         private bool _isUpdatingList = false;
 
         public MessagesForm() : this(false)
@@ -50,7 +50,7 @@ namespace DisplayMagician.UIForms
             _isUpdatingList = true;
             try
             {
-                LoadMessagesIntoList();
+                await LoadMessagesIntoListAsync();
                 await InitializeWebViewIfNeededAsync();
             }
             finally
@@ -60,6 +60,7 @@ namespace DisplayMagician.UIForms
 
             dgv_messages.ClearSelection();
             SelectInitialMessageIfNeeded();
+            await ShowSelectedMessageAsync();
         }
 
         private async Task InitializeWebViewIfNeededAsync()
@@ -79,7 +80,6 @@ namespace DisplayMagician.UIForms
                 message_content_panel.Controls.Add(webView);
                 webView.BringToFront();
                 await webView.EnsureCoreWebView2Async();
-                webView.CoreWebView2.SetVirtualHostNameToFolderMapping(MessagesVirtualHost, Program.AppMessagesPath, CoreWebView2HostResourceAccessKind.DenyCors);
             }
             catch (Exception ex)
             {
@@ -89,19 +89,25 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void LoadMessagesIntoList()
+        private async Task LoadMessagesIntoListAsync()
+        {
+            MessageListResult messageList = await _controlServicePipeClient.ListMessagesAsync(System.Threading.CancellationToken.None);
+            SetMessages(messageList);
+        }
+
+        private void SetMessages(MessageListResult messageList)
         {
             bool wasUpdatingList = _isUpdatingList;
             _isUpdatingList = true;
             try
             {
-                _messages = Program.GetStoredMessages();
+                _messages = messageList.Messages.ToList();
                 dgv_messages.Rows.Clear();
 
                 Font unreadFont = new Font(dgv_messages.Font, FontStyle.Bold);
                 Font readFont = new Font(dgv_messages.Font, FontStyle.Regular);
 
-                foreach (LocalMessage message in _messages)
+                foreach (MessageView message in _messages)
                 {
                     bool isReleaseAnnouncement = string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase);
                     DateTime displayUtc = message.PublishedUtc ?? message.ReceivedUtc;
@@ -128,8 +134,7 @@ namespace DisplayMagician.UIForms
                     dgv_messages.Rows.Add(row);
                 }
 
-                int unreadCount = _messages.Count(m => !m.IsRead);
-                lbl_count.Text = $"{_messages.Count} messages ({unreadCount} unread)";
+                lbl_count.Text = $"{_messages.Count} messages ({messageList.UnreadCount} unread)";
             }
             finally
             {
@@ -137,7 +142,12 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void dgv_messages_SelectionChanged(object sender, EventArgs e)
+        private async void dgv_messages_SelectionChanged(object sender, EventArgs e)
+        {
+            await ShowSelectedMessageAsync();
+        }
+
+        private async Task ShowSelectedMessageAsync()
         {
             if (_isUpdatingList)
             {
@@ -147,36 +157,47 @@ namespace DisplayMagician.UIForms
             if (dgv_messages.SelectedRows.Count == 0)
             {
                 panel_release_header.Visible = false;
+                RenderMessage(null);
                 return;
             }
 
+            MessageView selectedMessage = dgv_messages.SelectedRows[0].Tag as MessageView;
+            ConfigureReleaseHeader(selectedMessage);
+            RenderMessage(selectedMessage);
+
             List<string> selectedIds = dgv_messages.SelectedRows
                 .Cast<DataGridViewRow>()
-                .Select(row => (row.Tag as LocalMessage)?.Id)
+                .Select(row => (row.Tag as MessageView)?.Id)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
+            List<string> unreadIds = dgv_messages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => row.Tag as MessageView)
+                .Where(message => message != null && !message.IsRead && !string.IsNullOrWhiteSpace(message.Id))
+                .Select(message => message.Id)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (unreadIds.Count == 0)
+                return;
 
             try
             {
                 _isUpdatingList = true;
-                Program.SetMessageReadState(selectedIds, true);
-                LoadMessagesIntoList();
+                MessageListResult messageList = await _controlServicePipeClient.SetMessageReadStateAsync(unreadIds, true, System.Threading.CancellationToken.None);
+                SetMessages(messageList);
                 RestoreSelection(selectedIds);
+                RefreshMessageIndicators(messageList.UnreadCount);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+            {
+                logger.Warn(ex, "MessagesForm/ShowSelectedMessageAsync: Could not mark the displayed message as read.");
             }
             finally
             {
                 _isUpdatingList = false;
             }
-
-            if (dgv_messages.SelectedRows.Count > 0)
-            {
-                LocalMessage selectedMessage = dgv_messages.SelectedRows[0].Tag as LocalMessage;
-                ConfigureReleaseHeader(selectedMessage);
-                RenderMessage(selectedMessage);
-            }
-
-            Program.RefreshMessageIndicators();
         }
 
         private void btn_mark_read_Click(object sender, EventArgs e)
@@ -191,8 +212,8 @@ namespace DisplayMagician.UIForms
 
         private void btn_update_now_Click(object sender, EventArgs e)
         {
-            LocalMessage selectedMessage = dgv_messages.SelectedRows.Count == 1
-                ? dgv_messages.SelectedRows[0].Tag as LocalMessage
+            MessageView selectedMessage = dgv_messages.SelectedRows.Count == 1
+                ? dgv_messages.SelectedRows[0].Tag as MessageView
                 : null;
 
             if (!IsApplicableReleaseAnnouncement(selectedMessage))
@@ -208,7 +229,7 @@ namespace DisplayMagician.UIForms
                 requestedMessageUpdateChannel: selectedMessage.ReleaseChannel);
         }
 
-        private void ApplyReadStateForSelection(bool isRead)
+        private async void ApplyReadStateForSelection(bool isRead)
         {
             if (_isUpdatingList)
             {
@@ -217,7 +238,7 @@ namespace DisplayMagician.UIForms
 
             List<string> selectedIds = dgv_messages.SelectedRows
                 .Cast<DataGridViewRow>()
-                .Select(row => (row.Tag as LocalMessage)?.Id)
+                .Select(row => (row.Tag as MessageView)?.Id)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -230,19 +251,19 @@ namespace DisplayMagician.UIForms
             try
             {
                 _isUpdatingList = true;
-                Program.SetMessageReadState(selectedIds, isRead);
-                LoadMessagesIntoList();
+                MessageListResult messageList = await _controlServicePipeClient.SetMessageReadStateAsync(selectedIds, isRead, System.Threading.CancellationToken.None);
+                SetMessages(messageList);
                 RestoreSelection(selectedIds);
+                RefreshMessageIndicators(messageList.UnreadCount);
             }
             finally
             {
                 _isUpdatingList = false;
             }
 
-            Program.RefreshMessageIndicators();
         }
 
-        private bool IsApplicableReleaseAnnouncement(LocalMessage message)
+        private bool IsApplicableReleaseAnnouncement(MessageView message)
         {
             if (message == null
                 || !string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
@@ -256,7 +277,7 @@ namespace DisplayMagician.UIForms
             return releaseVersion > currentVersion;
         }
 
-        private void ConfigureReleaseHeader(LocalMessage message)
+        private void ConfigureReleaseHeader(MessageView message)
         {
             bool isReleaseAnnouncement = message != null
                 && string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase);
@@ -289,7 +310,7 @@ namespace DisplayMagician.UIForms
         {
             foreach (DataGridViewRow row in dgv_messages.Rows)
             {
-                LocalMessage message = row.Tag as LocalMessage;
+                MessageView message = row.Tag as MessageView;
                 if (message != null && selectedIds.Contains(message.Id, StringComparer.OrdinalIgnoreCase))
                 {
                     row.Selected = true;
@@ -312,9 +333,6 @@ namespace DisplayMagician.UIForms
                 rowToSelect.Selected = true;
                 dgv_messages.CurrentCell = rowToSelect.Cells[0];
                 dgv_messages.FirstDisplayedScrollingRowIndex = rowToSelect.Index;
-                LocalMessage messageToRender = rowToSelect.Tag as LocalMessage;
-                ConfigureReleaseHeader(messageToRender);
-                RenderMessage(messageToRender);
             }
             finally
             {
@@ -322,7 +340,7 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void RenderMessage(LocalMessage message)
+        private void RenderMessage(MessageView message)
         {
             if (message == null)
             {
@@ -335,11 +353,10 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            string fullPath = Path.Combine(Program.AppMessagesPath, message.MarkdownFileName ?? string.Empty);
-            if (!File.Exists(fullPath))
+            if (string.IsNullOrWhiteSpace(message.Content))
             {
-                logger.Warn($"MessagesForm/RenderMessage: Markdown file is missing (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
-                lbl_fallback.Text = "This message content could not be found on disk.";
+                logger.Warn($"MessagesForm/RenderMessage: Agent returned no message content (messageId={message.Id}, title={message.Title}).");
+                lbl_fallback.Text = "This message content could not be loaded.";
                 lbl_fallback.Visible = true;
                 if (webView != null)
                 {
@@ -352,25 +369,17 @@ namespace DisplayMagician.UIForms
             string htmlDoc;
             try
             {
-                rawContent = File.ReadAllText(fullPath);
-                string mediaFolderPath = Path.Combine(Program.AppMessagesPath, "media");
+                rawContent = message.Content;
                 rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"(?<url>(?:https?://[^\s\""'<>\)\]]+)?/messages/media/(?<id>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))", match =>
                 {
                     string mediaId = match.Groups["id"].Value;
-                    string localMediaPath = Directory.Exists(mediaFolderPath)
-                        ? Directory.EnumerateFiles(mediaFolderPath, mediaId + ".*").FirstOrDefault()
-                        : null;
-                    return localMediaPath == null
-                        ? match.Value
-                        : $"https://{MessagesVirtualHost}/media/{Path.GetFileName(localMediaPath)}";
+                    return $"https://sync.displaymagician.com/messages/media/{mediaId}";
                 }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 rawContent = System.Text.RegularExpressions.Regex.Replace(rawContent, @"/sync/media/(?<hash>[a-fA-F0-9]{64})\.(?<extension>png|jpe?g|gif|webp)", match =>
                 {
-                    string localMediaPath = Path.Combine(mediaFolderPath, match.Groups["hash"].Value.ToLowerInvariant() + "." + (match.Groups["extension"].Value.Equals("jpeg", StringComparison.OrdinalIgnoreCase) ? "jpg" : match.Groups["extension"].Value));
-                    return File.Exists(localMediaPath) ? $"https://{MessagesVirtualHost}/media/{Path.GetFileName(localMediaPath)}" : match.Value;
+                    return $"https://sync.displaymagician.com{match.Value}";
                 }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                Uri manifestUri = new Uri(Program.ClientSyncUrl, UriKind.Absolute);
-                string messageBaseUrl = System.Net.WebUtility.HtmlEncode(manifestUri.GetLeftPart(UriPartial.Authority) + "/");
+                string messageBaseUrl = System.Net.WebUtility.HtmlEncode(MessageContentBaseUrl);
                 if (message.Format != null && message.Format.Equals("html", StringComparison.OrdinalIgnoreCase))
                 {
                     htmlDoc = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='{messageBaseUrl}' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}} pre{{background:#f4f4f4;padding:10px;overflow:auto;}} code{{font-family:Consolas,monospace;}} table{{border-collapse:collapse;}} th,td{{border:1px solid #ddd;padding:6px 8px;}}</style></head><body>{rawContent}</body></html>";
@@ -383,7 +392,7 @@ namespace DisplayMagician.UIForms
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to read or parse content (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
+                logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to parse Agent content (messageId={message.Id}, title={message.Title}).");
                 lbl_fallback.Text = "This message content could not be loaded.";
                 lbl_fallback.Visible = true;
                 if (webView != null)
@@ -403,7 +412,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to render HTML in WebView2 (messageId={message.Id}, title={message.Title}, markdownFileName={message.MarkdownFileName}, fullPath={fullPath}).");
+                    logger.Warn(ex, $"MessagesForm/RenderMessage: Failed to render HTML in WebView2 (messageId={message.Id}, title={message.Title}).");
                     webView.Visible = false;
                     lbl_fallback.Text = rawContent;
                     lbl_fallback.Visible = true;
@@ -426,21 +435,37 @@ namespace DisplayMagician.UIForms
             btn_check_for_new_messages.Enabled = false;
             try
             {
-                await Program.CheckForNewMessagesAsync(this);
-                LoadMessagesIntoList();
-                if (dgv_messages.Rows.Count > 0)
-                {
-                    DataGridViewRow firstRow = dgv_messages.Rows[0];
-                    firstRow.Selected = true;
-                    dgv_messages.CurrentCell = firstRow.Cells[0];
-                    LocalMessage firstMessage = firstRow.Tag as LocalMessage;
-                    ConfigureReleaseHeader(firstMessage);
-                    RenderMessage(firstMessage);
-                }
+                _isUpdatingList = true;
+                MessageSyncResult syncResult = await _controlServicePipeClient.SyncMessagesAsync(System.Threading.CancellationToken.None);
+                await LoadMessagesIntoListAsync();
+                RefreshMessageIndicators(syncResult.UnreadCount);
+                _isUpdatingList = false;
+                dgv_messages.ClearSelection();
+                SelectInitialMessageIfNeeded();
+                await ShowSelectedMessageAsync();
+
+                string completionMessage = syncResult.NewMessagesCount == 1
+                    ? "DisplayMagician found 1 new message."
+                    : $"DisplayMagician found {syncResult.NewMessagesCount} new messages.";
+                MessageBox.Show(this, completionMessage, "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is System.IO.IOException || ex is TimeoutException)
+            {
+                logger.Warn(ex, "MessagesForm/btn_check_for_new_messages_Click: DisplayMagician could not check for new messages.");
+                MessageBox.Show(this, "DisplayMagician could not check for new messages. Please try again later.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             finally
             {
+                _isUpdatingList = false;
                 btn_check_for_new_messages.Enabled = true;
+            }
+        }
+
+        private static void RefreshMessageIndicators(int unreadCount)
+        {
+            if (Program.AppMainForm != null && Program.AppMainForm.IsHandleCreated)
+            {
+                Program.AppMainForm.BeginInvoke((MethodInvoker)delegate { Program.AppMainForm.SetUnreadMessageCount(unreadCount); });
             }
         }
     }

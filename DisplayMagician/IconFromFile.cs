@@ -52,8 +52,7 @@ namespace DisplayMagician
 
         };
 
-        [System.Runtime.InteropServices.DllImport("Kernel32.dll")]
-        public static extern Boolean CloseHandle(IntPtr handle);
+        public static bool CloseHandle(IntPtr handle) => NativeMethods.CloseHandle(handle);
 
 #pragma warning disable 0649
         private struct IMAGELISTDRAWPARAMS
@@ -256,26 +255,20 @@ namespace DisplayMagician
         /// http://support.microsoft.com/default.aspx?scid=kb;EN-US;Q316931
         /// Apparently (and hopefully) ordinal 727 isn't going to change.
         ///
-        [DllImport("shell32.dll", EntryPoint = "#727")]
-        private extern static int SHGetImageList(
+        private static int SHGetImageList(
             int iImageList,
             ref Guid riid,
             out IImageList ppv
-            );
+            ) => NativeMethods.SHGetImageList(iImageList, ref riid, out ppv);
 
         // The signature of SHGetFileInfo (located in Shell32.dll)
-        [DllImport("Shell32.dll")]
-        public static extern int SHGetFileInfo(string pszPath, int dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags);
+        public static int SHGetFileInfo(string pszPath, int dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags) => NativeMethods.SHGetFileInfo(pszPath, dwFileAttributes, ref psfi, cbFileInfo, uFlags);
 
-        [DllImport("Shell32.dll")]
-        public static extern int SHGetFileInfo(IntPtr pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags);
+        public static int SHGetFileInfo(IntPtr pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags) => NativeMethods.SHGetFileInfo(pszPath, dwFileAttributes, ref psfi, cbFileInfo, uFlags);
 
-        [DllImport("shell32.dll", SetLastError = true)]
-        static extern int SHGetSpecialFolderLocation(IntPtr hwndOwner, Int32 nFolder,
-                 ref IntPtr ppidl);
+        private static int SHGetSpecialFolderLocation(IntPtr hwndOwner, Int32 nFolder, ref IntPtr ppidl) => NativeMethods.SHGetSpecialFolderLocation(hwndOwner, nFolder, ref ppidl);
 
-        [DllImport("user32")]
-        public static extern int DestroyIcon(IntPtr hIcon);
+        public static int DestroyIcon(IntPtr hIcon) => NativeMethods.DestroyIcon(hIcon);
 
         public struct Pair
         {
@@ -287,6 +280,27 @@ namespace DisplayMagician
         public static int DestroyIcon2(IntPtr hIcon)
         {
             return DestroyIcon(hIcon);
+        }
+
+        private static class NativeMethods
+        {
+            [DllImport("Kernel32.dll")]
+            internal static extern bool CloseHandle(IntPtr handle);
+
+            [DllImport("shell32.dll", EntryPoint = "#727")]
+            internal static extern int SHGetImageList(int iImageList, ref Guid riid, out IImageList ppv);
+
+            [DllImport("Shell32.dll")]
+            internal static extern int SHGetFileInfo(string pszPath, int dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags);
+
+            [DllImport("Shell32.dll")]
+            internal static extern int SHGetFileInfo(IntPtr pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, int cbFileInfo, uint uFlags);
+
+            [DllImport("shell32.dll", SetLastError = true)]
+            internal static extern int SHGetSpecialFolderLocation(IntPtr hwndOwner, int nFolder, ref IntPtr ppidl);
+
+            [DllImport("user32")]
+            internal static extern int DestroyIcon(IntPtr hIcon);
         }
 
         /*private static BitmapSource bitmap_source_of_icon(System.Drawing.Icon ic)

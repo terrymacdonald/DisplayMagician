@@ -1,4 +1,3 @@
-using DisplayMagicianShared;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -48,6 +47,15 @@ namespace DisplayMagician
         public const string ProgramSettingsStorageJsonFileName = "Settings.json";
         public static string ProgramSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, ProgramSettingsStorageJsonFileName);
         public static string _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
+
+        public static void ConfigureStoragePath(string applicationDataPath)
+        {
+            if (string.IsNullOrWhiteSpace(applicationDataPath))
+                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+
+            ProgramSettingsStorageJsonFullFileName = Path.Combine(Path.GetFullPath(applicationDataPath), ProgramSettingsStorageJsonFileName);
+            _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
+        }
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         #endregion
 
@@ -607,7 +615,6 @@ namespace DisplayMagician
                             NullValueHandling = NullValueHandling.Ignore,
                             DefaultValueHandling = DefaultValueHandling.Populate,
                             TypeNameHandling = TypeNameHandling.Auto,
-                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                             ObjectCreationHandling = ObjectCreationHandling.Replace,
                             Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
 {
@@ -648,7 +655,6 @@ namespace DisplayMagician
                                 NullValueHandling = NullValueHandling.Ignore,
                                 DefaultValueHandling = DefaultValueHandling.Populate,
                                 TypeNameHandling = TypeNameHandling.Auto,
-                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
@@ -728,7 +734,6 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Error,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                     Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)

@@ -1,4 +1,3 @@
-using DisplayMagician.Processes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -69,7 +68,7 @@ namespace DisplayMagician.UIForms
         private void btn_donate_Click(object sender, EventArgs e)
         {
             string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
         }

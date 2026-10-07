@@ -1,5 +1,4 @@
-﻿using DisplayMagician.GameLibraries;
-using Microsoft.WindowsAPICodePack.Win32Native.Consts;
+﻿using Microsoft.WindowsAPICodePack.Win32Native.Consts;
 using System;
 using System.Collections.Generic;
 using System.IO;

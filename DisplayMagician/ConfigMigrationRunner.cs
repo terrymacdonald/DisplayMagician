@@ -1,6 +1,5 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using DisplayMagicianShared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -324,7 +323,6 @@ namespace DisplayMagician
                     NullValueHandling = NullValueHandling.Include,
                     DefaultValueHandling = DefaultValueHandling.Include,
                     TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
                     MissingMemberHandling = MissingMemberHandling.Ignore,
                     ObjectCreationHandling = ObjectCreationHandling.Replace,
                 };

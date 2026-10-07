@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatform>windows</SupportedOSPlatform>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <OutputType>WinExe</OutputType>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>DisplayMagician.UserAgent</AssemblyName>
+    <RootNamespace>DisplayMagician.UserAgent</RootNamespace>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <DefineConstants>$(DefineConstants);USER_AGENT</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DisplayMagician.ConfigurationDefinitions\DisplayMagician.ConfigurationDefinitions.csproj" />
+    <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EDIDParser" Version="1.2.5.4" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NLog" Version="6.1.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="protobuf-net" Version="3.2.56" />
+    <PackageReference Include="System.Management" Version="10.0.7" />
+    <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
+    <PackageReference Include="YamlDotNet" Version="17.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="ADLXWrapper">
+      <HintPath>DLL\ADLXWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="IconLib">
+      <HintPath>DLL\IconLib.dll</HintPath>
+    </Reference>
+    <Reference Include="IGCLWrapper">
+      <HintPath>DLL\IGCLWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="NVAPIWrapper">
+      <HintPath>DLL\NVAPIWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsAudioWrapper">
+      <HintPath>DLL\WindowsAudioWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsWallpaperWrapper">
+      <HintPath>DLL\WindowsWallpaperWrapper.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DLL\AMDExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DLL\NVIDIAExportsDll.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="IWshRuntimeLibrary">
+      <Guid>F935DC20-1CF0-11D0-ADB9-00C04FD58A0B</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+    </COMReference>
+  </ItemGroup>
+</Project>

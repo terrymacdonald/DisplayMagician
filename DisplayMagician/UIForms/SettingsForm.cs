@@ -1,14 +1,15 @@
 using AutoUpdaterDotNET;
-using DisplayMagicianShared;
 //using NHotkey;
 //using NHotkey.WindowsForms;
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
+using System.Security.Principal;
 using System.Windows.Forms;
+using DisplayMagician.Contracts;
 using Vortice.DirectInput;
 
 namespace DisplayMagician.UIForms
@@ -59,6 +60,7 @@ namespace DisplayMagician.UIForms
 
         private void SettingsForm_Load(object sender, EventArgs e)
         {
+            btn_service_recovery.Visible = true;
             // start displaymagician when computer starts
             if (Program.AppProgramSettings.StartOnBootUp == true)
             {
@@ -166,7 +168,7 @@ namespace DisplayMagician.UIForms
                 logger.Info($"SettingsForm/SettingsForm_Load: AppProgramSettings UpgradeEnabled set to false");
             }
 
-            cb_share_anonymous_usage_metrics.Checked = Program.AppProgramSettings.ShareAnonymousUsageMetrics;
+            cb_share_anonymous_usage_metrics.Checked = Program.GetShareAnonymousUsageMetrics();
 
             // Set the AudioDeviceWaitSecs numeric up down control to the value from the settings
             nud_audio_device_wait.Value = Program.AppProgramSettings.AudioDeviceWaitSecs;
@@ -316,8 +318,14 @@ namespace DisplayMagician.UIForms
                 Program.AppProgramSettings.ShowMessageToasts = false;
             logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShowMessageToasts as {Program.AppProgramSettings.ShowMessageToasts}");
 
-            Program.AppProgramSettings.ShareAnonymousUsageMetrics = cb_share_anonymous_usage_metrics.Checked;
-            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShareAnonymousUsageMetrics as {Program.AppProgramSettings.ShareAnonymousUsageMetrics}");
+            if (!Program.UpdateShareAnonymousUsageMetrics(cb_share_anonymous_usage_metrics.Checked))
+            {
+                MessageBox.Show(this, "DisplayMagician could not update anonymous metrics settings because the Control Service is unavailable.", "Anonymous metrics", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            else
+            {
+                logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved ShareAnonymousUsageMetrics as {cb_share_anonymous_usage_metrics.Checked}");
+            }
 
             // save the wakeupgpus setting that controls loading the DLLs that keep NVIDIA and AMD from turning off their dGPUs in gaming laptops
             if (cb_wake_up_gpus.Checked == true)
@@ -605,145 +613,73 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_create_support_package_Click(object sender, EventArgs e)
+        private async void btn_create_support_package_Click(object sender, EventArgs e)
         {
+            using SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                Filter = "ZIP files (*.zip)|*.zip|All files (*.*)|*.*",
+                FilterIndex = 1,
+                RestoreDirectory = true,
+                OverwritePrompt = true,
+                FileName = $"DisplayMagician-Support-{DateTime.Now:yyyyMMdd-HHmm}.zip",
+                Title = "Save a DisplayMagician Support ZIP File"
+            };
+
+            if (saveFileDialog.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            btn_create_support_package.Enabled = false;
             try
             {
-                using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+                ControlResponse response = await new ControlServicePipeClient().CreateUserSupportBundleAsync(saveFileDialog.FileName, System.Threading.CancellationToken.None);
+                if (!response.IsSuccessful || response.UserSupportBundle == null)
                 {
-                    DateTime now = DateTime.UtcNow;
-                    saveFileDialog.InitialDirectory = Environment.SpecialFolder.MyDocuments.ToString();
-                    saveFileDialog.Filter = "Zip Files(*.zip)| *.zip | All files(*.*) | *.*";
-                    saveFileDialog.FilterIndex = 2;
-                    saveFileDialog.RestoreDirectory = true;
-                    saveFileDialog.FileName = $"DisplayMagician-Support-{now.ToString("yyyyMMdd-HHmm")}.zip";
-                    saveFileDialog.Title = "Save a DisplayMagician Support ZIP file";
-
-                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                    {
-                        //Get the path of specified file
-                        string zipFilePath = saveFileDialog.FileName;
-                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Creating support zip file at {zipFilePath}.");
-
-                        if (File.Exists(zipFilePath))
-                        {
-                            File.Delete(zipFilePath);
-                        }
-
-                        NLog.LogManager.SuspendLogging();
-
-                        ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
-
-                        // Look for log files
-                        List<string> listOfLogFiles = Directory.GetFiles(Program.AppLogPath, "DisplayMagician*.log").ToList();
-
-
-                        // Get the list of files we want to look for to zip (they may or may not exist)
-                        List<string> listOfFilesToArchive = new List<string> {
-                            // Also try to copy the new configs if they exist
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.6.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.6.json"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_1.0.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.0.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.3.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.4.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.5.json"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.6.json"),
-                            Path.Combine(Program.AppDataPath,"Settings.json"),
-                            Path.Combine(Program.AppDataPath,"DonationSettings.json"),
-                            // Also try to copy the old configs if they exist
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.6.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.5.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.4.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.3.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.2.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.1.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles_2.0.json.old"),
-                            Path.Combine(Program.AppProfilePath,"DisplayProfiles.json.bak"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_1.0.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.0.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.2.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.5.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts_2.6.json.old"),
-                            Path.Combine(Program.AppShortcutPath,"Shortcuts.json.bak"),
-                            Path.Combine(Program.AppDataPath,"Settings_1.0.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.0.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.3.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.4.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.5.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings_2.6.json.old"),
-                            Path.Combine(Program.AppDataPath,"Settings.json.bak"),
-                            Path.Combine(Program.AppDataPath,"DonationSettings.json.bak")
-                        };
-                        // Also add the log files found (including the new date style formatted ones).
-                        listOfFilesToArchive.AddRange(listOfLogFiles);
-
-
-                        foreach (string filename in listOfFilesToArchive)
-                        {
-                            try
-                            {
-                                if (File.Exists(filename))
-                                {
-                                    archive.CreateEntryFromFile(filename, Path.GetFileName(filename), CompressionLevel.Optimal);
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Warn($"SettingsForm/btn_create_support_package_Click: Couldn't add {filename} to the support ZIP file {zipFilePath} as it doesn't exist.");
-                                }
-
-                            }
-                            catch (ArgumentNullException ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while adding files to the support zip file.");
-                            }
-                            catch (System.Runtime.InteropServices.ExternalException ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while adding files to the support zip file.");
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while adding files to the support zip file.");
-                            }
-
-
-                        }
-
-                        archive.Dispose();
-
-                        NLog.LogManager.ResumeLogging();
-
-                        SharedLogger.logger.Trace($"SettingsForm/btn_create_support_package_Click: Finished creating support zip file at {zipFilePath}.");
-                        MessageBox.Show($"Created DisplayMagician Support ZIP file {zipFilePath}. You can now attach this file to your GitHub issue using your Web Browser.");
-                    }
+                    MessageBox.Show(this, response.Message, "Support ZIP File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
-            }
-            catch (ArgumentNullException ex)
-            {
-                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Argument Null Exception while creating support zip file.");
-            }
-            catch (System.Runtime.InteropServices.ExternalException ex)
-            {
-                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: External InteropServices Exception while creating support zip file.");
+
+                string warnings = response.UserSupportBundle.Warnings.Length == 0
+                    ? string.Empty
+                    : $"\r\n\r\nSome files were unavailable:\r\n- {string.Join("\r\n- ", response.UserSupportBundle.Warnings)}";
+                MessageBox.Show(this, $"Created DisplayMagician Support ZIP file:\r\n{response.UserSupportBundle.DestinationPath}{warnings}", "Support ZIP File", MessageBoxButtons.OK, response.UserSupportBundle.Warnings.Length == 0 ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Warn(ex, $"SettingsForm/btn_create_support_package_Click: Exception while while creating support zip file.");
+                logger.Error(ex, "SettingsForm/btn_create_support_package_Click: Could not create a support ZIP file at {0}.", saveFileDialog.FileName);
+                MessageBox.Show(this, "DisplayMagician could not create the support ZIP file. Check the selected location and try again.", "Support ZIP File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btn_create_support_package.Enabled = true;
+            }
+        }
+
+        private void btn_service_recovery_Click(object sender, EventArgs e)
+        {
+            if (IsElevatedAdministrator())
+            {
+                using ServerSettingsForm serverSettingsForm = new ServerSettingsForm();
+                serverSettingsForm.ShowDialog(this);
+                return;
             }
 
+            try
+            {
+                Process.Start(new ProcessStartInfo(Application.ExecutablePath, Program.ServerSettingsCommandLineOption) { UseShellExecute = true, Verb = "runas" });
+            }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                MessageBox.Show(this, "Administrator approval was cancelled. Server Settings was not opened.", "Server Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
 
+        private static bool IsElevatedAdministrator()
+        {
+            using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
         }
 
         private void btn_context_menu_remove_Click(object sender, EventArgs e)

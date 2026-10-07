@@ -5,18 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 //using DisplayMagician.Resources;
-using DisplayMagicianShared;
-using DisplayMagician.GameLibraries;
+using DisplayMagician.Contracts;
 using Manina.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 //using NHotkey.WindowsForms;
 //using NHotkey;
 using DisplayMagician;
 using System.Threading;
-using DisplayMagician.AppLibraries;
-using static DisplayMagician.GameLibraries.ProductInformation;
+using System.Threading.Tasks;
 using System.ComponentModel;
-using DisplayMagician.Processes;
 using System.Globalization;
 using System.Diagnostics;
 
@@ -30,8 +27,8 @@ namespace DisplayMagician.UIForms
         private GameAdaptor _gameAdaptor;
         private bool _editingExistingShortcut = false;
         private ShortcutCategory _shortcutCategory = ShortcutCategory.Game;
-        //private List<ProfileItem> _loadedProfiles = new List<ProfileItem>();
-        private ProfileItem _profileToUse = null;
+        private DisplayProfileView _profileToUse = null;
+        private List<DisplayProfileView> _displayProfiles = new List<DisplayProfileView>();
         private ImageListViewItem _skipDisplayChangeILVItem;
 
         private string _gameLauncher = "";
@@ -43,14 +40,17 @@ namespace DisplayMagician.UIForms
         List<StartProgram> _startPrograms = new List<StartProgram>();
         List<AfterProgram> _afterPrograms = new List<AfterProgram>();
         List<StopProgram> _stopPrograms = new List<StopProgram>();
-        private AudioProfileItem _audioProfileToUse = null;
+        private AudioProfileView _audioProfileToUse = null;
+        private List<AudioProfileView> _audioProfiles = new List<AudioProfileView>();
+        private bool _canAccessAudioSettings;
         private ShortcutItem _shortcutToEdit = null;
         private bool _overrideAudioSpeakerVolume = false;
         private bool _overrideAudioMicrophoneVolume = false;
         private int _overrideAudioSpeakerVolumeLevel = 50;
         private int _overrideAudioMicrophoneVolumeLevel = 50;
-        private Game _selectedGame = null;
-        private App _selectedApp = null;
+        private GameView _selectedGame = null;
+        private List<GameView> _availableGames = new List<GameView>();
+        private AppView _selectedApp = null;
         private string _selectedAppId = "";
         private bool _isUnsaved = true;
         private bool _loadedShortcut = false;
@@ -63,7 +63,6 @@ namespace DisplayMagician.UIForms
 
         private List<ShortcutBitmap> _availableImages = new List<ShortcutBitmap>();
         private ShortcutBitmap _selectedImage = new ShortcutBitmap();
-        private bool _firstShow = true;
 
         // Debounce timer: delays the icon scan until the user stops typing in txt_executable
         private readonly System.Windows.Forms.Timer _exePathDebounceTimer = new System.Windows.Forms.Timer { Interval = 600 };
@@ -82,7 +81,7 @@ namespace DisplayMagician.UIForms
                 if (_shortcutCategory == ShortcutCategory.Application)
                     return;
                 string path = txt_executable.Text.Trim();
-                if (File.Exists(path) && ProcessUtils.IsExecutableFileType(path))
+                if (File.Exists(path) && DesktopShellUtilities.IsExecutableFileType(path))
                 {
                     logger.Debug($"ShortcutForm/ExePathDebounceTimer: Scanning icons for '{path}'.");
                     UpdateExeImagesUI(null);
@@ -115,7 +114,7 @@ namespace DisplayMagician.UIForms
                 logger.Error(ex, $"ShortcutForm/ShortcutForm: Exception while trying to setup the game ImageListView and set the render.");
             }
 
-            _skipDisplayChangeILVItem = new ImageListViewItem(ShortcutItem.SkipDisplayChangeProfile, ProfileItem.SkipDisplayChangeName);
+            _skipDisplayChangeILVItem = new ImageListViewItem(ShortcutItem.SkipDisplayChangeProfile, ShortcutItem.SkipDisplayChangeName);
 
             lbl_profile_shown.Text = "No Display Profiles available";
             lbl_profile_shown_subtitle.Text = "Please go back to the main window, click on 'Display Profiles', and save a new Display Profile. Then come back here.";
@@ -234,7 +233,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
+                _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
                 if (_audioProfileToUse == null)
                 {
                     MessageBox.Show(this,
@@ -324,40 +323,7 @@ namespace DisplayMagician.UIForms
                     ProcessPriority = (ProcessPriority)cbx_game_priority.SelectedValue,
                 };
 
-                // If the game is a SteamGame
-                if (_gameLauncher == SupportedGameLibraryType.Steam.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Steam game!");
-                    _gameToUse.GameToPlay = (from steamGame in SteamLibrary.GetLibrary().AllInstalledGames where steamGame.Id == _gameId select steamGame).FirstOrDefault();
-                }
-                // If the game is a UplayGame
-                else if (_gameLauncher == SupportedGameLibraryType.Uplay.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving a Uplay game!");
-                    _gameToUse.GameToPlay = (from uplayGame in UplayLibrary.GetLibrary().AllInstalledGames where uplayGame.Id == _gameId select uplayGame).FirstOrDefault();
-                }
-                // If the game is an Origin Game
-                else if (_gameLauncher == SupportedGameLibraryType.Origin.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Origin game!");
-                    _gameToUse.GameToPlay = (from originGame in OriginLibrary.GetLibrary().AllInstalledGames where originGame.Id == _gameId select originGame).FirstOrDefault();
-                }
-                // If the game is an Epic Game
-                else if (_gameLauncher == SupportedGameLibraryType.Epic.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an Epic game!");
-                    _gameToUse.GameToPlay = (from epicGame in EpicLibrary.GetLibrary().AllInstalledGames where epicGame.Id == _gameId select epicGame).FirstOrDefault();
-                }
-                // If the game is an GOG Game
-                else if (_gameLauncher == SupportedGameLibraryType.GOG.ToString())
-                {
-                    logger.Trace($"ShortcutForm/btn_save_Click: We're saving an GOG game!");
-                    _gameToUse.GameToPlay = (from gogGame in GogLibrary.GetLibrary().AllInstalledGames where gogGame.Id == _gameId select gogGame).FirstOrDefault();
-                }
-                else
-                {
-                    logger.Error($"ShortcutForm/btn_save_Click: Unknown game launcher type '{_gameLauncher}' — cannot resolve game to save.");
-                }
+                _gameToUse.GameToPlay = _availableGames.FirstOrDefault(game => string.Equals(game.Id, _gameId, StringComparison.OrdinalIgnoreCase));
 
                 if (_gameToUse.GameToPlay == null)
                 {
@@ -381,7 +347,7 @@ namespace DisplayMagician.UIForms
                         _gameToUse.GameToPlay.IconPath,
                         _selectedImage,
                         _availableImages,
-                        _audioProfileToUse,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -396,6 +362,8 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
 
             }
@@ -437,7 +405,7 @@ namespace DisplayMagician.UIForms
                         _executableToUse.ExecutableNameAndPath,
                         _selectedImage,
                         _availableImages,
-                        _audioProfileToUse,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -451,6 +419,8 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an executable shortcut.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
             else if (_shortcutCategory == ShortcutCategory.Application)
@@ -499,8 +469,8 @@ namespace DisplayMagician.UIForms
                         _audioPermanence,
                         _selectedImage,
                         _availableImages,
-                        _appToUse.AppToUse.AppLibraryType,
-                        _audioProfileToUse,
+                        (SupportedAppLibraryType)_appToUse.AppToUse.Library,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -514,6 +484,8 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
             else if (_shortcutCategory == ShortcutCategory.NoGame)
@@ -526,7 +498,7 @@ namespace DisplayMagician.UIForms
                         _profileToUse,
                         _displayPermanence,
                         _audioPermanence,
-                        _audioProfileToUse,
+                        _audioProfileToUse?.Id,
                         _overrideAudioSpeakerVolume,
                         _overrideAudioSpeakerVolumeLevel,
                         _overrideAudioMicrophoneVolume,
@@ -540,11 +512,15 @@ namespace DisplayMagician.UIForms
                 catch (Exception ex)
                 {
                     logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a shortcut that doesn't run anything.");
+                    MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
             else
             {
                 logger.Error($"ShortcutForm/btn_save_Click: We're unable to save as the Shortut Category isn't a category we support! {_shortcutCategory.ToString("G")}");
+                MessageBox.Show(this, "This shortcut type cannot be saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
 
             /*if (_hotkey == Keys.None)
@@ -569,7 +545,7 @@ namespace DisplayMagician.UIForms
         {
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
-                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
+                if (File.Exists(dialog_open.FileName) && DesktopShellUtilities.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -601,7 +577,7 @@ namespace DisplayMagician.UIForms
             // we still need to scan it for icons — otherwise ShortcutBitmap will be null and the renderer crashes.
             // Restart the debounce timer so we only scan once the user stops typing.
             string typedPath = txt_executable.Text.Trim();
-            if (File.Exists(typedPath) && ProcessUtils.IsExecutableFileType(typedPath))
+            if (File.Exists(typedPath) && DesktopShellUtilities.IsExecutableFileType(typedPath))
             {
                 _exePathDebounceTimer.Stop();
                 _exePathDebounceTimer.Start();
@@ -610,9 +586,6 @@ namespace DisplayMagician.UIForms
 
         private bool AllowedToSave(bool showErrorsToUser = false)
         {
-            // The user may have enabled microphone access in Windows Settings while this
-            // form was open, so do not rely on the startup status when saving.
-            Program.RefreshAudioAccessStatus();
             RefreshAudioAccessWarning();
 
             // initialise errors list
@@ -626,7 +599,7 @@ namespace DisplayMagician.UIForms
             }
 
             // Check the profile is set and that it's still valid
-            if (!(_profileToUse is ProfileItem))
+            if (_profileToUse == null)
             {
                 logger.Error($"ShortcutForm/AllowedToSave: The shortcut doesn't have a display profile selected!");
                 errors.Add("You need to select a Display Profile to use with this shortcut. Please select one from the list of Display Profiles on the left of the screen.");
@@ -634,13 +607,13 @@ namespace DisplayMagician.UIForms
 
             // Audio changes are impossible without Windows microphone privacy access. Do not
             // save a shortcut which claims it will change audio but can never do so.
-            if (!cb_dont_change_audio.Checked && !AudioProfileRepository.CanAccessAudioSettings)
+            if (!cb_dont_change_audio.Checked && !_canAccessAudioSettings)
             {
                 logger.Error("ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings, but Windows microphone access is denied.");
                 errors.Add("Windows has denied microphone access, so DisplayMagician cannot apply an Audio Profile. Select 'Don't change audio settings' before saving this shortcut, or enable microphone access in Windows Settings.");
             }
             // Check if the user has selected to change the audio settings, and if so, that they have selected a valid audio profile
-            else if (!cb_dont_change_audio.Checked && !(_audioProfileToUse is AudioProfileItem))
+            else if (!cb_dont_change_audio.Checked && _audioProfileToUse == null)
             {
                 logger.Error($"ShortcutForm/AllowedToSave: The shortcut is configured to change audio settings but doesn't have an audio profile selected!");
                 errors.Add("You need to select an Audio Profile to use with this shortcut. Please select one from the list of Audio Profiles on the left of the screen or create one if none exists, or select 'Don't change audio settings' if you don't want to change the audio settings.");
@@ -656,7 +629,7 @@ namespace DisplayMagician.UIForms
                         logger.Error($"ShortcutForm/AllowedToSave: The executable {txt_executable.Text} doesn't exist. Please check the file '{txt_executable.Text}' is still there, and that the file has the correct permissions.");
                         errors.Add("The executable you have chosen does not exist! Please reselect the executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                     }
-                    else if (!ProcessUtils.IsExecutableFileType(txt_executable.Text))
+                    else if (!DesktopShellUtilities.IsExecutableFileType(txt_executable.Text))
                     {
                         logger.Error($"ShortcutForm/AllowedToSave: The file '{txt_executable.Text}' is not a supported executable type.");
                         errors.Add($"The file '{Path.GetFileName(txt_executable.Text)}' is not a supported executable type. Please choose an executable file (.exe, .com, .msi, .bat, .cmd, .ps1, .lnk, or .url).");
@@ -682,7 +655,7 @@ namespace DisplayMagician.UIForms
                             logger.Error($"ShortcutForm/AllowedToSave: The alternative executable the user wants to monitor as part of an executable shortcut doesn't exist. Please check the file '{txt_alternative_executable.Text}' is still there, and that the file has the correct permissions.");
                             errors.Add("The alternative executable you have chosen does not exist! Please reselect the alternative executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                         }
-                        else if (!ProcessUtils.IsExecutableFileType(txt_alternative_executable.Text))
+                        else if (!DesktopShellUtilities.IsExecutableFileType(txt_alternative_executable.Text))
                         {
                             logger.Error($"ShortcutForm/AllowedToSave: The alternative executable file '{txt_alternative_executable.Text}' is not a supported executable type.");
                             errors.Add($"The alternative executable file '{Path.GetFileName(txt_alternative_executable.Text)}' is not a supported executable type. Please choose a file with an executable extension (.exe, .com, .msi, .bat, .cmd, .ps1, .lnk, or .url).");
@@ -773,7 +746,7 @@ namespace DisplayMagician.UIForms
                         logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_game.Text}' is still there, and that the file has the correct permissions.");
                         errors.Add("The different game executable you have chosen to monitor does not exist! Please reselect the different game executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                     }
-                    else if (!ProcessUtils.IsExecutableFileType(txt_alternative_game.Text))
+                    else if (!DesktopShellUtilities.IsExecutableFileType(txt_alternative_game.Text))
                     {
                         logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable '{txt_alternative_game.Text}' is not a valid executable file type.");
                         errors.Add("The different game executable you have chosen to monitor is not a valid executable file type. Please select a valid executable (.exe, .com, .bat, .cmd, .ps1, .lnk, .url, .msi) using the Choose button.");
@@ -852,7 +825,7 @@ namespace DisplayMagician.UIForms
 
         private void SuggestShortcutName()
         {
-            if (_autoName && _profileToUse is ProfileItem)
+            if (_autoName && _profileToUse is DisplayProfileView)
             {
                 if (_shortcutCategory == ShortcutCategory.NoGame)
                 {
@@ -861,11 +834,11 @@ namespace DisplayMagician.UIForms
                     else if (rb_switch_display_temp.Checked)
                         txt_shortcut_save_name.Text = $"{_profileToUse.Name} (Temporary)";
                 }
-                else if (_shortcutCategory == ShortcutCategory.Game && _selectedGame is Game)
+                else if (_shortcutCategory == ShortcutCategory.Game && _selectedGame is GameView)
                 {
                     txt_shortcut_save_name.Text = $"{_selectedGame.Name} ({_profileToUse.Name})";
                 }
-                else if (_shortcutCategory == ShortcutCategory.Application && _selectedApp is App)
+                else if (_shortcutCategory == ShortcutCategory.Application && _selectedApp is AppView)
                 {
                     txt_shortcut_save_name.Text = $"{_selectedApp.Name} ({_profileToUse.Name})";
                 }
@@ -880,7 +853,7 @@ namespace DisplayMagician.UIForms
         }
 
 
-        private void UpdateProfileImageListView(ProfileItem profile)
+        private void UpdateProfileImageListView(DisplayProfileView profile)
         {
             ilv_saved_profiles.ClearSelection();
             IEnumerable<ImageListViewItem> matchingImageListViewItems = (from item in ilv_saved_profiles.Items where item.Text == profile.Name select item);
@@ -897,7 +870,6 @@ namespace DisplayMagician.UIForms
         private void ClearForm()
         {
             // Reset all the tracking variables back to default
-            //_loadedProfiles = new List<ProfileItem>();
             _profileToUse = null;
             _gameLauncher = "";
 
@@ -950,28 +922,6 @@ namespace DisplayMagician.UIForms
             txt_alternative_executable.Text = "";
 
 
-            // Populate all the Profiles in the profile listview
-            if (ProfileRepository.ProfileCount > 0)
-            {
-
-                // Temporarily stop updating the saved_profiles listview
-                ilv_saved_profiles.SuspendLayout();
-
-                ImageListViewItem newItem = null;
-                foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
-                {
-                    bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
-                    if (!thisLoadedProfileIsAlreadyHere)
-                    {
-                        newItem = new ImageListViewItem(loadedProfile, loadedProfile.Name);
-                        ilv_saved_profiles.Items.Add(newItem, _profileAdaptor);
-                    }
-
-                }
-
-                // Restart updating the saved_profiles listview
-                ilv_saved_profiles.ResumeLayout();
-            }
             RefreshAudioProfilesList();
 
 
@@ -1034,7 +984,7 @@ namespace DisplayMagician.UIForms
 
             // Load all the profiles to prepare things
             bool foundChosenProfileInLoadedProfiles = false;
-            ProfileItem chosenProfile = null;
+            DisplayProfileView chosenProfile = null;
 
             // Close the splash screen
             CloseTheSplashScreen();
@@ -1063,7 +1013,7 @@ namespace DisplayMagician.UIForms
             ilv_games.Items.Clear();
 
             // Add the rest of the true profiles
-            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
+            foreach (GameView game in _availableGames.OrderBy(game => game.Name))
             {
                 // Add the game to the game array
                 ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
@@ -1096,18 +1046,15 @@ namespace DisplayMagician.UIForms
 
                 // *** 1. Choose Display Profile Tab ***
                 // Find the profile
-                if (_shortcutToEdit.ProfileUUID.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.InvariantCulture))
+                if (_shortcutToEdit.ProfileUUID.Equals(ShortcutItem.SkipDisplayChangeUUID, StringComparison.InvariantCulture))
                 {
                     chosenProfile = ShortcutItem.SkipDisplayChangeProfile;
                     foundChosenProfileInLoadedProfiles = true;
                 }
-                else if (ProfileRepository.ContainsProfile(_shortcutToEdit.ProfileUUID))
+                else
                 {
-                    // We have loaded the profile used last time
-                    // so we need to show the selected profile in the UI
-                    chosenProfile = ProfileRepository.GetProfile(_shortcutToEdit.ProfileUUID);
-                    foundChosenProfileInLoadedProfiles = true;
-
+                    chosenProfile = _displayProfiles.FirstOrDefault(profile => string.Equals(profile.Id, _shortcutToEdit.ProfileUUID, StringComparison.OrdinalIgnoreCase));
+                    foundChosenProfileInLoadedProfiles = chosenProfile != null;
                 }
 
                 if (!foundChosenProfileInLoadedProfiles && !String.IsNullOrWhiteSpace(_shortcutToEdit.ProfileUUID))
@@ -1118,7 +1065,7 @@ namespace DisplayMagician.UIForms
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);
 
-                    chosenProfile = ProfileRepository.CurrentProfile;
+                    chosenProfile = _displayProfiles.FirstOrDefault();
                     shortcutTweakChangesName = true;
                     _isUnsaved = true;
 
@@ -1126,37 +1073,11 @@ namespace DisplayMagician.UIForms
                 // If we get to the end of the loaded profiles and haven't
                 // found a matching profile, then we need to show the current profile
                 // that we're running now (only if that's been saved)
-                else if (!foundChosenProfileInLoadedProfiles && ProfileRepository.ProfileCount > 0)
+                else if (!foundChosenProfileInLoadedProfiles && _displayProfiles.Count > 0)
                 {
-                    ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
-                    bool foundCurrentProfile = false;
-                    foreach (ProfileItem profileToCheck in ProfileRepository.AllProfiles)
-                    {
-                        if (profileToCheck.Equals(currentProfile))
-                        {
-                            chosenProfile = currentProfile;
-                            foundCurrentProfile = true;
-                        }
-                    }
-
-                    // If we get here, and we still haven't matched the profile, then just pick the first one
-                    if (!foundCurrentProfile)
-                    {
-                        MessageBox.Show(
-                            "The Display Profile used in this Game Shortcut no longer exists! You will need to either select or create another display profile, or select the 'No change' display profile, then save the Shortcut in order to use it.",
-                            "Display Profile no longer exists",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Exclamation);
-
-                        if (ProfileRepository.ProfileCount > 0)
-                        {
-                            chosenProfile = ProfileRepository.AllProfiles[0];
-                            shortcutTweakChangesName = true;
-                            _isUnsaved = true;
-                        }
-
-                    }
-
+                    chosenProfile = _displayProfiles.First();
+                    shortcutTweakChangesName = true;
+                    _isUnsaved = true;
                 }
 
                 _profileToUse = chosenProfile;
@@ -1174,8 +1095,7 @@ namespace DisplayMagician.UIForms
                 }
 
                 // *** 2. Choose Audio Tab ***
-                RefreshAudioProfilesList();
-                if (_shortcutToEdit.AudioProfileUUID.Equals(AudioProfileItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(_shortcutToEdit.AudioProfileUUID, ShortcutItem.SkipAudioProfilesChangeUUID, StringComparison.OrdinalIgnoreCase))
                 {
                     cb_dont_change_audio.Checked = true;
                     lb_audio_profiles.ClearSelected();
@@ -1185,7 +1105,7 @@ namespace DisplayMagician.UIForms
                 else
                 {
                     cb_dont_change_audio.Checked = false;
-                    AudioProfileItem selectedAudioProfile = AudioProfileRepository.GetAudioProfile(_shortcutToEdit.AudioProfileUUID);
+                    AudioProfileView selectedAudioProfile = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Id, _shortcutToEdit.AudioProfileUUID, StringComparison.OrdinalIgnoreCase));
                     if (selectedAudioProfile != null)
                     {
                         // We still have ann audio profile in the audio profile repo that matches this UUID
@@ -1497,7 +1417,7 @@ namespace DisplayMagician.UIForms
                     // Set the executable items if we have them
                     _selectedAppId = _shortcutToEdit.ApplicationId;
                     // Now lets try and find the games
-                    _selectedApp = LocalLibrary.GetAnyAppById(_selectedAppId);
+                    _selectedApp = null;
 
 
                     txt_executable.Text = _shortcutToEdit.ExecutableNameAndPath;
@@ -1549,7 +1469,7 @@ namespace DisplayMagician.UIForms
                     // Show an error message if there isn't a game launcher selected
                     if (_shortcutToEdit.GameLibrary.Equals(SupportedGameLibraryType.Unknown))
                     {
-                        if (GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Count <= 0)
+                        if (_availableGames.Count <= 0)
                         {
                             // Fill in the game library information to highlight there isn't one detected.
                             _gameLauncher = "None detected";
@@ -1605,9 +1525,9 @@ namespace DisplayMagician.UIForms
                                 MessageBoxIcon.Exclamation);
                         }
 
-                        foreach (Game game in GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+                        foreach (GameView game in _availableGames)
                         {
-                            if (game.Name == _shortcutToEdit.GameName)
+                            if (string.Equals(game.Id, _shortcutToEdit.GameAppId, StringComparison.OrdinalIgnoreCase))
                             {
                                 _selectedGame = game;
                                 break;
@@ -1648,9 +1568,9 @@ namespace DisplayMagician.UIForms
                         if (_selectedGame != null)
                         {
                             _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.IconPath));
-                            if (_selectedGame.ExePath != _selectedGame.IconPath)
+                            if (_selectedGame.ExecutablePath != _selectedGame.IconPath)
                             {
-                                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.ExePath));
+                                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(_selectedGame.ExecutablePath));
                             }
 
                         }
@@ -1856,29 +1776,9 @@ namespace DisplayMagician.UIForms
 
                 // We need to show the current profile
                 // that we're running now (only if that's been saved)
-                if (ProfileRepository.ProfileCount > 0)
+                if (_displayProfiles.Count > 0)
                 {
-                    ProfileItem currentProfile = ProfileRepository.GetActiveProfile();
-                    bool foundCurrentProfile = false;
-                    foreach (ProfileItem profileToCheck in ProfileRepository.AllProfiles)
-                    {
-                        if (profileToCheck.Equals(currentProfile))
-                        {
-                            chosenProfile = currentProfile;
-                            foundCurrentProfile = true;
-                        }
-                    }
-
-                    // If we get here, and we still haven't matched the profile, then just pick the first one
-                    if (!foundCurrentProfile)
-                    {
-                        if (ProfileRepository.ProfileCount > 0)
-                        {
-                            chosenProfile = ProfileRepository.AllProfiles[0];
-                            shortcutTweakChangesName = true;
-                        }
-
-                    }
+                    chosenProfile = _displayProfiles.First();
                     _profileToUse = chosenProfile;
                     // Also need to select the chosenProfile in the UI so it gets saved properly
                     foreach (var item in ilv_saved_profiles.Items)
@@ -1916,34 +1816,51 @@ namespace DisplayMagician.UIForms
             // Refresh the Shortcut UI
             RefreshShortcutUI();
             ChangeSelectedProfile(chosenProfile);
+            UpdateHotkeyText();
             //RefreshImageListView(chosenProfile);
 
             _loadedShortcut = true;
 
         }
 
-        private void ShortcutForm_Load(object sender, EventArgs e)
+        private async void ShortcutForm_Load(object sender, EventArgs e)
         {
+            ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
 
-            if (_firstShow)
+            try
             {
-                // Parse the game bitmaps now the first time as we need them
-                // We need to add a refresh button to the shortcut page now!
-                if (!GameLibraries.GameLibrary.GamesImagesLoaded)
+                DisplayMagician.Contracts.ProfileListResult profiles = await controlServiceClient.ListProfilesAsync(CancellationToken.None);
+                _displayProfiles = profiles.SavedProfiles.ToList();
+                await RefreshAudioProfilesAsync();
+                await Task.Run(() =>
                 {
-                    GameLibraries.GameLibrary.RefreshGameBitmaps();
-                }
-                if (!AppLibraries.AppLibrary.AppImagesLoaded)
-                {
-                    AppLibraries.AppLibrary.RefreshAppBitmaps();
-                }
+                    UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(controlServiceClient);
+                    ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
+                });
 
-
-
-                _firstShow = false;
+                // Connecting replaces the repository objects. Keep the editor attached to
+                // the current object so its changes are included in the next commit.
+                if (_editingExistingShortcut && _shortcutToEdit != null)
+                    _shortcutToEdit = ShortcutRepository.GetShortcut(_shortcutToEdit.UUID);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "ShortcutForm/ShortcutForm_Load: Could not load service-authoritative audio profiles.");
+                MessageBox.Show(this, "DisplayMagician could not load Audio Profiles through the User Agent.", "Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             // Load the shortcut info
+            try
+            {
+                DisplayMagician.Contracts.GameListResult games = await controlServiceClient.ListGamesAsync(System.Threading.CancellationToken.None);
+                _availableGames = games.Games.ToList();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "ShortcutForm/ShortcutForm_Load: Could not load games through the User Agent.");
+                _availableGames = new List<GameView>();
+            }
+
             LoadShortcut();
 
             CloseTheSplashScreen();
@@ -2024,10 +1941,10 @@ namespace DisplayMagician.UIForms
 
                 if (!String.IsNullOrWhiteSpace(txt_game_name.Text) && ilv_games.SelectedItems.Count == 1 && _selectedGame != null)
                 {
-                    _gameLauncher = _selectedGame.GameLibraryType.ToString("G");
+                    _gameLauncher = ((SupportedGameLibraryType)_selectedGame.Library).ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = _selectedGame.Id;
-                    _availableImages = _selectedGame.AvailableGameBitmaps ?? new List<ShortcutBitmap>();
+                    _availableImages = GetGameImages(_selectedGame);
                     _shortcutToEdit.AvailableImages = _availableImages;
                     _selectedImage = _availableImages.Count > 0
                         ? ImageUtils.GetMeLargestAvailableBitmap(_availableImages)
@@ -2134,7 +2051,7 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
+                if (File.Exists(dialog_open.FileName) && DesktopShellUtilities.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_alternative_executable.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -2167,27 +2084,21 @@ namespace DisplayMagician.UIForms
         private void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
             // Check if the user clicked the special "Skip Display Change" item first
-            if (e.Item.EquipmentModel == ProfileItem.SkipDisplayChangeUUID)
+            if (e.Item.EquipmentModel == ShortcutItem.SkipDisplayChangeUUID)
             {
                 ChangeSelectedProfile(ShortcutItem.SkipDisplayChangeProfile);
                 SuggestShortcutName();
                 return;
             }
 
-            foreach (ProfileItem savedProfile in ProfileRepository.AllProfiles)
-            {
-                if (savedProfile.Name == e.Item.Text)
-                {
-                    ChangeSelectedProfile(savedProfile);
-                    break;
-                }
-            }
+            DisplayProfileView savedProfile = _displayProfiles.FirstOrDefault(profile => string.Equals(profile.Id, e.Item.EquipmentModel as string, StringComparison.OrdinalIgnoreCase));
+            ChangeSelectedProfile(savedProfile);
 
             SuggestShortcutName();
 
         }
 
-        private void ChangeSelectedProfile(ProfileItem profile)
+        private void ChangeSelectedProfile(DisplayProfileView profile)
         {
             // If the profile is null then return
             // (this happens when a new blank shortcut is created)
@@ -2198,15 +2109,13 @@ namespace DisplayMagician.UIForms
             _profileToUse = profile;
 
             // Handle the special "Skip Display Change" profile
-            if (profile.UUID == ProfileItem.SkipDisplayChangeUUID)
+            if (profile.Id == ShortcutItem.SkipDisplayChangeUUID)
             {
-                lbl_profile_shown.Text = ProfileItem.SkipDisplayChangeName;
+                lbl_profile_shown.Text = ShortcutItem.SkipDisplayChangeName;
                 lbl_profile_shown_subtitle.Text = "The display configuration will not be changed when this shortcut runs.";
                 lbl_profile_shown_subtitle.Visible = true;
 
-                // Clear the display view - DrawEmptyView will be called automatically
-                dv_profile.Profile = null;
-                dv_profile.Refresh();
+                UpdateProfilePreview(null);
 
                 UpdateProfileImageListView(profile);
                 return;
@@ -2215,32 +2124,64 @@ namespace DisplayMagician.UIForms
             // We also need to load the saved profile name to show the user
             lbl_profile_shown.Text = _profileToUse.Name;
 
-            if (_profileToUse.Equals(ProfileRepository.CurrentProfile))
-            {
-                lbl_profile_shown_subtitle.Text = "This is the Display Profile currently in use.";
-                lbl_profile_shown_subtitle.Visible = true;
-            }
-            else
-            {
-                lbl_profile_shown_subtitle.Text = "";
-                lbl_profile_shown_subtitle.Visible = false;
-            }
+            lbl_profile_shown_subtitle.Text = "";
+            lbl_profile_shown_subtitle.Visible = false;
 
             // Refresh the image list view
             UpdateProfileImageListView(profile);
 
-            // And finally show the profile in the display view
-            dv_profile.Profile = profile;
-            dv_profile.Refresh();
+            UpdateProfilePreview(profile);
+            if (string.IsNullOrWhiteSpace(profile.DetailedLayoutPngBase64))
+                _ = LoadDetailedProfilePreviewAsync(profile);
+        }
+
+        private async Task LoadDetailedProfilePreviewAsync(DisplayProfileView profile)
+        {
+            try
+            {
+                ProfileListResult profiles = await new ControlServicePipeClient().ListProfilesAsync(CancellationToken.None, detailedProfileId: profile.Id);
+                DisplayProfileView detailedProfile = profiles.SavedProfiles.FirstOrDefault(item => string.Equals(item.Id, profile.Id, StringComparison.OrdinalIgnoreCase));
+                if (detailedProfile == null || IsDisposed || !string.Equals(_profileToUse?.Id, profile.Id, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                profile.DetailedLayoutPngBase64 = detailedProfile.DetailedLayoutPngBase64;
+                UpdateProfilePreview(profile);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutForm/LoadDetailedProfilePreviewAsync: Could not load the detailed preview for profile '{0}'.", profile.Name);
+            }
+        }
+
+        private void UpdateProfilePreview(DisplayProfileView profile)
+        {
+            Image previousImage = dv_profile.Image;
+            dv_profile.Image = null;
+            previousImage?.Dispose();
+
+            string previewPngBase64 = profile?.DetailedLayoutPngBase64 ?? profile?.ThumbnailPngBase64;
+            if (string.IsNullOrWhiteSpace(previewPngBase64))
+            {
+                return;
+            }
+
+            try
+            {
+                byte[] thumbnailBytes = Convert.FromBase64String(previewPngBase64);
+                using MemoryStream thumbnailStream = new MemoryStream(thumbnailBytes);
+                using Image thumbnail = Image.FromStream(thumbnailStream);
+                dv_profile.Image = new Bitmap(thumbnail);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutForm/UpdateProfilePreview: Could not load the display profile preview.");
+            }
         }
 
 
         private void RefreshShortcutUI()
         {
 
-
-            //if (ProfileRepository.ProfileCount > 0)
-            //{
 
             // Temporarily stop updating the saved_profiles listview
             ilv_saved_profiles.SuspendLayout();
@@ -2249,7 +2190,7 @@ namespace DisplayMagician.UIForms
             ilv_saved_profiles.Items.Clear();
 
             ImageListViewItem newItem = null;
-            foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
+            foreach (DisplayProfileView loadedProfile in _displayProfiles)
             {
                 bool thisLoadedProfileIsAlreadyHere = (from item in ilv_saved_profiles.Items where item.Text == loadedProfile.Name orderby item.Text select item.Text).Any();
                 if (!thisLoadedProfileIsAlreadyHere)
@@ -2451,7 +2392,7 @@ namespace DisplayMagician.UIForms
                     _shortcutCategory = ShortcutCategory.Application;
                     _selectedApp = exeForm.AppToUse;
                     _selectedAppId = exeForm.AppToUse.Id;
-                    txt_executable.Text = _selectedApp.ExePath;
+                    txt_executable.Text = _selectedApp.ExecutablePath;
                     if (!String.IsNullOrEmpty(_selectedApp.Arguments))
                     {
                         txt_args_executable.Text = _selectedApp.Arguments;
@@ -2483,12 +2424,12 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void UpdateExeImagesUI(App selectedApp = null)
+        private void UpdateExeImagesUI(AppView selectedApp = null)
         {
             _availableImages = new List<ShortcutBitmap>();
-            if (selectedApp is App)
+            if (selectedApp != null && File.Exists(selectedApp.IconPath))
             {
-                _availableImages.AddRange(selectedApp.AvailableAppBitmaps);
+                _availableImages.AddRange(ImageUtils.GetMeAllBitmapsFromFile(selectedApp.IconPath));
             }
             else
             {
@@ -2560,12 +2501,27 @@ namespace DisplayMagician.UIForms
             return textToReturn;
         }
 
-        private void RefreshAudioProfilesList()
+        private async Task RefreshAudioProfilesAsync(string selectedProfileId = null)
+        {
+            AudioProfileListResult profileList = await new ControlServicePipeClient().ListAudioProfilesAsync(CancellationToken.None);
+            _audioProfiles = profileList.SavedProfiles.ToList();
+            _canAccessAudioSettings = profileList.CanAccessAudioSettings;
+            RefreshAudioProfilesList(selectedProfileId);
+        }
+
+        private void RefreshAudioProfilesList(string selectedProfileId = null)
         {
             lb_audio_profiles.Items.Clear();
-            foreach (AudioProfileItem audioProfile in AudioProfileRepository.AllAudioProfiles.OrderBy(p => p.Name))
+            lb_audio_profiles.DisplayMember = nameof(AudioProfileView.Name);
+            foreach (AudioProfileView audioProfile in _audioProfiles.OrderBy(profile => profile.Name))
             {
                 lb_audio_profiles.Items.Add(audioProfile);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedProfileId))
+            {
+                _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase));
+                lb_audio_profiles.SelectedItem = _audioProfileToUse;
             }
 
             RefreshAudioAccessWarning();
@@ -2573,7 +2529,7 @@ namespace DisplayMagician.UIForms
 
         private void RefreshAudioAccessWarning()
         {
-            bool audioAccessDenied = !AudioProfileRepository.CanAccessAudioSettings;
+            bool audioAccessDenied = !_canAccessAudioSettings;
             p_audio_access_warning.Visible = audioAccessDenied;
             btn_create_audio_profile.Enabled = !audioAccessDenied;
             btn_update_audio_profile.Enabled = !audioAccessDenied && _audioProfileToUse != null;
@@ -2587,7 +2543,6 @@ namespace DisplayMagician.UIForms
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            Program.RefreshAudioAccessStatus();
             RefreshAudioAccessWarning();
         }
 
@@ -2681,46 +2636,29 @@ namespace DisplayMagician.UIForms
         {
             if (_loadedShortcut)
                 _isUnsaved = true;
-            _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
-            btn_update_audio_profile.Enabled = AudioProfileRepository.CanAccessAudioSettings && _audioProfileToUse != null;
+            _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
+            btn_update_audio_profile.Enabled = _canAccessAudioSettings && _audioProfileToUse != null;
             btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
             gb_selected_audio_settings.Enabled = _audioProfileToUse != null;
             if (_audioProfileToUse != null)
             {
-                // Save the select audio profile to the Shortcut
-                _shortcutToEdit.AudioProfileToUse = _audioProfileToUse;
-                _shortcutToEdit.AudioProfileUUID = _audioProfileToUse.UUID;
                 // Update the UI settings window too
-                txt_audio_profile_settings.Text = _audioProfileToUse.GenerateSettingsText();
+                txt_audio_profile_settings.Text = _audioProfileToUse.SettingsText;
             }
         }
 
-        private void btn_create_audio_profile_Click(object sender, EventArgs e)
+        private async void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
             string profileName = PromptForAudioProfileName("Create Audio Profile");
             if (string.IsNullOrWhiteSpace(profileName))
                 return;
 
-            if (!AudioProfileItem.IsValidName(profileName))
+            ControlResponse response = await new ControlServicePipeClient().CreateAudioProfileFromCurrentAsync(profileName, CancellationToken.None);
+            if (response.IsSuccessful)
             {
-                MessageBox.Show(this, "That Audio Profile name already exists. Please choose a unique name.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            AudioProfileItem newAudioProfile = new AudioProfileItem { Name = profileName };
-            if (!newAudioProfile.CreateProfileFromCurrentAudioSettings())
-            {
-                MessageBox.Show(this, "Windows has not allowed DisplayMagician to access audio settings. Enable microphone access in Windows Settings, then return to DisplayMagician.", "Audio Access Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            if (AudioProfileRepository.AddAudioProfile(newAudioProfile))
-            {
-                RefreshAudioProfilesList();
-                lb_audio_profiles.SelectedItem = newAudioProfile;
-                _audioProfileToUse = newAudioProfile;
-                btn_update_audio_profile.Enabled = true;
-                btn_delete_audio_profile.Enabled = true;
+                await RefreshAudioProfilesAsync();
+                _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Name, profileName, StringComparison.OrdinalIgnoreCase));
+                lb_audio_profiles.SelectedItem = _audioProfileToUse;
                 cb_dont_change_audio.Checked = false;
 
                 if (_loadedShortcut)
@@ -2728,34 +2666,32 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                MessageBox.Show(this, "Unable to create the Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btn_update_audio_profile_Click(object sender, EventArgs e)
+        private async void btn_update_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileItem selected = lb_audio_profiles.SelectedItem as AudioProfileItem;
+            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
             if (selected == null)
                 return;
 
-            if (selected.CreateProfileFromCurrentAudioSettings())
+            ControlResponse response = await new ControlServicePipeClient().UpdateAudioProfileFromCurrentAsync(selected.Id, CancellationToken.None);
+            if (response.IsSuccessful)
             {
-                AudioProfileRepository.SaveAudioProfiles();
-                RefreshAudioProfilesList();
-                lb_audio_profiles.SelectedItem = selected;
-                _audioProfileToUse = selected;
+                await RefreshAudioProfilesAsync(selected.Id);
                 if (_loadedShortcut)
                     _isUnsaved = true;
             }
             else
             {
-                MessageBox.Show(this, "Unable to update the Audio Profile from current settings.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btn_delete_audio_profile_Click(object sender, EventArgs e)
+        private async void btn_delete_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileItem selected = lb_audio_profiles.SelectedItem as AudioProfileItem;
+            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
             if (selected == null)
                 return;
 
@@ -2768,18 +2704,14 @@ namespace DisplayMagician.UIForms
             if (result != DialogResult.Yes)
                 return;
 
-            if (AudioProfileRepository.RemoveAudioProfile(selected))
+            ControlResponse response = await new ControlServicePipeClient().DeleteAudioProfileAsync(selected.Id, CancellationToken.None);
+            if (response.IsSuccessful)
             {
-                //if (_audioProfileToUse != null && _audioProfileToUse.UUID.Equals(selected.UUID, StringComparison.OrdinalIgnoreCase))
-                //{
-                //    _audioProfileToUse = null;
-                //}
-
-                RefreshAudioProfilesList();
+                await RefreshAudioProfilesAsync();
                 if (lb_audio_profiles.Items.Count > 0)
                 {
                     lb_audio_profiles.SelectedIndex = 0;
-                    _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileItem;
+                    _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
                     btn_update_audio_profile.Enabled = false;
                     btn_delete_audio_profile.Enabled = false;
                 }
@@ -2795,7 +2727,7 @@ namespace DisplayMagician.UIForms
             }
             else
             {
-                MessageBox.Show(this, "Unable to delete the selected Audio Profile.", "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -2820,7 +2752,7 @@ namespace DisplayMagician.UIForms
         private void btn_choose_alternative_game_Click(object sender, EventArgs e)
         {
             string gamePath = "";
-            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            foreach (GameView game in _availableGames)
             {
                 if (game.Name == txt_game_name.Text)
                 {
@@ -2845,7 +2777,7 @@ namespace DisplayMagician.UIForms
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && ProcessUtils.IsExecutableFileType(dialog_open.FileName))
+                if (File.Exists(dialog_open.FileName) && DesktopShellUtilities.IsExecutableFileType(dialog_open.FileName))
                 {
                     txt_alternative_game.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
@@ -3173,25 +3105,25 @@ namespace DisplayMagician.UIForms
         private void ilv_games_ItemClick(object sender, ItemClickEventArgs e)
         {
             txt_game_name.Text = e.Item.Text;
-            foreach (Game game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries)
+            foreach (GameView game in _availableGames)
             {
                 if (game.Name == txt_game_name.Text)
                 {
                     if (_loadedShortcut)
                         _isUnsaved = true;
                     _selectedGame = game;
-                    _gameLauncher = game.GameLibraryType.ToString("G");
+                    _gameLauncher = ((SupportedGameLibraryType)game.Library).ToString("G");
                     lbl_game_library.Text = $"Game Library: {_gameLauncher}";
                     _gameId = game.Id;
-                    _availableImages = game.AvailableGameBitmaps ?? new List<ShortcutBitmap>();
+                    _availableImages = GetGameImages(game);
                     _shortcutToEdit.AvailableImages = _availableImages;
                     _selectedImage = _availableImages.Count > 0
                         ? ImageUtils.GetMeLargestAvailableBitmap(_availableImages)
-                        : ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExePath);
+                        : ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExecutablePath);
                     if (_selectedImage.Image == null)
                     {
                         logger.Warn($"ShortcutForm/ilv_games_ItemClick: No image resolved for game '{game.Name}'; using default exe icon.");
-                        _selectedImage = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExePath);
+                        _selectedImage = ImageUtils.CreateShortcutBitmap(Properties.Resources.exe, "Default", game.ExecutablePath);
                     }
                     _shortcutToEdit.SelectedImage = _selectedImage;
                     txt_game_name.Text = game.Name;
@@ -3216,13 +3148,13 @@ namespace DisplayMagician.UIForms
         private void btn_find_examples_startprograms_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Start-Program-Examples";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private void btn_find_examples_game_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Main-Game-and-Application-Examples";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private Bitmap PickBitmapBasedOnBgColour(Color bgColour, Bitmap lightBitmap, Bitmap darkBitmap)
@@ -3318,52 +3250,36 @@ namespace DisplayMagician.UIForms
             txt_run_cmd_afterwards.Text = getExeFile();
         }
 
-        private void btn_refresh_games_list_Click(object sender, EventArgs e)
+        private async void btn_refresh_games_list_Click(object sender, EventArgs e)
         {
-            // Change the mouse crusor so the user knows something is happening
             this.Cursor = Cursors.WaitCursor;
-            // Empty the games list
-            GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.Clear();
-            // Load all the new games
-            GameLibraries.GameLibrary.LoadGamesInBackground();
-            // Parse the libraries
-            GameLibraries.GameLibrary.RefreshGameBitmaps();
-            // Load all the Games into the Games ListView            
-            ImageListViewItem previouslySelectedItem = null;
-            if (ilv_games.SelectedItems.Count > 0)
+            try
             {
-                previouslySelectedItem = ilv_games.SelectedItems[0];
+                GameListResult games = await new ControlServicePipeClient().ListGamesAsync(System.Threading.CancellationToken.None);
+                _availableGames = games.Games.ToList();
+                LoadShortcut();
+                MessageBox.Show(this, "The list of available games has been updated.", "Games List Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            ilv_games.Items.Clear();
-            foreach (var game in DisplayMagician.GameLibraries.GameLibrary.AllInstalledGamesInAllLibraries.OrderBy(game => game.Name))
+            catch (Exception ex)
             {
-                // Add the game to the game array
-                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
-                if (previouslySelectedItem != null && newItem.Text.Equals(previouslySelectedItem.Text))
-                {
-                    newItem.Selected = true;
-                }
-                else if (_editingExistingShortcut && game.Name.Equals(_shortcutToEdit.GameName))
-                {
-                    newItem.Selected = true;
-                }
-                ilv_games.Items.Add(newItem, _gameAdaptor);
+                logger.Warn(ex, "ShortcutForm/btn_refresh_games_list_Click: Could not refresh games through the User Agent.");
+                MessageBox.Show(this, "DisplayMagician could not refresh games through the User Agent.", "Games List", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-            // Make sure that if the item is selected that it's visible
-            if (ilv_games.SelectedItems.Count > 0)
+            finally
             {
-                int selectedIndex = ilv_games.SelectedItems[0].Index;
-                ilv_games.EnsureVisible(selectedIndex);
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+        private static List<ShortcutBitmap> GetGameImages(GameView game)
+        {
+            List<ShortcutBitmap> images = ImageUtils.GetMeAllBitmapsFromFile(game.IconPath);
+            if (images.Count == 0 && !string.Equals(game.IconPath, game.ExecutablePath, StringComparison.OrdinalIgnoreCase))
+            {
+                images.AddRange(ImageUtils.GetMeAllBitmapsFromFile(game.ExecutablePath));
             }
 
-            // Change the user cursor back
-            this.Cursor = Cursors.Default;
-            // Show we're done
-            MessageBox.Show(
-                @"The list of available games has been updated.",
-                @"Games List Updated",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Exclamation);
+            return images;
         }
 
         private void pb_game_icon_Click(object sender, EventArgs e)
@@ -3385,7 +3301,7 @@ namespace DisplayMagician.UIForms
         private void btn_help_Click(object sender, EventArgs e)
         {
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Initial-DisplayMagician-Setup";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private void cb_override_speaker_volume_CheckedChanged(object sender, EventArgs e)

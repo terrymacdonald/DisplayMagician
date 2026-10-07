@@ -1,15 +1,9 @@
-﻿using DisplayMagicianShared;
-using DisplayMagicianShared.NVIDIA;
-using DisplayMagicianShared.AMD;
-using DisplayMagicianShared.Windows;
+﻿using DisplayMagician.Contracts;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DisplayMagician.UIForms
 {
@@ -47,42 +41,26 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                ProfileItem profileToUse = key as ProfileItem;
+                DisplayProfileView profileToUse = key as DisplayProfileView;
 
                 // Handle the special "Skip Display Change" profile
-                if (profileToUse != null && profileToUse.UUID == ProfileItem.SkipDisplayChangeUUID)
+                if (profileToUse != null && profileToUse.Id == ShortcutItem.SkipDisplayChangeUUID)
                 {
                     return Properties.Resources.skipdisplaychange.GetThumbnailImage(size.Width, size.Height, new Image.GetThumbnailImageAbort(() => { return false; }), IntPtr.Zero);
                 }
 
-                // Fall back to searching by name (existing behaviour)
-                string profileName = key.ToString();
-
-                if (profileToUse == null)
-                {
-                    foreach (ProfileItem profileToTest in ProfileRepository.AllProfiles)
-                    {
-                        if (profileToTest.Name == profileName)
-                        {
-                            profileToUse = profileToTest;
-                        }
-                    }
-                }
-
-                if (profileToUse == null)
-                {
-                    profileToUse = ProfileRepository.CurrentProfile;
-                }
-
                 Image.GetThumbnailImageAbort myCallback = new Image.GetThumbnailImageAbort(() => { return false; });
 
-                if (profileToUse.ProfileBitmap == null)
+                if (profileToUse == null || string.IsNullOrWhiteSpace(profileToUse.ThumbnailPngBase64))
                 {
-                    logger.Warn($"ProfileAdaptor/GetThumbnail: ProfileBitmap is null for profile '{profileToUse.Name}' (UUID: {profileToUse.UUID}). Returning default exe icon thumbnail.");
+                    logger.Warn("ProfileAdaptor/GetThumbnail: Profile thumbnail is unavailable. Returning default exe icon thumbnail.");
                     return Properties.Resources.exe.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
                 }
 
-                return profileToUse.ProfileBitmap.GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
+                byte[] thumbnailBytes = Convert.FromBase64String(profileToUse.ThumbnailPngBase64);
+                using MemoryStream thumbnailStream = new MemoryStream(thumbnailBytes);
+                using Image thumbnail = Image.FromStream(thumbnailStream);
+                return new Bitmap(thumbnail).GetThumbnailImage(size.Width, size.Height, myCallback, IntPtr.Zero);
 
             }
             catch (Exception ex)
@@ -111,14 +89,8 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                ProfileItem profileToUse = (ProfileItem)key;
-
-                if (profileToUse == null)
-                {
-                    profileToUse = ProfileRepository.CurrentProfile;
-                }
-
-                return profileToUse.UUID;
+                DisplayProfileView profileToUse = key as DisplayProfileView;
+                return profileToUse?.Id;
             }
             catch (Exception ex)
             {
@@ -141,8 +113,8 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                ProfileItem profile = (ProfileItem)key;
-                return profile.Name;
+                DisplayProfileView profile = key as DisplayProfileView;
+                return profile?.Name;
             }
             catch (Exception ex)
             {
@@ -167,17 +139,14 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                ProfileItem profileToUse = (ProfileItem)key;
-
+                DisplayProfileView profileToUse = key as DisplayProfileView;
                 if (profileToUse == null)
-                {
-                    profileToUse = ProfileRepository.CurrentProfile;
-                }
+                    return null;
 
                 // Get file info. A profile may not have a saved bitmap, but it must
                 // still provide its UUID through EquipmentModel so the renderer can
                 // look up its current error or advisory state.
-                Image profileBitmap = profileToUse.ProfileBitmap ?? Properties.Resources.exe;
+                Image profileBitmap = GetThumbnail(profileToUse, new Size(256, 256), UseEmbeddedThumbnails.Auto, false) ?? Properties.Resources.exe;
                 if (profileBitmap is Bitmap)
                 {
                     // Have to do some gymnastics to get rid of the 
@@ -216,8 +185,7 @@ namespace DisplayMagician.UIForms
                         }
                     }
                     string name = profileToUse.Name;
-                    string filepath = Path.GetDirectoryName(profileToUse.SavedProfileIconCacheFilename);
-                    string filename = Path.GetFileName(profileToUse.SavedProfileIconCacheFilename);
+                    string filepath = "";
                     DateTime now = DateTime.Now;
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, now));
@@ -228,7 +196,7 @@ namespace DisplayMagician.UIForms
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Dimensions, string.Empty, mySize));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Resolution, string.Empty, mySizeF));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.ImageDescription, string.Empty, name ?? ""));
-                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.EquipmentModel, string.Empty, profileToUse.UUID));
+                    details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.EquipmentModel, string.Empty, profileToUse.Id));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateTaken, string.Empty, now));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Artist, string.Empty, ""));
                     details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.Copyright, string.Empty, ""));

@@ -48,7 +48,6 @@
     <UseVSHostingProcess>true</UseVSHostingProcess>
     <WarningLevel>4</WarningLevel>
 	  <OutputPath>$(ProjectDir)bin\Debug\</OutputPath>
-	  <NoWarn>1701;1702;CA1416</NoWarn>
 	  <WarningsAsErrors />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -57,7 +56,6 @@
     <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
     <WarningLevel>3</WarningLevel>
 	  <OutputPath>$(ProjectDir)bin\Release\</OutputPath>
-	  <NoWarn>1701;1702;CA1416</NoWarn>
 	  <WarningsAsErrors />
   </PropertyGroup>
   <PropertyGroup>
@@ -81,6 +79,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Resources\**" />
+    <Compile Remove="GameLibraries\**" />
+    <Compile Remove="Processes\**" />
     <None Remove="Resources\**" />
     <Page Remove="Resources\**" />
   </ItemGroup>
@@ -135,6 +135,7 @@
     <PackageReference Include="NLog">
       <Version>6.1.3</Version>
     </PackageReference>
+    <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="protobuf-net">
       <Version>3.2.56</Version>
     </PackageReference>
@@ -194,40 +195,18 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="WindowsAudioWrapper">
-      <HintPath>..\DisplayMagicianShared\DLL\WindowsAudioWrapper.dll</HintPath>
-    </Reference>
-	  <Reference Include="ADLXWrapper">
-		  <HintPath>..\DisplayMagicianShared\DLL\ADLXWrapper.dll</HintPath>
-		  <Private>true</Private>
-	  </Reference>
-	  <Reference Include="IGCLWrapper">
-		  <HintPath>..\DisplayMagicianShared\DLL\IGCLWrapper.dll</HintPath>
-		  <Private>true</Private>
-	  </Reference>
-	  <Reference Include="NVAPIWrapper">
-		  <HintPath>..\DisplayMagicianShared\DLL\NVAPIWrapper.dll</HintPath>
-		  <Private>true</Private>
-	  </Reference>
-	  <Reference Include="WindowsAudioWrapper">
-		  <HintPath>..\DisplayMagicianShared\DLL\WindowsAudioWrapper.dll</HintPath>
-		  <Private>true</Private>
-	  </Reference>
-	  <Reference Include="WindowsWallpaperWrapper">
-		  <HintPath>..\DisplayMagicianShared\DLL\WindowsWallpaperWrapper.dll</HintPath>
-		  <Private>true</Private>
-	  </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="UIForms\AudioAccessPermissionForm.resx" />
+    <EmbeddedResource Include="UIForms\AudioApplyFailureForm.resx" />
     <EmbeddedResource Include="UIForms\ChooseExecutableForm.resx" />
     <EmbeddedResource Include="UIForms\ChooseImageForm.resx" />
     <EmbeddedResource Include="UIForms\AudioProfileNameForm.resx" />
     <EmbeddedResource Include="UIForms\AudioProfilesForm.resx" />
+    <EmbeddedResource Include="UIForms\DisplayApplyFailureForm.resx" />
+    <EmbeddedResource Include="UIForms\DisplayMagicianForm.resx" />
     <EmbeddedResource Include="UIForms\DisplayProfileForm.resx" />
     <EmbeddedResource Include="UIForms\DonationForm.resx" />
     <EmbeddedResource Include="UIForms\FovCalcForm.resx" />
@@ -236,7 +215,9 @@
     <EmbeddedResource Include="UIForms\MigrationSummaryForm.resx" />
     <EmbeddedResource Include="UIForms\MainForm.resx" />
     <EmbeddedResource Include="UIForms\MessagesForm.resx" />
+    <EmbeddedResource Include="UIForms\OperationDecisionForm.resx" />
     <EmbeddedResource Include="UIForms\ProfileSettingsForm.resx" />
+    <EmbeddedResource Include="UIForms\ServerSettingsForm.resx" />
     <EmbeddedResource Include="UIForms\SettingsForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutErrorForm.resx" />
     <EmbeddedResource Include="UIForms\ShortcutForm.resx" />
@@ -248,7 +229,8 @@
     <EmbeddedResource Include="UIForms\UpgradeForm.resx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
+    <ProjectReference Include="..\DisplayMagician.ConfigurationDefinitions\DisplayMagician.ConfigurationDefinitions.csproj" />
+    <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="DLL\" />
@@ -259,9 +241,6 @@
     </Reference>
     <Reference Include="ImageListViewCore">
       <HintPath>DLL\ImageListViewCore.dll</HintPath>
-    </Reference>
-    <Reference Include="WindowsWallpaperWrapper">
-      <HintPath>..\DisplayMagicianShared\DLL\WindowsWallpaperWrapper.dll</HintPath>
     </Reference>
   </ItemGroup>
   <PropertyGroup>
@@ -274,6 +253,9 @@
 		<!-- For 64-bit Windows builds -->
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
+  <Target Name="VerifyDesktopRuntimeRetirement" BeforeTargets="CoreCompile">
+    <Error Condition="Exists('GameLibraries') Or Exists('Processes')" Text="DisplayMagician desktop must not contain Agent-owned GameLibraries or Processes source folders." />
+  </Target>
 	<PropertyGroup>
 		<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>

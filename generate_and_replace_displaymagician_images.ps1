@@ -93,7 +93,6 @@ if ($LASTEXITCODE -ne 0 -or @($iconDimensions | Where-Object { $_.Trim() -match 
 $deployments = @(
     @{ Source = $iconPath; Destination = (Join-Path $repoRoot 'DisplayMagician\Properties\DisplayMagician.ico') },
     @{ Source = $iconPath; Destination = (Join-Path $repoRoot 'DisplayMagicianConsole\DisplayMagician.ico') },
-    @{ Source = $iconPath; Destination = (Join-Path $repoRoot 'DisplayMagicianShared\Properties\DisplayMagician.ico') },
     @{ Source = $iconPath; Destination = (Join-Path $repoRoot 'DisplayMagicianPackage\DisplayMagician.ico') },
     @{ Source = $iconPath; Destination = (Join-Path $repoRoot 'DisplayMagicianBundle\DisplayMagician.ico') },
     @{ Source = (Join-Path $generatedRoot 'applogo.png'); Destination = (Join-Path $repoRoot 'DisplayMagician\Properties\applogo.png') },

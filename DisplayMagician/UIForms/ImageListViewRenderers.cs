@@ -7,9 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DisplayMagician.AppLibraries;
-using DisplayMagician.GameLibraries;
-using DisplayMagicianShared;
 using Manina.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -297,20 +294,8 @@ namespace DisplayMagician.UIForms
                 {
                     Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                //if (item.EquipmentModel.Equals(ProfileItem.SkipDisplayChangeUUID, StringComparison.OrdinalIgnoreCase))
-                //{
-                //    logger.Trace($"ProfileILVRenderer/DrawItem: Rendering special 'skip display change' profile item with key '{item.EquipmentModel}'. Drawing with warning icon overlay.");
-                //    // This is a special "profile" that represents the "skip display change" option, which isn't a real profile and doesn't have a repository entry
-                //    // so we just draw it with a warning icon to indicate it's not a real profile
-                //    Image grayImg = ImageUtils.MakeGrayscale(img);
-                //    g.DrawImage(grayImg, pos);
-                //    // And return early as there's no need to do any repository checks for this item
-                //    //return;
-                //}
-                //else
-                //{
                     logger.Trace($"ProfileILVRenderer/DrawItem: Rendering profile item with key '{item.EquipmentModel}'.");
-                    ProfileItem profileToRender = ProfileRepository.GetProfile(item.EquipmentModel);
+                    DisplayProfileView profileToRender = DesktopProfileViewCache.Get(item.EquipmentModel as string ?? string.Empty);
                     if (profileToRender == null)
                     {
                         // Profile no longer exists in the repository; try the cached image first, fall back to default
@@ -325,7 +310,7 @@ namespace DisplayMagician.UIForms
                             g.DrawImage(Properties.Resources.exe, pos);
                         }
                     }
-                    else if (!profileToRender.HasUsableSavedConfiguration(out _))
+                    else if (!profileToRender.IsValid)
                     {
                         logger.Trace($"ProfileILVRenderer/DrawItem: Rendering profile item with invalid saved configuration for key '{item.EquipmentModel}'. Drawing with error icon overlay.");
                         using (Image grayImg = ImageUtils.MakeGrayscale(img))
@@ -335,7 +320,7 @@ namespace DisplayMagician.UIForms
 
                         g.DrawImage(Properties.Resources.error, pos.X + 30, pos.Y + 30, 40, 40);
                     }
-                    else if (!profileToRender.HasDisplayDetectionAdvisory)
+                    else if (string.IsNullOrWhiteSpace(profileToRender.DiagnosticMessage))
                     {
                         // Draw the full color image when no display-detection advisory is present.
                         logger.Trace($"ProfileILVRenderer/DrawItem: Rendering valid profile item with key '{item.EquipmentModel}'.");
@@ -351,9 +336,6 @@ namespace DisplayMagician.UIForms
                         // right in the centre
                         g.DrawImage(Properties.Resources.warning, pos.X + 30, pos.Y + 30, 40, 40);
                     }
-
-                //}
-
 
                     // Draw image border
                     if (Math.Min(pos.Width, pos.Height) > 32)
@@ -496,18 +478,10 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                bool gameFound = false;
-                foreach (Game gameToTest in GameLibrary.AllInstalledGamesInAllLibraries)
-                {
-                    if (gameToTest.Name.Equals(item.Text))
-                    {
-                        g.DrawImage(img, pos);
-                        gameFound = true;
-                        break;
-                    }
-                }
+                ShortcutItem shortcut = ShortcutRepository.GetShortcut(item.EquipmentModel);
+                bool isUnavailableGameShortcut = shortcut?.Category == ShortcutCategory.Game && shortcut.IsValid == ShortcutValidity.Error;
 
-                if (!gameFound)
+                if (isUnavailableGameShortcut)
                 {
                     // Game is no longer installed; draw with a greyed-out appearance as a fallback
                     try
@@ -659,15 +633,7 @@ namespace DisplayMagician.UIForms
             {
                 Rectangle pos = Utility.GetSizedImageBounds(img, new Rectangle(bounds.Location + itemPadding, ImageListView.ThumbnailSize));
 
-                foreach (App appToTest in AppLibrary.AllInstalledAppsInAllLibraries)
-                {
-                    if (appToTest.Name.Equals(item.Text))
-                    {
-                        // Draw the full color image as the shortcuts is not invalid
-                        g.DrawImage(img, pos);
-                        break;
-                    }
-                }
+                g.DrawImage(img, pos);
 
                 // Draw image border
                 if (Math.Min(pos.Width, pos.Height) > 32)

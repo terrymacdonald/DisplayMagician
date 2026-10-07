@@ -1,8 +1,4 @@
-using DisplayMagician.AppLibraries;
-using DisplayMagician.GameLibraries;
-using DisplayMagician.Processes;
 //using DisplayMagician.Resources;
-using DisplayMagicianShared;
 using Manina.Windows.Forms;
 using System;
 using System.Collections.Generic;
@@ -13,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DisplayMagician.UIForms
@@ -59,14 +56,9 @@ namespace DisplayMagician.UIForms
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-
-            // Refresh cached warning icons after the user returns from Windows Settings.
-            if (Program.RefreshAudioAccessStatus())
-            {
-                ShortcutRepository.IsValidRefresh();
-                RefreshShortcutLibraryUI();
-                UpdateShortcutStatusPanel();
-            }
+            ShortcutRepository.IsValidRefresh();
+            RefreshShortcutLibraryUI();
+            UpdateShortcutStatusPanel();
         }
 
         private void btn_back_Click(object sender, EventArgs e)
@@ -308,14 +300,6 @@ namespace DisplayMagician.UIForms
             {
                 _shortcutForm = new ShortcutForm();
                 ShowShortcutLoadingWindow();
-                logger.Trace($"ShortcutLibraryForm/btn_new_Click: Starting the Loading the Games in the background tasks.");
-                // Load the games in background on execute
-                GameLibrary.LoadGamesInBackground();
-                // Load the apps in background on execute
-                //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                //      Need to investigate why this particular part was crashing everything.
-                logger.Trace($"ShortcutLibraryForm/btn_new_Click: Starting the Loading the Apps in the background tasks.");
-                AppLibrary.LoadAppsInBackground();
             }
             _shortcutForm.Owner = this;
 
@@ -412,14 +396,6 @@ namespace DisplayMagician.UIForms
                 if (_shortcutForm == null)
                 {
                     _shortcutForm = new ShortcutForm();
-                    logger.Trace($"ShortcutLibraryForm / btn_edit_Click: Starting the Loading the Games in the background tasks.");
-                    // Load the games in background on execute
-                    GameLibrary.LoadGamesInBackground();
-                    // Load the apps in background on execute
-                    //TODO: Add this back in (Note - this was removed as it was causing a crash on startup)
-                    //      Need to investigate why this particular part was crashing everything.
-                    logger.Trace($"ShortcutLibraryForm/btn_edit_Click: Starting the Loading the Apps in the background tasks.");
-                    AppLibrary.LoadAppsInBackground();
                 }
                 _shortcutForm.Owner = this;
 
@@ -429,15 +405,19 @@ namespace DisplayMagician.UIForms
                 _shortcutForm.ShowDialog(this);
                 if (_shortcutForm.DialogResult == DialogResult.OK)
                 {
-                    RefreshShortcutLibraryUI();
-                    // As this is an edit, we need to manually force saving the shortcut library
-                    ShortcutRepository.SaveShortcuts();
-                    // We update the Game Shortcut context menu is always updated and correct.
-                    if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                    // The editor updates the repository object; do not report the edit as
+                    // saved until the User Agent has accepted the repository commit.
+                    if (ShortcutRepository.SaveShortcuts())
                     {
-                        DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
+                        if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                            DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
+                    }
+                    else
+                    {
+                        MessageBox.Show(this, "The shortcut changes could not be saved. Please reopen the shortcut and try again.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
 
+                    RefreshShortcutLibraryUI();
                 }
 
                 this.Cursor = Cursors.Default;
@@ -520,13 +500,6 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            if (ProfileRepository.UserChangingProfiles)
-            {
-                logger.Error($"ShortcutLibraryForm/btn_run_Click: The User is currently changing profiles. We can't run this Game Shortcut until they're finished.");
-                MessageBox.Show("The User is currently changing profiles. We can't run this Game Shortcut until they're finished.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
             // Revalidate immediately before running so the UI does not rely on a stale library state.
             _selectedShortcut.RefreshValidity();
             UpdateShortcutStatusPanel();
@@ -568,10 +541,10 @@ namespace DisplayMagician.UIForms
             ilv_saved_shortcuts.SuspendLayout();
             ilv_saved_shortcuts.Refresh();
 
-            RunShortcutResult result = RunShortcutResult.Error;
+            Program.ERRORLEVEL result = Program.ERRORLEVEL.ERROR_EXCEPTION;
             try
             {
-                result = await Program.RunShortcutTaskAsync(_selectedShortcut);
+                result = await Task.Run(() => Program.RunShortcut(_selectedShortcut.UUID));
             }
             catch (OperationCanceledException)
             {
@@ -754,14 +727,14 @@ namespace DisplayMagician.UIForms
         {
             logger.Trace($"ShortcutLibraryForm/btn_help_Click: User clicked on the Help button.");
             string targetURL = @"https://github.com/terrymacdonald/DisplayMagician/wiki/Troubleshooting-DisplayMagician";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
         }
 
         private void btn_donate_Click(object sender, EventArgs e)
         {
             logger.Trace($"ShortcutLibraryForm/btn_donate_Click: User clicked on the Donate button.");
             string targetURL = "https://github.com/sponsors/terrymacdonald?frequency=one-time";
-            ProcessUtils.StartProcess(targetURL, "", ProcessPriority.Normal);
+            DesktopShellUtilities.OpenUrl(targetURL);
             // Update the settings to say that user has donated.
             Utils.UserHasDonated();
 

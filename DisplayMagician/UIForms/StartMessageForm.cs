@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using Microsoft.Web.WebView2.WinForms;
 using Markdig;
 
@@ -17,6 +17,7 @@ namespace DisplayMagician.UIForms
     public partial class StartMessageForm : DisplayMagicianForm
     {
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly HttpClient _httpClient = new HttpClient();
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string MessageMode
@@ -28,6 +29,10 @@ namespace DisplayMagician.UIForms
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string URL
+        { get; set; }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Content
         { get; set; }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -48,7 +53,7 @@ namespace DisplayMagician.UIForms
             this.Close();
         }
 
-        private void StartMessageForm_Load(object sender, EventArgs e)
+        private async void StartMessageForm_Load(object sender, EventArgs e)
         {
             string FullPath;
 
@@ -62,6 +67,41 @@ namespace DisplayMagician.UIForms
             if (!String.IsNullOrWhiteSpace(ButtonText))
             {
                 btn_back.Text = ButtonText;
+            }
+
+            if (!String.IsNullOrWhiteSpace(Content))
+            {
+                try
+                {
+                    if (MessageMode == "html" || MessageMode == "md" || MessageMode == "markdown")
+                    {
+                        string htmlBody = MessageMode == "html"
+                            ? Content
+                            : Markdown.ToHtml(Content, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+                        string htmlDocument = $"<!DOCTYPE html><html><head><meta charset='utf-8'><base href='https://sync.displaymagician.com/' /><style>body{{font-family:'Segoe UI',sans-serif;padding:20px;line-height:1.45;color:#1a1a1a;}}</style></head><body>{htmlBody}</body></html>";
+                        WebView2 webView = new WebView2
+                        {
+                            Dock = DockStyle.Fill,
+                        };
+                        pnl_richtextbox.Controls.Add(webView);
+                        webView.BringToFront();
+                        rtb_message.Hide();
+                        webView.NavigateToString(htmlDocument);
+                    }
+                    else
+                    {
+                        rtb_message.Show();
+                        rtb_message.Text = Content;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "StartMessageForm/StartMessageForm_Load: Failed to render supplied message content.");
+                    rtb_message.Show();
+                    rtb_message.Text = Content;
+                }
+
+                return;
             }
 
             // check if we're in Filename mode or URL mode
@@ -161,17 +201,12 @@ namespace DisplayMagician.UIForms
                     return;
                 }
                 // If we get here, then the URL is good. See if we can access the URL supplied
-#pragma warning disable SYSLIB0014
-                WebClient client = new WebClient();
-#pragma warning restore SYSLIB0014
                 if (MessageMode == "rtf")
                 {
                     try
                     {
-                        byte[] byteArray = client.DownloadData(URL);
-                        MemoryStream theMemStream = new MemoryStream();
-                        theMemStream.Write(byteArray, 0, byteArray.Length);
-                        theMemStream.Position = 0;
+                        byte[] byteArray = await _httpClient.GetByteArrayAsync(URL);
+                        using MemoryStream theMemStream = new MemoryStream(byteArray);
                         rtb_message.Show();
                         rtb_message.LoadFile(theMemStream, RichTextBoxStreamType.RichText);
                     }
@@ -186,7 +221,7 @@ namespace DisplayMagician.UIForms
                 {
                     try
                     {
-                        string textToShow = client.DownloadString(URL);
+                        string textToShow = await _httpClient.GetStringAsync(URL);
                         rtb_message.Show();
                         rtb_message.Text = textToShow;
                     }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
 	<SupportedOSPlatform>windows</SupportedOSPlatform>
@@ -13,7 +13,6 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
-    <NoWarn>1701;1702;CA1416</NoWarn>
     <WarningLevel>3</WarningLevel>
     <WarningsAsErrors />
   </PropertyGroup>
@@ -27,7 +26,6 @@
     <StartupObject>DisplayMagicianConsole.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <NoWarn>1701;1702;CA1416;</NoWarn>
     <WarningLevel>3</WarningLevel>
     <WarningsAsErrors />
   </PropertyGroup>
@@ -35,10 +33,11 @@
     <Content Include="DisplayMagician.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DisplayMagicianShared\DisplayMagicianShared.csproj" />
+    <ProjectReference Include="..\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
+    <PackageReference Include="NLog" Version="6.1.3" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

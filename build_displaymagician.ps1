@@ -31,7 +31,7 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
 # ---------------------------------------------------------------------------
-# Locate VS MSBuild.exe (required for ResolveComReference in DisplayMagicianShared)
+# Locate VS MSBuild.exe (required for ResolveComReference in the main application)
 # ---------------------------------------------------------------------------
 function Find-MSBuild {
     # Try vswhere first (present with VS 2017+)
@@ -69,16 +69,25 @@ function Invoke-Step {
 }
 
 # ---------------------------------------------------------------------------
-# Clean, restore + build the solution (project order is determined by solution dependencies)
+# Restore, clean + build the solution (project order is determined by solution dependencies).
+#
+# Restore must occur before Clean: on a new or updated .NET SDK installation, Clean evaluates
+# Windows reference packs before it can remove project outputs. ControlService also needs the
+# "any" runtime reference pack restored before Clean can evaluate it.
 # ---------------------------------------------------------------------------
-Invoke-Step "Clean DisplayMagician.sln" {
-    $sln = Join-Path $root 'DisplayMagician.sln'
-    & $msbuild $sln -t:Clean -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
-}
-
 Invoke-Step "Restore DisplayMagician.sln" {
     $sln = Join-Path $root 'DisplayMagician.sln'
     & $msbuild $sln -t:Restore -nologo -v:minimal
+}
+
+Invoke-Step "Restore ControlService any-runtime reference pack" {
+    $controlServiceProject = Join-Path $root 'DisplayMagician.ControlService\DisplayMagician.ControlService.csproj'
+    & $msbuild $controlServiceProject -t:Restore -p:RuntimeIdentifier=any -nologo -v:minimal
+}
+
+Invoke-Step "Clean DisplayMagician.sln" {
+    $sln = Join-Path $root 'DisplayMagician.sln'
+    & $msbuild $sln -t:Clean -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
 }
 
 Invoke-Step "Build DisplayMagician.sln ($Configuration|$Platform)" {

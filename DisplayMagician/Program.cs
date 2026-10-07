@@ -7,26 +7,24 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System.Windows.Forms;
-using DisplayMagicianShared;
+using DisplayMagician.Contracts;
 using DisplayMagician.UIForms;
-using DisplayMagician.GameLibraries;
 using System.Text.RegularExpressions;
 using System.Drawing;
 using NLog.Config;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using System.Threading;
 using Microsoft.Win32;
 using System.Net.NetworkInformation;
-using DisplayMagician.AppLibraries;
 using System.ComponentModel;
 using System.Text;
 using System.Globalization;
 using System.Web;
 using Vortice.DirectInput;
 using System.Diagnostics;
-using DisplayMagician.Messaging;
 
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
@@ -40,10 +38,7 @@ namespace DisplayMagician {
         internal static string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician");
         public static string AppStartupPath = Application.StartupPath;
         public static string AppIconPath = Path.Combine(Program.AppDataPath, $"Icons");
-        public static string AppProfilePath = Path.Combine(Program.AppDataPath, $"Profiles");
-        public static string AppShortcutPath = Path.Combine(Program.AppDataPath, $"Shortcuts");
         public static string AppWallpaperPath = Path.Combine(Program.AppDataPath, $"Wallpaper");
-        public static string AppMessagesPath = Path.Combine(Program.AppDataPath, $"Messages");
         public static string AppLogPath = Path.Combine(Program.AppDataPath, $"Logs");
         public static string AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, @"DisplayMagician.ico");
         public static string AppOriginIconFilename = Path.Combine(AppIconPath, @"Origin.ico");
@@ -73,8 +68,6 @@ namespace DisplayMagician {
         //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
         public static SemaphoreSlim AppBackgroundTaskSemaphoreSlim = new SemaphoreSlim(1, 1);
 
-        public static List<Game> AppGameList = new List<Game>();
-        public static List<App> AppAppList = new List<App>();
         public static bool WaitingForGameToExit = false;
         public static ProgramSettings AppProgramSettings;
         public static DonationSettings AppDonationSettings;
@@ -90,24 +83,28 @@ namespace DisplayMagician {
         public static System.Timers.Timer AppUpdateRemindLaterTimer = null;
         private static NLog.LogLevel _userWantedLogLevel = NLog.LogLevel.Info; // Default log level is Info, but can be changed later based on user settings
         private static bool _userOverrodeLogLevel = false; // Used to track if the user has overridden the log level via command line options
-        private static readonly System.Net.Http.HttpClient AppHttpClient = new System.Net.Http.HttpClient();
+        private static Guid _temporaryDiagnosticLogLevelOwnerId;
         private static bool _packageIdentityWarningNeeded = false;
         private static bool _autoUpdaterEventsRegistered = false;
         private static bool _lastUpdateCheckWasAutomatic = true;
         private static string _requestedMessageUpdateVersion;
         private static string _requestedMessageUpdateChannel;
         private static bool _startupBackgroundTasksQueued = false;
+        private static bool _isElevatedRecoveryAction;
         private static SynchronizationContext _mainSynchronizationContext;
-        private static MessageSyncService _messageSyncService;
-        private static ClientSyncService _clientSyncService;
-        private static AnonymousMetricsService _anonymousMetricsService;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
-        private static System.Timers.Timer _clientSyncTimer;
-        private static System.Timers.Timer _metricsHeartbeatTimer;
-        private static System.Timers.Timer _startupMessagePollTimer;
-        internal const string ClientSyncUrl = "https://sync.displaymagician.com/sync/client-sync.json";
+        private static readonly CancellationTokenSource _clientEventListenerCancellationSource = new CancellationTokenSource();
+        private static readonly ConcurrentDictionary<Guid, long> _lastOperationStatusSequences = new ConcurrentDictionary<Guid, long>();
+        private static string _controlServiceInstanceId;
+        private static readonly ConcurrentDictionary<Guid, byte> _displayedOperationDecisionPrompts = new ConcurrentDictionary<Guid, byte>();
+        private static readonly ConcurrentDictionary<Guid, OperationDecisionForm> _operationDecisionForms = new ConcurrentDictionary<Guid, OperationDecisionForm>();
         internal const string TestUpdateFeedCommandLineOption = "--test-update-feed";
         private const string PackageIdentityRestartCommandLineOption = "--package-identity-restart";
+        internal const string ForceReleaseDisplayControlCommandLineOption = "--force-release-display-control";
+        internal const string RestartControlServiceCommandLineOption = "--restart-control-service";
+        internal const string ServerSettingsCommandLineOption = "--server-settings";
+        internal const string RestartGatewayCommandLineOption = "--restart-gateway";
+        private const string ControlServiceName = "DisplayMagicianControlService";
 
         private static volatile bool _useTestUpdateFeed;
 
@@ -120,6 +117,64 @@ namespace DisplayMagician {
 
                 _activeOperationCancellationSource.Cancel();
                 return true;
+            }
+        }
+
+        private static void ConfigureDesktopSettingsAndLogPath(string userDataPath)
+        {
+            string rootPath = Path.GetFullPath(userDataPath);
+            ProgramSettings.ConfigureStoragePath(Path.Combine(rootPath, "Settings"));
+            DonationSettings.ConfigureStoragePath(Path.Combine(rootPath, "Settings"));
+            AppLogPath = Path.Combine(rootPath, "Logs");
+        }
+
+        private static void ConfigureLogPath(string legacyLogPath)
+        {
+            string preferredLogPath = AppLogPath;
+            try
+            {
+                Directory.CreateDirectory(preferredLogPath);
+                string probePath = Path.Combine(preferredLogPath, $".write-probe-{Guid.NewGuid():N}.tmp");
+                using (FileStream probe = new FileStream(probePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose))
+                {
+                    probe.WriteByte(0);
+                }
+
+                if (!string.Equals(preferredLogPath, legacyLogPath, StringComparison.OrdinalIgnoreCase) && Directory.Exists(legacyLogPath))
+                {
+                    foreach (string legacyLogFile in Directory.EnumerateFiles(legacyLogPath, "*.log", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            string destinationPath = Path.Combine(preferredLogPath, Path.GetFileName(legacyLogFile));
+                            if (File.Exists(destinationPath))
+                            {
+                                destinationPath = Path.Combine(preferredLogPath, $"{Path.GetFileNameWithoutExtension(legacyLogFile)}-{Guid.NewGuid():N}{Path.GetExtension(legacyLogFile)}");
+                            }
+
+                            File.Move(legacyLogFile, destinationPath);
+                        }
+                        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                        {
+                            Console.WriteLine($"Program/ConfigureLogPath: Could not move legacy log {legacyLogFile} to {preferredLogPath}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException)
+            {
+                AppLogPath = legacyLogPath;
+                try
+                {
+                    Directory.CreateDirectory(AppLogPath);
+                }
+                catch (Exception fallbackException) when (fallbackException is IOException || fallbackException is UnauthorizedAccessException || fallbackException is NotSupportedException)
+                {
+                    Console.WriteLine($"Program/ConfigureLogPath: Cannot create a log directory at {preferredLogPath} or fallback path {AppLogPath}: {fallbackException.Message}");
+                    return;
+                }
+
+                Console.WriteLine($"Program/ConfigureLogPath: Using legacy log path {AppLogPath} because {preferredLogPath} is not writable: {ex.Message}");
             }
         }
 
@@ -158,6 +213,7 @@ namespace DisplayMagician {
             ERROR_APPLYING_PROFILE = 103,  // Errorlevel returned when RunProfile command is used, and it cannot apply the profile for some reason
             ERROR_UNKNOWN_COMMAND = 104, // Errorlevel returned when DisplayMagician is given an unregonised command
             ERROR_PROFILE_CHANGE_OCCURRING = 105, // Errorlevel returned when DisplayMagician is already making a display profile change and is unable to comeplete what the user requested at this time. Try again soon. 
+            ERROR_RECOVERY_HISTORY_NOT_RECORDED = 106, // The recovery action completed, but its administration history could not be recorded.
         };
 
         public struct UpgradeExtraDetails
@@ -183,32 +239,23 @@ namespace DisplayMagician {
         private static int Main(string[] args)
         {
             // BOOTSTRAP AND INITIALIZATION LOGIC
-
-            // Create the Logging Dir if it doesn't exist so that it's avilable for all
-            // parts of the program to use
-            if (!Directory.Exists(AppDataPath))
+            Application.ApplicationExit += (sender, eventArgs) =>
             {
-                try
-                {
-                    Directory.CreateDirectory(AppDataPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Program/Main Exception: Cannot create the Application Data  Folder {AppDataPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                }
+                if (_isElevatedRecoveryAction)
+                    return;
+
+                _clientEventListenerCancellationSource.Cancel();
+                ReleaseTemporaryDiagnosticLogLevel();
+                StopUserAgentIfIdle();
+            };
+
+            string legacyLogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DisplayMagician", "Logs");
+            if (V4UserDataPathResolver.TryGetMigratedUserDataPath(out string migratedUserDataPath))
+            {
+                ConfigureDesktopSettingsAndLogPath(migratedUserDataPath);
             }
 
-            if (!Directory.Exists(AppLogPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppLogPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Program/Main Exception: Cannot create the Application Log Folder {AppLogPath} - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-                }
-            }
+            ConfigureLogPath(legacyLogPath);
 
 
             
@@ -217,6 +264,7 @@ namespace DisplayMagician {
             //NLog.Common.InternalLogger.LogToConsole = true;
             //NLog.Common.InternalLogger.LogFile = "C:\\Users\\terry\\AppData\\Local\\DisplayMagician\\Logs\\nlog-internal.txt";
 
+            SupportLogLayout.Register();
             var config = new NLog.Config.LoggingConfiguration();
 
             // To enable us to start logging early, set the logLevel to Info, and then later on we can change it if the user wants it different
@@ -226,7 +274,7 @@ namespace DisplayMagician {
             {
                 // Set things to debug mode as the user provided this on the command line
                 logLevel = NLog.LogLevel.Debug;
-                _userWantedLogLevel = NLog.LogLevel.Trace;
+                _userWantedLogLevel = NLog.LogLevel.Debug;
                 _userOverrodeLogLevel = true; // User has overridden the log level to debug, so we will use this for the rest of the program
             }
             else if (args.Contains("--trace"))
@@ -246,7 +294,7 @@ namespace DisplayMagician {
                 FileName = appLogFilename,
                 MaxArchiveFiles = 4,
                 ArchiveAboveSize = 41943040, // 40MB max file size
-                Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}|${onexception:EXCEPTION OCCURRED \\:${exception::format=toString,Properties,Data}"
+                Layout = "${displaymagicianlog:component=DesktopApp}"
             };
 
             // Create a logging rule to use the log file target
@@ -259,12 +307,40 @@ namespace DisplayMagician {
             // Apply config           
             NLog.LogManager.Configuration = config;
 
-            // Make DisplayMagicianShared use the same log file by sending it the 
+            // Keep the legacy desktop helpers on the same log file by sending them the
             // details of the existing NLog logger
             sharedLogger = new SharedLogger(logger);
 
             // Start the Log file
             logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
+
+            if (args.Any(argument => string.Equals(argument, ForceReleaseDisplayControlCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                return ForceReleaseDisplayControlFromElevatedProcess();
+            }
+
+            if (args.Any(argument => string.Equals(argument, RestartControlServiceCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                return RestartControlServiceFromElevatedProcess();
+            }
+
+            if (args.Any(argument => string.Equals(argument, ServerSettingsCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                using ServerSettingsForm serverSettingsForm = new ServerSettingsForm();
+                serverSettingsForm.ShowDialog();
+                return (int)ERRORLEVEL.OK;
+            }
+
+            if (args.Any(argument => string.Equals(argument, RestartGatewayCommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                return RunServiceControlCommand("stop", out _, "DisplayMagicianGateway") == 0 && RunServiceControlCommand("start", out _, "DisplayMagicianGateway") == 0 ? (int)ERRORLEVEL.OK : (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
 
             // Check for the --test-update-feed to check for the test update feed instead of the normal update feed. This is useful for testing the update feed without having to change the code.
             if (args.Any(argument => string.Equals(argument, TestUpdateFeedCommandLineOption, StringComparison.OrdinalIgnoreCase)))
@@ -331,9 +407,6 @@ namespace DisplayMagician {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Set up some defaults for the shared HttpClient
-            AppHttpClient.Timeout = TimeSpan.FromSeconds(30);
-
             // Check if DisplayMagician is not installed (and is portable) by looking for the installer registry key for this executable path.
             // We need to know this so that we can handle certain things differently for installed vs portable users, such as where we store the settings file, and whether we show the "you need to install DisplayMagician" message when certain errors occur that we can detect are due to the fact the user is running in portable mode without realising it.
             AppNotInstalled = DMIsNotInstalled();          
@@ -386,22 +459,11 @@ namespace DisplayMagician {
             }
 
             bool settingsChanged = AppProgramSettings.EnsureInstallIdentity(false);
-            if (!AppProgramSettings.NextClientSyncUtc.HasValue)
-            {
-                AppProgramSettings.NextClientSyncUtc = DateTime.UtcNow.AddMinutes(Random.Shared.Next(0, 12 * 60 + 1));
-                settingsChanged = true;
-            }
-            if (!AppProgramSettings.NextMetricsHeartbeatUtc.HasValue)
-            {
-                AppProgramSettings.NextMetricsHeartbeatUtc = DateTime.UtcNow;
-                settingsChanged = true;
-            }
-            AppProgramSettings.TotalAnonymousMetricLaunches++;
-            settingsChanged = true;
             if (settingsChanged)
             {
                 AppProgramSettings.SaveSettings();
             }
+            ReportAnonymousMetricsUsage(isLaunch: true, activeMinutes: 0);
 
             // Load the Donation Settings and update the number of times run and number of starts since last donation form and button animation, and save the settings back to the file
             logger.Trace($"Program/Main: Loading Donation Settings.");
@@ -477,6 +539,29 @@ namespace DisplayMagician {
                 logger.Trace($"Program/Main: User has set the log level to {_userWantedLogLevel} via command line options so no need to use the log level from program settings.");
             }
 
+            if (_userOverrodeLogLevel)
+            {
+                try
+                {
+                    _temporaryDiagnosticLogLevelOwnerId = Guid.NewGuid();
+                    ControlResponse response = new ControlServicePipeClient().SetTemporaryDiagnosticLogLevelAsync(_userWantedLogLevel.Name, _temporaryDiagnosticLogLevelOwnerId, CancellationToken.None).GetAwaiter().GetResult();
+                    if (!response.IsSuccessful)
+                    {
+                        logger.Warn("Program/Main: Could not enable temporary machine diagnostic logging. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
+                        _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
+                    }
+                    else
+                    {
+                        logger.Info("Program/Main: Enabled temporary {0} machine diagnostic logging for this command-line session.", _userWantedLogLevel.Name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "Program/Main: Could not enable temporary machine diagnostic logging.");
+                    _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
+                }
+            }
+
 
             // STARTUP UI AND OTHER INITIALIZATION
             logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");
@@ -514,55 +599,6 @@ namespace DisplayMagician {
             {
                 logger.Trace($"Program/Main: Application Icon Folder {AppIconPath} already exists so skipping creating it");
             }
-            if (!Directory.Exists(AppProfilePath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppProfilePath);
-                    logger.Trace($"Program/Main: Created the Application Profile Folder {AppProfilePath}");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Profile Folder {AppProfilePath}");
-                }
-            }
-            else
-            {
-                logger.Trace($"Program/Main: Application Profile Folder {AppProfilePath} already exists so skipping creating it");
-            }
-            if (!Directory.Exists(AppShortcutPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppShortcutPath);
-                    logger.Trace($"Program/Main: Created the Application Shortcut Folder {AppShortcutPath}");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Shortcut Folder {AppShortcutPath}");
-                }
-            }
-            else
-            {
-                logger.Trace($"Program/Main: Application Shortcut Folder {AppShortcutPath} already exists so skipping creating it");
-            }
-            if (!Directory.Exists(AppWallpaperPath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppWallpaperPath);
-                    logger.Trace($"Program/Main: Created the Application Wallpaper Folder {AppWallpaperPath}");
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Program/Main: exception: Cannot create the Application Wallpaper Folder {AppWallpaperPath}");
-                }
-            }
-            else
-            {
-                logger.Trace($"Program/Main: Application Wallpaper Folder {AppWallpaperPath} already exists so skipping creating it");
-            }
-
             //if (AppVersionUpgrade)
             //{
             //    // Do all the upgrade things
@@ -581,6 +617,15 @@ namespace DisplayMagician {
 
             // Next we try to setup the Registry Keys for the DesktopBackground Context Menu
             // This is redone each time we start so that the context menu is always updated and correct.
+            if (!ConnectDesktopStateToUserAgent(out string desktopStateConnectionError))
+            {
+                string message = string.IsNullOrWhiteSpace(desktopStateConnectionError)
+                    ? "DisplayMagician could not connect to the User Agent that manages your profiles. Please restart DisplayMagician and try again."
+                    : desktopStateConnectionError;
+                MessageBox.Show(message, "DisplayMagician User Agent", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+
             if (AppProgramSettings.InstallDesktopContextMenu)
             {
                 logger.Trace($"Program/Main: Installing the context menu on startup");
@@ -589,7 +634,6 @@ namespace DisplayMagician {
 
             // Next we create the MainForm object but keep it hidden for now
             logger.Trace($"Program/Main: Creating the MainForm object");
-            RequestAudioAccessBeforeFirstProfileCheck();
             AppMainForm = new MainForm();
 
             ShowMigrationSummary(migrationResult.Notices);
@@ -852,9 +896,6 @@ namespace DisplayMagician {
 
                 
 
-                /* // Update the Active Profile before we load the Main Form
-                 ProfileRepository.UpdateActiveProfile();*/
-
                 // Keep the splash screen in the foreground until the normal main window is visible,
                 // then explicitly transfer focus to it. A minimized startup has no main window to show.
                 if (!AppProgramSettings.MinimiseOnStart)
@@ -925,24 +966,7 @@ namespace DisplayMagician {
             // Remove all the notifications we have set as they don't matter now!
             ToastNotificationManagerCompat.History.Clear();
 
-            try
-            {
-                using CancellationTokenSource initialMetricsCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                EnsureClientSyncService();
-                _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: true, initialMetricsCancellation.Token).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, "Program/Main: Initial anonymous metrics heartbeat did not complete during orderly shutdown.");
-            }
-
-            logger.Trace($"Program/Main: Stopping message sync timer.");
-            _clientSyncTimer?.Stop();
-            _clientSyncTimer?.Dispose();
-            _clientSyncTimer = null;
-            _metricsHeartbeatTimer?.Stop();
-            _metricsHeartbeatTimer?.Dispose();
-            _metricsHeartbeatTimer = null;
+            ReportAnonymousMetricsUsage(isLaunch: false, activeMinutes: Math.Max(0, (long)_interactiveRuntimeStopwatch.Elapsed.TotalMinutes));
 
             logger.Trace($"Program/Main: Disposing the DirectInput manager.");
             AppDirectInputManager?.Dispose();
@@ -960,6 +984,144 @@ namespace DisplayMagician {
             logger.Trace($"Program/Main: Returning the following errorlevel to the OS: {errorLevelToReturnToOS} ({((ERRORLEVEL)errorLevelToReturnToOS).ToString()})");
             return errorLevelToReturnToOS;
         }       
+
+        private static int ForceReleaseDisplayControlFromElevatedProcess()
+        {
+            try
+            {
+                logger.Info("Program/ForceReleaseDisplayControlFromElevatedProcess: Processing the elevated emergency display-control release request.");
+                ControlResponse response = new ControlServicePipeClient()
+                    .ForceReleaseDisplayControlAsync(CancellationToken.None)
+                    .GetAwaiter()
+                    .GetResult();
+                if (response.IsSuccessful)
+                {
+                    logger.Info("Program/ForceReleaseDisplayControlFromElevatedProcess: {0}", response.Message);
+                    return (int)ERRORLEVEL.OK;
+                }
+
+                logger.Error("Program/ForceReleaseDisplayControlFromElevatedProcess: The Control Service rejected the emergency release. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/ForceReleaseDisplayControlFromElevatedProcess: The emergency display-control release request failed.");
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown();
+            }
+        }
+
+        private static int RestartControlServiceFromElevatedProcess()
+        {
+            try
+            {
+                try
+                {
+                    ControlServiceStatus status = new ControlServicePipeClient().GetServiceStatusAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    if (status.DisplayControlLease?.ActiveOperationId != null || status.DisplayControlLease?.IsRecoveryRequired == true)
+                    {
+                        logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service restart was refused because display control is active or recovery is required.");
+                        return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                    }
+                }
+                catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is InvalidOperationException)
+                {
+                    logger.Warn(ex, "Program/RestartControlServiceFromElevatedProcess: Could not obtain Control Service status before restarting it; continuing with the administrator-requested restart.");
+                }
+
+                int stopExitCode = RunServiceControlCommand("stop", out string stopOutput);
+                if (stopExitCode != 0 && stopExitCode != 1062)
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service stop command failed. ExitCode={0}; Output={1}", stopExitCode, stopOutput);
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                if (!WaitForControlServiceState("STOPPED", TimeSpan.FromSeconds(30)))
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service did not stop within the expected time.");
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                int startExitCode = RunServiceControlCommand("start", out string startOutput);
+                if (startExitCode != 0)
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service start command failed. ExitCode={0}; Output={1}", startExitCode, startOutput);
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                if (!WaitForControlServiceState("RUNNING", TimeSpan.FromSeconds(30)))
+                {
+                    logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service did not start within the expected time.");
+                    return (int)ERRORLEVEL.ERROR_EXCEPTION;
+                }
+
+                try
+                {
+                    ControlResponse recoveryRecordResponse = new ControlServicePipeClient().RecordRecoveryAdministrationAsync("RestartControlService", "Succeeded", CancellationToken.None).GetAwaiter().GetResult();
+                    if (!recoveryRecordResponse.IsSuccessful)
+                    {
+                        logger.Error("Program/RestartControlServiceFromElevatedProcess: Control Service restarted but rejected its recovery history record. ErrorCode={0}; Message={1}", recoveryRecordResponse.ErrorCode, recoveryRecordResponse.Message);
+                        return (int)ERRORLEVEL.ERROR_RECOVERY_HISTORY_NOT_RECORDED;
+                    }
+                }
+                catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+                {
+                    logger.Warn(ex, "Program/RestartControlServiceFromElevatedProcess: Control Service restarted but its recovery history could not be recorded.");
+                }
+
+                logger.Info("Program/RestartControlServiceFromElevatedProcess: Control Service restarted successfully.");
+                return (int)ERRORLEVEL.OK;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/RestartControlServiceFromElevatedProcess: Control Service restart failed.");
+                return (int)ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown();
+            }
+        }
+
+        private static int RunServiceControlCommand(string action, out string output, string serviceName = null)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "sc.exe"), $"{action} \"{serviceName ?? ControlServiceName}\"")
+            {
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+            using Process process = Process.Start(startInfo) ?? throw new InvalidOperationException("Windows could not start the Service Control command.");
+            output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+            if (!process.WaitForExit(10000))
+            {
+                throw new TimeoutException("The Service Control command did not finish in time.");
+            }
+
+            return process.ExitCode;
+        }
+
+        private static bool WaitForControlServiceState(string expectedState, TimeSpan timeout)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            while (stopwatch.Elapsed < timeout)
+            {
+                int expectedStateCode = string.Equals(expectedState, "STOPPED", StringComparison.Ordinal) ? 1 : 4;
+                int queryExitCode = RunServiceControlCommand("query", out string queryOutput);
+                if (queryExitCode == 0 && queryOutput.IndexOf($"STATE              : {expectedStateCode}", StringComparison.Ordinal) >= 0)
+                {
+                    return true;
+                }
+
+                Thread.Sleep(500);
+            }
+
+            return false;
+        }
 
         public static ERRORLEVEL CreateProfile()
         {
@@ -1086,116 +1248,79 @@ namespace DisplayMagician {
         {
             logger.Debug($"Program/RunShortcut: Running shortcut {shortcutUUID}");
 
-            ERRORLEVEL errLevel = ERRORLEVEL.OK;
-            ShortcutItem shortcutToRun = null;
-
             // Close the splash screen
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
-            if (ProfileRepository.UserChangingProfiles)
+            if (string.IsNullOrWhiteSpace(shortcutUUID))
             {
-                logger.Error($"Program/RunShortcut: The User is currently changing to another Display Profile. We can't run a Game Shortcut until that has finished happening. Please wait.");
-                MessageBox.Show("The User is currently changing to another Display Profile. We can't run a Game Shortcut until that has finished happening. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return ERRORLEVEL.ERROR_PROFILE_CHANGE_OCCURRING;
+                logger.Error("Program/RunShortcut: A shortcut ID is required.");
+                return ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
             }
 
-
-            // Match the ShortcutName to the actual shortcut listed in the shortcut library
-            // And error if we can't find it.
-            if (ShortcutRepository.ContainsShortcut(shortcutUUID))
-            {
-                // make sure we trim the "" if there are any
-                shortcutUUID = shortcutUUID.Trim('"');
-                shortcutToRun = ShortcutRepository.GetShortcut(shortcutUUID);
-                if (shortcutToRun is ShortcutItem)
-                {
-                    // We need to update the active profile if we've been run from a shortcut.
-                    ProfileRepository.UpdateActiveProfile();
-                    // Now refresh the shortcut validity
-                    shortcutToRun.RefreshValidity();
-                    //ShortcutRepository.RunShortcut(shortcutToRun);
-                    RunShortcutResult shortcutResult = Program.RunShortcutTask(shortcutToRun);
-                    if (shortcutResult == RunShortcutResult.Cancelled)
-                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                    else if (shortcutResult == RunShortcutResult.Error)
-                        errLevel = ERRORLEVEL.ERROR_EXCEPTION;
-                }
-            }
-            else
-            {
-                logger.Error($"Program/RunShortcut: Cannot find the shortcut with UUID {shortcutUUID}");
-                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_SHORTCUT;
-            }
-
-            return errLevel;
-
+            shortcutUUID = shortcutUUID.Trim('"');
+            return RunShortcutThroughUserAgent(shortcutUUID);
         }
 
-        public static ERRORLEVEL RunProfile(string profileName)
+        private static ERRORLEVEL RunShortcutThroughUserAgent(string shortcutUUID)
         {
-            logger.Trace($"Program/RunProfile: Running profile {profileName}");
-            ERRORLEVEL errLevel = ERRORLEVEL.OK;
+            try
+            {
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.StartShortcutWhenAgentAvailableAsync(shortcutUUID, CancellationToken.None).GetAwaiter().GetResult();
+                if (response.IsSuccessful)
+                {
+                    return ERRORLEVEL.OK;
+                }
+
+                logger.Error("Program/RunShortcutThroughUserAgent: The User Agent rejected shortcut {0}. ErrorCode={1}; Message={2}", shortcutUUID, response.ErrorCode, response.Message);
+                return response.OperationStatus?.Phase == DisplayMagician.Contracts.OperationPhase.Cancelled
+                    ? ERRORLEVEL.CANCELED_BY_USER
+                    : ERRORLEVEL.ERROR_EXCEPTION;
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Error(ex, "Program/RunShortcutThroughUserAgent: The Control Service path is unavailable for shortcut {0}.", shortcutUUID);
+                return ERRORLEVEL.ERROR_EXCEPTION;
+            }
+        }
+
+        public static ERRORLEVEL RunProfile(string profileId)
+        {
+            logger.Trace($"Program/RunProfile: Running profile {profileId}");
 
             // Close the splash screen
             if (AppProgramSettings.ShowSplashScreen && AppSplashScreen != null && !AppSplashScreen.Disposing && !AppSplashScreen.IsDisposed)
                 AppSplashScreen.Invoke(new Action(() => AppSplashScreen.Close()));
 
-            if (ProfileRepository.UserChangingProfiles)
+            if (string.IsNullOrWhiteSpace(profileId))
             {
-                logger.Error($"Program/RunProfile: The User is currently changing to another Display Profiles. We can't change to another Display Profile right now. Please wait.");
-                MessageBox.Show("The User is currently changing to another Display Profiles. We can't change to another Display Profile right now. Please wait.", "User changing profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return ERRORLEVEL.ERROR_PROFILE_CHANGE_OCCURRING;
+                logger.Error("Program/RunProfile: A display profile ID is required.");
+                return ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
             }
 
-            if (ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).Any())
+            profileId = profileId.Trim('"');
+            try
             {
-                logger.Trace($"Program/RunProfile: Found profile called {profileName} and now starting to apply the profile");
-
-                // Get the profile
-                ProfileItem profileToUse = ProfileRepository.AllProfiles.Where(p => p.UUID.Equals(profileName)).First();
-
-                // We need to update the active profile if we've been run from a profile shortcut.
-                ProfileRepository.UpdateActiveProfile();
-
-                // Only apply the profile if it is not already active
-                if (ProfileRepository.IsActiveProfile(profileToUse))
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.ApplyProfileWhenAgentAvailableAsync(profileId, CancellationToken.None).GetAwaiter().GetResult();
+                if (response.IsSuccessful)
                 {
-                    logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} is already the active profile. Notifying user.");
-                    new ToastContentBuilder()
-                        .AddText("Display Profile Already Active", hintMaxLines: 1)
-                        .AddText($"\"{profileToUse.Name}\" is already the current display profile.")
-                        .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                        .SetToastDuration(ToastDuration.Short)
-                        .Show();
+                    return ERRORLEVEL.OK;
                 }
-                else
-                {
-                    // Apply the profile change
-                    ApplyProfileResult result = Program.ApplyProfileTask(profileToUse);
-                    if (result == ApplyProfileResult.Successful)
-                    {
-                        logger.Trace($"Program/RunProfile: Profile {profileToUse.Name} was successfully applied.");
-                        new ToastContentBuilder()
-                            .AddText("Display Profile Applied", hintMaxLines: 1)
-                            .AddText($"\"{profileToUse.Name}\" has been applied successfully.")
-                            .AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true)
-                            .SetToastDuration(ToastDuration.Short)
-                            .Show();
-                    }
-                    else if (result == ApplyProfileResult.Cancelled)
-                        errLevel = ERRORLEVEL.CANCELED_BY_USER;
-                    else if (result == ApplyProfileResult.Error)
-                        errLevel = ERRORLEVEL.ERROR_APPLYING_PROFILE;
-                }
-            }
-            else
-            {
-                logger.Error($"Program/RunProfile: We tried looking for a profile called {profileName} and couldn't find it. It probably is an old display profile that has been deleted previously by the user.");
-                errLevel = ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE;
-            }
 
-            return errLevel;
+                logger.Error("Program/RunProfile: The Control Service did not apply profile {0}. ErrorCode={1}; Message={2}", profileId, response.ErrorCode, response.Message);
+                return response.ApplyProfile?.WasCancelled == true
+                    ? ERRORLEVEL.CANCELED_BY_USER
+                    : response.ErrorCode is DisplayMagician.Contracts.ControlErrorCode.InvalidRequest or DisplayMagician.Contracts.ControlErrorCode.ProfileNotFound
+                        ? ERRORLEVEL.ERROR_CANNOT_FIND_PROFILE
+                        : ERRORLEVEL.ERROR_APPLYING_PROFILE;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Program/RunProfile: Could not invoke the User Agent for profile {0}.", profileId);
+                return ERRORLEVEL.ERROR_APPLYING_PROFILE;
+            }
         }
 
 
@@ -1209,162 +1334,124 @@ namespace DisplayMagician {
             return true;
         }
 
-        
-        
-
-        public static RunShortcutResult RunShortcutTask(ShortcutItem shortcutToUse)
+        private static bool ConnectDesktopStateToUserAgent(out string errorMessage)
         {
-            return RunShortcutTaskAsync(shortcutToUse).GetAwaiter().GetResult();
-        }
-
-        public static async Task<RunShortcutResult> RunShortcutTaskAsync(ShortcutItem shortcutToUse)
-        {
-            //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
-            bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
-            if (gotGreenLightToProceed)
-            {
-                logger.Trace($"Program/RunShortcutTask: Got exclusive control of the RunShortcutTask");
-            }
-            else
-            {
-                logger.Error($"Program/RunShortcutTask: Cannot run the shortcut {shortcutToUse.Name} as another task is running!");
-                return RunShortcutResult.Error;
-            }
-
-            CancellationTokenSource cancellationSource = BeginActiveOperationCancellation();
-            RunShortcutResult result = RunShortcutResult.Error;
+            errorMessage = string.Empty;
             try
             {
-                CancellationToken cancelToken = cancellationSource.Token;
-                // Start the RunShortcut Task in a new thread
-                Task<RunShortcutResult> output = Task.Factory.StartNew<RunShortcutResult>(() => ShortcutRepository.RunShortcut(shortcutToUse, cancelToken), cancelToken);
-                // Awaiting keeps a WinForms caller's message loop available for shortcut prompts.
-                result = await output;
-            }
-            catch (OperationCanceledException ex)
-            {
-                logger.Trace(ex, $"Program/RunShortcutTask: User cancelled the running the shortcut {shortcutToUse.Name}.");
+                Exception lastException = null;
+
+                for (int attempt = 1; attempt <= 20; attempt++)
+                {
+                    try
+                    {
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: Starting attempt {0}/20.",
+                            attempt);
+
+                        UserAgentRepositoryConnection userAgentRepositoryConnection =
+                            new UserAgentRepositoryConnection(
+                                new ControlServicePipeClient());
+
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: Calling ShortcutRepository.ConnectToUserAgent.");
+
+                        ShortcutRepository.ConnectToUserAgent(
+                            userAgentRepositoryConnection);
+
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: ShortcutRepository.ConnectToUserAgent returned.");
+
+                        DesktopProfileViewCache.Refresh();
+
+                        logger.Trace(
+                            "Program/ConnectDesktopStateToUserAgent: DesktopProfileViewCache.Refresh returned.");
+
+                        logger.Info(
+                            "Program/ConnectDesktopStateToUserAgent: Loaded display profile views and the shortcut cache from the User Agent.");
+
+                        return true;
+                    }
+                    catch (Exception ex) when (
+                        ex is IOException ||
+                        ex is TimeoutException ||
+                        ex is InvalidOperationException)
+                    {
+                        lastException = ex;
+
+                        if (ex.Message.StartsWith("The DisplayMagician Session Launcher service could not be started.", StringComparison.Ordinal))
+                        {
+                            errorMessage = ex.Message;
+                            logger.Error(ex, "Program/ConnectDesktopStateToUserAgent: The Session Launcher service could not be started.");
+                            return false;
+                        }
+
+                        logger.Debug(
+                            ex,
+                            "Program/ConnectDesktopStateToUserAgent: User Agent is not ready yet. Attempt {0}/20.",
+                            attempt);
+
+                        Thread.Sleep(500);
+                    }
+                }
+
+                if (lastException != null)
+                {
+                    errorMessage = lastException.Message;
+                    logger.Error(
+                        lastException,
+                        "Program/ConnectDesktopStateToUserAgent: User Agent did not become ready within the startup timeout.");
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Program/RunShortcutTask: Exception while trying to run the shortcut {shortcutToUse.Name}.");
+                errorMessage = ex.Message;
+                logger.Error(
+                    ex,
+                    "Program/ConnectDesktopStateToUserAgent: Could not load desktop state from the User Agent.");
+
+                return false;
             }
-            finally
-            {
-                CompleteActiveOperationCancellation(cancellationSource);
-                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
-                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                if (gotGreenLightToProceed)
-                {
-                    Program.AppBackgroundTaskSemaphoreSlim.Release();
-                }
-            }
-            return result;
         }
 
-        //public async static Task<ApplyProfileResult> ApplyProfileTask(ProfileItem profile)
-        public static ApplyProfileResult ApplyProfileTask(ProfileItem profile)
+        internal static void StopUserAgentIfIdle()
         {
-            //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
-            //await Program.AppBackgroundTaskSemaphoreSlim.WaitAsync(0);
-            bool gotGreenLightToProceed = Program.AppBackgroundTaskSemaphoreSlim.Wait(0);
-            if (gotGreenLightToProceed)
-            {
-                logger.Trace($"Program/ApplyProfileTask: Got exclusive control of the ApplyProfileTask");
-            }
-            else
-            {
-                logger.Error($"Program/ApplyProfileTask: Cannot apply the display profile {profile.Name} as another task is running!");
-                return ApplyProfileResult.Error;
-            }
-            ApplyProfileResult result = ApplyProfileResult.Error;            
-            bool semaphoreReleaseDeferred = false;
-            CancellationTokenSource cancellationSource = BeginActiveOperationCancellation();
             try
             {
-                Task<ApplyProfileResult> taskToRun = Task.Run(() => ProfileRepository.ApplyProfile(profile));
-                bool completed = taskToRun.Wait(TimeSpan.FromSeconds(120));
-                if (completed)
-                    result = taskToRun.Result;
-                else
+                ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+                DisplayMagician.Contracts.ControlResponse response = controlServiceClient.StopAgentIfIdleAsync(CancellationToken.None).GetAwaiter().GetResult();
+                if (!response.IsSuccessful && response.ErrorCode != DisplayMagician.Contracts.ControlErrorCode.AgentUnavailable)
                 {
-                    logger.Warn($"Program/ApplyProfileTask: Profile apply task timed out after 120 seconds.");
-                    semaphoreReleaseDeferred = true;
-                    _ = taskToRun.ContinueWith(completedTask =>
-                    {
-                        try
-                        {
-                            if (completedTask.IsFaulted)
-                            {
-                                logger.Error(completedTask.Exception, $"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} completed with an exception.");
-                            }
-                            else if (completedTask.IsCanceled)
-                            {
-                                logger.Warn($"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} was cancelled.");
-                            }
-                            else
-                            {
-                                logger.Warn($"Program/ApplyProfileTask: Timed-out profile apply task for {profile.Name} has now finished with result {completedTask.Result}.");
-                            }
-                        }
-                        finally
-                        {
-                            CompleteActiveOperationCancellation(cancellationSource);
-                            Program.AppBackgroundTaskSemaphoreSlim.Release();
-                        }
-                    }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+                    logger.Info("Program/StopUserAgentIfIdle: The User Agent remains running. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
                 }
-            }   
-            catch (OperationCanceledException ex)
-            {
-                logger.Trace(ex, $"Program/ApplyProfileTask: User cancelled the ApplyProfile {profile.Name}.");
             }
-            catch( Exception ex)
+            catch (Exception ex)
             {
-                logger.Error(ex, $"Program/ApplyProfileTask: Exception while trying to apply Profile {profile.Name}.");
+                logger.Warn(ex, "Program/StopUserAgentIfIdle: Unable to ask the Control Service to stop the User Agent before WinForms exits.");
+            }
+        }
+
+        private static void ReleaseTemporaryDiagnosticLogLevel()
+        {
+            if (_temporaryDiagnosticLogLevelOwnerId == Guid.Empty)
+            {
+                return;
+            }
+
+            try
+            {
+                new ControlServicePipeClient().ReleaseTemporaryDiagnosticLogLevelAsync(_temporaryDiagnosticLogLevelOwnerId, CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/ReleaseTemporaryDiagnosticLogLevel: Could not release temporary machine diagnostic logging; it will expire automatically.");
             }
             finally
             {
-                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
-                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                if (gotGreenLightToProceed && !semaphoreReleaseDeferred)
-                {
-                    CompleteActiveOperationCancellation(cancellationSource);
-                    Program.AppBackgroundTaskSemaphoreSlim.Release();
-                }                        
+                _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
             }
-
-            //taskToRun.RunSynchronously();
-            //result = taskToRun.GetAwaiter().GetResult();                
-            if (result == ApplyProfileResult.Successful)
-            {
-                MainForm myMainForm = Program.AppMainForm;
-                if (myMainForm.InvokeRequired)
-                {
-                    myMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate {
-                        myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                    });
-                }
-                else
-                {
-                    myMainForm.UpdateNotifyIconText($"DisplayMagician ({profile.Name})");
-                }
-
-                logger.Trace($"Program/ApplyProfileTask: Successfully applied Profile {profile.Name}.");
-            }
-            else if (result == ApplyProfileResult.Cancelled)
-            {
-                logger.Warn($"Program/ApplyProfileTask: The user cancelled changing to Profile {profile.Name}.");
-            }
-            else
-            {
-                logger.Warn($"Program/ApplyProfileTask: Error applying the Profile {profile.Name}. Unable to change the display layout.");
-            }
-
-            // Replace the code above with this code when it is time for the UI rewrite, as it is non-blocking
-            //result = await Task.Run(() => ProfileRepository.ApplyProfile(profile));
-            return result;
         }
 
         private static bool EnsurePackageIdentity(string[] startupArguments)
@@ -1428,105 +1515,6 @@ namespace DisplayMagician {
             return false;
         }
 
-        private static void RequestAudioAccessBeforeFirstProfileCheck()
-        {
-            if (!AppHasPackageIdentity)
-            {
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                logger.Warn("Program/RequestAudioAccessBeforeFirstProfileCheck: DisplayMagician has no package identity, so Windows microphone privacy access cannot be checked.");
-                return;
-            }
-
-            try
-            {
-                AppCapability microphoneCapability = AppCapability.Create("microphone");
-                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
-                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
-                logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability access is {accessStatus}.");
-
-                if (accessStatus != AppCapabilityAccessStatus.UserPromptRequired)
-                    return;
-
-                Action<IWin32Window> showPermissionDialogAndRequestAccess = owner =>
-                {
-                    using (AudioAccessPermissionForm permissionForm = new AudioAccessPermissionForm())
-                    {
-                        // Closing this explanation is deliberately equivalent to Continue. There is
-                        // no bypass because audio profile detection needs Windows' consent decision.
-                        if (owner != null)
-                            permissionForm.ShowDialog(owner);
-                        else
-                            permissionForm.ShowDialog();
-                    }
-
-                    accessStatus = AppCapability.RequestAccessForCapabilitiesAsync(new[] { "microphone" }).AsTask().GetAwaiter().GetResult()["microphone"];
-                    AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
-                    logger.Info($"Program/RequestAudioAccessBeforeFirstProfileCheck: Microphone capability request completed with {accessStatus}.");
-                };
-
-                // The splash has its own UI thread. Showing the modal dialog on that thread,
-                // with the splash as owner, keeps it above the loading window.
-                if (AppSplashScreen != null && !AppSplashScreen.IsDisposed && !AppSplashScreen.Disposing && AppSplashScreen.IsHandleCreated)
-                {
-                    AppSplashScreen.Invoke(new Action(() => showPermissionDialogAndRequestAccess(AppSplashScreen)));
-                }
-                else
-                {
-                    // The splash is disabled, or has not created a window yet. The form's
-                    // normal centred, unowned modal behaviour is appropriate in this case.
-                    showPermissionDialogAndRequestAccess(null);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Retain the legacy behaviour when Windows cannot query the package capability.
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                logger.Warn(ex, "Program/RequestAudioAccessBeforeFirstProfileCheck: Could not query or request microphone access. Audio operations will be attempted and report any Windows error.");
-            }
-        }
-
-        /// <summary>
-        /// Re-reads Windows' current microphone privacy decision without asking the user
-        /// again. This lets audio features resume in the same DisplayMagician session when
-        /// the user enables access in Windows Settings.
-        /// </summary>
-        public static bool RefreshAudioAccessStatus()
-        {
-            AudioAccessStatus previousStatus = AudioProfileRepository.AudioAccessStatus;
-            if (!AppHasPackageIdentity)
-            {
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                return previousStatus != AudioProfileRepository.AudioAccessStatus;
-            }
-
-            try
-            {
-                AppCapability microphoneCapability = AppCapability.Create("microphone");
-                AppCapabilityAccessStatus accessStatus = microphoneCapability.CheckAccess();
-                AudioProfileRepository.AudioAccessStatus = ConvertAudioAccessStatus(accessStatus);
-                logger.Debug($"Program/RefreshAudioAccessStatus: Microphone capability access is {accessStatus}.");
-            }
-            catch (Exception ex)
-            {
-                AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
-                logger.Warn(ex, "Program/RefreshAudioAccessStatus: Could not query Windows microphone privacy access.");
-            }
-
-            return previousStatus != AudioProfileRepository.AudioAccessStatus;
-        }
-
-        private static AudioAccessStatus ConvertAudioAccessStatus(AppCapabilityAccessStatus accessStatus)
-        {
-            return accessStatus switch
-            {
-                AppCapabilityAccessStatus.Allowed => AudioAccessStatus.Available,
-                AppCapabilityAccessStatus.UserPromptRequired => AudioAccessStatus.PromptRequired,
-                AppCapabilityAccessStatus.DeniedByUser => AudioAccessStatus.Denied,
-                AppCapabilityAccessStatus.DeniedBySystem => AudioAccessStatus.Denied,
-                _ => AudioAccessStatus.Unknown
-            };
-        }
-
         private static void QueueStartupBackgroundTasks(object sender, EventArgs e)
         {
             if (_startupBackgroundTasksQueued)
@@ -1545,261 +1533,269 @@ namespace DisplayMagician {
             {
                 try
                 {
-                    await RunClientSyncAndNotifyUserAsync(manual: false);
-                    EnsureClientSyncTimer();
-                    EnsureMetricsHeartbeatTimer();
-                    EnsureStartupMessagePollTimer();
+                    await ListenForControlServiceEventsAsync(_clientEventListenerCancellationSource.Token);
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, "Program/QueueStartupBackgroundTasks: Scheduled client sync failed. DisplayMagician will continue running.");
+                    logger.Warn(ex, "Program/QueueStartupBackgroundTasks: Control Service event subscription failed. DisplayMagician will continue running.");
                 }
             });
         }
 
-        private static void EnsureClientSyncTimer()
+        private static async Task ListenForControlServiceEventsAsync(CancellationToken cancellationToken)
         {
-            if (_clientSyncTimer == null)
-            {
-                _clientSyncTimer = new System.Timers.Timer { AutoReset = false };
-                _clientSyncTimer.Elapsed += async (_, __) =>
-                {
-                    try
-                    {
-                        await RunClientSyncAndNotifyUserAsync(manual: false);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, "Program/EnsureClientSyncTimer: Scheduled client sync failed.");
-                    }
-                    finally
-                    {
-                        ScheduleClientSyncTimer();
-                    }
-                };
-            }
-
-            ScheduleClientSyncTimer();
-        }
-
-        private static void ScheduleClientSyncTimer()
-        {
-            if (_clientSyncTimer == null || AppProgramSettings?.NextClientSyncUtc == null)
-            {
-                return;
-            }
-
-            _clientSyncTimer.Stop();
-            _clientSyncTimer.Interval = Math.Max(1, (AppProgramSettings.NextClientSyncUtc.Value - DateTime.UtcNow).TotalMilliseconds);
-            _clientSyncTimer.Start();
-        }
-
-        private static void EnsureMetricsHeartbeatTimer()
-        {
-            if (_metricsHeartbeatTimer == null)
-            {
-                _metricsHeartbeatTimer = new System.Timers.Timer { AutoReset = false };
-                _metricsHeartbeatTimer.Elapsed += async (_, __) =>
-                {
-                    try
-                    {
-                        await TrySendAnonymousMetricsAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Warn(ex, "Program/EnsureMetricsHeartbeatTimer: Scheduled anonymous metrics heartbeat failed.");
-                    }
-                    finally
-                    {
-                        ScheduleMetricsHeartbeatTimer();
-                    }
-                };
-            }
-
-            ScheduleMetricsHeartbeatTimer();
-        }
-
-        private static void ScheduleMetricsHeartbeatTimer()
-        {
-            if (_metricsHeartbeatTimer == null || AppProgramSettings?.NextMetricsHeartbeatUtc == null || string.IsNullOrWhiteSpace(AppProgramSettings.LastMetricsReportedVersion))
-            {
-                return;
-            }
-
-            _metricsHeartbeatTimer.Stop();
-            _metricsHeartbeatTimer.Interval = Math.Max(1, (AppProgramSettings.NextMetricsHeartbeatUtc.Value - DateTime.UtcNow).TotalMilliseconds);
-            _metricsHeartbeatTimer.Start();
-        }
-
-        private static void EnsureStartupMessagePollTimer()
-        {
-            if (_startupMessagePollTimer != null)
-            {
-                return;
-            }
-
-            _startupMessagePollTimer = new System.Timers.Timer
-            {
-                Interval = TimeSpan.FromMinutes(1).TotalMilliseconds,
-                AutoReset = true,
-                Enabled = true,
-            };
-
-            _startupMessagePollTimer.Elapsed += (_, __) =>
+            int retrySeconds = 5;
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    List<LocalMessage> storedMessages = GetStoredMessages();
-                    if (storedMessages == null || !storedMessages.Any(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty && string.Equals(m.Kind, "standard", StringComparison.OrdinalIgnoreCase)))
+                    await new ControlServicePipeClient().SubscribeClientEventsAsync(HandleControlServiceEventAsync, welcome =>
                     {
-                        return;
-                    }
-
-                    bool gotLock = AppBackgroundTaskSemaphoreSlim.Wait(0);
-                    if (!gotLock)
-                    {
-                        return;
-                    }
-
+                        string previous = _controlServiceInstanceId;
+                        _controlServiceInstanceId = welcome.ServiceInstanceId;
+                        if (string.IsNullOrWhiteSpace(previous)) logger.Info("Program/ListenForControlServiceEventsAsync: Connected to Control Service instance {0}.", welcome.ServiceInstanceId);
+                        else if (!string.Equals(previous, welcome.ServiceInstanceId, StringComparison.Ordinal)) logger.Warn("Program/ListenForControlServiceEventsAsync: Control Service instance changed from {0} to {1}. Event state was resynchronised.", previous, welcome.ServiceInstanceId);
+                    }, cancellationToken);
+                    retrySeconds = 5;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+                {
+                    logger.Warn(ex, "Program/ListenForControlServiceEventsAsync: Control Service event listener disconnected. Retrying in approximately {0} seconds.", retrySeconds);
                     try
                     {
-                        if (AppMainForm != null && AppMainForm.IsHandleCreated)
-                        {
-                            AppMainForm.Invoke((System.Windows.Forms.MethodInvoker)delegate
-                            {
-                                List<LocalMessage> messagesToShow = GetStoredMessages()
-                                    .Where(m => !m.IsRead && m.ShowOnStartup && !m.IsFaulty && string.Equals(m.Kind, "standard", StringComparison.OrdinalIgnoreCase))
-                                    .OrderBy(m => m.ReceivedUtc)
-                                    .ToList();
-
-                                foreach (LocalMessage message in messagesToShow)
-                                {
-                                    SetMessageReadState(new[] { message.Id }, true);
-
-                                    string fullPath = Path.Combine(AppMessagesPath, message.MarkdownFileName ?? string.Empty);
-                                    if (!File.Exists(fullPath))
-                                    {
-                                        continue;
-                                    }
-
-                                    StartMessageForm myMessageWindow = new StartMessageForm();
-                                    myMessageWindow.MessageMode = message.Format;
-                                    myMessageWindow.Filename = fullPath;
-                                    myMessageWindow.HeadingText = message.Title;
-                                    myMessageWindow.ButtonText = "&Close";
-                                    myMessageWindow.ShowDialog(AppMainForm);
-                                }
-
-                                RefreshMessageIndicators();
-                            });
-                        }
+                        int delayMilliseconds = (int)(retrySeconds * 1000 * (0.8 + (Random.Shared.NextDouble() * 0.4)));
+                        await Task.Delay(TimeSpan.FromMilliseconds(delayMilliseconds), cancellationToken);
+                        retrySeconds = Math.Min(retrySeconds * 2, 60);
                     }
-                    finally
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                     {
-                        AppBackgroundTaskSemaphoreSlim.Release();
+                        return;
                     }
                 }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, "Program/StartupMessagePollTimer: Error checking or showing startup messages.");
-                }
-            };
+            }
+        }
 
-            _startupMessagePollTimer.Start();
+        private static Task HandleControlServiceEventAsync(ControlClientEvent clientEvent)
+        {
+            if (clientEvent.EventType == ControlClientEventType.ClientSyncCompleted && clientEvent.ClientSync != null)
+            {
+                _mainSynchronizationContext?.Post(_ => HandleClientSyncEvent(clientEvent.ClientSync), null);
+            }
+            else if (clientEvent.EventType == ControlClientEventType.OperationStatusUpdated && clientEvent.OperationStatus != null)
+            {
+                if (!clientEvent.OperationStatus.IsTerminal && clientEvent.PublishedUtc != default && DateTime.UtcNow - clientEvent.PublishedUtc > ControlProtocol.EventIdleTimeout)
+                {
+                    logger.Warn("Program/HandleControlServiceEventAsync: Ignored delayed operation status for {0}.", clientEvent.OperationStatus.OperationId);
+                    return Task.CompletedTask;
+                }
+                _mainSynchronizationContext?.Post(_ => HandleOperationStatusEvent(clientEvent.OperationStatus), null);
+            }
+            else if (clientEvent.EventType == ControlClientEventType.OperationDecisionUpdated && clientEvent.OperationDecision != null)
+            {
+                _mainSynchronizationContext?.Post(_ => HandleOperationDecisionEvent(clientEvent.OperationDecision), null);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static void HandleOperationStatusEvent(OperationStatus status)
+        {
+            if (_lastOperationStatusSequences.TryGetValue(status.OperationId, out long lastSequence) && status.Sequence <= lastSequence)
+            {
+                return;
+            }
+
+            _lastOperationStatusSequences[status.OperationId] = status.Sequence;
+            if (status.IsTerminal)
+            {
+                _lastOperationStatusSequences.TryRemove(status.OperationId, out _);
+            }
+
+            ShowOperationStatusToast(status);
+        }
+
+        private static void HandleOperationDecisionEvent(OperationDecision decision)
+        {
+            if (decision.IsResolved)
+            {
+                if (_operationDecisionForms.TryRemove(decision.PromptId, out OperationDecisionForm activeForm) && !activeForm.IsDisposed)
+                {
+                    activeForm.CloseBecauseAnotherClientResponded();
+                }
+
+                _displayedOperationDecisionPrompts.TryRemove(decision.PromptId, out _);
+                return;
+            }
+
+            if (!_displayedOperationDecisionPrompts.TryAdd(decision.PromptId, 0))
+            {
+                return;
+            }
+
+            using OperationDecisionForm form = new OperationDecisionForm(decision);
+            _operationDecisionForms[decision.PromptId] = form;
+            try
+            {
+                form.ShowDialog(AppMainForm);
+                if (!form.WasResolvedByAnotherClient)
+                {
+                    _ = ResolveOperationDecisionAsync(decision.PromptId, form.SelectedChoice);
+                }
+            }
+            finally
+            {
+                _operationDecisionForms.TryRemove(decision.PromptId, out _);
+            }
+        }
+
+        private static async Task ResolveOperationDecisionAsync(Guid promptId, OperationDecisionChoice choice)
+        {
+            try
+            {
+                await new ControlServicePipeClient().ResolveOperationDecisionAsync(promptId, choice, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/ResolveOperationDecisionAsync: Could not resolve operation decision {0}; the Control Service will use its Continue default.", promptId);
+            }
+            finally
+            {
+                _displayedOperationDecisionPrompts.TryRemove(promptId, out _);
+            }
+        }
+
+        private static void HandleClientSyncEvent(DisplayMagician.Contracts.ClientSyncResult syncResult)
+        {
+            if (syncResult.MessageSync?.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
+            {
+                ShowNewMessagesToast(syncResult.MessageSync.NewMessagesCount);
+            }
+
+            RefreshMessageIndicators();
+            ClientSyncUpdateView selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
+            if (selectedUpdate != null)
+            {
+                ShowClientSyncUpdate(selectedUpdate, automatic: true);
+            }
         }
 
         private static async Task RunClientSyncAndNotifyUserAsync(bool manual)
         {
-            ClientSyncResult syncResult = await EnsureClientSyncService().RunAsync(manual, AppVersion, CancellationToken.None).ConfigureAwait(false);
-            if (!syncResult.Success || !syncResult.WasDue)
+            DisplayMagician.Contracts.ClientSyncResult syncResult = await new ControlServicePipeClient().SyncClientAsync(manual, AppProgramSettings?.UpgradeToPreReleases == true, CancellationToken.None).ConfigureAwait(false);
+            if (!syncResult.WasDue)
             {
                 return;
             }
 
-            if (syncResult.MessageResult?.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
+            if (syncResult.MessageSync?.NewMessagesCount > 0 && AppProgramSettings?.ShowMessageToasts != false)
             {
-                ShowNewMessagesToast(syncResult.MessageResult.NewMessagesCount);
+                ShowNewMessagesToast(syncResult.MessageSync.NewMessagesCount);
             }
             RefreshMessageIndicators();
-            if (syncResult.SelectedUpdate != null)
+            ClientSyncUpdateView selectedUpdate = AppProgramSettings?.UpgradeToPreReleases == true ? syncResult.PrereleaseUpdate : syncResult.StableUpdate;
+            if (selectedUpdate != null)
             {
-                ShowClientSyncUpdate(syncResult.SelectedUpdate, manual);
+                ShowClientSyncUpdate(selectedUpdate, manual);
             }
         }
 
-        private static ClientSyncService EnsureClientSyncService()
+        public static bool GetShareAnonymousUsageMetrics()
         {
-            if (_messageSyncService == null)
+            try
             {
-                _messageSyncService = new MessageSyncService(AppHttpClient, logger, ClientSyncUrl, AppMessagesPath);
-                _messageSyncService.EnsureStorage();
+                return new ControlServicePipeClient().GetAnonymousMetricsSettingsAsync(CancellationToken.None).GetAwaiter().GetResult().ShareAnonymousUsageMetrics;
             }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/GetShareAnonymousUsageMetrics: The Control Service anonymous metrics settings are unavailable.");
+                return false;
+            }
+        }
 
-            if (_clientSyncService == null)
+        public static bool UpdateShareAnonymousUsageMetrics(bool shareAnonymousUsageMetrics)
+        {
+            try
             {
-                _clientSyncService = new ClientSyncService(AppHttpClient, logger, _messageSyncService, AppProgramSettings, _useTestUpdateFeed);
+                new ControlServicePipeClient().UpdateAnonymousMetricsSettingsAsync(shareAnonymousUsageMetrics, CancellationToken.None).GetAwaiter().GetResult();
+                return true;
             }
-            if (_anonymousMetricsService == null)
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
             {
-                _anonymousMetricsService = new AnonymousMetricsService(AppHttpClient, AppProgramSettings, logger, _useTestUpdateFeed);
+                logger.Warn(ex, "Program/UpdateShareAnonymousUsageMetrics: The Control Service anonymous metrics settings could not be updated.");
+                return false;
             }
-            return _clientSyncService;
         }
 
         public static async Task CheckForNewMessagesAsync(Form owner)
         {
-            ClientSyncResult result = await EnsureClientSyncService().RunAsync(true, AppVersion, CancellationToken.None);
-            if (!result.Success)
+            DisplayMagician.Contracts.ClientSyncResult result;
+            try
+            {
+                result = await new ControlServicePipeClient().SyncClientAsync(true, AppProgramSettings?.UpgradeToPreReleases == true, CancellationToken.None);
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
             {
                 MessageBox.Show(owner, "DisplayMagician could not check for new messages. Please try again later.", "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             RefreshMessageIndicators();
-            ScheduleClientSyncTimer();
-            int newMessagesCount = result.MessageResult?.NewMessagesCount ?? 0;
+            int newMessagesCount = result.MessageSync?.NewMessagesCount ?? 0;
             string completionMessage = newMessagesCount == 1
                 ? "DisplayMagician found 1 new message."
                 : $"DisplayMagician found {newMessagesCount} new messages.";
             MessageBox.Show(owner, completionMessage, "Check for new messages", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private static async Task TrySendAnonymousMetricsAsync()
+        private static void ReportAnonymousMetricsUsage(bool isLaunch, long activeMinutes)
         {
-            EnsureClientSyncService();
-            await _anonymousMetricsService.TrySendAsync(_interactiveRuntimeStopwatch.Elapsed, allowInitialHeartbeat: false, CancellationToken.None).ConfigureAwait(false);
-        }
-
-        private static MessageSyncService EnsureMessageSyncService()
-        {
-            if (_messageSyncService == null)
+            try
             {
-                _messageSyncService = new MessageSyncService(AppHttpClient, logger, ClientSyncUrl, AppMessagesPath);
-                _messageSyncService.EnsureStorage();
+                new ControlServicePipeClient().ReportAnonymousMetricsUsageAsync(new AnonymousMetricsUsageReport
+                {
+                    AppVersion = AppVersion,
+                    UpdateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable",
+                    IsLaunch = isLaunch,
+                    ActiveMinutes = activeMinutes
+                }, CancellationToken.None).GetAwaiter().GetResult();
             }
-            return _messageSyncService;
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/ReportAnonymousMetricsUsage: The Control Service anonymous metrics store is unavailable.");
+            }
         }
 
-        /*
-         * The legacy message polling method was replaced by RunClientSyncAndNotifyUserAsync.
-         */
-        private static async Task RunMessageSyncAndNotifyUserAsync(bool force)
+        private static MessageListResult GetMessageListFromUserAgent()
         {
-            await RunClientSyncAndNotifyUserAsync(force).ConfigureAwait(false);
-        }
-
-        public static List<LocalMessage> GetStoredMessages()
-        {
-            return EnsureMessageSyncService().GetMessages();
+            try
+            {
+                return new ControlServicePipeClient().ListMessagesAsync(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/GetMessageListFromUserAgent: The User Agent message store is unavailable.");
+                return new MessageListResult();
+            }
         }
 
         public static int GetUnreadMessageCount()
         {
-            return EnsureMessageSyncService().GetUnreadCount();
+            return GetMessageListFromUserAgent().UnreadCount;
         }
 
-        public static void SetMessageReadState(IEnumerable<string> ids, bool isRead)
+        private static void SetMessageReadState(IEnumerable<string> ids, bool isRead)
         {
-            EnsureMessageSyncService().SetReadState(ids, isRead);
+            try
+            {
+                new ControlServicePipeClient().SetMessageReadStateAsync(ids, isRead, CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/SetMessageReadState: The User Agent message store is unavailable.");
+            }
         }
 
         public static void RefreshMessageIndicators()
@@ -1849,6 +1845,42 @@ namespace DisplayMagician {
             catch (Exception ex)
             {
                 logger.Warn(ex, $"Program/ShowNewMessagesToast: Could not show messages toast.");
+            }
+        }
+
+        private static void ShowOperationStatusToast(OperationStatus status)
+        {
+            try
+            {
+                string operationName = status.OperationType == DisplayOperationType.StartShortcut ? "Game shortcut" : "Display operation";
+                string outcome = status.Phase switch
+                {
+                    OperationPhase.Completed => "completed",
+                    OperationPhase.Cancelled => "cancelled",
+                    OperationPhase.Failed => "failed",
+                    _ => "update"
+                };
+                string headerText = status.IsTerminal ? $"{operationName} {outcome}" : $"{operationName}: {status.Phase}";
+                string message = string.IsNullOrWhiteSpace(status.Message) ? "DisplayMagician is processing your request." : status.Message;
+                if (status.IsStale)
+                {
+                    message = $"{message} Status is no longer confirmed. {status.StaleReason}";
+                }
+
+                ToastContentBuilder toast = new ToastContentBuilder()
+                    .AddText(headerText, hintMaxLines: 1)
+                    .AddText(message)
+                    .SetToastDuration(ToastDuration.Short);
+                if (status.IsTerminal)
+                {
+                    toast.AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
+                }
+
+                toast.Show();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/ShowOperationStatusToast: Could not show operation status toast for {0} sequence {1}.", status.OperationId, status.Sequence);
             }
         }
 
@@ -2250,7 +2282,7 @@ namespace DisplayMagician {
             }
         }
 
-        private static void ShowClientSyncUpdate(ClientSyncUpdate update, bool automatic)
+        private static void ShowClientSyncUpdate(ClientSyncUpdateView update, bool automatic)
         {
             if (!AppProgramSettings.UpgradeEnabled || !Version.TryParse(update.Version, out Version availableVersion) || !Version.TryParse(AppVersion, out Version installedVersion))
             {
@@ -2275,14 +2307,14 @@ namespace DisplayMagician {
                 IsUpdateAvailable = availableVersion > installedVersion,
                 Mandatory = new Mandatory
                 {
-                    Value = update.Mandatory.Value,
-                    UpdateMode = (Mode)update.Mandatory.Mode,
-                    MinimumVersion = update.Mandatory.MinVersion
+                    Value = update.Mandatory,
+                    UpdateMode = (Mode)update.MandatoryMode,
+                    MinimumVersion = update.MandatoryMinimumVersion
                 },
                 CheckSum = new CheckSum
                 {
-                    Value = update.Checksum.Value,
-                    HashingAlgorithm = update.Checksum.HashingAlgorithm
+                    Value = update.ChecksumValue,
+                    HashingAlgorithm = update.ChecksumAlgorithm
                 }
             });
         }
@@ -2357,32 +2389,24 @@ namespace DisplayMagician {
                     upgradeForm.ReleaseHeading = $"DisplayMagician update {args.CurrentVersion} is available";
 
                     string updateChannel = AppProgramSettings.UpgradeToPreReleases ? "prerelease" : "stable";
-                    LocalMessage releaseAnnouncement = GetStoredMessages().FirstOrDefault(m =>
-                        string.Equals(m.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(m.ReleaseVersion, args.CurrentVersion, StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(m.ReleaseChannel, updateChannel, StringComparison.OrdinalIgnoreCase));
+                    MessageView releaseAnnouncement = GetMessageListFromUserAgent().Messages.FirstOrDefault(message =>
+                        string.Equals(message.Kind, "releaseAnnouncement", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(message.ReleaseVersion, args.CurrentVersion, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(message.ReleaseChannel, updateChannel, StringComparison.OrdinalIgnoreCase));
 
                     if (releaseAnnouncement != null)
                     {
                         SetMessageReadState(new[] { releaseAnnouncement.Id }, true);
                         RefreshMessageIndicators();
 
-                        string releaseNotesPath = Path.Combine(AppMessagesPath, releaseAnnouncement.MarkdownFileName ?? string.Empty);
-                        try
+                        if (!string.IsNullOrWhiteSpace(releaseAnnouncement.Content))
                         {
-                            if (File.Exists(releaseNotesPath))
-                            {
-                                upgradeForm.ReleaseNotesHtml = File.ReadAllText(releaseNotesPath);
-                                upgradeForm.ReleaseNotesFormat = releaseAnnouncement.Format;
-                            }
-                            else
-                            {
-                                logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent: Release announcement content is missing for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}, fullPath={releaseNotesPath}). Showing the upgrade-form fallback text instead.");
-                            }
+                            upgradeForm.ReleaseNotesHtml = releaseAnnouncement.Content;
+                            upgradeForm.ReleaseNotesFormat = releaseAnnouncement.Format;
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            logger.Warn(ex, $"Program/AutoUpdaterOnCheckForUpdateEvent: Failed to load release announcement content for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}). Showing the upgrade-form fallback text instead.");
+                            logger.Warn($"Program/AutoUpdaterOnCheckForUpdateEvent: Release announcement content is missing for version {args.CurrentVersion} (messageId={releaseAnnouncement.Id}). Showing the upgrade-form fallback text instead.");
                         }
                     }
                     else

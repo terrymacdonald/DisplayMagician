@@ -1,12 +1,26 @@
-﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Fragment>
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="!(bind.Property.ProductName)">
         <Directory Id="IdentityAssetsFolder" Name="Assets" />
+		<Directory Id="ControlServiceFolder" Name="ControlService" />
+		<Directory Id="SessionLauncherFolder" Name="SessionLauncher" />
+		<Directory Id="UserAgentFolder" Name="UserAgent" />
+		<Directory Id="GatewayFolder" Name="Gateway" />
       </Directory>
     </StandardDirectory>
 	  <StandardDirectory Id="ProgramMenuFolder">
 	    <Directory Id="DisplayMagicianStartMenuFolder" Name="DisplayMagician" />
+	  </StandardDirectory>
+	  <StandardDirectory Id="CommonAppDataFolder">
+		  <Directory Id="DisplayMagicianProgramDataFolder" Name="DisplayMagician">
+			  <Directory Id="DisplayMagicianMachineDataFolder" Name="Machine">
+				  <Directory Id="DisplayMagicianMachineLogsFolder" Name="Logs" />
+				  <Directory Id="DisplayMagicianMachineBackupsFolder" Name="Backups" />
+				  <Directory Id="DisplayMagicianMachineDiagnosticsFolder" Name="Diagnostics" />
+			  </Directory>
+			  <Directory Id="DisplayMagicianUsersDataFolder" Name="Users" />
+		  </Directory>
 	  </StandardDirectory>
   </Fragment>
 </Wix>
