@@ -12,13 +12,15 @@ Read the [specification](REST-API-Specification.md) for the target contract and 
 
 The examples below illustrate target interactions. Exact schemas and several lifecycle details still need to be finalized in the [roadmap](REST-API-ROADMAP.md). Do not generate a target production client from the prototype OpenAPI or assume an example is a complete schema.
 
+Every request also sends `DisplayMagician-Protocol-Hello` containing unpadded base64url encoded UTF-8 JSON for the shared `ProtocolHello` contract. Every successful response supplies `DisplayMagician-Protocol-Welcome` in the same encoding for `ProtocolWelcome`. The examples omit these repeated headers for readability; they are required even on public pairing and identity requests.
+
 ## 2. Client interaction walkthroughs
 
 These walkthroughs apply the specification's lifecycle and recovery rules. They do not define a separate API contract.
 
 ### 2.1 First launch and pairing
 
-The local WinForms application creates a time-limited pairing QR payload containing:
+The local WinForms application creates a pairing QR valid for 10 minutes. It encodes `displaymagician://pair?payload=<unpad-base64url-utf8-json>` with:
 
 - Gateway HTTPS URI;
 - stable host ID;
@@ -28,6 +30,8 @@ The local WinForms application creates a time-limited pairing QR payload contain
 - one-time pairing secret;
 - expiration time.
 
+Treat the whole app link as a one-time secret. Do not open it in a browser, log it, or put it in support data.
+
 The phone then:
 
 1. scans the QR code;
@@ -36,21 +40,23 @@ The phone then:
 4. calls `GET /v1/identity`;
 5. verifies the returned host ID and public identity against the QR payload;
 6. submits its pairing request;
-7. polls the pairing-request resource using the temporary pairing authorization;
+7. polls the pairing-request resource using a separate 256-bit secret it generated before submission;
 8. receives its bearer credential once after approval;
 9. stores the credential in platform-secure storage;
 10. discards the QR secret and temporary pairing authorization;
-11. retrieves capabilities and an initial dashboard/status snapshot.
+11. retrieves public server capabilities, its current device grants, and any relevant operation/decision resources. An SSE client can also request an initial event snapshot.
 
 Submit pairing:
 
 ```http
 POST /v1/pairing-requests HTTP/1.1
 Content-Type: application/json
+Idempotency-Key: 8a0bc7e5-37d4-4f78-aa42-80319a3e3c72
 
 {
   "pairingRequestId": "205242b3-cb35-41e0-a109-7fab351fe17e",
   "pairingSecret": "<one-time-secret>",
+  "pollingSecret": "<phone-generated-256-bit-secret>",
   "deviceId": "terrys-iphone",
   "displayName": "Terry's iPhone",
   "clientType": "displaymagician-ios",
@@ -77,17 +83,27 @@ Location: /v1/pairing-requests/205242b3-cb35-41e0-a109-7fab351fe17e
 Cache-Control: no-store
 ```
 
-Poll while awaiting approval:
+```json
+{
+  "pairingRequestId": "205242b3-cb35-41e0-a109-7fab351fe17e",
+  "status": "awaiting-approval",
+  "href": "/v1/pairing-requests/205242b3-cb35-41e0-a109-7fab351fe17e",
+  "expiresAt": "2026-10-08T10:10:00Z"
+}
+```
+
+Poll while awaiting approval, no faster than once every two seconds:
 
 ```http
 GET /v1/pairing-requests/205242b3-cb35-41e0-a109-7fab351fe17e HTTP/1.1
-Authorization: DisplayMagician-Pairing <one-time-pairing-credential>
+Authorization: DisplayMagician-Pairing <phone-generated-polling-secret>
 ```
 
 Approved response:
 
 ```json
 {
+  "pairingRequestId": "205242b3-cb35-41e0-a109-7fab351fe17e",
   "status": "approved",
   "deviceId": "terrys-iphone",
   "credential": "<returned-once-device-credential>",
@@ -106,7 +122,7 @@ Approved response:
 }
 ```
 
-The credential must never be returned again by status, device-list, or support APIs. If the app loses it, the device must pair again.
+The first approved poll consumes the one-time bearer-credential delivery. An expired request or consumed delivery returns `410 Gone` with a specific Problem Details code. The credential is never returned again by another poll, general status, device-list, or support API. If that response is lost, or the app later loses the credential, the device must pair again. A lost submission response can be retried with the same `Idempotency-Key`, pairing secret, polling secret, and body while the pairing session is valid.
 
 ### 2.2 Normal application startup
 
@@ -116,15 +132,15 @@ On later launches, the phone:
 2. discovers or reconnects to the saved Gateway;
 3. validates the TLS SPKI before sending the credential;
 4. calls `GET /v1/capabilities`;
-5. disables UI for unsupported API features;
-6. calls `GET /v1/dashboard` or the required resource collections;
-7. opens `GET /v1/events`;
-8. reconciles the initial event snapshot with locally displayed state.
+5. calls `GET /v1/devices/current` to refresh its own authoritative grants, then disables UI for unsupported or unauthorized features;
+6. retrieves the required resource collections and operation/decision state;
+7. resumes polling any active operation known locally and reads the pending-decision inbox when granted `decisions-read`;
+8. optionally opens `GET /v1/events` and reconciles its initial snapshot with locally displayed state.
 
 Example protected request:
 
 ```http
-GET /v1/dashboard HTTP/1.1
+GET /v1/operations HTTP/1.1
 Authorization: Bearer <device-credential>
 Accept: application/json
 traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
@@ -132,7 +148,7 @@ traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
 
 If Gateway returns `401 Unauthorized`, the app must treat the credential as invalid or revoked. It must not repeatedly retry the same credential. The app should remove it from active use and guide the user through pairing again.
 
-If the TLS SPKI changes unexpectedly, the app must not send its bearer credential or offer a bypass button that silently trusts the new key. The user must verify/reset the Gateway identity locally.
+If the TLS SPKI changes unexpectedly, the app must not send its bearer credential or offer a bypass button that silently trusts the new key. In the first release, TLS key replacement requires approval in local WinForms and a fresh QR pairing. Host-identity loss or reset also invalidates every paired credential and requires fresh pairing.
 
 ### 2.3 List and apply a display profile
 
@@ -194,23 +210,22 @@ GET /v1/operations/4eca79f6-8fcf-418c-b55d-61dfa14ba5bd HTTP/1.1
 Authorization: Bearer <device-credential>
 ```
 
-Normal tracking:
+Normal tracking with polling:
 
 1. process the initial operation representation;
-2. process `operation.updated` SSE events in sequence order;
+2. poll the operation resource with bounded backoff while it is active;
 3. ignore duplicate or older sequence numbers;
 4. display the server-provided phase and message;
-5. continue until the operation is terminal;
-6. retrieve the resource when event continuity is uncertain.
+5. stop polling when the operation is terminal.
 
-After app suspension, network loss, or SSE disconnection:
+SSE is optional for the phone. A client that uses it can process `operation.updated` events between authoritative reads. After app suspension, network loss, or SSE disconnection:
 
 1. reconnect to `/v1/events` using `Last-Event-ID` when available;
-2. accept a fresh authoritative snapshot if event history is unavailable;
+2. apply missed events after a valid retained cursor, with no new snapshot; if the cursor is unknown or expired, replace included local sections from the fresh authoritative snapshot;
 3. retrieve any operation still shown as active locally;
 4. replace local state only with an equal or newer authoritative sequence.
 
-Polling `GET /v1/operations/{operationId}` is a supported fallback. Clients should use bounded backoff and should not poll rapidly while a healthy SSE stream is active.
+Polling `GET /v1/operations/{operationId}` is a complete supported workflow. Clients should use bounded backoff and should not poll rapidly while a healthy SSE stream is active.
 
 ### 2.5 Cancel an operation
 
@@ -233,7 +248,7 @@ Expected failures include:
 
 The phone may learn about a decision from:
 
-- an `operation.decision-created` SSE event;
+- a `decision.updated` SSE event;
 - `GET /v1/decisions?status=pending`;
 - the operation's nested decision collection.
 
@@ -342,6 +357,7 @@ After `204 No Content`, the revoked credential must fail immediately with `401 U
 Clients should handle errors by HTTP status and Problem Details:
 
 - do not retry `400`, `401`, `403`, `404`, or `422` without changing input, credentials, or user action;
+- treat `409` protocol-version conflicts and `412` unsupported required protocol features as client compatibility failures; retry a `409` idempotency-pending result only when its Problem Details marks it retryable and honor `Retry-After`;
 - treat `409` according to the resource state, retrieving the current resource when useful;
 - honor `Retry-After` for `429` and `503`;
 - retry transient transport failures with bounded exponential backoff and jitter;
@@ -359,24 +375,17 @@ The phone may poll:
 GET /v1/operations/{operationId}
 ```
 
-The preferred normal flow is:
+The simple phone flow is:
 
 1. submit an application/run command;
 2. receive `202 Accepted` and the operation `Location`;
 3. retrieve the initial operation representation;
-4. listen to `GET /v1/events`;
-5. update the UI from `operation.updated` events;
-6. retrieve the operation after reconnecting or whenever an authoritative refresh is required.
+4. poll the operation resource with bounded backoff until terminal;
+5. retrieve the operation after reconnecting or whenever an authoritative refresh is required.
 
-Example SSE update:
+Clients may add `GET /v1/events` later for faster updates. No SSE parser is required for a first phone client.
 
-```text
-id: 1842
-event: operation.updated
-data: {"operationId":"4eca79f6-8fcf-418c-b55d-61dfa14ba5bd","sequence":14,"status":"running","phase":"waiting-for-game-to-close","message":"Waiting for iRacing to close."}
-```
-
-SSE updates are notifications of changed state. `GET /v1/operations/{operationId}` remains the authoritative resource and recovery path.
+SSE `operation.updated` data carries the full latest operation representation defined in the [target schema](target-openapi.json). `GET /v1/operations/{operationId}` remains the authoritative resource and recovery path.
 
 ### 3.2 Watch status relay
 
@@ -408,7 +417,7 @@ A minimal phone or integration client needs:
 5. Tracking through the returned operation resource.
 6. Error presentation and safe retry.
 
-SSE can be added after authoritative operation polling works. Device administration, pairing approval, and optional dashboard support are not required for a minimal controller.
+SSE can be added after authoritative operation polling works. Device administration and pairing approval are not required for a minimal controller. Dashboard aggregation is deferred from the first released API.
 
 Use this distinction when selecting grants:
 
@@ -422,7 +431,7 @@ Use this distinction when selecting grants:
 | Manage paired devices | `devices-read`, `devices-revoke` |
 | Approve another device | `pairing-approve` |
 
-Known server capabilities are not the device's permission set. Use the stored pairing grant and future authoritative grant metadata when available; always handle `403` as an authoritative denial.
+Known server capabilities are not the device's permission set. Read `GET /v1/devices/current` after authentication for current grants; use the stored pairing grant only until that request succeeds. Always handle `403` as an authoritative denial.
 
 ### 4.2 Base URL, resource IDs, and credentials
 
@@ -430,9 +439,9 @@ Known server capabilities are not the device's permission set. Use the stored pa
 - Resolve relative `Location`/`href` values against that trusted origin.
 - Verify the origin of a returned URL before attaching credentials. Do not automatically forward authentication on redirects to another origin.
 - Encode each opaque resource ID as one URL path segment, and encode query values separately.
-- Preserve the method, URI/query, and body for an idempotent retry.
+- Preserve the method, escaped path, raw query, content type, and exact body bytes for an idempotent retry.
 - Replace `Authorization: Bearer <device-credential>` with the securely stored credential. Angle-bracket strings in examples are placeholders, not literal values.
-- The temporary `DisplayMagician-Pairing` authorization is not a device bearer credential and must not be used for ordinary commands.
+- The temporary `DisplayMagician-Pairing` authorization uses the phone-generated polling secret. It is not a device bearer credential and must not be used for ordinary commands.
 - Keep secrets out of URLs, crash reports, analytics, screenshot-based support capture, and HTTP debug logging.
 
 Do not use `curl -k`, a trust-all TLS callback, or another certificate-verification bypass as a production transport. A runnable pairing sample needs the finalized certificate-validation and SPKI rules first.
@@ -458,13 +467,13 @@ Persist an unresolved mutation's idempotency key and exact request identity befo
 On a lost submission response:
 
 ```text
-keep the original method, URI, body, and idempotency key
+keep the original method, URI, content type, body bytes, and idempotency key
 retry only while the server's documented retention guarantee applies
 if the retained result is returned, follow its operation resource
 if the outcome cannot be recovered, surface uncertainty rather than start new work
 ```
 
-The target retention period is not finalized. Do not infer REST idempotency retention from the IPC replay store's current 24-hour retention.
+The server retains an accepted REST idempotency result for 24 hours, including across Gateway and ControlService restarts. A retry after that window can create a new operation; the client must reconcile operation history or ask the user before repeating the action.
 
 After mobile suspension or a reconnect:
 
@@ -488,13 +497,13 @@ The client parser must support:
 - blank-line event delimiters;
 - `event`, `id`, and `data` fields, including multiple data lines;
 - keep-alive comments;
-- an initial snapshot before incremental updates;
+- a snapshot on a new stream or after replay continuity is lost, and replayed events without a snapshot when `Last-Event-ID` is valid;
 - cancellation/disposal when the application no longer needs the stream;
 - reconnect and `Last-Event-ID` without treating event IDs as operation sequence numbers.
 
 Capability filtering can omit entire resource classes. Absence of decisions from a snapshot is not proof that no decision exists when the caller lacks `decisions-read`.
 
-The complete DMv4 event catalogue and snapshot/resume schema still need to be finalized. Do not invent event names from IPC numeric event types.
+Use the event names and payloads in the [target schema](target-openapi.json). Do not invent event names from IPC numeric event types.
 
 ### 4.6 Platform and generated-client integration
 

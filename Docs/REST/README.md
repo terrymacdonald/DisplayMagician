@@ -9,6 +9,7 @@ The REST API is the deliberately narrow remote-controller surface exposed by `Di
 - [REST API architecture](REST-API-Architecture.md) explains component responsibilities, trust boundaries, credential/certificate rationale, watches, and the future Telegram connector.
 - [REST API implementation roadmap](REST-API-ROADMAP.md) tracks delivery phases, acceptance criteria, deferred features, and incomplete contract details.
 - [Current prototype OpenAPI description](openapi.yaml) documents only routes currently implemented by the Gateway.
+- [Target OpenAPI draft](target-openapi.json) records P0 design-only schemas as they are completed; it does not describe current Gateway behavior and is not yet the frozen contract.
 - [Cross-transport gap analysis](../IPC/API-Gap-Analysis.md) records gaps spanning IPC, REST, contracts, and tooling.
 
 ## Read this first

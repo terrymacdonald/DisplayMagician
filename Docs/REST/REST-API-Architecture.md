@@ -115,11 +115,11 @@ Apple, Google, Elgato, or other marketplace purchase validation remains inside t
 
 Pairing means the DMv4 user authorized a controller. Marketplace entitlement means the user is licensed to run that client. They are separate concerns.
 
-## 4. LAN discovery
+## 4. LAN discovery (deferred)
 
 QR pairing remains the trust bootstrap.
 
-Optional reconnect discovery:
+The first released API uses the saved Gateway URI after pairing. Optional mDNS reconnect discovery is deferred; a later release may advertise:
 
 ```text
 _displaymagician._tcp.local

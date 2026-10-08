@@ -1,0 +1,1248 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DisplayMagician v4 target REST API (P0 draft)",
+    "version": "1.0.0-draft",
+    "description": "Design-only schemas for the target REST API. This file does not describe routes available in the current Gateway build. Docs/REST/openapi.yaml remains the implemented prototype contract. Only the routes with completed draft schemas are listed here."
+  },
+  "x-displaymagician-contractStatus": "design-only-incomplete",
+  "servers": [
+    {
+      "url": "https://{host}:{port}",
+      "description": "Trusted LAN Gateway from a verified pairing QR.",
+      "variables": {
+        "host": { "default": "displaymagician.local" },
+        "port": { "default": "22846" }
+      }
+    }
+  ],
+  "paths": {
+    "/v1/identity": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "getIdentity",
+        "summary": "Read public Gateway identity",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Public pairing identity. Does not authenticate a device.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GatewayIdentity" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/capabilities": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "getCapabilities",
+        "summary": "Read public API support, not device grants",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Public feature and version discovery.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Capabilities" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/pairing-requests": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "post": {
+        "operationId": "requestPairing",
+        "summary": "Submit one verified QR pairing session",
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PairingSubmissionRequest" } } }
+        },
+        "responses": {
+          "202": {
+            "description": "Request accepted for local or authorized remote approval.",
+            "headers": {
+              "Location": { "description": "Candidate polling resource.", "schema": { "type": "string", "pattern": "^/v1/pairing-requests/[0-9a-f-]+$" } },
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PairingSubmissionAccepted" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      },
+      "get": {
+        "operationId": "listPairingRequests",
+        "summary": "List pending pairing requests for the paired user",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "pairing-approve",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Cursor" }],
+        "responses": {
+          "200": {
+            "description": "User-scoped pending requests, without secrets.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PairingRequestPage" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/pairing-requests/{pairingRequestId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/PairingRequestId" }],
+      "get": {
+        "operationId": "getPairingRequest",
+        "summary": "Poll one candidate request using its temporary secret",
+        "security": [{ "pairingPoll": [] }],
+        "responses": {
+          "200": {
+            "description": "Pending, rejected, or first approved poll. The approved variant delivers the bearer credential once.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PairingPollResult" } } }
+          },
+          "410": { "$ref": "#/components/responses/Problem" },
+          "429": { "$ref": "#/components/responses/Problem" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/pairing-requests/{pairingRequestId}/decision": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/PairingRequestId" }],
+      "put": {
+        "operationId": "decidePairingRequest",
+        "summary": "Approve a subset of requested grants, or reject",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "pairing-approve",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PairingDecisionRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Decision recorded; no bearer credential is returned to the approver.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PairingRequestItem" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/devices/current": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "getCurrentDevice",
+        "summary": "Read the authenticated device and its current grants",
+        "security": [{ "deviceBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "The authenticated device. No devices-read grant is needed.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "description": "Always no-store.", "schema": { "type": "string", "const": "no-store" } }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CurrentDevice" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/devices": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "listDevices",
+        "summary": "List the paired user's active devices",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "devices-read",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Cursor" }],
+        "responses": {
+          "200": {
+            "description": "User-scoped devices, without credentials or public keys.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DevicePage" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/DeviceId" }],
+      "delete": {
+        "operationId": "revokeDevice",
+        "summary": "Revoke one device, including the caller itself",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "devices-revoke",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "204": {
+            "description": "Credential revoked before the response is sent. An accepted operation continues.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/operations": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "listOperations",
+        "summary": "List visible active and retained operations",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "status-read",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Cursor" }],
+        "responses": {
+          "200": {
+            "description": "User-scoped operation snapshots, newest first.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationPage" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/operations/{operationId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/OperationId" }],
+      "get": {
+        "operationId": "getOperation",
+        "summary": "Read the latest retained operation snapshot",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "status-read",
+        "parameters": [{ "name": "If-None-Match", "in": "header", "schema": { "type": "string" }, "description": "Optional representation ETag." }],
+        "responses": {
+          "200": {
+            "description": "Latest snapshot, possibly marked stale while UserAgent is unavailable.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" },
+              "ETag": { "description": "Changes with each representation update.", "schema": { "type": "string" } }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Operation" } } }
+          },
+          "304": {
+            "description": "Representation has not changed; no body.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" },
+              "ETag": { "description": "Current representation tag.", "schema": { "type": "string" } }
+            }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/operations/{operationId}/cancellations": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/OperationId" }],
+      "post": {
+        "operationId": "cancelOperation",
+        "summary": "Request cancellation of eligible work",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "operations-cancel",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "202": {
+            "description": "Cancellation request accepted; operation completion remains asynchronous.",
+            "headers": {
+              "Location": { "description": "Operation resource.", "schema": { "type": "string", "pattern": "^/v1/operations/[0-9a-f-]+$" } },
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            }
+          },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/operations/{operationId}/decisions": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/OperationId" }],
+      "get": {
+        "operationId": "listOperationDecisions",
+        "summary": "List decisions for one visible operation",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "decisions-read",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Cursor" }],
+        "responses": {
+          "200": {
+            "description": "Decisions for the operation, including retained resolved decisions.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DecisionPage" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/operations/{operationId}/decisions/{decisionId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/OperationId" }, { "$ref": "#/components/parameters/DecisionId" }],
+      "get": {
+        "operationId": "getOperationDecision",
+        "summary": "Read one visible operation decision",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "decisions-read",
+        "responses": {
+          "200": {
+            "description": "Current decision state.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Decision" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/operations/{operationId}/decisions/{decisionId}/response": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/OperationId" }, { "$ref": "#/components/parameters/DecisionId" }],
+      "put": {
+        "operationId": "answerDecision",
+        "summary": "Answer an unresolved decision",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "decisions-answer",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DecisionAnswerRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Answer recorded or the original idempotency result replayed.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Decision" } } }
+          },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/decisions": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "listPendingDecisions",
+        "summary": "List the paired user's pending decisions",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "decisions-read",
+        "parameters": [
+          { "name": "status", "in": "query", "required": true, "schema": { "type": "string", "const": "pending" } },
+          { "$ref": "#/components/parameters/Limit" },
+          { "$ref": "#/components/parameters/Cursor" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Only pending decisions visible to the paired user.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DecisionPage" } } }
+          },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/display-profiles": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "listDisplayProfiles",
+        "summary": "List saved display profiles",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "display-profiles-read",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Cursor" }, { "$ref": "#/components/parameters/IncludeArtwork" }, { "$ref": "#/components/parameters/IfNoneMatch" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/DisplayProfilePageSuccess" },
+          "304": { "$ref": "#/components/responses/NotModified" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/display-profiles/{profileId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/ProfileId" }],
+      "get": {
+        "operationId": "getDisplayProfile",
+        "summary": "Read one saved display profile",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "display-profiles-read",
+        "parameters": [{ "$ref": "#/components/parameters/IncludeArtwork" }, { "$ref": "#/components/parameters/IfNoneMatch" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/DisplayProfileDetailSuccess" },
+          "304": { "$ref": "#/components/responses/NotModified" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/display-profiles/{profileId}/applications": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/ProfileId" }],
+      "post": {
+        "operationId": "applyDisplayProfile",
+        "summary": "Apply a saved display profile",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "display-profiles-apply",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "202": { "$ref": "#/components/responses/AcceptedOperation" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/audio-profiles": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "listAudioProfiles",
+        "summary": "List saved audio profiles",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "audio-profiles-read",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Cursor" }, { "$ref": "#/components/parameters/IfNoneMatch" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/AudioProfilePageSuccess" },
+          "304": { "$ref": "#/components/responses/NotModified" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/audio-profiles/{profileId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/ProfileId" }],
+      "get": {
+        "operationId": "getAudioProfile",
+        "summary": "Read one saved audio profile",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "audio-profiles-read",
+        "parameters": [{ "$ref": "#/components/parameters/IfNoneMatch" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/AudioProfileDetailSuccess" },
+          "304": { "$ref": "#/components/responses/NotModified" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/audio-profiles/{profileId}/applications": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/ProfileId" }],
+      "post": {
+        "operationId": "applyAudioProfile",
+        "summary": "Apply a saved audio profile",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "audio-profiles-apply",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "202": { "$ref": "#/components/responses/AcceptedOperation" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/shortcuts": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "listShortcuts",
+        "summary": "List saved shortcuts",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "shortcuts-read",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Cursor" }, { "$ref": "#/components/parameters/IncludeArtwork" }, { "$ref": "#/components/parameters/IfNoneMatch" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ShortcutPageSuccess" },
+          "304": { "$ref": "#/components/responses/NotModified" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/shortcuts/{shortcutId}": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/ShortcutId" }],
+      "get": {
+        "operationId": "getShortcut",
+        "summary": "Read one saved shortcut",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "shortcuts-read",
+        "parameters": [{ "$ref": "#/components/parameters/IncludeArtwork" }, { "$ref": "#/components/parameters/IfNoneMatch" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/ShortcutDetailSuccess" },
+          "304": { "$ref": "#/components/responses/NotModified" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/shortcuts/{shortcutId}/runs": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }, { "$ref": "#/components/parameters/ShortcutId" }],
+      "post": {
+        "operationId": "runShortcut",
+        "summary": "Run a saved shortcut",
+        "security": [{ "deviceBearer": [] }],
+        "x-requiredCapability": "shortcuts-run",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": {
+          "202": { "$ref": "#/components/responses/AcceptedOperation" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/events": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "streamEvents",
+        "summary": "Stream authorized user-scoped changes",
+        "security": [{ "deviceBearer": [] }],
+        "parameters": [
+          { "name": "Last-Event-ID", "in": "header", "required": false, "schema": { "type": "string", "minLength": 1, "maxLength": 128 }, "description": "Opaque cursor from a previous event on this paired user's stream. A valid retained cursor replays only later events with no snapshot; an absent, unknown, or expired cursor starts with a fresh snapshot." }
+        ],
+        "responses": {
+          "200": {
+            "description": "UTF-8 Server-Sent Events. A new or unresumable stream starts with an id-bearing snapshot; a valid retained Last-Event-ID replays later events with no snapshot. Replay and live subscription have no event gap. Every data field is JSON for the named event schema; comments are keep-alives.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "text/event-stream": { "schema": { "type": "string", "description": "SSE frame stream; use x-sse-eventSchemas for typed data payloads." } } },
+            "x-sse-eventSchemas": {
+              "snapshot": { "$ref": "#/components/schemas/SseSnapshot" },
+              "operation.updated": { "$ref": "#/components/schemas/SseOperationUpdated" },
+              "decision.updated": { "$ref": "#/components/schemas/SseDecisionUpdated" },
+              "display-profile.changed": { "$ref": "#/components/schemas/SseResourceChanged" },
+              "audio-profile.changed": { "$ref": "#/components/schemas/SseResourceChanged" },
+              "shortcut.changed": { "$ref": "#/components/schemas/SseResourceChanged" }
+            }
+          },
+          "429": { "$ref": "#/components/responses/Problem" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "deviceBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "opaque 256-bit random credential"
+      },
+      "pairingPoll": {
+        "type": "http",
+        "scheme": "DisplayMagician-Pairing",
+        "description": "Phone-generated 256-bit polling secret for one pairing request only."
+      }
+    },
+    "parameters": {
+      "ProtocolHello": {
+        "name": "DisplayMagician-Protocol-Hello",
+        "in": "header",
+        "required": true,
+        "description": "Unpadded base64url of UTF-8 JSON for the shared ProtocolHello contract. Required on public requests too; it is not authentication.",
+        "schema": { "type": "string", "minLength": 1 }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "description": "A fresh canonical lowercase UUID v4 per intended mutation; retained for 24 hours after acceptance.",
+        "schema": { "$ref": "#/components/schemas/UuidV4" }
+      },
+      "PairingRequestId": {
+        "name": "pairingRequestId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/Uuid" }
+      },
+      "DeviceId": {
+        "name": "deviceId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "description": "Opaque ID; clients must encode it as one path segment."
+      },
+      "OperationId": {
+        "name": "operationId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/Uuid" }
+      },
+      "DecisionId": {
+        "name": "decisionId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/Uuid" }
+      },
+      "ProfileId": {
+        "name": "profileId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/SavedResourceId" },
+        "description": "Opaque saved-resource ID encoded as one path segment."
+      },
+      "ShortcutId": {
+        "name": "shortcutId",
+        "in": "path",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/SavedResourceId" },
+        "description": "Opaque shortcut ID encoded as one path segment."
+      },
+      "IncludeArtwork": {
+        "name": "includeArtwork",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "boolean", "default": false }
+      },
+      "IfNoneMatch": {
+        "name": "If-None-Match",
+        "in": "header",
+        "required": false,
+        "schema": { "type": "string" },
+        "description": "Compare the current representation ETag for this exact query."
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "schema": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "description": "Opaque continuation token bound to user/device, route, filters, and a 10-minute stable collection snapshot. Clients must not inspect or modify it."
+      }
+    },
+    "headers": {
+      "ProtocolWelcome": {
+        "description": "Unpadded base64url of UTF-8 JSON for the shared ProtocolWelcome contract. Present on every successful response.",
+        "schema": { "type": "string", "minLength": 1 }
+      },
+      "RequestId": {
+        "description": "Server-generated request ID for this HTTP attempt.",
+        "schema": { "$ref": "#/components/schemas/Uuid" }
+      },
+      "NoStore": {
+        "description": "Sensitive response; always no-store.",
+        "schema": { "type": "string", "const": "no-store" }
+      }
+    },
+    "responses": {
+      "NotModified": {
+        "description": "Representation unchanged; no body.",
+        "headers": {
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "ETag": { "description": "Current representation tag.", "schema": { "type": "string" } }
+        }
+      },
+      "DisplayProfilePageSuccess": {
+        "description": "Compact saved display profiles; artwork is optional.",
+        "headers": {
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "ETag": { "description": "Representation tag.", "schema": { "type": "string" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DisplayProfilePage" } } }
+      },
+      "DisplayProfileDetailSuccess": {
+        "description": "One saved display profile.",
+        "headers": {
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "ETag": { "description": "Representation tag.", "schema": { "type": "string" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DisplayProfileDetail" } } }
+      },
+      "AudioProfilePageSuccess": {
+        "description": "Compact saved audio profiles.",
+        "headers": {
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "ETag": { "description": "Representation tag.", "schema": { "type": "string" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AudioProfilePage" } } }
+      },
+      "AudioProfileDetailSuccess": {
+        "description": "One saved audio profile.",
+        "headers": {
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "ETag": { "description": "Representation tag.", "schema": { "type": "string" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AudioProfileDetail" } } }
+      },
+      "ShortcutPageSuccess": {
+        "description": "Compact saved shortcuts; artwork is optional.",
+        "headers": {
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "ETag": { "description": "Representation tag.", "schema": { "type": "string" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ShortcutPage" } } }
+      },
+      "ShortcutDetailSuccess": {
+        "description": "One saved shortcut without executable paths or arguments.",
+        "headers": {
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "ETag": { "description": "Representation tag.", "schema": { "type": "string" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ShortcutDetail" } } }
+      },
+      "AcceptedOperation": {
+        "description": "Operation accepted for asynchronous execution; not a terminal success.",
+        "headers": {
+          "Location": { "description": "Top-level operation resource.", "schema": { "type": "string", "pattern": "^/v1/operations/[0-9a-f-]+$" } },
+          "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationAccepted" } } }
+      },
+      "Problem": {
+        "description": "RFC 9457 Problem Details. The status and errorCode identify the failure.",
+        "headers": {
+          "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+          "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+        },
+        "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+      }
+    },
+    "schemas": {
+      "Uuid": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "UuidV4": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      },
+      "Secret256": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{43}$",
+        "description": "Canonical unpadded base64url of exactly 32 cryptographically random bytes; validate decoded length and canonical re-encoding."
+      },
+      "SpkiPin": {
+        "type": "string",
+        "description": "Canonical padded RFC 4648 Base64 of SHA-256 over DER X.509 SubjectPublicKeyInfo; validate decoded length and canonical re-encoding.",
+        "pattern": "^[A-Za-z0-9+/]{43}=$"
+      },
+      "HostId": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{43}$",
+        "description": "Canonical unpadded base64url SHA-256 RFC 7638 JWK thumbprint of the P-256 host public key."
+      },
+      "GatewayIdentity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["hostId", "hostIdentityPublicKeyJwk", "tlsSpkiSha256"],
+        "properties": {
+          "hostId": { "$ref": "#/components/schemas/HostId" },
+          "hostIdentityPublicKeyJwk": { "type": "string", "minLength": 1, "description": "JSON-encoded public P-256 identity JWK; verify against the trusted QR payload." },
+          "tlsSpkiSha256": { "$ref": "#/components/schemas/SpkiPin" }
+        }
+      },
+      "PairingQrPayload": {
+        "type": "object",
+        "description": "Design-only schema for JSON inside displaymagician://pair?payload=<unpad-base64url-utf8-json>. This object is generated by local WinForms, not a REST response.",
+        "additionalProperties": false,
+        "required": ["version", "gatewayUri", "hostId", "hostIdentityPublicKeyJwk", "tlsSpkiSha256", "pairingRequestId", "pairingSecret", "expiresAt"],
+        "properties": {
+          "version": { "type": "integer", "const": 1 },
+          "gatewayUri": { "type": "string", "format": "uri", "pattern": "^https://", "description": "HTTPS origin only: scheme, host, and port; no path, query, fragment, or userinfo." },
+          "hostId": { "$ref": "#/components/schemas/HostId" },
+          "hostIdentityPublicKeyJwk": { "type": "string", "minLength": 1 },
+          "tlsSpkiSha256": { "$ref": "#/components/schemas/SpkiPin" },
+          "pairingRequestId": { "$ref": "#/components/schemas/Uuid" },
+          "pairingSecret": { "$ref": "#/components/schemas/Secret256" },
+          "expiresAt": { "type": "string", "format": "date-time", "description": "UTC; 10 minutes after QR creation." }
+        }
+      },
+      "Capabilities": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["apiVersions", "gatewayVersion", "hostId", "supportedFeatures", "knownCapabilities", "limits", "eventTransports"],
+        "properties": {
+          "apiVersions": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1, "uniqueItems": true },
+          "gatewayVersion": { "type": "string", "minLength": 1 },
+          "hostId": { "$ref": "#/components/schemas/HostId" },
+          "supportedFeatures": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "uniqueItems": true },
+          "knownCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "uniqueItems": true },
+          "limits": { "$ref": "#/components/schemas/PublishedLimits" },
+          "eventTransports": { "type": "array", "items": { "type": "string", "const": "sse" }, "uniqueItems": true }
+        }
+      },
+      "PublishedLimits": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["maxRequestBodyBytes", "maxJsonResponseBytes", "maxArtworkBytes", "defaultPageSize", "maxPageSize", "minPairingPollSeconds", "maxSseStreamsPerDevice", "maxSseStreamsPerUser", "authenticatedRequestsPerMinute", "mutationsPerMinute", "failedAuthenticationsPerIpPerMinute", "idempotencyRetentionHours", "maxTerminalOperationsPerUser", "terminalOperationRetentionDays", "sseReplayHours", "maxSseReplayEventsPerUser", "maxSseReplayBytesPerUser"],
+        "properties": {
+          "maxRequestBodyBytes": { "type": "integer", "const": 65536 },
+          "maxJsonResponseBytes": { "type": "integer", "const": 1048576 },
+          "maxArtworkBytes": { "type": "integer", "const": 262144 },
+          "defaultPageSize": { "type": "integer", "const": 25 },
+          "maxPageSize": { "type": "integer", "const": 100 },
+          "minPairingPollSeconds": { "type": "integer", "const": 2 },
+          "maxSseStreamsPerDevice": { "type": "integer", "const": 1 },
+          "maxSseStreamsPerUser": { "type": "integer", "const": 4 },
+          "authenticatedRequestsPerMinute": { "type": "integer", "const": 120 },
+          "mutationsPerMinute": { "type": "integer", "const": 10 },
+          "failedAuthenticationsPerIpPerMinute": { "type": "integer", "const": 20 },
+          "idempotencyRetentionHours": { "type": "integer", "const": 24 },
+          "maxTerminalOperationsPerUser": { "type": "integer", "const": 100 },
+          "terminalOperationRetentionDays": { "type": "integer", "const": 7 },
+          "sseReplayHours": { "type": "integer", "const": 24 },
+          "maxSseReplayEventsPerUser": { "type": "integer", "const": 10000 },
+          "maxSseReplayBytesPerUser": { "type": "integer", "const": 10485760 }
+        }
+      },
+      "RemoteCapability": {
+        "type": "string",
+        "enum": ["status-read", "decisions-read", "decisions-answer", "display-profiles-read", "display-profiles-apply", "audio-profiles-read", "audio-profiles-apply", "shortcuts-read", "shortcuts-run", "operations-cancel", "pairing-approve", "devices-read", "devices-revoke"]
+      },
+      "CurrentDevice": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "clientType", "grantedCapabilities"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Opaque device ID bound to the credential." },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "clientType": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "grantedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "uniqueItems": true }
+        }
+      },
+      "DeviceItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "clientType", "grantedCapabilities", "pairedAt", "lastSeenAt"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "clientType": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "grantedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "uniqueItems": true },
+          "pairedAt": { "type": "string", "format": "date-time" },
+          "lastSeenAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "DevicePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/DeviceItem" }, "maxItems": 100 },
+          "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 1024 }
+        }
+      },
+      "OperationStatus": {
+        "type": "string",
+        "enum": ["requested", "running", "waiting-for-decision", "succeeded", "failed", "cancelled"]
+      },
+      "OperationPhase": {
+        "type": "string",
+        "enum": ["requested", "validating", "applying-display-profile", "applying-audio-profile", "starting-programs", "starting-game", "waiting-for-game-to-start", "waiting-for-game-to-close", "running-after-programs", "restoring-display-profile", "restoring-audio-profile", "waiting-for-decision", "completed", "failed", "cancelled"]
+      },
+      "OperationSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "id", "name", "href"],
+        "properties": {
+          "type": { "type": "string", "enum": ["display-profile", "audio-profile", "shortcut"] },
+          "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "href": { "type": "string", "pattern": "^/v1/(display-profiles|audio-profiles|shortcuts)/" }
+        }
+      },
+      "OperationError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "retryable"],
+        "properties": {
+          "code": { "$ref": "#/components/schemas/ErrorCode" },
+          "message": { "type": "string", "maxLength": 1024 },
+          "retryable": { "type": "boolean" }
+        }
+      },
+      "OperationLinks": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["self", "decisions", "cancellations"],
+        "properties": {
+          "self": { "type": "string", "pattern": "^/v1/operations/" },
+          "decisions": { "type": "string", "pattern": "^/v1/operations/.+/decisions$" },
+          "cancellations": { "type": "string", "pattern": "^/v1/operations/.+/cancellations$" }
+        }
+      },
+      "Operation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "status", "phase", "message", "sequence", "startedAt", "updatedAt", "completedAt", "isTerminal", "isStale", "staleReason", "source", "error", "links"],
+        "allOf": [
+          { "if": { "properties": { "status": { "enum": ["succeeded", "failed", "cancelled"] } }, "required": ["status"] }, "then": { "properties": { "isTerminal": { "const": true }, "completedAt": { "type": "string" } } }, "else": { "properties": { "isTerminal": { "const": false }, "completedAt": { "type": "null" } } } },
+          { "if": { "properties": { "isStale": { "const": true } }, "required": ["isStale"] }, "then": { "properties": { "staleReason": { "type": "string", "minLength": 1 } } }, "else": { "properties": { "staleReason": { "type": "null" } } } },
+          { "if": { "properties": { "status": { "const": "failed" } }, "required": ["status"] }, "then": { "properties": { "error": { "$ref": "#/components/schemas/OperationError" } } }, "else": { "properties": { "error": { "type": "null" } } } }
+        ],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/Uuid" },
+          "type": { "type": "string", "enum": ["apply-display-profile", "apply-audio-profile", "run-shortcut", "restore-temporary-state"] },
+          "status": { "$ref": "#/components/schemas/OperationStatus" },
+          "phase": { "$ref": "#/components/schemas/OperationPhase" },
+          "message": { "type": "string", "maxLength": 1024 },
+          "sequence": { "type": "integer", "minimum": 0 },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": ["string", "null"], "format": "date-time" },
+          "isTerminal": { "type": "boolean" },
+          "isStale": { "type": "boolean" },
+          "staleReason": { "type": ["string", "null"], "maxLength": 256 },
+          "source": { "oneOf": [{ "$ref": "#/components/schemas/OperationSource" }, { "type": "null" }] },
+          "error": { "oneOf": [{ "$ref": "#/components/schemas/OperationError" }, { "type": "null" }] },
+          "links": { "$ref": "#/components/schemas/OperationLinks" }
+        }
+      },
+      "OperationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Operation" }, "maxItems": 100 },
+          "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 1024 }
+        }
+      },
+      "DecisionChoice": {
+        "type": "string",
+        "enum": ["continue", "stop-and-restore"]
+      },
+      "Decision": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "operationId", "status", "title", "message", "allowedChoices", "defaultChoice", "createdAt", "expiresAt", "resolvedChoice", "resolvedAt", "href", "operationHref"],
+        "if": { "properties": { "status": { "const": "pending" } }, "required": ["status"] },
+        "then": { "properties": { "resolvedChoice": { "type": "null" }, "resolvedAt": { "type": "null" } } },
+        "else": { "properties": { "resolvedChoice": { "$ref": "#/components/schemas/DecisionChoice" }, "resolvedAt": { "type": "string" } } },
+        "properties": {
+          "id": { "$ref": "#/components/schemas/Uuid" },
+          "operationId": { "$ref": "#/components/schemas/Uuid" },
+          "status": { "type": "string", "enum": ["pending", "resolved"] },
+          "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "message": { "type": "string", "maxLength": 1024 },
+          "allowedChoices": { "type": "array", "items": { "$ref": "#/components/schemas/DecisionChoice" }, "minItems": 1, "maxItems": 2, "uniqueItems": true },
+          "defaultChoice": { "$ref": "#/components/schemas/DecisionChoice" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "resolvedChoice": { "oneOf": [{ "$ref": "#/components/schemas/DecisionChoice" }, { "type": "null" }] },
+          "resolvedAt": { "type": ["string", "null"], "format": "date-time" },
+          "href": { "type": "string", "pattern": "^/v1/operations/.+/decisions/.+$" },
+          "operationHref": { "type": "string", "pattern": "^/v1/operations/" }
+        }
+      },
+      "DecisionPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Decision" }, "maxItems": 100 },
+          "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 1024 }
+        }
+      },
+      "DecisionAnswerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["choice"],
+        "properties": { "choice": { "$ref": "#/components/schemas/DecisionChoice" } }
+      },
+      "SseSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["capturedAt", "resetReason"],
+        "dependentRequired": { "operations": ["operationsHasMore"], "operationsHasMore": ["operations"], "pendingDecisions": ["pendingDecisionsHasMore"], "pendingDecisionsHasMore": ["pendingDecisions"] },
+        "properties": {
+          "capturedAt": { "type": "string", "format": "date-time" },
+          "resetReason": { "type": ["string", "null"], "enum": ["cursor-expired", "cursor-unknown", null] },
+          "operations": { "type": "array", "items": { "$ref": "#/components/schemas/Operation" }, "maxItems": 100, "description": "Present only with status-read. Older retained operations are paged through /v1/operations." },
+          "operationsHasMore": { "type": "boolean", "description": "Present with operations." },
+          "pendingDecisions": { "type": "array", "items": { "$ref": "#/components/schemas/Decision" }, "maxItems": 100, "description": "Present only with decisions-read. More pending decisions are paged through /v1/decisions." },
+          "pendingDecisionsHasMore": { "type": "boolean", "description": "Present with pendingDecisions." }
+        }
+      },
+      "SseOperationUpdated": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation"],
+        "properties": { "operation": { "$ref": "#/components/schemas/Operation" } }
+      },
+      "SseDecisionUpdated": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision"],
+        "properties": { "decision": { "$ref": "#/components/schemas/Decision" } }
+      },
+      "SseResourceChanged": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["resourceType", "id", "action", "href"],
+        "properties": {
+          "resourceType": { "type": "string", "enum": ["display-profile", "audio-profile", "shortcut"] },
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "action": { "type": "string", "enum": ["upsert", "deleted"] },
+          "href": { "type": ["string", "null"], "description": "Null after deletion." }
+        }
+      },
+      "SavedResourceId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "description": "Opaque case-sensitive ID. Stable across rename; recreated items receive a new ID."
+      },
+      "PngArtwork": {
+        "type": "string",
+        "contentEncoding": "base64",
+        "contentMediaType": "image/png",
+        "description": "Optional PNG data, at most 256 KiB decoded. Included only when includeArtwork=true."
+      },
+      "DisplayProfileSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "isActive", "isValid", "connectedDisplayCount", "href"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "isActive": { "type": "boolean" },
+          "isValid": { "type": "boolean" },
+          "connectedDisplayCount": { "type": "integer", "minimum": 0 },
+          "href": { "type": "string", "pattern": "^/v1/display-profiles/" },
+          "thumbnailPngBase64": { "$ref": "#/components/schemas/PngArtwork" }
+        }
+      },
+      "DisplayProfileDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "isActive", "isValid", "connectedDisplayCount", "href", "primaryDisplayWidth", "primaryDisplayHeight", "diagnosticMessage"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "isActive": { "type": "boolean" },
+          "isValid": { "type": "boolean" },
+          "connectedDisplayCount": { "type": "integer", "minimum": 0 },
+          "href": { "type": "string", "pattern": "^/v1/display-profiles/" },
+          "thumbnailPngBase64": { "$ref": "#/components/schemas/PngArtwork" },
+          "primaryDisplayWidth": { "type": "integer", "minimum": 0 },
+          "primaryDisplayHeight": { "type": "integer", "minimum": 0 },
+          "diagnosticMessage": { "type": "string", "maxLength": 1024 }
+        }
+      },
+      "DisplayProfilePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/DisplayProfileSummary" }, "maxItems": 100 },
+          "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 1024 }
+        }
+      },
+      "AudioProfileSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "isActive", "href"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "isActive": { "type": "boolean" },
+          "href": { "type": "string", "pattern": "^/v1/audio-profiles/" }
+        }
+      },
+      "AudioProfileDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "isActive", "href", "settingsSummary", "unavailableDeviceNames"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "isActive": { "type": "boolean" },
+          "href": { "type": "string", "pattern": "^/v1/audio-profiles/" },
+          "settingsSummary": { "type": "string", "maxLength": 4096 },
+          "unavailableDeviceNames": { "type": "array", "items": { "type": "string", "maxLength": 256 }, "maxItems": 64 }
+        }
+      },
+      "AudioProfilePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/AudioProfileSummary" }, "maxItems": 100 },
+          "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 1024 }
+        }
+      },
+      "ShortcutSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "category", "href"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "category": { "type": "string", "enum": ["executable", "game", "no-game", "application"] },
+          "href": { "type": "string", "pattern": "^/v1/shortcuts/" },
+          "iconPngBase64": { "$ref": "#/components/schemas/PngArtwork" }
+        }
+      },
+      "ShortcutDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "category", "href", "displayProfileId"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "category": { "type": "string", "enum": ["executable", "game", "no-game", "application"] },
+          "href": { "type": "string", "pattern": "^/v1/shortcuts/" },
+          "iconPngBase64": { "$ref": "#/components/schemas/PngArtwork" },
+          "displayProfileId": { "oneOf": [{ "$ref": "#/components/schemas/SavedResourceId" }, { "type": "null" }] }
+        }
+      },
+      "ShortcutPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ShortcutSummary" }, "maxItems": 100 },
+          "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 1024 }
+        }
+      },
+      "OperationAccepted": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operationId", "status", "href"],
+        "properties": {
+          "operationId": { "$ref": "#/components/schemas/Uuid" },
+          "status": { "type": "string", "const": "requested" },
+          "href": { "type": "string", "pattern": "^/v1/operations/" }
+        }
+      },
+      "PairingSubmissionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pairingRequestId", "pairingSecret", "pollingSecret", "deviceId", "displayName", "clientType", "requestedCapabilities"],
+        "properties": {
+          "pairingRequestId": { "$ref": "#/components/schemas/Uuid" },
+          "pairingSecret": { "$ref": "#/components/schemas/Secret256" },
+          "pollingSecret": { "$ref": "#/components/schemas/Secret256" },
+          "deviceId": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "clientType": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "requestedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "minItems": 1, "maxItems": 13, "uniqueItems": true }
+        }
+      },
+      "PairingSubmissionAccepted": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pairingRequestId", "status", "href", "expiresAt"],
+        "properties": {
+          "pairingRequestId": { "$ref": "#/components/schemas/Uuid" },
+          "status": { "type": "string", "const": "awaiting-approval" },
+          "href": { "type": "string", "pattern": "^/v1/pairing-requests/[0-9a-f-]+$" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PairingPollResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A single simple response object. awaiting-approval and rejected include expiresAt; approved includes deviceId, credential, and grantedCapabilities exactly once. No credential appears in other states.",
+        "required": ["pairingRequestId", "status"],
+        "properties": {
+          "pairingRequestId": { "$ref": "#/components/schemas/Uuid" },
+          "status": { "type": "string", "enum": ["awaiting-approval", "rejected", "approved"] },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "deviceId": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "credential": { "$ref": "#/components/schemas/Secret256" },
+          "grantedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "minItems": 1, "maxItems": 13, "uniqueItems": true }
+        }
+      },
+      "PairingRequestItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pairingRequestId", "status", "deviceId", "displayName", "clientType", "requestedCapabilities", "createdAt", "expiresAt"],
+        "properties": {
+          "pairingRequestId": { "$ref": "#/components/schemas/Uuid" },
+          "status": { "type": "string", "enum": ["awaiting-approval", "approved", "rejected"] },
+          "deviceId": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "clientType": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "requestedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "minItems": 1, "maxItems": 13, "uniqueItems": true },
+          "grantedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "minItems": 1, "maxItems": 13, "uniqueItems": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PairingRequestPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/PairingRequestItem" }, "maxItems": 100 },
+          "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 1024 }
+        }
+      },
+      "PairingDecisionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "For approved, grantedCapabilities is required and must be a nonempty subset of requested capabilities. For rejected, grantedCapabilities must be absent.",
+        "required": ["decision"],
+        "properties": {
+          "decision": { "type": "string", "enum": ["approved", "rejected"] },
+          "grantedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "minItems": 1, "maxItems": 13, "uniqueItems": true }
+        }
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": ["protocol-hello-invalid", "protocol-version-incompatible", "protocol-capability-unavailable", "idempotency-key-required", "idempotency-key-invalid", "idempotency-key-conflict", "idempotency-pending", "authentication-required", "credential-invalid", "capability-denied", "resource-not-found", "pairing-expired", "pairing-delivery-consumed", "pairing-already-resolved", "decision-already-resolved", "operation-not-cancellable", "operation-busy", "recovery-conflict", "cursor-invalid", "cursor-expired", "validation-failed", "request-too-large", "rate-limited", "target-unavailable", "execution-failed", "internal-error"]
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "title", "status", "detail", "instance", "errorCode", "requestId", "retryable"],
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string", "minLength": 1 },
+          "status": { "type": "integer", "minimum": 400, "maximum": 599 },
+          "detail": { "type": "string" },
+          "instance": { "type": "string", "description": "Request path without secrets or query credentials." },
+          "errorCode": { "$ref": "#/components/schemas/ErrorCode" },
+          "requestId": { "$ref": "#/components/schemas/Uuid" },
+          "operationId": { "oneOf": [{ "$ref": "#/components/schemas/Uuid" }, { "type": "null" }] },
+          "retryable": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
