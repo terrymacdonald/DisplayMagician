@@ -28,9 +28,11 @@ The highest-priority confirmed gaps are:
 **Priority:** High  
 **Status:** Confirmed
 
-The reusable contracts exist as a project, while connection, validation, retries, event reconnection, and response handling are implemented separately in WinForms and Console clients. A third-party developer must reproduce framing and lifecycle behavior.
+The reusable contracts and a [local IPC client guide](Local-IPC-Client-Guide.md) exist, while connection, validation, retries, event reconnection, and response handling are implemented separately in WinForms and Console clients. A third-party developer must still implement the documented framing and lifecycle behavior.
 
 **Recommendation:** create a supported `DisplayMagician.Client` library after the protocol is stable. It should reference `DisplayMagician.Contracts`, expose typed async methods, centralize request/response validation and event reconnection, and identify itself as `LocalIntegration`. Do not expose internal pipes.
+
+The initial library should expose the reduced local-controller profile from the client guide rather than every public application-support and administrative command. This is a supported-surface decision under the existing same-user trust model, not capability-based local authorization.
 
 ### G-02: REST compatibility/capability discovery is absent
 

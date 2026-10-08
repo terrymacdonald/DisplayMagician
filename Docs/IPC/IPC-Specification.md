@@ -8,6 +8,8 @@
 
 This document specifies the supported local integration protocol between a same-device client and DisplayMagician.ControlService. It covers request/response commands and server-pushed client events.
 
+For an end-to-end integration workflow, see the [local IPC client guide](Local-IPC-Client-Guide.md). For DMv4 component-to-component data flows, see [internal component communication](Internal-Component-Communication.md).
+
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** are to be interpreted as described by RFC 2119 and RFC 8174.
 
 Public clients MUST communicate with ControlService. They MUST NOT connect directly to UserAgent, SessionLauncher, Gateway control, or ControlService's Agent-registration pipe. Those endpoints are internal implementation details described in Appendix A.
@@ -364,7 +366,7 @@ The following endpoints are DMv4 implementation details and are unsupported for 
 | Pipe | Participants | Purpose |
 |---|---|---|
 | `DisplayMagician.ControlService.v1` | UserAgent → ControlService | Agent registration, heartbeat, progress, decisions, and service coordination |
-| `DisplayMagician.UserAgent.Command.v1.{session}` | ControlService → UserAgent | Interactive display/audio/profile/shortcut commands |
+| `DisplayMagician.UserAgent.Command.v1.{processId}` | ControlService → UserAgent | Interactive display/audio/profile/shortcut commands |
 | `DisplayMagician.SessionLauncher.v1` | ControlService → SessionLauncher | Starts the fixed signed UserAgent payload in an authorised interactive session |
 | `DisplayMagician.Gateway.Control.v1` | Gateway ↔ ControlService | Gateway identity registration, remote authentication, pairing, and routed remote commands |
 
@@ -377,4 +379,3 @@ Internal endpoints use the same framing and shared contracts where applicable, b
 - [Capability matrix](API-Capability-Matrix.md)
 - [Gap analysis](API-Gap-Analysis.md)
 - [REST OpenAPI description](../REST/openapi.yaml)
-

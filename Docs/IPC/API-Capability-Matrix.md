@@ -60,6 +60,20 @@ These message types are implemented by `ControlClientPipeServer`.
 | Pairing/Gateway | `GetGatewaySettings`, `UpdateGatewaySettings`, `GetGatewayIdentity`, `CreateDevicePairingQr`, `ListDevicePairingRequests`, `ApproveDevicePairing`, `RejectDevicePairing`, `ListPairedClients`, `RevokePairedClient` |
 | Diagnostics/admin | `CreateUserSupportBundle`, `ForceReleaseDisplayControl`, `RecordRecoveryAdministration`, `SetTemporaryDiagnosticLogLevel`, `ReleaseTemporaryDiagnosticLogLevel` |
 
+## Local controller integration profile
+
+Same-PC controller integrations such as Stream Deck use a deliberately smaller supported profile:
+
+- service status;
+- list/apply display profiles;
+- list/apply audio profiles;
+- list/run shortcuts;
+- operation status and cancellation;
+- operation decisions;
+- client events.
+
+The full workflow and exclusions are documented in the [local IPC client guide](Local-IPC-Client-Guide.md). This profile limits the supported integration surface; it is not a separate authorization boundary. `ProtocolHello` capability negotiation reports compatibility and does not grant local permissions.
+
 ## Internal-only message groups
 
 The following are not public client-pipe API even though their contracts share `ControlMessageType`:
