@@ -102,7 +102,7 @@ components:
       title: Correlated command response
       contentType: application/json
       payload:
-        $ref: './schemas/displaymagician-ipc.schema.json'
+        $ref: './schemas/displaymagician-ipc.schema.json#/$defs/ServerEnvelope'
     SubscriptionRequest:
       name: SubscribeClientEvents
       title: Event subscription request
@@ -115,14 +115,14 @@ components:
       title: Subscription acknowledgement and authoritative snapshot
       contentType: application/json
       payload:
-        $ref: './schemas/displaymagician-ipc.schema.json'
+        $ref: './schemas/displaymagician-ipc.schema.json#/$defs/ServerEnvelope'
       x-displaymagician-message-type: 44
     ClientEvent:
       name: ClientEvent
       title: Server-pushed client event
       contentType: application/json
       payload:
-        $ref: './schemas/displaymagician-ipc.schema.json'
+        $ref: './schemas/displaymagician-ipc.schema.json#/$defs/ServerEnvelope'
       x-displaymagician-message-type: 45
       x-displaymagician-keep-alive-seconds: 20
       x-displaymagician-client-idle-timeout-seconds: 45

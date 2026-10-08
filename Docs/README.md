@@ -17,7 +17,7 @@ The local IPC API is the primary, richer integration surface used for trusted co
 - [IPC specification](IPC/IPC-Specification.md) is the normative human-readable protocol specification.
 - [Local IPC client guide](IPC/Local-IPC-Client-Guide.md) explains how same-PC controller integrations connect, negotiate, list actions, start work, follow operations, and recover events.
 - [Internal component communication](IPC/Internal-Component-Communication.md) describes how WinForms, Console, ControlService, UserAgent, SessionLauncher, and Gateway exchange information.
-- [IPC JSON Schema](IPC/schemas/displaymagician-ipc.schema.json) describes the common envelope and public payload structures.
+- [IPC JSON Schema](IPC/schemas/displaymagician-ipc.schema.json) describes client request and server frame envelopes, plus selected public payload structures.
 - [IPC AsyncAPI description](IPC/asyncapi.yaml) is a machine-readable message catalogue. The named-pipe details are represented with extension fields because AsyncAPI has no standard Windows named-pipe binding.
 - [REST OpenAPI description](REST/openapi.yaml) documents the currently implemented Gateway routes.
 - [REST API documentation](REST/README.md) defines the remote product boundary and client architecture.

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://displaymagician.org/schemas/v4/ipc-v1.json",
   "title": "DisplayMagician local IPC protocol version 1",
-  "description": "Common named-pipe envelope and selected public payload definitions. The Payload property contains serialized JSON text and therefore requires a second validation pass against the schema selected by MessageType.",
+  "description": "Client request envelopes, server response/event envelopes, and selected public payload definitions. The Payload property contains serialized JSON text or is empty and therefore requires a second validation pass against the schema selected by MessageType.",
   "$defs": {
     "Guid": {
       "type": "string",
@@ -34,16 +34,7 @@
     "ProtocolHello": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "MinimumProtocolVersion",
-        "MaximumProtocolVersion",
-        "ClientKind",
-        "ClientId",
-        "DeviceId",
-        "DisplayName",
-        "RequiredCapabilities",
-        "OptionalCapabilities"
-      ],
+      "required": ["ClientKind", "ClientId"],
       "properties": {
         "MinimumProtocolVersion": {
           "type": "integer",
@@ -78,6 +69,22 @@
         "OptionalCapabilities": {
           "$ref": "#/$defs/CapabilityList"
         }
+      }
+    },
+    "DefaultServerHello": {
+      "type": "object",
+      "description": "Unused default Hello emitted by the current ControlEnvelope serializer for server frames.",
+      "additionalProperties": false,
+      "required": ["MinimumProtocolVersion", "MaximumProtocolVersion", "ClientKind", "ClientId", "DeviceId", "DisplayName", "RequiredCapabilities", "OptionalCapabilities"],
+      "properties": {
+        "MinimumProtocolVersion": { "const": 1 },
+        "MaximumProtocolVersion": { "const": 1 },
+        "ClientKind": { "const": 0 },
+        "ClientId": { "const": "" },
+        "DeviceId": { "const": "" },
+        "DisplayName": { "const": "" },
+        "RequiredCapabilities": { "const": [] },
+        "OptionalCapabilities": { "const": [] }
       }
     },
     "CapabilityList": {
@@ -148,18 +155,34 @@
         },
         "Payload": {
           "type": "string",
-          "contentMediaType": "application/json"
+          "description": "Empty when the message has no payload; otherwise serialized JSON text."
+        }
+      }
+    },
+    "ServerEnvelope": {
+      "type": "object",
+      "description": "Responses and pushed events use the endpoint's protocol version. Their Hello property is unused default metadata; the negotiated result is in ControlResponse.ProtocolWelcome.",
+      "additionalProperties": false,
+      "required": ["ProtocolVersion", "MessageType", "RequestId", "Hello", "Payload"],
+      "properties": {
+        "ProtocolVersion": { "const": 1 },
+        "MessageType": { "$ref": "#/$defs/ControlMessageType" },
+        "RequestId": {
+          "$ref": "#/$defs/Guid",
+          "not": { "const": "00000000-0000-0000-0000-000000000000" }
+        },
+        "Hello": {
+          "$ref": "#/$defs/DefaultServerHello"
+        },
+        "Payload": {
+          "type": "string",
+          "description": "Serialized ControlResponse or ControlClientEvent JSON text."
         }
       }
     },
     "ProfileListRequest": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "DetailedProfileId",
-        "IncludeActiveProfileDetail",
-        "IncludeCurrentLayoutDetail"
-      ],
       "properties": {
         "DetailedProfileId": {
           "type": "string"
@@ -182,14 +205,15 @@
           "minLength": 1
         },
         "OperationId": {
-          "$ref": "#/$defs/Guid"
+          "$ref": "#/$defs/Guid",
+          "description": "A non-empty, client-supplied operation ID is required."
         }
       }
     },
     "ApplyAudioProfileRequest": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ProfileId", "DeviceWaitMilliseconds", "OperationId"],
+      "required": ["ProfileId"],
       "properties": {
         "ProfileId": {
           "type": "string",
@@ -197,24 +221,26 @@
         },
         "DeviceWaitMilliseconds": {
           "type": "integer",
-          "minimum": 0
+          "description": "Optional; omitted or non-positive values use the 20-second default."
         },
         "OperationId": {
-          "$ref": "#/$defs/Guid"
+          "$ref": "#/$defs/Guid",
+          "description": "Optional on the wire; the UserAgent generates an ID if omitted or empty. Clients should supply a non-empty ID for reliable retries."
         }
       }
     },
     "StartShortcutRequest": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ShortcutId", "OperationId"],
+      "required": ["ShortcutId"],
       "properties": {
         "ShortcutId": {
           "type": "string",
           "minLength": 1
         },
         "OperationId": {
-          "$ref": "#/$defs/Guid"
+          "$ref": "#/$defs/Guid",
+          "description": "Optional on the wire; ControlService generates an ID if omitted or empty. Clients should supply a non-empty ID for reliable retries."
         }
       }
     },

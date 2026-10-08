@@ -2,7 +2,7 @@
 
 **Status:** Implemented protocol documentation  
 **Protocol version:** 1  
-**Last verified:** 2026-10-07
+**Last verified:** 2026-10-08
 
 ## 1. Scope
 
@@ -105,7 +105,7 @@ See [the examples](examples/) for complete frames after the four-byte length pre
 | `Hello` | MUST contain valid compatibility metadata on every request. |
 | `Payload` | MUST be an empty string when no payload is needed, or operation-specific JSON text. |
 
-A command response MUST preserve the request's `ProtocolVersion`, `MessageType`, and `RequestId`. Clients MUST reject a response with a mismatched message type or request ID.
+A command response preserves the request's `MessageType` and `RequestId`. The response envelope uses this endpoint's protocol version (`1`), including when it rejects a request with a different outer version. Clients MUST reject a response with a mismatched message type or request ID and MUST verify that the response uses a protocol version they support.
 
 The outer response envelope's `Hello` property is not the negotiation result. A successful response carries `ProtocolWelcome` inside the serialized `ControlResponse` payload.
 
@@ -210,16 +210,20 @@ The numeric values are stable wire values. “Local” means callable through th
 | 24 | `UpdateAudioProfileFromCurrent` | `DeleteProfileRequest` | General success | Payload property is `ProfileId`. |
 | 36 | `UpdateDisplayProfileSettings` | `UpdateDisplayProfileSettingsRequest` | General success | Local editing. |
 
+`ApplyProfile` requires a non-empty client-supplied operation ID. `ApplyAudioProfile` accepts an omitted or empty operation ID and generates one in UserAgent; an omitted or non-positive device wait uses the 20-second default. Clients SHOULD supply their own non-empty operation ID so they can reconcile an ambiguous response or retry.
+
 ### 10.2 Shortcuts, games, applications, and repositories
 
 | Value | Message | Request payload | Primary response | Notes |
 |---:|---|---|---|---|
-| 27 | `StartShortcut` | `StartShortcutRequest` | Operation status via response/events | Client supplies non-empty operation ID. |
+| 27 | `StartShortcut` | `StartShortcutRequest` | Operation status via response/events | Client-supplied non-empty operation ID is recommended. |
 | 30 | `ListGames` | Empty | `GameListResult` | UserAgent-owned discovery. |
 | 34 | `ListApps` | Empty | `AppListResult` | UserAgent-owned discovery. |
 | 35 | `ListShortcuts` | Empty | `ShortcutListResult` | Client-safe shortcut views. |
 | 25 | `GetRepositorySnapshot` | `RepositorySnapshotRequest` | `RepositorySnapshot` | Advanced local editing primitive. |
 | 26 | `CommitRepositorySnapshot` | `RepositoryCommitRequest` | `RepositoryCommitResult` | Optimistic concurrency by revision. |
+
+`StartShortcut` accepts an omitted or empty operation ID and generates one in ControlService. Clients SHOULD supply their own non-empty operation ID so they can reconcile an ambiguous response or retry.
 
 ### 10.3 Operations and decisions
 
@@ -240,6 +244,7 @@ Decision choices are `Unknown=0`, `Continue=1`, and `StopAndRestore=2`. Expired 
 | Value | Message | Request payload | Primary response |
 |---:|---|---|---|
 | 9 | `GetServiceStatus` | Empty | `ControlServiceStatus` |
+| 13 | `StopAgentIfIdle` | Empty | General success |
 | 38 | `SyncClient` | `ClientSyncRequest` | `ClientSyncResult` |
 | 31 | `ListMessages` | Empty | `MessageListResult` |
 | 32 | `SetMessageReadState` | `SetMessageReadStateRequest` | `MessageListResult` |
@@ -347,7 +352,7 @@ Clients MAY retry transport failures and transient Agent availability errors wit
 - Clients MUST NOT claim or trust a SID/session from payload data.
 - Clients MUST NOT log pairing secrets, private keys, tokens, passwords, full sensitive arguments, or unredacted support data.
 - A local bridge for runtimes without named-pipe support SHOULD expose only the narrow operations required by that integration.
-- Remote clients MUST use the paired Gateway and its signed-request protocol.
+- Remote clients MUST use the paired Gateway and its documented authentication protocol.
 - `ProtocolHello` and `ProtocolWelcome` MUST NOT be treated as authentication.
 
 ## 15. Versioning rules

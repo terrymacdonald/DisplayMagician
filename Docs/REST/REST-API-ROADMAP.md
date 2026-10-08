@@ -22,6 +22,7 @@ There is no released REST API to migrate. Update the implementation and [openapi
 6. Confirm capability renames.
 7. Confirm removal of Windows SID/session fields.
 8. Finalize target schemas and update [openapi.yaml](openapi.yaml) alongside implemented routes. Keep any design-only schemas explicitly marked as unavailable; do not publish them as the implemented API.
+9. Resolve the decisions in the [contract completion register](#6-contract-completion-register) before declaring the target contract frozen. Record each decision in the specification and applicable schemas.
 
 ### P1: Identity, credential, and HTTP foundation
 
@@ -33,6 +34,9 @@ There is no released REST API to migrate. Update the implementation and [openapi
 6. Implement idempotency storage and conflict detection.
 7. Implement trace/request correlation.
 8. Add authentication, capability, cross-user, revocation, and rate-limit tests.
+9. Implement the documented request, pairing-poll, failed-authentication, and concurrent-stream limits, including bounded work queues and `Retry-After` where applicable. Test enforcement as well as configured values.
+10. Keep bearer credentials and credential hashes out of logs, audit events, support ZIPs, and configuration snapshots. Update the existing machine-owned support snapshot before storing credential hashes in paired-client state.
+11. Enforce the approved LAN-only boundary in Gateway listener settings and the installer firewall rule. Define the allowed local interfaces and source-address scope, keep the rule in sync with configured port and network changes, and test that ordinary off-LAN access and router port forwarding do not expose the service. Treat deliberate firewall or network-address-translation overrides as outside the application's enforceable boundary.
 
 ### P2: Resource routes
 
@@ -44,8 +48,9 @@ There is no released REST API to migrate. Update the implementation and [openapi
 6. Implement shortcut list/detail/run routes.
 7. Implement operation list/detail/cancellation routes.
 8. Implement nested decisions and pending-decision inbox.
-9. Implement optional dashboard.
-10. Remove prototype-only routes so the first released API contains only the approved target route tree.
+9. Update the local WinForms QR, pairing-approval, and paired-device management workflows for the target credential and capability model. Verify that local approval and authorized remote approval produce the same user-scoped result.
+10. Implement optional dashboard.
+11. Remove prototype-only routes so the first released API contains only the approved target route tree.
 
 ### P3: Events, efficiency, and clients
 
@@ -58,6 +63,8 @@ There is no released REST API to migrate. Update the implementation and [openapi
 7. Add phone/watch relay contract tests.
 8. Add Telegram connector conformance tests when that product is started.
 9. Add Windows Sandbox installed-environment validation.
+10. Test the pairing, TLS trust, credential storage, operation polling, and event recovery flows on the supported phone platforms, including suspension and process restart.
+11. Verify install, service start/restart, upgrade, and uninstall behavior for the Gateway, ControlService, local UI, certificate renewal, configured listener port, and firewall rule. Check that an interrupted update leaves a usable installation and valid identity state.
 
 ## 3. Definition of done for each route
 
@@ -155,6 +162,7 @@ Resolve policy questions with the project owner before consequential implementat
 - Contract-test route identifiers, HTTP methods/statuses, capabilities, JSON enums, Problem Details, and request correlation.
 - Test accepted-but-not-completed behavior, duplicate mutations, lost responses, decisions answered by another client, SSE continuity loss, and service/Agent restarts.
 - Test cross-user isolation, revoked credentials, forged discovery, unexpected TLS key changes, and secret redaction.
-- Verify fresh installation, certificate renewal, listener/firewall scope, and component identity using Windows Sandbox where applicable.
+- Verify fresh installation, upgrade, uninstall, certificate renewal, LAN listener/firewall scope, and component identity using Windows Sandbox where applicable; use a separate network test setup for off-LAN and port-forward checks.
+- Inspect support ZIP contents and logs for bearer credentials, credential hashes, pairing secrets, and private keys.
 - Publish concrete limits and retention guarantees before claiming the API is ready for client use.
 - Keep incomplete features visibly marked unavailable; do not describe prototype endpoints as implementing the target contract.
