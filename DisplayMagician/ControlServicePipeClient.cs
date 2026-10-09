@@ -294,6 +294,11 @@ internal sealed class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.UpdateGatewaySettings, Payload = JsonSerializer.Serialize(settings) }, cancellationToken);
     }
 
+    public Task<ControlResponse> ApproveGatewayTlsKeyReplacementAsync(CancellationToken cancellationToken)
+    {
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ApproveGatewayTlsKeyReplacement }, cancellationToken);
+    }
+
     public async Task<GatewayIdentityView> GetGatewayIdentityAsync(CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetGatewayIdentity }, cancellationToken).ConfigureAwait(false);

@@ -51,6 +51,7 @@ public sealed class GatewayIdentityProvider
 
     private static X509Certificate2 GetOrCreateTlsCertificate(GatewaySettings settings)
     {
+        ApplyApprovedTlsKeyReplacement();
         string[] certificateHosts = new[] { "localhost", "127.0.0.1", "::1", settings.LanAdvertisedHost, settings.RemoteHost }
             .Where(host => !string.IsNullOrWhiteSpace(host))
             .Select(host => host.Trim())
@@ -66,8 +67,16 @@ public sealed class GatewayIdentityProvider
 
         using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
         store.Open(OpenFlags.ReadWrite);
+        string namedTlsPin = string.Empty;
+        if (CngKey.Exists(TlsKeyName, CngProvider.MicrosoftSoftwareKeyStorageProvider))
+        {
+            using CngKey namedKey = CngKey.Open(TlsKeyName, CngProvider.MicrosoftSoftwareKeyStorageProvider);
+            using ECDsa namedAlgorithm = new ECDsaCng(namedKey);
+            namedTlsPin = Convert.ToBase64String(SHA256.HashData(namedAlgorithm.ExportSubjectPublicKeyInfo()));
+        }
         X509Certificate2? existing = store.Certificates.Cast<X509Certificate2>().FirstOrDefault(certificate =>
             certificate.FriendlyName == TlsCertificateFriendlyName &&
+            CalculateTlsSpkiSha256(certificate) == namedTlsPin &&
             certificate.NotAfter.ToUniversalTime() > DateTime.UtcNow.AddDays(30) &&
             certificate.HasPrivateKey &&
             certificateHosts.All(host => certificate.MatchesHostname(host, allowWildcards: false, allowCommonName: false)));
@@ -108,6 +117,39 @@ public sealed class GatewayIdentityProvider
         certificate.FriendlyName = TlsCertificateFriendlyName;
         store.Add(certificate);
         return certificate;
+    }
+
+    private static void ApplyApprovedTlsKeyReplacement()
+    {
+        string approvalPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Machine", "GatewayTlsResetApproval.json");
+        if (!System.IO.File.Exists(approvalPath)) return;
+
+        using JsonDocument approval = JsonDocument.Parse(System.IO.File.ReadAllText(approvalPath));
+        string previousPin = approval.RootElement.GetProperty("PreviousTlsSpkiSha256").GetString() ?? string.Empty;
+        DateTime approvedUtc = approval.RootElement.GetProperty("ApprovedUtc").GetDateTime().ToUniversalTime();
+        if (string.IsNullOrWhiteSpace(previousPin) || approvedUtc > DateTime.UtcNow || approvedUtc.AddMinutes(10) < DateTime.UtcNow) return;
+
+        CngProvider provider = CngProvider.MicrosoftSoftwareKeyStorageProvider;
+        if (CngKey.Exists(TlsKeyName, provider))
+        {
+            using CngKey existingKey = CngKey.Open(TlsKeyName, provider);
+            using ECDsa algorithm = new ECDsaCng(existingKey);
+            string currentPin = Convert.ToBase64String(SHA256.HashData(algorithm.ExportSubjectPublicKeyInfo()));
+            if (!string.Equals(currentPin, previousPin, StringComparison.Ordinal)) return;
+        }
+
+        using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+        store.Open(OpenFlags.ReadWrite);
+        foreach (X509Certificate2 certificate in store.Certificates.Cast<X509Certificate2>().Where(certificate => certificate.FriendlyName == TlsCertificateFriendlyName && CalculateTlsSpkiSha256(certificate) == previousPin).ToArray())
+        {
+            store.Remove(certificate);
+        }
+
+        if (CngKey.Exists(TlsKeyName, provider))
+        {
+            using CngKey existingKey = CngKey.Open(TlsKeyName, provider);
+            existingKey.Delete();
+        }
     }
 
     private static CngKey OpenOrCreateKey(string keyName)
@@ -155,7 +197,6 @@ public sealed class GatewayIdentity
     public string HostId { get; }
     public string HostIdentityPublicKeyJwk { get; }
     public string TlsSpkiSha256 => GatewayIdentityProvider.CalculateTlsSpkiSha256(TlsCertificate);
-    public string TlsCertificateSha256 => TlsCertificate.GetCertHashString(HashAlgorithmName.SHA256);
     public X509Certificate2 TlsCertificate => Volatile.Read(ref _tlsCertificate);
 
     public void ReplaceCertificate(X509Certificate2 certificate)
@@ -166,6 +207,6 @@ public sealed class GatewayIdentity
 
     public GatewayIdentityView ToView()
     {
-        return new GatewayIdentityView { HostId = HostId, HostIdentityPublicKeyJwk = HostIdentityPublicKeyJwk, TlsSpkiSha256 = TlsSpkiSha256, TlsCertificateSha256 = TlsCertificateSha256 };
+        return new GatewayIdentityView { HostId = HostId, HostIdentityPublicKeyJwk = HostIdentityPublicKeyJwk, TlsSpkiSha256 = TlsSpkiSha256 };
     }
 }

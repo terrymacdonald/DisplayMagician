@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
+using Microsoft.AspNetCore.Http;
 
 namespace DisplayMagician.Gateway;
 
@@ -16,6 +17,10 @@ public interface IGatewayAuthenticationClient
 /// <summary>Uses the narrow LocalService-only pipe; it cannot invoke normal desktop client operations.</summary>
 public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
 {
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public GatewayControlServiceClient(IHttpContextAccessor httpContextAccessor) => _httpContextAccessor = httpContextAccessor;
+
     public Task<ControlResponse> ExecuteRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int? targetSessionId, string payload, CancellationToken cancellationToken) => SendAsync(messageType, JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, TargetSessionId = targetSessionId, Payload = payload }), cancellationToken);
     public async Task<ControlResponse> ListRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int? targetSessionId, CancellationToken cancellationToken)
     {
@@ -35,6 +40,18 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
         return response.IsSuccessful && response.GatewayAuthentication != null ? response.GatewayAuthentication : new GatewayAuthenticationResult { Message = string.IsNullOrWhiteSpace(response.Message) ? "Authentication could not be verified." : response.Message };
     }
 
+    public async Task<GatewayHttpIdempotencyResult> BeginIdempotencyAsync(GatewayHttpIdempotencyRequest request, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(ControlMessageType.GatewayIdempotencyBegin, JsonSerializer.Serialize(request), cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.GatewayIdempotency != null ? response.GatewayIdempotency : throw new InvalidOperationException("Control Service could not reserve the idempotency key.");
+    }
+
+    public async Task CompleteIdempotencyAsync(GatewayHttpIdempotencyRequest request, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(ControlMessageType.GatewayIdempotencyComplete, JsonSerializer.Serialize(request), cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessful) throw new InvalidOperationException("Control Service could not retain the idempotency result.");
+    }
+
     public Task<ControlResponse> RegisterAsync(GatewayPairingIdentity identity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(identity);
@@ -50,6 +67,12 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
             : new DevicePairingResult { State = DevicePairingState.Rejected, Message = string.IsNullOrWhiteSpace(response.Message) ? "The pairing request could not be processed." : response.Message };
     }
 
+    public async Task<DevicePairingState> ValidatePairingSubmissionAsync(DevicePairingRequest request, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(ControlMessageType.ValidateDevicePairingSession, JsonSerializer.Serialize(request), cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful ? response.DevicePairingResult?.State ?? DevicePairingState.Unknown : DevicePairingState.Unknown;
+    }
+
     public async Task<DevicePairingResult> GetDevicePairingStatusAsync(DevicePairingStatusRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -57,7 +80,7 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
         return response.IsSuccessful && response.DevicePairingResult != null ? response.DevicePairingResult : new DevicePairingResult { State = DevicePairingState.Rejected, Message = string.IsNullOrWhiteSpace(response.Message) ? "The pairing status could not be retrieved." : response.Message };
     }
 
-    private static async Task<ControlResponse> SendAsync(ControlMessageType messageType, string payload, CancellationToken cancellationToken)
+    private async Task<ControlResponse> SendAsync(ControlMessageType messageType, string payload, CancellationToken cancellationToken)
     {
         try
         {
@@ -71,6 +94,10 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
                 Hello = ControlProtocol.CreateHello(ControlClientKind.Gateway, "DisplayMagician.Gateway", "DisplayMagician Gateway"),
                 Payload = payload
             };
+            if (Guid.TryParse(_httpContextAccessor.HttpContext?.Response.Headers[GatewayProtocolMiddleware.RequestIdHeaderName], out Guid requestId))
+            {
+                request.RequestId = requestId;
+            }
             await ControlEnvelopeSerializer.WriteAsync(pipe, request, timeout.Token).ConfigureAwait(false);
             ControlEnvelope? envelope = await ControlEnvelopeSerializer.ReadAsync(pipe, timeout.Token).ConfigureAwait(false);
             ControlResponse? response = envelope == null ? null : JsonSerializer.Deserialize<ControlResponse>(envelope.Payload);

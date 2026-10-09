@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace DisplayMagician.Contracts;
 
@@ -203,7 +204,11 @@ public enum ControlMessageType
     StartRemoteShortcut = 76,
     ResolveRemoteOperationDecision = 77,
     SetTemporaryDiagnosticLogLevel = 78,
-    ReleaseTemporaryDiagnosticLogLevel = 79
+    ReleaseTemporaryDiagnosticLogLevel = 79,
+    GatewayIdempotencyBegin = 80,
+    GatewayIdempotencyComplete = 81,
+    ValidateDevicePairingSession = 82,
+    ApproveGatewayTlsKeyReplacement = 83
 }
 
 public enum ControlErrorCode
@@ -288,7 +293,6 @@ public sealed class GatewayPairingIdentity
     public string HostId { get; set; } = string.Empty;
     public string HostIdentityPublicKeyJwk { get; set; } = string.Empty;
     public string TlsSpkiSha256 { get; set; } = string.Empty;
-    public string TlsCertificateSha256 { get; set; } = string.Empty;
 }
 
 /// <summary>Client-safe Gateway identity returned before a device is paired.</summary>
@@ -299,7 +303,6 @@ public sealed class GatewayIdentityView
     public string HostId { get; set; } = string.Empty;
     public string HostIdentityPublicKeyJwk { get; set; } = string.Empty;
     public string TlsSpkiSha256 { get; set; } = string.Empty;
-    public string TlsCertificateSha256 { get; set; } = string.Empty;
 }
 
 /// <summary>Machine-owned Gateway listener and QR advertisement settings.</summary>
@@ -339,11 +342,14 @@ public sealed class DevicePairingRequest
 {
     public Guid PairingSessionId { get; set; }
     public string PairingSecret { get; set; } = string.Empty;
+    /// <summary>Candidate-generated 256-bit secret used only to poll this request.</summary>
+    public string PollingSecret { get; set; } = string.Empty;
     public string DeviceId { get; set; } = string.Empty;
     public string DeviceDisplayName { get; set; } = string.Empty;
     public string ClientType { get; set; } = string.Empty;
     /// <summary>Set only by the Gateway from the incoming connection; remote clients must not supply this value.</summary>
     public string SourceIpAddress { get; set; } = string.Empty;
+    /// <summary>Legacy optional public key metadata; bearer-authenticated clients do not need a device key pair.</summary>
     public string DevicePublicKeyJwk { get; set; } = string.Empty;
     public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
 }
@@ -362,7 +368,7 @@ public sealed class DevicePairingSessionView
     public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
 }
 
-/// <summary>Request made by an authorised local or paired client to approve a pending device. Granted capabilities must exactly match the candidate's request.</summary>
+/// <summary>Request made by an authorised local or paired client to approve a pending device. Granted capabilities may be a subset of the candidate's request.</summary>
 public sealed class ApproveDevicePairingRequest
 {
     public Guid PairingSessionId { get; set; }
@@ -379,7 +385,7 @@ public sealed class RejectDevicePairingRequest
 public sealed class DevicePairingStatusRequest
 {
     public Guid PairingSessionId { get; set; }
-    public string PairingSecret { get; set; } = string.Empty;
+    public string PollingSecret { get; set; } = string.Empty;
     public string DeviceId { get; set; } = string.Empty;
 }
 
@@ -395,6 +401,13 @@ public sealed class DevicePairingResult
     public DevicePairingState State { get; set; }
     public string DeviceId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ProblemCode { get; set; }
+    /// <summary>Returned exactly once on the first approved poll; never persisted or logged.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Credential { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string[]? GrantedCapabilities { get; set; }
 }
 
 /// <summary>Transport-neutral P-256 request proof. The signature covers method, path, body hash, timestamp, and nonce.</summary>
@@ -426,11 +439,32 @@ public sealed class GatewayAuthenticationResult
 /// <summary>Gateway-only verification request carrying a signed remote HTTP request's immutable details.</summary>
 public sealed class GatewayAuthenticationRequest
 {
+    public string BearerCredential { get; set; } = string.Empty;
     public SignedGatewayRequest SignedRequest { get; set; } = new SignedGatewayRequest();
     public string Method { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
     public string BodySha256 { get; set; } = string.Empty;
     public string SourceIpAddress { get; set; } = string.Empty;
+}
+
+public enum GatewayHttpIdempotencyState { Invalid, Accepted, Pending, Conflict, Replay }
+
+public sealed class GatewayHttpIdempotencyRequest
+{
+    public string ScopeHash { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
+    public string RequestHash { get; set; } = string.Empty;
+    public int StatusCode { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public string ResponseJson { get; set; } = string.Empty;
+}
+
+public sealed class GatewayHttpIdempotencyResult
+{
+    public GatewayHttpIdempotencyState State { get; set; }
+    public int StatusCode { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public string ResponseJson { get; set; } = string.Empty;
 }
 
 /// <summary>Authenticated, user-scoped status returned only to a paired client with status-read.</summary>
@@ -481,6 +515,8 @@ public sealed class PairedClient
     public DateTime ConnectedSinceUtc { get; set; }
     public string PublicKeyJwk { get; set; } = string.Empty;
     public string PublicKeyFingerprint { get; set; } = string.Empty;
+    /// <summary>SHA-256 of a 256-bit opaque bearer credential. Never include in support snapshots.</summary>
+    public string CredentialHash { get; set; } = string.Empty;
     public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
     public DateTime PairedUtc { get; set; }
     public DateTime? LastAuthenticatedUtc { get; set; }
@@ -1097,6 +1133,8 @@ public sealed class ControlResponse
     public PairedClientView[] PairedClients { get; set; } = Array.Empty<PairedClientView>();
 
     public GatewayAuthenticationResult? GatewayAuthentication { get; set; }
+
+    public GatewayHttpIdempotencyResult? GatewayIdempotency { get; set; }
 
     public RemoteUserStatus? RemoteUserStatus { get; set; }
 

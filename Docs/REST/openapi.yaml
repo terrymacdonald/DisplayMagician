@@ -9,13 +9,12 @@ info:
   description: >-
     HTTPS API exposed by DisplayMagician.Gateway to paired remote controllers.
     This API is intentionally narrower than the local named-pipe API. The
-    implementation currently returns a shared ControlResponse with HTTP 200 for
-    many downstream failures; the response body's isSuccessful and errorCode
-    fields are therefore authoritative. Every request now carries the shared
+    implementation still uses prototype resource paths and shared ControlResponse
+    success bodies. Every request carries the shared
     ProtocolHello in DisplayMagician-Protocol-Hello. Successful responses carry
     DisplayMagician-Protocol-Welcome, and every response carries
-    DisplayMagician-Request-Id. The target bearer authentication and resource
-    routes are not implemented yet.
+    DisplayMagician-Request-Id. Protected routes now use bearer authentication;
+    the target resource route layout is not implemented yet.
     HTTP request bodies are limited to 64 KiB.
 servers:
   - url: https://{host}:{port}
@@ -50,7 +49,7 @@ paths:
       summary: Get the public Gateway identity
       description: >-
         Public pre-pairing endpoint. A client must compare the returned host
-        identity and TLS fingerprint with the trusted values in the scanned QR
+        identity and TLS SPKI pin with the trusted values in the scanned QR
         payload before trusting the Gateway.
       security: []
       responses:
@@ -69,6 +68,8 @@ paths:
       tags: [Pairing]
       operationId: requestPairing
       summary: Submit a scanned one-time pairing request
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       security: []
       requestBody:
         required: true
@@ -84,7 +85,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DevicePairingResult'
         '400':
-          description: Pairing request is invalid, expired, rejected, or unavailable.
+          description: Pairing request is invalid, rejected, or unavailable.
           content:
             application/json:
               schema:
@@ -96,6 +97,7 @@ paths:
       tags: [Pairing]
       operationId: getPairingStatus
       summary: Poll the state of a pending pairing request
+      description: Prototype read-only POST. The target resource route becomes GET in P2, so this poll does not require an Idempotency-Key.
       security: []
       requestBody:
         required: true
@@ -110,6 +112,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DevicePairingResult'
+        '410':
+          description: Pairing expired or one-time credential delivery was consumed.
         4XX:
           description: The HTTP request or JSON body was malformed or exceeded host limits.
   /v1/status:
@@ -142,10 +146,7 @@ paths:
         '403':
           $ref: '#/components/responses/AuthorizationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/status/stream:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -177,10 +178,7 @@ paths:
         '403':
           description: Device lacks `status-read`; the stream is not established.
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/display-profiles:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -201,10 +199,7 @@ paths:
         '401':
           $ref: '#/components/responses/AuthenticationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/display-profiles/apply:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -215,6 +210,7 @@ paths:
       x-required-capability: profiles-apply
       parameters:
         - $ref: '#/components/parameters/TargetSessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -231,10 +227,7 @@ paths:
         '401':
           $ref: '#/components/responses/AuthenticationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/audio-profiles:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -255,10 +248,7 @@ paths:
         '401':
           $ref: '#/components/responses/AuthenticationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/audio-profiles/apply:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -269,6 +259,7 @@ paths:
       x-required-capability: audio-profiles-apply
       parameters:
         - $ref: '#/components/parameters/TargetSessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -285,10 +276,7 @@ paths:
         '401':
           $ref: '#/components/responses/AuthenticationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/shortcuts:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -309,10 +297,7 @@ paths:
         '401':
           $ref: '#/components/responses/AuthenticationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/shortcuts/run:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -323,6 +308,7 @@ paths:
       x-required-capability: shortcuts-run
       parameters:
         - $ref: '#/components/parameters/TargetSessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -339,10 +325,7 @@ paths:
         '401':
           $ref: '#/components/responses/AuthenticationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
   /v1/decisions/answer:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -353,6 +336,7 @@ paths:
       x-required-capability: decisions-answer
       parameters:
         - $ref: '#/components/parameters/TargetSessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -369,37 +353,22 @@ paths:
         '401':
           $ref: '#/components/responses/AuthenticationFailure'
       security:
-        - DeviceId: []
-          Timestamp: []
-          Nonce: []
-          Signature: []
+        - DeviceBearer: []
 components:
   securitySchemes:
-    DeviceId:
-      type: apiKey
-      in: header
-      name: X-DisplayMagician-Device-Id
-      description: Paired stable device ID.
-    Timestamp:
-      type: apiKey
-      in: header
-      name: X-DisplayMagician-Timestamp
-      description: ISO 8601 timestamp within five minutes of Gateway UTC.
-    Nonce:
-      type: apiKey
-      in: header
-      name: X-DisplayMagician-Nonce
-      description: Unique nonce. Reuse during the five-minute replay window is rejected.
-    Signature:
-      type: apiKey
-      in: header
-      name: X-DisplayMagician-Signature
-      description: >-
-        Base64url P-256 ECDSA SHA-256 signature in 64-byte IEEE P1363 format.
-        Sign UTF-8 text METHOD + LF + PATH + LF + uppercase SHA-256 body hex +
-        LF + UTC timestamp formatted with round-trip O + LF + nonce. METHOD is
-        uppercase and PATH excludes the query string.
+    DeviceBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque 256-bit random credential
   parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Lowercase canonical UUID v4 retained for 24 hours after an accepted mutation.
+      schema:
+        type: string
+        format: uuid
     ProtocolHello:
       name: DisplayMagician-Protocol-Hello
       in: header
@@ -428,15 +397,15 @@ components:
         minimum: 0
   responses:
     AuthenticationFailure:
-      description: Signed request is missing, invalid, expired, or replayed.
+      description: Bearer credential is missing or invalid.
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/HttpError'
     AuthorizationFailure:
       description: Authenticated device lacks the required capability.
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/HttpError'
   schemas:
@@ -445,7 +414,7 @@ components:
       format: uuid
     GatewayIdentityView:
       type: object
-      required: [protocolVersion, port, hostId, hostIdentityPublicKeyJwk, tlsSpkiSha256, tlsCertificateSha256]
+      required: [protocolVersion, port, hostId, hostIdentityPublicKeyJwk, tlsSpkiSha256]
       properties:
         protocolVersion:
           type: integer
@@ -462,25 +431,24 @@ components:
         tlsSpkiSha256:
           type: string
           description: Padded Base64 SHA-256 of the TLS SubjectPublicKeyInfo; stable across renewal with the same key.
-        tlsCertificateSha256:
-          type: string
-          deprecated: true
-          description: Prototype TLS certificate SHA-256 fingerprint; pairing QR codes now carry tlsSpkiSha256.
     DevicePairingRequest:
       type: object
       required:
         - pairingSessionId
         - pairingSecret
+        - pollingSecret
         - deviceId
         - deviceDisplayName
         - clientType
-        - devicePublicKeyJwk
         - requestedCapabilities
       properties:
         pairingSessionId:
           $ref: '#/components/schemas/Guid'
         pairingSecret:
           type: string
+        pollingSecret:
+          type: string
+          description: Candidate-generated unpadded base64url 256-bit secret used only for status polling.
         deviceId:
           type: string
           maxLength: 128
@@ -495,7 +463,8 @@ components:
           description: Ignored from the body and set by Gateway from the connection.
         devicePublicKeyJwk:
           type: string
-          description: Public P-256 key as JWK JSON text.
+          deprecated: true
+          description: Optional legacy public-key metadata. Bearer clients do not need a device key pair.
         requestedCapabilities:
           type: array
           uniqueItems: true
@@ -503,11 +472,11 @@ components:
             $ref: '#/components/schemas/RemoteCapability'
     DevicePairingStatusRequest:
       type: object
-      required: [pairingSessionId, pairingSecret, deviceId]
+      required: [pairingSessionId, pollingSecret, deviceId]
       properties:
         pairingSessionId:
           $ref: '#/components/schemas/Guid'
-        pairingSecret:
+        pollingSecret:
           type: string
         deviceId:
           type: string
@@ -523,6 +492,16 @@ components:
           type: string
         message:
           type: string
+        problemCode:
+          type: string
+          description: Machine-readable pairing failure code, when present.
+        credential:
+          type: string
+          description: One-time bearer credential, returned only by the first approved status poll.
+        grantedCapabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/RemoteCapability'
     RemoteCapability:
       type: string
       enum:
@@ -839,7 +818,22 @@ components:
       additionalProperties: true
     HttpError:
       type: object
-      required: [error]
+      required: [type, title, status, detail, instance, errorCode, requestId, retryable]
       properties:
-        error:
+        type:
           type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        errorCode:
+          type: string
+        requestId:
+          $ref: '#/components/schemas/Guid'
+        retryable:
+          type: boolean

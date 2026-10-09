@@ -33,8 +33,10 @@ public sealed class GatewayProtocolMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        string requestId = Guid.NewGuid().ToString("D");
+        Guid correlationId = Guid.NewGuid();
+        string requestId = correlationId.ToString("D");
         context.Response.Headers[RequestIdHeaderName] = requestId;
+        using IDisposable requestScope = SupportLogScope.BeginRequest(correlationId);
 
         if (!context.Request.Headers.TryGetValue(HelloHeaderName, out StringValues headerValues) || headerValues.Count != 1)
         {
@@ -100,19 +102,6 @@ public sealed class GatewayProtocolMiddleware
 
     private static async Task RejectAsync(HttpContext context, string requestId, int status, string code, string title, string detail)
     {
-        context.Response.StatusCode = status;
-        context.Response.ContentType = "application/problem+json";
-        string body = JsonSerializer.Serialize(new
-        {
-            type = $"https://displaymagician.org/problems/{code}",
-            title,
-            status,
-            detail,
-            instance = context.Request.Path.Value ?? string.Empty,
-            errorCode = code,
-            requestId,
-            retryable = false
-        });
-        await context.Response.WriteAsync(body, context.RequestAborted).ConfigureAwait(false);
+        await GatewayProblemDetails.WriteAsync(context, status, code, title, detail).ConfigureAwait(false);
     }
 }

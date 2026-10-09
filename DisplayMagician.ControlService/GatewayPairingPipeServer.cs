@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -21,17 +22,19 @@ public sealed class GatewayPairingPipeServer
     private readonly DevicePairingCoordinator _pairingCoordinator;
     private readonly GatewayIdentityRegistry _identityRegistry;
     private readonly GatewayRequestAuthenticator _requestAuthenticator;
+    private readonly GatewayHttpIdempotencyStore _idempotencyStore;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
     private readonly ProfileOperationRouter _profileOperationRouter;
     private readonly ControlStateCoordinator _controlStateCoordinator;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
-    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter, ControlStateCoordinator controlStateCoordinator)
+    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, GatewayHttpIdempotencyStore idempotencyStore, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter, ControlStateCoordinator controlStateCoordinator)
     {
         _pairingCoordinator = pairingCoordinator ?? throw new ArgumentNullException(nameof(pairingCoordinator));
         _identityRegistry = identityRegistry ?? throw new ArgumentNullException(nameof(identityRegistry));
         _requestAuthenticator = requestAuthenticator ?? throw new ArgumentNullException(nameof(requestAuthenticator));
+        _idempotencyStore = idempotencyStore ?? throw new ArgumentNullException(nameof(idempotencyStore));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
         _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
@@ -133,12 +136,16 @@ public sealed class GatewayPairingPipeServer
         }
         else
         {
+            using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
             response = request.MessageType switch
             {
                 ControlMessageType.GatewayRegistration => Register(request),
                 ControlMessageType.SubmitDevicePairing => Submit(request),
+                ControlMessageType.ValidateDevicePairingSession => ValidatePairing(request),
                 ControlMessageType.GetDevicePairingStatus => GetStatus(request),
                 ControlMessageType.AuthenticateGatewayRequest => Authenticate(request),
+                ControlMessageType.GatewayIdempotencyBegin => BeginIdempotency(request),
+                ControlMessageType.GatewayIdempotencyComplete => CompleteIdempotency(request),
                 ControlMessageType.GetRemoteUserStatus => GetRemoteUserStatus(request),
                 ControlMessageType.ListRemoteProfiles => ListRemote(request, RemoteClientCapabilities.ProfilesRead, ControlMessageType.ListProfiles),
                 ControlMessageType.ListRemoteAudioProfiles => ListRemote(request, RemoteClientCapabilities.AudioProfilesRead, ControlMessageType.ListAudioProfiles),
@@ -178,6 +185,13 @@ public sealed class GatewayPairingPipeServer
         return new ControlResponse { IsSuccessful = true, Message = "Pairing request processed.", DevicePairingResult = _pairingCoordinator.Submit(pairingRequest, DateTime.UtcNow) };
     }
 
+    private ControlResponse ValidatePairing(ControlEnvelope request)
+    {
+        DevicePairingRequest? pairingRequest = JsonSerializer.Deserialize<DevicePairingRequest>(request.Payload);
+        DevicePairingState state = pairingRequest == null ? DevicePairingState.Rejected : _pairingCoordinator.CheckSubmission(pairingRequest, DateTime.UtcNow);
+        return new ControlResponse { IsSuccessful = true, DevicePairingResult = new DevicePairingResult { State = state }, Message = "Pairing session validation completed." };
+    }
+
     private ControlResponse GetStatus(ControlEnvelope request)
     {
         DevicePairingStatusRequest? statusRequest = JsonSerializer.Deserialize<DevicePairingStatusRequest>(request.Payload);
@@ -192,6 +206,21 @@ public sealed class GatewayPairingPipeServer
         return authenticationRequest == null
             ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Gateway authentication request is invalid." }
             : new ControlResponse { IsSuccessful = true, GatewayAuthentication = _requestAuthenticator.Authenticate(authenticationRequest, DateTime.UtcNow) };
+    }
+
+    private ControlResponse BeginIdempotency(ControlEnvelope request)
+    {
+        GatewayHttpIdempotencyRequest? input = JsonSerializer.Deserialize<GatewayHttpIdempotencyRequest>(request.Payload);
+        if (input == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An idempotency request is required." };
+        return new ControlResponse { IsSuccessful = true, GatewayIdempotency = _idempotencyStore.Begin(input.ScopeHash, input.Key, input.RequestHash, DateTime.UtcNow) };
+    }
+
+    private ControlResponse CompleteIdempotency(ControlEnvelope request)
+    {
+        GatewayHttpIdempotencyRequest? input = JsonSerializer.Deserialize<GatewayHttpIdempotencyRequest>(request.Payload);
+        if (input == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An idempotency result is required." };
+        _idempotencyStore.Complete(input.ScopeHash, input.Key, input.RequestHash, input.StatusCode, input.ContentType, input.ResponseJson);
+        return new ControlResponse { IsSuccessful = true, Message = "Idempotency result retained." };
     }
 
     private ControlResponse GetRemoteUserStatus(ControlEnvelope request)
@@ -224,7 +253,7 @@ public sealed class GatewayPairingPipeServer
         if (!TryGetVerifiedTargetSession(authentication, command!.TargetSessionId, out int sessionId, out ControlResponse failure)) return failure;
         return messageType == ControlMessageType.ListProfiles
             ? _profileOperationRouter.ListProfilesAsync(authentication.OwnerUserSid, sessionId, CancellationToken.None).GetAwaiter().GetResult()
-            : _profileOperationRouter.ManageProfileAsync(authentication.OwnerUserSid, sessionId, new ControlEnvelope { MessageType = messageType }, CancellationToken.None).GetAwaiter().GetResult();
+            : _profileOperationRouter.ManageProfileAsync(authentication.OwnerUserSid, sessionId, new ControlEnvelope { MessageType = messageType, RequestId = request.RequestId }, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     private ControlResponse ExecuteRemote(ControlEnvelope request, string requiredCapability, ControlMessageType messageType)
@@ -234,7 +263,7 @@ public sealed class GatewayPairingPipeServer
         if (authentication == null || !authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(requiredCapability, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device is not authorised for this action." };
         GatewayRemoteCommand validCommand = command!;
         if (!TryGetVerifiedTargetSession(authentication, validCommand.TargetSessionId, out int sessionId, out ControlResponse failure)) return failure;
-        ControlEnvelope agentRequest = new ControlEnvelope { MessageType = messageType, Payload = validCommand.Payload, RequestId = Guid.NewGuid() };
+        ControlEnvelope agentRequest = new ControlEnvelope { MessageType = messageType, Payload = validCommand.Payload, RequestId = request.RequestId };
         ApplyProfileRequest? applyProfileRequest = messageType == ControlMessageType.ApplyProfile ? JsonSerializer.Deserialize<ApplyProfileRequest>(validCommand.Payload) : null;
         if (messageType == ControlMessageType.ApplyProfile && (applyProfileRequest == null || string.IsNullOrWhiteSpace(applyProfileRequest.ProfileId))) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile is required." };
         return messageType == ControlMessageType.ApplyProfile
@@ -310,18 +339,92 @@ public sealed class GatewayPairingPipeServer
 
 public sealed class GatewayIdentityRegistry
 {
+    private readonly object _syncRoot = new object();
+    private readonly string? _storagePath;
+    private readonly string? _tlsResetApprovalPath;
+    private readonly PairedClientRepository? _pairedClients;
+    private readonly DevicePairingCoordinator? _pairingCoordinator;
+    private readonly AuditStore? _auditStore;
     private GatewayPairingIdentity? _identity;
+
+    public GatewayIdentityRegistry()
+    {
+    }
+
+    public GatewayIdentityRegistry(StoragePaths storagePaths, PairedClientRepository pairedClients, DevicePairingCoordinator pairingCoordinator)
+        : this(storagePaths, pairedClients, pairingCoordinator, null)
+    {
+    }
+
+    public GatewayIdentityRegistry(StoragePaths storagePaths, PairedClientRepository pairedClients, DevicePairingCoordinator pairingCoordinator, AuditStore? auditStore)
+    {
+        _storagePath = Path.Combine(storagePaths.MachinePath, "GatewayHostIdentity.json");
+        _tlsResetApprovalPath = Path.Combine(storagePaths.MachinePath, "GatewayTlsResetApproval.json");
+        _pairedClients = pairedClients;
+        _pairingCoordinator = pairingCoordinator;
+        _auditStore = auditStore;
+    }
 
     public GatewayPairingIdentity? Get()
     {
         GatewayPairingIdentity? identity = _identity;
-        return identity == null ? null : new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, AdditionalGatewayUris = (string[])identity.AdditionalGatewayUris.Clone(), HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsSpkiSha256 = identity.TlsSpkiSha256, TlsCertificateSha256 = identity.TlsCertificateSha256 };
+        return identity == null ? null : new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, AdditionalGatewayUris = (string[])identity.AdditionalGatewayUris.Clone(), HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsSpkiSha256 = identity.TlsSpkiSha256 };
     }
 
     public void Set(GatewayPairingIdentity identity)
     {
         ArgumentNullException.ThrowIfNull(identity);
-        _identity = new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, AdditionalGatewayUris = (string[])(identity.AdditionalGatewayUris ?? Array.Empty<string>()).Clone(), HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsSpkiSha256 = identity.TlsSpkiSha256, TlsCertificateSha256 = identity.TlsCertificateSha256 };
+        lock (_syncRoot)
+        {
+            if (_storagePath != null)
+            {
+                string previousHostId = string.Empty;
+                string previousTlsPin = string.Empty;
+                try
+                {
+                    if (File.Exists(_storagePath))
+                    {
+                        using JsonDocument previous = JsonDocument.Parse(File.ReadAllText(_storagePath));
+                        previousHostId = previous.RootElement.GetProperty("HostId").GetString() ?? string.Empty;
+                        if (previous.RootElement.TryGetProperty("TlsSpkiSha256", out JsonElement pin)) previousTlsPin = pin.GetString() ?? string.Empty;
+                    }
+                }
+                catch (Exception ex) when (ex is JsonException || ex is KeyNotFoundException || ex is IOException)
+                {
+                    // Missing or damaged identity state is treated as a reset, so prior credentials cannot survive it.
+                }
+
+                bool tlsPinChanged = !string.IsNullOrEmpty(previousTlsPin) && !string.Equals(previousTlsPin, identity.TlsSpkiSha256, StringComparison.Ordinal);
+                if (!string.Equals(previousHostId, identity.HostId, StringComparison.Ordinal) || tlsPinChanged)
+                {
+                    _pairedClients!.RevokeAll(DateTime.UtcNow);
+                    _pairingCoordinator!.InvalidateAllSessions();
+                    _auditStore?.Append("gateway-identity-reset", "paired-devices-revoked", tlsPinChanged ? "Gateway TLS identity changed." : "Gateway host identity changed.");
+                }
+
+                AtomicFileStore.WriteAllText(_storagePath, JsonSerializer.Serialize(new { identity.HostId, identity.TlsSpkiSha256 }), $"{_storagePath}.bak");
+                if (tlsPinChanged && _tlsResetApprovalPath != null)
+                {
+                    if (File.Exists(_tlsResetApprovalPath)) File.Delete(_tlsResetApprovalPath);
+                    if (File.Exists(_tlsResetApprovalPath + ".bak")) File.Delete(_tlsResetApprovalPath + ".bak");
+                }
+            }
+
+            _identity = new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, AdditionalGatewayUris = (string[])(identity.AdditionalGatewayUris ?? Array.Empty<string>()).Clone(), HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsSpkiSha256 = identity.TlsSpkiSha256 };
+        }
+    }
+
+    public bool ApproveTlsKeyReplacement(DateTime utcNow)
+    {
+        if (_storagePath == null || _tlsResetApprovalPath == null || !File.Exists(_storagePath)) return false;
+        lock (_syncRoot)
+        {
+            using JsonDocument previous = JsonDocument.Parse(File.ReadAllText(_storagePath));
+            string previousTlsPin = previous.RootElement.TryGetProperty("TlsSpkiSha256", out JsonElement pin) ? pin.GetString() ?? string.Empty : string.Empty;
+            if (string.IsNullOrWhiteSpace(previousTlsPin)) return false;
+            AtomicFileStore.WriteAllText(_tlsResetApprovalPath, JsonSerializer.Serialize(new { PreviousTlsSpkiSha256 = previousTlsPin, ApprovedUtc = utcNow.ToUniversalTime() }), $"{_tlsResetApprovalPath}.bak");
+            return true;
+        }
     }
 
     public bool AllowsGatewayUri(Uri candidate)

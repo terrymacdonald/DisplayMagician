@@ -36,6 +36,7 @@ namespace DisplayMagician.UIForms
             txt_remote_host = new System.Windows.Forms.TextBox();
             txt_remote_port = new System.Windows.Forms.TextBox();
             chk_allow_public_networks = new System.Windows.Forms.CheckBox();
+            btn_replace_gateway_tls_key = new System.Windows.Forms.Button();
             btn_apply_gateway_settings = new System.Windows.Forms.Button();
             btn_pair_remote_device = new System.Windows.Forms.Button();
             gb_status.SuspendLayout();
@@ -210,6 +211,11 @@ namespace DisplayMagician.UIForms
             chk_allow_public_networks.Name = "chk_allow_public_networks";
             chk_allow_public_networks.Text = "Allow paired devices on Public Windows networks (advanced)";
             chk_allow_public_networks.UseVisualStyleBackColor = true;
+            btn_replace_gateway_tls_key.Location = new System.Drawing.Point(50, 409);
+            btn_replace_gateway_tls_key.Name = "btn_replace_gateway_tls_key";
+            btn_replace_gateway_tls_key.Size = new System.Drawing.Size(150, 30);
+            btn_replace_gateway_tls_key.Text = "Replace TLS Key";
+            btn_replace_gateway_tls_key.Click += btn_replace_gateway_tls_key_Click;
             btn_apply_gateway_settings.Location = new System.Drawing.Point(400, 409);
             btn_apply_gateway_settings.Name = "btn_apply_gateway_settings";
             btn_apply_gateway_settings.Size = new System.Drawing.Size(150, 30);
@@ -223,6 +229,7 @@ namespace DisplayMagician.UIForms
             ClientSize = new System.Drawing.Size(660, 457);
             Controls.Add(btn_apply_gateway_settings);
             Controls.Add(btn_pair_remote_device);
+            Controls.Add(btn_replace_gateway_tls_key);
             Controls.Add(chk_allow_public_networks);
             Controls.Add(gb_remote_settings);
             Controls.Add(gb_lan_settings);
@@ -267,6 +274,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TextBox txt_remote_host;
         private System.Windows.Forms.TextBox txt_remote_port;
         private System.Windows.Forms.CheckBox chk_allow_public_networks;
+        private System.Windows.Forms.Button btn_replace_gateway_tls_key;
         private System.Windows.Forms.Button btn_apply_gateway_settings;
         private System.Windows.Forms.Button btn_pair_remote_device;
     }

@@ -182,6 +182,7 @@ public partial class ServerSettingsForm : DisplayMagicianForm
         btn_force_release.Enabled = enabled;
         btn_restart_user_agent.Enabled = enabled;
         btn_restart_control_service.Enabled = enabled;
+        btn_replace_gateway_tls_key.Enabled = enabled;
     }
 
     private void btn_back_Click(object sender, EventArgs e)
@@ -229,6 +230,36 @@ public partial class ServerSettingsForm : DisplayMagicianForm
         {
             logger.Error(ex, "ServerSettingsForm/btn_pair_remote_device_Click: Could not open the device pairing dialog.");
             lbl_result.Text = $"Could not open device pairing: {ex.Message}";
+        }
+    }
+
+    private async void btn_replace_gateway_tls_key_Click(object sender, EventArgs e)
+    {
+        if (MessageBox.Show(this, "Replace the Gateway TLS private key? Every paired phone will lose access and must be paired again. Use this only to recover from a lost or compromised key.", "Replace Gateway TLS Key?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+        {
+            return;
+        }
+
+        SetActionsEnabled(false);
+        try
+        {
+            ControlResponse approval = await _controlServiceClient.ApproveGatewayTlsKeyReplacementAsync(CancellationToken.None);
+            if (!approval.IsSuccessful)
+            {
+                lbl_result.Text = approval.Message;
+                return;
+            }
+
+            await RunElevatedRecoveryActionAsync(Program.RestartGatewayCommandLineOption, "Gateway restarted after TLS key replacement approval. Paired devices must pair again once the new identity is active.", "Gateway TLS key replacement was approved, but Gateway did not restart. Restart it within ten minutes or approve the replacement again.");
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "ServerSettingsForm/btn_replace_gateway_tls_key_Click: Could not approve Gateway TLS key replacement.");
+            lbl_result.Text = "Gateway TLS key replacement could not be approved.";
+        }
+        finally
+        {
+            SetActionsEnabled(true);
         }
     }
 

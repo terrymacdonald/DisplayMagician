@@ -18,18 +18,31 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
         GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         DefaultHttpContext context = new DefaultHttpContext();
         context.Request.Path = "/v1/pairing/request";
-        await middleware.InvokeAsync(context, new FakeClient());
+        await middleware.InvokeAsync(context, new FakeClient(), new GatewayTrafficLimiter(), RegisteredState());
         Assert.True(nextCalled);
     }
 
     [Fact]
-    public async Task InvokeAsync_RejectsProtectedRequestWithoutTimestamp()
+    public async Task InvokeAsync_BlocksPairingUntilCurrentIdentityIsRegistered()
+    {
+        bool nextCalled = false;
+        GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
+        DefaultHttpContext context = new DefaultHttpContext();
+        context.Request.Path = "/v1/pairing/request";
+        context.Response.Body = new MemoryStream();
+        await middleware.InvokeAsync(context, new FakeClient(), new GatewayTrafficLimiter(), new GatewayRegistrationState());
+        Assert.False(nextCalled);
+        Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_RejectsProtectedRequestWithoutBearerCredential()
     {
         GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => Task.CompletedTask);
         DefaultHttpContext context = new DefaultHttpContext();
         context.Request.Path = "/v1/status";
         context.Response.Body = new MemoryStream();
-        await middleware.InvokeAsync(context, new FakeClient());
+        await middleware.InvokeAsync(context, new FakeClient(), new GatewayTrafficLimiter(), RegisteredState());
         Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
     }
 
@@ -44,10 +57,10 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
         });
         DefaultHttpContext context = new DefaultHttpContext();
         context.Request.Path = "/v1/status";
-        context.Request.Headers["X-DisplayMagician-Timestamp"] = DateTime.UtcNow.ToString("O");
+        context.Request.Headers.Authorization = "Bearer sample-credential";
         context.Request.Body = new MemoryStream();
 
-        await middleware.InvokeAsync(context, new FakeClient());
+        await middleware.InvokeAsync(context, new FakeClient(), new GatewayTrafficLimiter(), RegisteredState());
 
         Assert.True(nextCalled);
     }
@@ -59,10 +72,10 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
         GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         DefaultHttpContext context = new DefaultHttpContext();
         context.Request.Path = "/v1/status";
-        context.Request.Headers["X-DisplayMagician-Timestamp"] = DateTime.UtcNow.ToString("O");
+        context.Request.Headers.Authorization = "Bearer sample-credential";
         context.Request.Body = new MemoryStream();
 
-        await middleware.InvokeAsync(context, new FakeClient { Result = new GatewayAuthenticationResult { Message = "Invalid signature." } });
+        await middleware.InvokeAsync(context, new FakeClient { Result = new GatewayAuthenticationResult { Message = "Invalid credential." } }, new GatewayTrafficLimiter(), RegisteredState());
 
         Assert.False(nextCalled);
         Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
@@ -72,5 +85,12 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
     {
         public GatewayAuthenticationResult Result { get; set; } = new GatewayAuthenticationResult { IsAuthenticated = true, DeviceId = "device", OwnerUserSid = "user" };
         public Task<GatewayAuthenticationResult> AuthenticateAsync(GatewayAuthenticationRequest request, CancellationToken cancellationToken) => Task.FromResult(Result);
+    }
+
+    private static GatewayRegistrationState RegisteredState()
+    {
+        GatewayRegistrationState state = new GatewayRegistrationState();
+        state.SetRegistered(true);
+        return state;
     }
 }

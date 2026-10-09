@@ -216,6 +216,7 @@ public sealed class ControlClientPipeServer
                                     ControlMessageType.GetServiceStatus => GetServiceStatus(identity),
                                     ControlMessageType.GetGatewaySettings => GetGatewaySettings(),
                                     ControlMessageType.UpdateGatewaySettings => UpdateGatewaySettings(identity, request),
+                                    ControlMessageType.ApproveGatewayTlsKeyReplacement => ApproveGatewayTlsKeyReplacement(identity),
                                     ControlMessageType.GetGatewayIdentity => GetGatewayIdentity(),
                                     ControlMessageType.CreateDevicePairingQr => CreateDevicePairingQr(identity, request),
                                     ControlMessageType.ListDevicePairingRequests => new ControlResponse { IsSuccessful = true, DevicePairingRequests = _devicePairingCoordinator.GetPendingForUser(identity.UserSid, DateTime.UtcNow) },
@@ -494,7 +495,31 @@ public sealed class ControlClientPipeServer
         GatewayPairingIdentity? gateway = _gatewayIdentityRegistry.Get();
         return gateway == null
             ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The Gateway has not registered its identity yet." }
-            : new ControlResponse { IsSuccessful = true, GatewayIdentity = new GatewayIdentityView { HostId = gateway.HostId, HostIdentityPublicKeyJwk = gateway.HostIdentityPublicKeyJwk, TlsSpkiSha256 = gateway.TlsSpkiSha256, TlsCertificateSha256 = gateway.TlsCertificateSha256 } };
+            : new ControlResponse { IsSuccessful = true, GatewayIdentity = new GatewayIdentityView { HostId = gateway.HostId, HostIdentityPublicKeyJwk = gateway.HostIdentityPublicKeyJwk, TlsSpkiSha256 = gateway.TlsSpkiSha256 } };
+    }
+
+    private ControlResponse ApproveGatewayTlsKeyReplacement(PipeClientIdentity identity)
+    {
+        if (!identity.IsAdministrator)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AdministratorRequired, Message = "Administrator approval is required to replace the Gateway TLS key." };
+        }
+
+        try
+        {
+            if (!_gatewayIdentityRegistry.ApproveTlsKeyReplacement(DateTime.UtcNow))
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "No existing Gateway TLS identity was found to replace." };
+            }
+
+            _auditStore.Append("gateway-tls-key-replacement-approved", "approved", "Local administrator approved Gateway TLS key replacement.", identity.UserSid, identity.SessionId);
+            return new ControlResponse { IsSuccessful = true, Message = "Gateway TLS key replacement approved for the next restart. All devices must re-pair." };
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+        {
+            _logger.Error(ex, "ControlClientPipeServer/ApproveGatewayTlsKeyReplacement: Could not record local Gateway TLS key replacement approval.");
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "Gateway TLS key replacement could not be approved." };
+        }
     }
 
     private ControlResponse CreateDevicePairingQr(PipeClientIdentity identity, ControlEnvelope request)
@@ -506,7 +531,7 @@ public sealed class ControlClientPipeServer
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The pairing endpoint must match a registered Gateway HTTPS endpoint." };
         }
 
-        GatewayPairingIdentity gateway = new GatewayPairingIdentity { GatewayUri = gatewayUri.AbsoluteUri.TrimEnd('/'), HostId = registeredGateway.HostId, HostIdentityPublicKeyJwk = registeredGateway.HostIdentityPublicKeyJwk, TlsSpkiSha256 = registeredGateway.TlsSpkiSha256, TlsCertificateSha256 = registeredGateway.TlsCertificateSha256 };
+        GatewayPairingIdentity gateway = new GatewayPairingIdentity { GatewayUri = gatewayUri.AbsoluteUri.TrimEnd('/'), HostId = registeredGateway.HostId, HostIdentityPublicKeyJwk = registeredGateway.HostIdentityPublicKeyJwk, TlsSpkiSha256 = registeredGateway.TlsSpkiSha256 };
         return new ControlResponse { IsSuccessful = true, DevicePairingQrCode = _devicePairingCoordinator.CreateQrCode(identity.UserSid, identity.SessionId, gateway, DateTime.UtcNow) };
     }
 
@@ -613,7 +638,6 @@ public sealed class ControlClientPipeServer
                 Path.Combine(_storagePaths.MachinePath, "OperationDecisions.json"),
                 Path.Combine(_storagePaths.MachinePath, "OperationStatuses.json"),
                 Path.Combine(_storagePaths.MachinePath, "ScheduleState.json"),
-                Path.Combine(_storagePaths.MachinePath, "PairedClients.json"),
                 Path.Combine(_storagePaths.MachinePath, "GatewaySettings.json"),
                 Path.Combine(_storagePaths.MachineDiagnosticsPath, "RecoveryAdministration.json"),
                 Path.Combine(_storagePaths.MachineDiagnosticsPath, "TemporaryDiagnosticLogLevel.json")
@@ -631,13 +655,26 @@ public sealed class ControlClientPipeServer
                 }
             }
 
+            string pairedClientsPath = Path.Combine(_storagePaths.MachinePath, "PairedClients.json");
+            if (File.Exists(pairedClientsPath))
+            {
+                PairedClient[] pairedClients = JsonSerializer.Deserialize<PairedClient[]>(File.ReadAllText(pairedClientsPath)) ?? Array.Empty<PairedClient>();
+                string redactedPath = Path.Combine(machineConfigurationStagingPath, "PairedClients.redacted.json");
+                File.WriteAllText(redactedPath, PairedClientSupportSnapshot.Serialize(pairedClients));
+                machineCollectionWarnings.Add("PairedClients.json was included as a redacted snapshot; credential hashes and key material were excluded.");
+            }
+            else
+            {
+                machineCollectionWarnings.Add("PairedClients.json was unavailable; no paired-device snapshot was included.");
+            }
+
             supportBundleRequest.MachineLogsStagingPath = machineLogsStagingPath;
             supportBundleRequest.MachineConfigurationStagingPath = machineConfigurationStagingPath;
             supportBundleRequest.MachineCollectionWarnings = machineCollectionWarnings.ToArray();
             request.Payload = JsonSerializer.Serialize(supportBundleRequest);
             return await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException || ex is JsonException)
         {
             _logger.Error(ex, "ControlClientPipeServer/CreateUserSupportBundleAsync: Could not stage Control Service logs for SID {0}.", identity.UserSid);
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "DisplayMagician could not collect Control Service logs for the support ZIP file." };

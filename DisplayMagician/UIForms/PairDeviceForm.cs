@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -121,7 +122,18 @@ public partial class PairDeviceForm : DisplayMagicianForm
         {
             string gatewayUri = GetSelectedGatewayUri();
             DevicePairingQrCode qrCode = await _controlServiceClient.CreateDevicePairingQrAsync(gatewayUri, CancellationToken.None);
-            string payload = $"displaymagician://pair?session={Uri.EscapeDataString(qrCode.PairingSessionId.ToString("D"))}&secret={Uri.EscapeDataString(qrCode.PairingSecret)}&gateway={Uri.EscapeDataString(qrCode.Gateway.GatewayUri)}&hostId={Uri.EscapeDataString(qrCode.Gateway.HostId)}&hostKey={Uri.EscapeDataString(qrCode.Gateway.HostIdentityPublicKeyJwk)}&tlsSpkiSha256={Uri.EscapeDataString(qrCode.Gateway.TlsSpkiSha256)}&expires={Uri.EscapeDataString(qrCode.ExpiresUtc.ToUniversalTime().ToString("O"))}";
+            byte[] pairingPayload = JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                version = 1,
+                gatewayUri = qrCode.Gateway.GatewayUri,
+                hostId = qrCode.Gateway.HostId,
+                hostIdentityPublicKeyJwk = qrCode.Gateway.HostIdentityPublicKeyJwk,
+                tlsSpkiSha256 = qrCode.Gateway.TlsSpkiSha256,
+                pairingRequestId = qrCode.PairingSessionId,
+                pairingSecret = qrCode.PairingSecret,
+                expiresAt = qrCode.ExpiresUtc.ToUniversalTime()
+            });
+            string payload = "displaymagician://pair?payload=" + Convert.ToBase64String(pairingPayload).TrimEnd('=').Replace('+', '-').Replace('/', '_');
             using QRCodeGenerator generator = new QRCodeGenerator();
             using QRCodeData data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
             PngByteQRCode pngQrCode = new PngByteQRCode(data);

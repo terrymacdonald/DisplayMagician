@@ -37,6 +37,7 @@ internal static class Program
         builder.Services.AddSingleton<OperationStatusStore>();
         builder.Services.AddSingleton<OperationDecisionStore>();
         builder.Services.AddSingleton<ControlRequestReplayStore>();
+        builder.Services.AddSingleton<GatewayHttpIdempotencyStore>();
         builder.Services.AddSingleton<ControlClientEventHub>();
         builder.Services.AddSingleton<IAgentCommandClient, AgentCommandClient>();
         builder.Services.AddSingleton(provider => new ClientSyncCoordinator(new System.Net.Http.HttpClient { Timeout = System.TimeSpan.FromSeconds(30) }, provider.GetRequiredService<MachineScheduleCoordinator>(), provider.GetRequiredService<ControlStateCoordinator>(), provider.GetRequiredService<IAgentCommandClient>(), storagePaths, provider.GetRequiredService<ControlClientEventHub>()));

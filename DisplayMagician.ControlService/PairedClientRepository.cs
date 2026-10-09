@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using DisplayMagician.Contracts;
 using NLog;
@@ -62,6 +64,35 @@ public sealed class PairedClientRepository
         }
     }
 
+    public PairedClient? FindActiveByCredential(string credential)
+    {
+        if (string.IsNullOrWhiteSpace(credential) || credential.Length != 43)
+        {
+            return null;
+        }
+
+        byte[] candidateHash = SHA256.HashData(Encoding.UTF8.GetBytes(credential));
+        lock (_syncRoot)
+        {
+            foreach (PairedClient client in _clients.Where(client => client.RevokedUtc == null && client.CredentialHash.Length == 64))
+            {
+                try
+                {
+                    if (CryptographicOperations.FixedTimeEquals(candidateHash, Convert.FromHexString(client.CredentialHash)))
+                    {
+                        return Copy(client);
+                    }
+                }
+                catch (FormatException)
+                {
+                    // A damaged persisted hash cannot authenticate a client.
+                }
+            }
+        }
+
+        return null;
+    }
+
     public void RecordAuthentication(string deviceId, string sourceIpAddress, DateTime utcNow)
     {
         lock (_syncRoot)
@@ -100,6 +131,19 @@ public sealed class PairedClientRepository
             client.RevokedUtc = utcNow.ToUniversalTime();
             PersistUnsafe();
             return true;
+        }
+    }
+
+    public void RevokeAll(DateTime utcNow)
+    {
+        lock (_syncRoot)
+        {
+            foreach (PairedClient client in _clients.Where(client => client.RevokedUtc == null))
+            {
+                client.RevokedUtc = utcNow.ToUniversalTime();
+            }
+
+            PersistUnsafe();
         }
     }
 
@@ -147,6 +191,7 @@ public sealed class PairedClientRepository
             ConnectedSinceUtc = client.ConnectedSinceUtc,
             PublicKeyJwk = client.PublicKeyJwk,
             PublicKeyFingerprint = client.PublicKeyFingerprint,
+            CredentialHash = client.CredentialHash,
             GrantedCapabilities = (client.GrantedCapabilities ?? Array.Empty<string>()).ToArray(),
             PairedUtc = client.PairedUtc,
             LastAuthenticatedUtc = client.LastAuthenticatedUtc,

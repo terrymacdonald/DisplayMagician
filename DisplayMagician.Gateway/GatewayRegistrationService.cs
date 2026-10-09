@@ -14,12 +14,14 @@ public sealed class GatewayRegistrationService : BackgroundService
     private readonly GatewayIdentity _identity;
     private readonly GatewaySettings _settings;
     private readonly GatewayControlServiceClient _controlServiceClient;
+    private readonly GatewayRegistrationState _registrationState;
 
-    public GatewayRegistrationService(GatewayIdentity identity, GatewaySettings settings, GatewayControlServiceClient controlServiceClient)
+    public GatewayRegistrationService(GatewayIdentity identity, GatewaySettings settings, GatewayControlServiceClient controlServiceClient, GatewayRegistrationState registrationState)
     {
         _identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _controlServiceClient = controlServiceClient ?? throw new ArgumentNullException(nameof(controlServiceClient));
+        _registrationState = registrationState ?? throw new ArgumentNullException(nameof(registrationState));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -34,17 +36,18 @@ public sealed class GatewayRegistrationService : BackgroundService
                     : new[] { new UriBuilder(Uri.UriSchemeHttps, _settings.RemoteHost, _settings.RemotePort).Uri.GetLeftPart(UriPartial.Authority) },
                 HostId = _identity.HostId,
                 HostIdentityPublicKeyJwk = _identity.HostIdentityPublicKeyJwk,
-                TlsSpkiSha256 = _identity.TlsSpkiSha256,
-                TlsCertificateSha256 = _identity.TlsCertificateSha256
+                TlsSpkiSha256 = _identity.TlsSpkiSha256
             };
             ControlResponse response = await _controlServiceClient.RegisterAsync(registration, stoppingToken).ConfigureAwait(false);
             if (response.IsSuccessful)
             {
+                _registrationState.SetRegistered(true);
                 Logger.Debug("GatewayRegistrationService/ExecuteAsync: Registered the Gateway identity with Control Service.");
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
                 continue;
             }
 
+            _registrationState.SetRegistered(false);
             Logger.Warn("GatewayRegistrationService/ExecuteAsync: Could not register the Gateway identity with Control Service: {0}", response.Message);
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken).ConfigureAwait(false);
         }
