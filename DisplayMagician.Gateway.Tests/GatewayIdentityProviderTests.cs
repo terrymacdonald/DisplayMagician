@@ -30,4 +30,15 @@ public sealed class GatewayIdentityProviderTests
         Assert.NotEqual(first.GetCertHashString(HashAlgorithmName.SHA256), renewed.GetCertHashString(HashAlgorithmName.SHA256));
         Assert.Equal(44, firstPin.Length);
     }
+
+    [Fact]
+    public void PublicIdentityReportsConfiguredListenerPort()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using X509Certificate2 certificate = new CertificateRequest("CN=displaymagician", key, HashAlgorithmName.SHA256)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+        GatewayIdentity identity = new GatewayIdentity("host", "{}", certificate);
+
+        Assert.Equal(34567, identity.ToView(34567).Port);
+    }
 }

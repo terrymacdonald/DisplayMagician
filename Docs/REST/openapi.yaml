@@ -15,7 +15,9 @@ info:
     DisplayMagician-Protocol-Welcome, and every response carries
     DisplayMagician-Request-Id. Protected routes now use bearer authentication;
     the target resource route layout is not implemented yet.
-    HTTP request bodies are limited to 64 KiB.
+    HTTP request bodies are limited to 64 KiB and non-streaming JSON responses
+    to 1 MiB. An oversized JSON result returns 500 response-too-large until
+    the corresponding paged target resource is implemented.
 servers:
   - url: https://{host}:{port}
     description: Gateway endpoint advertised in the pairing QR code.
@@ -61,6 +63,10 @@ paths:
                 $ref: '#/components/schemas/GatewayIdentityView'
         4XX:
           description: The HTTP request was malformed or rejected before route execution.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
   /v1/pairing/request:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -85,11 +91,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/DevicePairingResult'
         '400':
-          description: Pairing request is invalid, rejected, or unavailable.
+          description: Pairing request is invalid or rejected.
           content:
-            application/json:
+            application/problem+json:
               schema:
-                $ref: '#/components/schemas/DevicePairingResult'
+                $ref: '#/components/schemas/HttpError'
+        '410':
+          description: Pairing session expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        '503':
+          description: Control Service could not validate the pairing session.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
   /v1/pairing/status:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'
@@ -114,8 +132,26 @@ paths:
                 $ref: '#/components/schemas/DevicePairingResult'
         '410':
           description: Pairing expired or one-time credential delivery was consumed.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        '429':
+          description: The candidate polled sooner than the two-second minimum interval.
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
         4XX:
           description: The HTTP request or JSON body was malformed or exceeded host limits.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
   /v1/status:
     parameters:
       - $ref: '#/components/parameters/ProtocolHello'

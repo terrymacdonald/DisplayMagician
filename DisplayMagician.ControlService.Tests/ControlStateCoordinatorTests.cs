@@ -8,38 +8,58 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class ControlStateCoordinatorTests
 {
     [Fact]
-    public void TryAcquireDisplayControl_ReleasesIdleLeaseWhenConsoleUserChanges()
+    public void TryAcquireDisplayControl_TransfersIdleLeaseToAnotherAuthorisedSession()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();
         DateTime now = DateTime.UtcNow;
         AgentRegistration firstUser = CreateAgent("S-1-5-21-100", 10, 1000);
         AgentRegistration secondUser = CreateAgent("S-1-5-21-200", 11, 2000);
         coordinator.RegisterAgent(firstUser, now);
-        Assert.True(coordinator.TryAcquireDisplayControl(firstUser.UserSid, firstUser.SessionId, firstUser.SessionId, now).IsGranted);
+        Assert.True(coordinator.TryAcquireDisplayControl(firstUser.UserSid, firstUser.SessionId, now).IsGranted);
 
         coordinator.RegisterAgent(secondUser, now.AddSeconds(1));
-        LeaseDecision decision = coordinator.TryAcquireDisplayControl(secondUser.UserSid, secondUser.SessionId, secondUser.SessionId, now.AddSeconds(1));
+        LeaseDecision decision = coordinator.TryAcquireDisplayControl(secondUser.UserSid, secondUser.SessionId, now.AddSeconds(1));
 
         Assert.True(decision.IsGranted, decision.Message);
+        Assert.Equal(secondUser.UserSid, decision.Lease?.OwnerUserSid);
         Assert.Equal(secondUser.SessionId, decision.Lease?.OwnerSessionId);
     }
 
     [Fact]
-    public void TryAcquireDisplayControl_ReleasesIdleLeaseWhenOwnerHeartbeatIsStale()
+    public void TryAcquireDisplayControl_DoesNotTransferLeaseWhileOperationIsActive()
     {
         ControlStateCoordinator coordinator = new ControlStateCoordinator();
         DateTime now = DateTime.UtcNow;
         AgentRegistration firstUser = CreateAgent("S-1-5-21-100", 10, 1000);
         AgentRegistration secondUser = CreateAgent("S-1-5-21-200", 11, 2000);
         coordinator.RegisterAgent(firstUser, now);
-        Assert.True(coordinator.TryAcquireDisplayControl(firstUser.UserSid, firstUser.SessionId, firstUser.SessionId, now).IsGranted);
+        Assert.True(coordinator.TryAcquireDisplayControl(firstUser.UserSid, firstUser.SessionId, now).IsGranted);
+        Guid operationId = Guid.NewGuid();
+        Assert.True(coordinator.TryBeginDisplayOperation(firstUser.UserSid, firstUser.SessionId, operationId, now));
+
+        coordinator.RegisterAgent(secondUser, now.AddSeconds(1));
+        LeaseDecision decision = coordinator.TryAcquireDisplayControl(secondUser.UserSid, secondUser.SessionId, now.AddSeconds(1));
+
+        Assert.False(decision.IsGranted);
+        Assert.Equal(ControlErrorCode.DisplayControlBusy, decision.ErrorCode);
+        Assert.Equal(operationId, coordinator.GetDisplayControlLease()?.ActiveOperationId);
+    }
+
+    [Fact]
+    public void TryAcquireDisplayControl_ClearsIdleLeaseWhenOwnerHeartbeatIsStale()
+    {
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        DateTime now = DateTime.UtcNow;
+        AgentRegistration firstUser = CreateAgent("S-1-5-21-100", 10, 1000);
+        coordinator.RegisterAgent(firstUser, now);
+        Assert.True(coordinator.TryAcquireDisplayControl(firstUser.UserSid, firstUser.SessionId, now).IsGranted);
 
         DateTime later = now.AddSeconds(46);
-        coordinator.RegisterAgent(secondUser, later);
-        LeaseDecision decision = coordinator.TryAcquireDisplayControl(secondUser.UserSid, secondUser.SessionId, secondUser.SessionId, later);
+        LeaseDecision decision = coordinator.TryAcquireDisplayControl(firstUser.UserSid, firstUser.SessionId, later);
 
-        Assert.True(decision.IsGranted, decision.Message);
-        Assert.Equal(secondUser.SessionId, decision.Lease?.OwnerSessionId);
+        Assert.False(decision.IsGranted);
+        Assert.Equal(ControlErrorCode.AgentNotHealthy, decision.ErrorCode);
+        Assert.Null(coordinator.GetDisplayControlLease());
     }
 
     [Fact]

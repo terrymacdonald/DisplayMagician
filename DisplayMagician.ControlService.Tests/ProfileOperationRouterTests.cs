@@ -10,7 +10,7 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class ProfileOperationRouterTests
 {
     [Fact]
-    public async Task ListProfilesAsync_ReturnsAgentUnavailableWhenNoAgentIsRegistered()
+    public async Task ListProfilesAsync_ReturnsExecutionFailedWhenAgentAndLauncherAreUnavailable()
     {
         RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
         ProfileOperationRouter router = new ProfileOperationRouter(new ControlStateCoordinator(), commandClient);
@@ -18,7 +18,8 @@ public sealed class ProfileOperationRouterTests
         ControlResponse response = await router.ListProfilesAsync("S-1-5-21-100", 10, CancellationToken.None);
 
         Assert.False(response.IsSuccessful);
-        Assert.Equal(ControlErrorCode.AgentUnavailable, response.ErrorCode);
+        Assert.Equal(ControlErrorCode.ExecutionFailed, response.ErrorCode);
+        Assert.Contains("Session Launcher", response.Message);
         Assert.False(commandClient.WasCalled);
     }
 

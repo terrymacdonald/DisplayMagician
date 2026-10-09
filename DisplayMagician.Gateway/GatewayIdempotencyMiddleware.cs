@@ -140,6 +140,8 @@ public sealed class GatewayIdempotencyMiddleware
             context.Response.StatusCode = result.StatusCode;
             context.Response.Headers.CacheControl = "no-store";
             if (!string.IsNullOrEmpty(result.ContentType)) context.Response.ContentType = result.ContentType;
+            if (!string.IsNullOrEmpty(result.Location)) context.Response.Headers.Location = result.Location;
+            if (!string.IsNullOrEmpty(result.RetryAfter)) context.Response.Headers.RetryAfter = result.RetryAfter;
             if (!string.IsNullOrEmpty(result.ResponseJson)) await context.Response.WriteAsync(result.ResponseJson, context.RequestAborted).ConfigureAwait(false);
             return;
         }
@@ -150,14 +152,23 @@ public sealed class GatewayIdempotencyMiddleware
         try
         {
             await _next(context).ConfigureAwait(false);
-            reservation.StatusCode = context.Response.StatusCode;
-            reservation.ContentType = context.Response.ContentType ?? string.Empty;
-            reservation.ResponseJson = Encoding.UTF8.GetString(responseBody.ToArray());
-            if (reservation.ResponseJson.Length > 1024 * 1024)
+            if (context.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true &&
+                responseBody.Length > GatewayJsonResponseLimitMiddleware.MaximumJsonResponseBytes)
             {
-                throw new InvalidOperationException("The Gateway mutation response exceeded its size limit.");
+                string requestId = context.Response.Headers[GatewayProtocolMiddleware.RequestIdHeaderName].ToString();
+                responseBody.SetLength(0);
+                responseBody.Position = 0;
+                context.Response.Clear();
+                context.Response.Headers[GatewayProtocolMiddleware.RequestIdHeaderName] = requestId;
+                await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status500InternalServerError,
+                    "response-too-large", "Response too large", "The result exceeds the Gateway's 1 MiB JSON response limit.").ConfigureAwait(false);
             }
 
+            reservation.StatusCode = context.Response.StatusCode;
+            reservation.ContentType = context.Response.ContentType ?? string.Empty;
+            reservation.Location = context.Response.Headers.Location.ToString();
+            reservation.RetryAfter = context.Response.Headers.RetryAfter.ToString();
+            reservation.ResponseJson = Encoding.UTF8.GetString(responseBody.ToArray());
             await controlServiceClient.CompleteIdempotencyAsync(reservation, CancellationToken.None).ConfigureAwait(false);
             context.Response.Body = originalBody;
             responseBody.Position = 0;

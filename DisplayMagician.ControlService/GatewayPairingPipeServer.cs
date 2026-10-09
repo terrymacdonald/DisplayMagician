@@ -219,7 +219,7 @@ public sealed class GatewayPairingPipeServer
     {
         GatewayHttpIdempotencyRequest? input = JsonSerializer.Deserialize<GatewayHttpIdempotencyRequest>(request.Payload);
         if (input == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An idempotency result is required." };
-        _idempotencyStore.Complete(input.ScopeHash, input.Key, input.RequestHash, input.StatusCode, input.ContentType, input.ResponseJson);
+        _idempotencyStore.Complete(input.ScopeHash, input.Key, input.RequestHash, input.StatusCode, input.ContentType, input.Location, input.RetryAfter, input.ResponseJson);
         return new ControlResponse { IsSuccessful = true, Message = "Idempotency result retained." };
     }
 

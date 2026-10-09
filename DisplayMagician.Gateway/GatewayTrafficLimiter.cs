@@ -10,6 +10,7 @@ public sealed class GatewayTrafficLimiter
     private readonly Dictionary<string, Window> _requests = new Dictionary<string, Window>(StringComparer.Ordinal);
     private readonly Dictionary<string, Window> _mutations = new Dictionary<string, Window>(StringComparer.Ordinal);
     private readonly Dictionary<string, Window> _failedAuthentications = new Dictionary<string, Window>(StringComparer.Ordinal);
+    private DateTime _nextCleanupUtc;
 
     public bool IsSourceBlocked(string sourceIp, DateTime utcNow) => !CanConsume(_failedAuthentications, sourceIp, 20, utcNow, false);
 
@@ -19,6 +20,7 @@ public sealed class GatewayTrafficLimiter
     {
         lock (_syncRoot)
         {
+            PruneExpiredWindowsUnsafe(utcNow);
             if (!CanConsumeUnsafe(_requests, deviceId, 120, utcNow, false) ||
                 isMutation && !CanConsumeUnsafe(_mutations, deviceId, 10, utcNow, false))
             {
@@ -35,8 +37,24 @@ public sealed class GatewayTrafficLimiter
     {
         lock (_syncRoot)
         {
+            PruneExpiredWindowsUnsafe(utcNow);
             return CanConsumeUnsafe(windows, key, limit, utcNow, consume);
         }
+    }
+
+    private void PruneExpiredWindowsUnsafe(DateTime utcNow)
+    {
+        if (utcNow < _nextCleanupUtc) return;
+
+        foreach (Dictionary<string, Window> windows in new[] { _requests, _mutations, _failedAuthentications })
+        {
+            foreach (string key in new List<string>(windows.Keys))
+            {
+                if (utcNow >= windows[key].StartsUtc.AddMinutes(1)) windows.Remove(key);
+            }
+        }
+
+        _nextCleanupUtc = utcNow.AddMinutes(1);
     }
 
     private static bool CanConsumeUnsafe(Dictionary<string, Window> windows, string key, int limit, DateTime utcNow, bool consume)

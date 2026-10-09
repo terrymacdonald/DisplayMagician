@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using DisplayMagician.Contracts;
 
@@ -42,7 +43,7 @@ public sealed class GatewayHttpIdempotencyStore
                 }
 
                 return existing.Completed
-                    ? new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Replay, StatusCode = existing.StatusCode, ContentType = existing.ContentType, ResponseJson = existing.ResponseJson }
+                    ? new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Replay, StatusCode = existing.StatusCode, ContentType = existing.ContentType, Location = existing.Location, RetryAfter = existing.RetryAfter, ResponseJson = existing.ResponseJson }
                     : new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Pending };
             }
 
@@ -52,24 +53,26 @@ public sealed class GatewayHttpIdempotencyStore
         }
     }
 
-    public void Complete(string scopeHash, string key, string requestHash, int statusCode, string contentType, string responseJson)
+    public void Complete(string scopeHash, string key, string requestHash, int statusCode, string contentType, string location, string retryAfter, string responseJson)
     {
         lock (_syncRoot)
         {
             Record? record = _records.FirstOrDefault(candidate => candidate.ScopeHash == scopeHash && candidate.Key == key && candidate.RequestHash == requestHash);
-            if (record == null || statusCode is < 200 or >= 500 || responseJson.Length > 1024 * 1024)
+            if (record == null || statusCode is < 200 or > 599 || Encoding.UTF8.GetByteCount(responseJson) > 1024 * 1024)
             {
                 throw new InvalidOperationException("The Gateway idempotency result could not be stored.");
             }
 
             if (record.Completed)
             {
-                if (record.StatusCode == statusCode && record.ContentType == contentType && record.ResponseJson == responseJson) return;
+                if (record.StatusCode == statusCode && record.ContentType == contentType && record.Location == location && record.RetryAfter == retryAfter && record.ResponseJson == responseJson) return;
                 throw new InvalidOperationException("A completed Gateway idempotency result cannot be replaced.");
             }
 
             record.StatusCode = statusCode;
             record.ContentType = contentType;
+            record.Location = location;
+            record.RetryAfter = retryAfter;
             record.ResponseJson = responseJson;
             record.Completed = true;
             PersistUnsafe();
@@ -95,6 +98,8 @@ public sealed class GatewayHttpIdempotencyStore
         public bool Completed { get; set; }
         public int StatusCode { get; set; }
         public string ContentType { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string RetryAfter { get; set; } = string.Empty;
         public string ResponseJson { get; set; } = string.Empty;
     }
 }

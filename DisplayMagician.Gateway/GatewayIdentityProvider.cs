@@ -205,8 +205,8 @@ public sealed class GatewayIdentity
         Interlocked.Exchange(ref _tlsCertificate, certificate);
     }
 
-    public GatewayIdentityView ToView()
+    public GatewayIdentityView ToView(int port)
     {
-        return new GatewayIdentityView { HostId = HostId, HostIdentityPublicKeyJwk = HostIdentityPublicKeyJwk, TlsSpkiSha256 = TlsSpkiSha256 };
+        return new GatewayIdentityView { Port = port, HostId = HostId, HostIdentityPublicKeyJwk = HostIdentityPublicKeyJwk, TlsSpkiSha256 = TlsSpkiSha256 };
     }
 }

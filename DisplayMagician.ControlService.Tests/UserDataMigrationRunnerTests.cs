@@ -10,7 +10,7 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class UserDataMigrationRunnerTests
 {
     [Fact]
-    public void Migrate_PreservesAllKnownDataAndRetiresEachSourceFile()
+    public void Migrate_PreservesKnownDataAndLeavesOldLogsInPlace()
     {
         string fixtureRoot = Path.Combine(Path.GetTempPath(), $"DisplayMagician-V4-Migration-{Guid.NewGuid():N}");
         try
@@ -55,7 +55,8 @@ public sealed class UserDataMigrationRunnerTests
             Assert.True(File.Exists(Path.Combine(userPaths.IconsPath, "Steam.ico")));
             Assert.True(File.Exists(Path.Combine(userPaths.WallpaperPath, "wallpaper.jpg")));
             Assert.True(File.Exists(Path.Combine(userPaths.MessagesPath, "media", "notice.png")));
-            Assert.True(File.Exists(Path.Combine(userPaths.LogsPath, "DisplayMagician.log")));
+            Assert.False(File.Exists(Path.Combine(userPaths.LogsPath, "DisplayMagician.log")));
+            Assert.True(File.Exists(Path.Combine(legacyRoot, "Logs", "DisplayMagician.log")));
             Assert.True(File.Exists(Path.Combine(userPaths.LegacyFilesPath, "future.dat")));
             Assert.True(File.Exists(userPaths.MigrationMarkerPath));
             Assert.True(File.Exists(Path.Combine(legacyRoot, "Settings.json.old")));
@@ -80,6 +81,7 @@ public sealed class UserDataMigrationRunnerTests
             Assert.Contains(marker.Files, file => file.DestinationFilePath == Path.Combine(userPaths.AudioProfilesPath, "AudioProfiles.json") && file.RetiredLegacyPath == Path.Combine(legacyRoot, "AudioProfiles", "AudioProfiles.json.old"));
             Assert.Contains(marker.Files, file => file.DestinationFilePath == Path.Combine(userPaths.ShortcutsPath, "Shortcuts.json") && file.RetiredLegacyPath == Path.Combine(legacyRoot, "Shortcuts", "Shortcuts.json.old"));
             Assert.Contains(marker.Files, file => file.DestinationFilePath == Path.Combine(userPaths.MessagesPath, "MessagesIndex.json") && file.RetiredLegacyPath == Path.Combine(legacyRoot, "Messages", "MessagesIndex.json.old"));
+            Assert.DoesNotContain(marker.Files, file => file.LegacyFilePath == Path.Combine(legacyRoot, "Logs", "DisplayMagician.log"));
         }
         finally
         {

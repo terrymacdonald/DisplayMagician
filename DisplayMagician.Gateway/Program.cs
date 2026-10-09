@@ -82,9 +82,10 @@ internal static class Program
             return GatewayProblemDetails.WriteAsync(statusContext.HttpContext, status, code, title, "The requested resource or route is unavailable.");
         });
         app.UseMiddleware<GatewayProtocolMiddleware>();
+        app.UseMiddleware<GatewayJsonResponseLimitMiddleware>();
         app.UseMiddleware<GatewayRequestAuthenticationMiddleware>();
         app.UseMiddleware<GatewayIdempotencyMiddleware>();
-        app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity) => Results.Ok(gatewayIdentity.ToView()));
+        app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity, GatewaySettings gatewaySettings) => Results.Ok(gatewayIdentity.ToView(gatewaySettings.LanPort)));
         app.MapPost("/v1/pairing/request", async (DevicePairingRequest request, HttpContext httpContext, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
         {
             request.SourceIpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;

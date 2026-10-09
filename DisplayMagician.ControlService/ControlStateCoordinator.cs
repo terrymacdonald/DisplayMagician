@@ -132,7 +132,13 @@ public sealed class ControlStateCoordinator
 
             if (_displayControlLease != null && (_displayControlLease.OwnerSessionId != sessionId || !string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase)))
             {
-                return Deny(ControlErrorCode.DisplayControlBusy, "Another user currently owns DisplayMagician display control.");
+                if (_displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired)
+                {
+                    return Deny(ControlErrorCode.DisplayControlBusy, "Another user currently owns DisplayMagician display control.");
+                }
+
+                // An idle lease must not reserve display control indefinitely while its Agent keeps heartbeating.
+                _displayControlLease = null;
             }
 
             _displayControlLease ??= new DisplayControlLease

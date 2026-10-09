@@ -410,20 +410,6 @@ public sealed class DevicePairingResult
     public string[]? GrantedCapabilities { get; set; }
 }
 
-/// <summary>Transport-neutral P-256 request proof. The signature covers method, path, body hash, timestamp, and nonce.</summary>
-public sealed class SignedGatewayRequest
-{
-    public string DeviceId { get; set; } = string.Empty;
-    public DateTime TimestampUtc { get; set; }
-    public string Nonce { get; set; } = string.Empty;
-    public string Signature { get; set; } = string.Empty;
-
-    public static string CreateCanonicalPayload(string method, string path, string bodySha256, DateTime timestampUtc, string nonce)
-    {
-        return string.Concat(method?.Trim().ToUpperInvariant() ?? string.Empty, "\n", path ?? string.Empty, "\n", bodySha256 ?? string.Empty, "\n", timestampUtc.ToUniversalTime().ToString("O"), "\n", nonce ?? string.Empty);
-    }
-}
-
 /// <summary>Gateway-only authenticated device context. It is never returned to an unpaired network client.</summary>
 public sealed class GatewayAuthenticationResult
 {
@@ -436,14 +422,12 @@ public sealed class GatewayAuthenticationResult
     public string Message { get; set; } = string.Empty;
 }
 
-/// <summary>Gateway-only verification request carrying a signed remote HTTP request's immutable details.</summary>
+/// <summary>Gateway-only bearer verification request carrying the remote HTTP request's immutable details.</summary>
 public sealed class GatewayAuthenticationRequest
 {
     public string BearerCredential { get; set; } = string.Empty;
-    public SignedGatewayRequest SignedRequest { get; set; } = new SignedGatewayRequest();
     public string Method { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
-    public string BodySha256 { get; set; } = string.Empty;
     public string SourceIpAddress { get; set; } = string.Empty;
 }
 
@@ -456,6 +440,8 @@ public sealed class GatewayHttpIdempotencyRequest
     public string RequestHash { get; set; } = string.Empty;
     public int StatusCode { get; set; }
     public string ContentType { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string RetryAfter { get; set; } = string.Empty;
     public string ResponseJson { get; set; } = string.Empty;
 }
 
@@ -464,6 +450,8 @@ public sealed class GatewayHttpIdempotencyResult
     public GatewayHttpIdempotencyState State { get; set; }
     public int StatusCode { get; set; }
     public string ContentType { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string RetryAfter { get; set; } = string.Empty;
     public string ResponseJson { get; set; } = string.Empty;
 }
 
