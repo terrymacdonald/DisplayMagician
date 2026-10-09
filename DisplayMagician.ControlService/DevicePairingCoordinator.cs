@@ -36,7 +36,7 @@ public sealed class DevicePairingCoordinator
             throw new ArgumentOutOfRangeException(nameof(ownerSessionId));
         }
         ArgumentNullException.ThrowIfNull(gateway);
-        if (string.IsNullOrWhiteSpace(gateway.GatewayUri) || string.IsNullOrWhiteSpace(gateway.HostId) || string.IsNullOrWhiteSpace(gateway.HostIdentityPublicKeyJwk) || string.IsNullOrWhiteSpace(gateway.TlsCertificateSha256))
+        if (string.IsNullOrWhiteSpace(gateway.GatewayUri) || string.IsNullOrWhiteSpace(gateway.HostId) || string.IsNullOrWhiteSpace(gateway.HostIdentityPublicKeyJwk) || string.IsNullOrWhiteSpace(gateway.TlsSpkiSha256))
         {
             throw new ArgumentException("A complete Gateway identity is required.", nameof(gateway));
         }
@@ -310,7 +310,7 @@ public sealed class DevicePairingCoordinator
 
     private static GatewayPairingIdentity Copy(GatewayPairingIdentity gateway)
     {
-        return new GatewayPairingIdentity { GatewayUri = gateway.GatewayUri, HostId = gateway.HostId, HostIdentityPublicKeyJwk = gateway.HostIdentityPublicKeyJwk, TlsCertificateSha256 = gateway.TlsCertificateSha256 };
+        return new GatewayPairingIdentity { GatewayUri = gateway.GatewayUri, HostId = gateway.HostId, HostIdentityPublicKeyJwk = gateway.HostIdentityPublicKeyJwk, TlsSpkiSha256 = gateway.TlsSpkiSha256, TlsCertificateSha256 = gateway.TlsCertificateSha256 };
     }
 
     private sealed class PairingSessionRecord

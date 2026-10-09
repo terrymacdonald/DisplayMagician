@@ -158,7 +158,7 @@ public sealed class GatewayPairingPipeServer
     private ControlResponse Register(ControlEnvelope request)
     {
         GatewayRegistration? registration = JsonSerializer.Deserialize<GatewayRegistration>(request.Payload);
-        if (registration?.Identity == null || string.IsNullOrWhiteSpace(registration.Identity.GatewayUri) || string.IsNullOrWhiteSpace(registration.Identity.HostId) || string.IsNullOrWhiteSpace(registration.Identity.HostIdentityPublicKeyJwk) || string.IsNullOrWhiteSpace(registration.Identity.TlsCertificateSha256))
+        if (registration?.Identity == null || string.IsNullOrWhiteSpace(registration.Identity.GatewayUri) || string.IsNullOrWhiteSpace(registration.Identity.HostId) || string.IsNullOrWhiteSpace(registration.Identity.HostIdentityPublicKeyJwk) || string.IsNullOrWhiteSpace(registration.Identity.TlsSpkiSha256))
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Gateway identity is invalid." };
         }
@@ -315,12 +315,28 @@ public sealed class GatewayIdentityRegistry
     public GatewayPairingIdentity? Get()
     {
         GatewayPairingIdentity? identity = _identity;
-        return identity == null ? null : new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsCertificateSha256 = identity.TlsCertificateSha256 };
+        return identity == null ? null : new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, AdditionalGatewayUris = (string[])identity.AdditionalGatewayUris.Clone(), HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsSpkiSha256 = identity.TlsSpkiSha256, TlsCertificateSha256 = identity.TlsCertificateSha256 };
     }
 
     public void Set(GatewayPairingIdentity identity)
     {
         ArgumentNullException.ThrowIfNull(identity);
-        _identity = new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsCertificateSha256 = identity.TlsCertificateSha256 };
+        _identity = new GatewayPairingIdentity { GatewayUri = identity.GatewayUri, AdditionalGatewayUris = (string[])(identity.AdditionalGatewayUris ?? Array.Empty<string>()).Clone(), HostId = identity.HostId, HostIdentityPublicKeyJwk = identity.HostIdentityPublicKeyJwk, TlsSpkiSha256 = identity.TlsSpkiSha256, TlsCertificateSha256 = identity.TlsCertificateSha256 };
+    }
+
+    public bool AllowsGatewayUri(Uri candidate)
+    {
+        GatewayPairingIdentity? identity = _identity;
+        if (identity == null || !candidate.IsAbsoluteUri || candidate.Scheme != Uri.UriSchemeHttps ||
+            candidate.UserInfo.Length != 0 || candidate.AbsolutePath != "/" || candidate.Query.Length != 0 || candidate.Fragment.Length != 0)
+        {
+            return false;
+        }
+
+        string authority = candidate.GetLeftPart(UriPartial.Authority);
+        return new[] { identity.GatewayUri }.Concat(identity.AdditionalGatewayUris).Any(registeredUri =>
+            Uri.TryCreate(registeredUri, UriKind.Absolute, out Uri? allowed) &&
+            allowed.Scheme == Uri.UriSchemeHttps &&
+            string.Equals(authority, allowed.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase));
     }
 }

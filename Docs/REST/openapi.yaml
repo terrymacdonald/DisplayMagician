@@ -16,6 +16,7 @@ info:
     DisplayMagician-Protocol-Welcome, and every response carries
     DisplayMagician-Request-Id. The target bearer authentication and resource
     routes are not implemented yet.
+    HTTP request bodies are limited to 64 KiB.
 servers:
   - url: https://{host}:{port}
     description: Gateway endpoint advertised in the pairing QR code.
@@ -444,7 +445,7 @@ components:
       format: uuid
     GatewayIdentityView:
       type: object
-      required: [protocolVersion, port, hostId, hostIdentityPublicKeyJwk, tlsCertificateSha256]
+      required: [protocolVersion, port, hostId, hostIdentityPublicKeyJwk, tlsSpkiSha256, tlsCertificateSha256]
       properties:
         protocolVersion:
           type: integer
@@ -454,12 +455,17 @@ components:
           default: 22846
         hostId:
           type: string
+          description: Unpadded base64url SHA-256 RFC 7638 JWK thumbprint of the host P-256 public key.
         hostIdentityPublicKeyJwk:
           type: string
           description: Public P-256 host identity as JWK JSON text.
+        tlsSpkiSha256:
+          type: string
+          description: Padded Base64 SHA-256 of the TLS SubjectPublicKeyInfo; stable across renewal with the same key.
         tlsCertificateSha256:
           type: string
-          description: TLS certificate SHA-256 fingerprint.
+          deprecated: true
+          description: Prototype TLS certificate SHA-256 fingerprint; pairing QR codes now carry tlsSpkiSha256.
     DevicePairingRequest:
       type: object
       required:

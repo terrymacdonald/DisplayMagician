@@ -10,6 +10,10 @@ Control Service routes work only to a ready Agent whose process and command-pipe
 
 Every local request carries the shared transport-neutral protocol hello and receives a negotiated protocol/capability welcome before work is processed. This is a compatibility boundary only; remote authentication belongs to the future REST gateway, not to the Windows service listener. ControlService remains the source of truth for pairing approval, expiry, revocation, ownership, and capability grants.
 
+Administrator Gateway settings updates validate bind addresses, advertised DNS/IP hosts, and ports before saving so invalid endpoints cannot prevent Gateway startup.
+Pairing QR creation also checks that the requested HTTPS origin matches an endpoint registered by the running Gateway.
+ControlService reconciles the installer-owned Private, Domain, and Public Gateway firewall rules with the saved listener port and `AllowPublicNetworks` setting. Public is off by default; only an administrator may change the setting.
+
 ## Development
 
 ```powershell

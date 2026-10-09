@@ -4,6 +4,9 @@ This project is the designer-backed WinForms desktop application. It provides th
 
 The desktop application is a client of `DisplayMagician.ControlService`; it must not directly perform Agent-owned display, audio, game, process, or authoritative per-user storage work. Shared transport types come from `DisplayMagician.Contracts`, while portable shortcut definitions come from `DisplayMagician.ConfigurationDefinitions`.
 
+The pairing and server-settings forms show the local/routed-network workflow for the first REST release. Their Remote Network controls remain in the Designer and code but are hidden until user-enabled Internet access is supported.
+Server Settings can also allow paired devices on Windows Public networks after administrator approval and a confirmation. This changes the Gateway firewall rule for Public networks; it does not configure router port forwarding.
+
 ## Development
 
 Build the project from the repository root:

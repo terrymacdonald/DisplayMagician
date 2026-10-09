@@ -23,8 +23,9 @@ public sealed class ControlServiceWorker : BackgroundService
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
     private readonly ControlStateCoordinator _controlStateCoordinator;
+    private readonly GatewayFirewallManager _gatewayFirewallManager;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, GatewayPairingPipeServer gatewayPairingPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ControlStateCoordinator controlStateCoordinator)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, GatewayPairingPipeServer gatewayPairingPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ControlStateCoordinator controlStateCoordinator, GatewayFirewallManager gatewayFirewallManager)
     {
         _pipeServer = pipeServer;
         _clientPipeServer = clientPipeServer;
@@ -38,6 +39,7 @@ public sealed class ControlServiceWorker : BackgroundService
         _operationStatusStore = operationStatusStore;
         _operationDecisionStore = operationDecisionStore;
         _controlStateCoordinator = controlStateCoordinator;
+        _gatewayFirewallManager = gatewayFirewallManager;
         _operationStatusStore.StatusUpdated += PublishOperationStatus;
         _operationDecisionStore.DecisionUpdated += PublishOperationDecision;
     }
@@ -56,13 +58,46 @@ public sealed class ControlServiceWorker : BackgroundService
             // The installer provisions ProgramData ACLs. Keep the local coordinator available for development diagnostics if they are absent.
             _logger.Error(ex, "ControlServiceWorker/ExecuteAsync: Machine storage at {0} is unavailable. Persistent operations, including migration, will fail until installer permissions are repaired.", _storagePaths.MachinePath);
         }
+        bool firewallReady = false;
+        try
+        {
+            _gatewayFirewallManager.Reconcile();
+            firewallReady = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "ControlServiceWorker/ExecuteAsync: Could not reconcile the installed Gateway firewall rules with saved settings.");
+        }
         Task agentServer = _pipeServer.RunAsync(stoppingToken);
         Task clientServer = _clientPipeServer.RunAsync(stoppingToken);
         Task clientEventServer = _clientEventPipeServer.RunAsync(stoppingToken);
         Task gatewayPairingServer = _gatewayPairingPipeServer.RunAsync(stoppingToken);
         Task clientSync = RunClientSyncAsync(stoppingToken);
-        await Task.WhenAll(agentServer, clientServer, clientEventServer, gatewayPairingServer, clientSync).ConfigureAwait(false);
+        Task firewallRetry = firewallReady ? Task.CompletedTask : RetryGatewayFirewallAsync(stoppingToken);
+        await Task.WhenAll(agentServer, clientServer, clientEventServer, gatewayPairingServer, clientSync, firewallRetry).ConfigureAwait(false);
         _logger.Info("ControlServiceWorker/ExecuteAsync: Control Service pipe listener has stopped.");
+    }
+
+    private async Task RetryGatewayFirewallAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken).ConfigureAwait(false);
+                _gatewayFirewallManager.Reconcile();
+                _logger.Info("ControlServiceWorker/RetryGatewayFirewallAsync: Reconciled the installed Gateway firewall rules after a startup failure.");
+                return;
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "ControlServiceWorker/RetryGatewayFirewallAsync: Gateway firewall rules are still unavailable; retrying in one minute.");
+            }
+        }
     }
 
     private async Task RunClientSyncAsync(CancellationToken stoppingToken)

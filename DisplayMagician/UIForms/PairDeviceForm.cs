@@ -121,7 +121,7 @@ public partial class PairDeviceForm : DisplayMagicianForm
         {
             string gatewayUri = GetSelectedGatewayUri();
             DevicePairingQrCode qrCode = await _controlServiceClient.CreateDevicePairingQrAsync(gatewayUri, CancellationToken.None);
-            string payload = $"displaymagician://pair?session={Uri.EscapeDataString(qrCode.PairingSessionId.ToString("D"))}&secret={Uri.EscapeDataString(qrCode.PairingSecret)}&gateway={Uri.EscapeDataString(qrCode.Gateway.GatewayUri)}&hostId={Uri.EscapeDataString(qrCode.Gateway.HostId)}&hostKey={Uri.EscapeDataString(qrCode.Gateway.HostIdentityPublicKeyJwk)}&tlsFingerprint={Uri.EscapeDataString(qrCode.Gateway.TlsCertificateSha256)}&expires={Uri.EscapeDataString(qrCode.ExpiresUtc.ToUniversalTime().ToString("O"))}";
+            string payload = $"displaymagician://pair?session={Uri.EscapeDataString(qrCode.PairingSessionId.ToString("D"))}&secret={Uri.EscapeDataString(qrCode.PairingSecret)}&gateway={Uri.EscapeDataString(qrCode.Gateway.GatewayUri)}&hostId={Uri.EscapeDataString(qrCode.Gateway.HostId)}&hostKey={Uri.EscapeDataString(qrCode.Gateway.HostIdentityPublicKeyJwk)}&tlsSpkiSha256={Uri.EscapeDataString(qrCode.Gateway.TlsSpkiSha256)}&expires={Uri.EscapeDataString(qrCode.ExpiresUtc.ToUniversalTime().ToString("O"))}";
             using QRCodeGenerator generator = new QRCodeGenerator();
             using QRCodeData data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
             PngByteQRCode pngQrCode = new PngByteQRCode(data);

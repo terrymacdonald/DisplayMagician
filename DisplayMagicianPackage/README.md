@@ -1,5 +1,7 @@
 # DisplayMagicianPackage
 
+The Gateway installer creates separate inbound TCP firewall rules for Private, Domain, and Public Windows network profiles. Private and Domain are enabled by default; Public is disabled until an administrator enables it in WinForms Server Settings. ControlService keeps their ports and enabled state aligned with the saved Gateway settings.
+
 This WiX project builds the DisplayMagician MSI. It publishes and packages the desktop application, console, Control Service, Session Launcher, User Agent, the sparse MSIX identity package, and installer resources. It also defines installation folders, service registration, context-menu integration, and installer UI.
 
 ## Build

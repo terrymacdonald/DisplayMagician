@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net;
 using System.Text.Json;
 using DisplayMagician.Contracts;
 using NLog;
@@ -61,8 +62,24 @@ public sealed class GatewaySettingsStore
             throw new ArgumentException("Gateway ports must be between 1 and 65535.", nameof(settings));
         }
 
-        return new GatewaySettings { LanBindAddress = string.IsNullOrWhiteSpace(settings.LanBindAddress) ? "*" : settings.LanBindAddress.Trim(), LanAdvertisedHost = settings.LanAdvertisedHost?.Trim() ?? string.Empty, LanPort = settings.LanPort, RemoteHost = settings.RemoteHost?.Trim() ?? string.Empty, RemotePort = settings.RemotePort };
+        string bindAddress = string.IsNullOrWhiteSpace(settings.LanBindAddress) ? "*" : settings.LanBindAddress.Trim();
+        if (bindAddress != "*" && !IPAddress.TryParse(bindAddress, out _))
+        {
+            throw new ArgumentException("Gateway bind address must be an IP address or all interfaces.", nameof(settings));
+        }
+
+        string advertisedHost = settings.LanAdvertisedHost?.Trim() ?? string.Empty;
+        string remoteHost = settings.RemoteHost?.Trim() ?? string.Empty;
+        if ((!string.IsNullOrEmpty(advertisedHost) && !IsDnsOrIpAddress(advertisedHost)) ||
+            (!string.IsNullOrEmpty(remoteHost) && !IsDnsOrIpAddress(remoteHost)))
+        {
+            throw new ArgumentException("Gateway advertised hosts must be DNS names or IP addresses.", nameof(settings));
+        }
+
+        return new GatewaySettings { LanBindAddress = bindAddress, LanAdvertisedHost = advertisedHost, LanPort = settings.LanPort, AllowPublicNetworks = settings.AllowPublicNetworks, RemoteHost = remoteHost, RemotePort = settings.RemotePort };
     }
 
-    private static GatewaySettings Copy(GatewaySettings settings) => new GatewaySettings { LanBindAddress = settings.LanBindAddress, LanAdvertisedHost = settings.LanAdvertisedHost, LanPort = settings.LanPort, RemoteHost = settings.RemoteHost, RemotePort = settings.RemotePort };
+    private static bool IsDnsOrIpAddress(string host) => IPAddress.TryParse(host, out _) || Uri.CheckHostName(host) == UriHostNameType.Dns;
+
+    private static GatewaySettings Copy(GatewaySettings settings) => new GatewaySettings { LanBindAddress = settings.LanBindAddress, LanAdvertisedHost = settings.LanAdvertisedHost, LanPort = settings.LanPort, AllowPublicNetworks = settings.AllowPublicNetworks, RemoteHost = settings.RemoteHost, RemotePort = settings.RemotePort };
 }

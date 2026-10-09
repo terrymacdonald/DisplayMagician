@@ -284,8 +284,10 @@ public enum DevicePairingState
 public sealed class GatewayPairingIdentity
 {
     public string GatewayUri { get; set; } = string.Empty;
+    public string[] AdditionalGatewayUris { get; set; } = Array.Empty<string>();
     public string HostId { get; set; } = string.Empty;
     public string HostIdentityPublicKeyJwk { get; set; } = string.Empty;
+    public string TlsSpkiSha256 { get; set; } = string.Empty;
     public string TlsCertificateSha256 { get; set; } = string.Empty;
 }
 
@@ -296,6 +298,7 @@ public sealed class GatewayIdentityView
     public int Port { get; set; } = ControlProtocol.DefaultGatewayPort;
     public string HostId { get; set; } = string.Empty;
     public string HostIdentityPublicKeyJwk { get; set; } = string.Empty;
+    public string TlsSpkiSha256 { get; set; } = string.Empty;
     public string TlsCertificateSha256 { get; set; } = string.Empty;
 }
 
@@ -305,6 +308,7 @@ public sealed class GatewaySettings
     public string LanBindAddress { get; set; } = "*";
     public string LanAdvertisedHost { get; set; } = string.Empty;
     public int LanPort { get; set; } = ControlProtocol.DefaultGatewayPort;
+    public bool AllowPublicNetworks { get; set; }
     public string RemoteHost { get; set; } = string.Empty;
     public int RemotePort { get; set; } = ControlProtocol.DefaultGatewayPort;
 }

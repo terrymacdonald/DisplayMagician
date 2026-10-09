@@ -24,16 +24,19 @@ public sealed class GatewayRegistrationService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        GatewayPairingIdentity registration = new GatewayPairingIdentity
-        {
-            GatewayUri = $"https://localhost:{_settings.LanPort}",
-            HostId = _identity.HostId,
-            HostIdentityPublicKeyJwk = _identity.HostIdentityPublicKeyJwk,
-            TlsCertificateSha256 = _identity.TlsCertificateSha256
-        };
-
         while (!stoppingToken.IsCancellationRequested)
         {
+            GatewayPairingIdentity registration = new GatewayPairingIdentity
+            {
+                GatewayUri = new UriBuilder(Uri.UriSchemeHttps, string.IsNullOrWhiteSpace(_settings.LanAdvertisedHost) ? "localhost" : _settings.LanAdvertisedHost, _settings.LanPort).Uri.GetLeftPart(UriPartial.Authority),
+                AdditionalGatewayUris = string.IsNullOrWhiteSpace(_settings.RemoteHost)
+                    ? Array.Empty<string>()
+                    : new[] { new UriBuilder(Uri.UriSchemeHttps, _settings.RemoteHost, _settings.RemotePort).Uri.GetLeftPart(UriPartial.Authority) },
+                HostId = _identity.HostId,
+                HostIdentityPublicKeyJwk = _identity.HostIdentityPublicKeyJwk,
+                TlsSpkiSha256 = _identity.TlsSpkiSha256,
+                TlsCertificateSha256 = _identity.TlsCertificateSha256
+            };
             ControlResponse response = await _controlServiceClient.RegisterAsync(registration, stoppingToken).ConfigureAwait(false);
             if (response.IsSuccessful)
             {

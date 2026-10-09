@@ -28,7 +28,7 @@ The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY**, w
 
 | Area | Target decision |
 |---|---|
-| Network exposure | First-release support includes local and routed private networks, without a hard-coded same-subnet client check. Gateway does not configure router forwarding or advertise WAN access. Official user-enabled port-forwarding support is deferred; deliberate router/firewall changes may still make Gateway reachable from the Internet. |
+| Network exposure | First-release support includes local and routed private networks, without a hard-coded same-subnet client check. Installer firewall rules allow Private and Domain Windows network profiles by default; an administrator may also enable the Public profile in WinForms Server Settings. This setting does not configure router forwarding or advertise WAN access. Official user-enabled port-forwarding support is deferred; deliberate router/firewall changes may still make Gateway reachable from the Internet. |
 | Transport | All Gateway requests use HTTPS. |
 | Server trust | Pairing pins the Gateway TLS public key/SPKI and stable host identity, not a short-lived complete certificate fingerprint. |
 | TLS renewal | Gateway renews its TLS certificate automatically while retaining the pinned TLS key/SPKI whenever possible. |

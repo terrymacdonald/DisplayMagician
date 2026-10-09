@@ -189,6 +189,8 @@ REST clients never choose an internal pipe, inspect protected machine paths, or 
 
 First-release support covers local and routed private networks. A same-subnet source-address check is not part of Gateway trust. Gateway still requires pairing, credentials, capability checks, and user isolation.
 
+Installer firewall rules permit Private and Domain Windows network profiles by default. An administrator may opt in to Public networks through WinForms Server Settings; this setting changes the Windows firewall allowance and does not configure port forwarding.
+
 - Network advertisements can be forged; trust remains anchored in pairing and the pinned host.
 - Do not configure port forwarding, automatic router exposure, or direct Internet access as part of discovery. Official user-enabled Internet access is deferred; deliberate router/firewall changes may still expose Gateway.
 - A Telegram connector introduces an external command source but requires no inbound Internet access to Gateway.

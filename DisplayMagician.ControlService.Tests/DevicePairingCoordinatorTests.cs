@@ -169,7 +169,7 @@ public sealed class DevicePairingCoordinatorTests
         }
     }
 
-    private static GatewayPairingIdentity CreateGateway() => new GatewayPairingIdentity { GatewayUri = "https://displaymagician.local:22846", HostId = "host-123", HostIdentityPublicKeyJwk = ValidP256Jwk, TlsCertificateSha256 = new string('A', 64) };
+    private static GatewayPairingIdentity CreateGateway() => new GatewayPairingIdentity { GatewayUri = "https://displaymagician.local:22846", HostId = "host-123", HostIdentityPublicKeyJwk = ValidP256Jwk, TlsSpkiSha256 = Convert.ToBase64String(new byte[32]), TlsCertificateSha256 = new string('A', 64) };
     private static DevicePairingRequest CreateRequest(DevicePairingQrCode qrCode) => new DevicePairingRequest { PairingSessionId = qrCode.PairingSessionId, PairingSecret = qrCode.PairingSecret, DeviceId = "phone-123", DeviceDisplayName = "Phone", ClientType = "Android phone", SourceIpAddress = "192.168.1.20", DevicePublicKeyJwk = ValidP256Jwk, RequestedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.PairingApprove } };
 
     private const string ValidP256Jwk = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"y\":\"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\"}";

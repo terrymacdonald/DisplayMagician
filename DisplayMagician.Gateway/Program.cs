@@ -25,29 +25,31 @@ internal static class Program
     private static void Main(string[] args)
     {
         ConfigureLogging();
-        GatewayIdentityProvider identityProvider = new GatewayIdentityProvider();
-        GatewayIdentity identity = identityProvider.GetOrCreate();
         GatewaySettings settings = GatewaySettingsProvider.Load();
+        GatewayIdentityProvider identityProvider = new GatewayIdentityProvider();
+        GatewayIdentity identity = identityProvider.GetOrCreate(settings);
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         builder.Services.AddWindowsService(options => options.ServiceName = "DisplayMagicianGateway");
         builder.Services.AddSingleton(identity);
+        builder.Services.AddSingleton(identityProvider);
         builder.Services.AddSingleton(settings);
         builder.Services.AddSingleton<GatewayControlServiceClient>();
         builder.Services.AddSingleton<GatewayStatusFeed>();
         builder.Services.AddHostedService(provider => provider.GetRequiredService<GatewayStatusFeed>());
         builder.Services.AddSingleton<IGatewayAuthenticationClient>(provider => provider.GetRequiredService<GatewayControlServiceClient>());
         builder.Services.AddHostedService<GatewayRegistrationService>();
+        builder.Services.AddHostedService<GatewayCertificateRenewalService>();
         builder.WebHost.ConfigureKestrel(options =>
         {
             options.AddServerHeader = false;
-            options.Limits.MaxRequestBodySize = ControlProtocol.MaximumMessageLength;
+            options.Limits.MaxRequestBodySize = 64 * 1024;
             if (settings.LanBindAddress == "*" || string.IsNullOrWhiteSpace(settings.LanBindAddress))
             {
-                options.ListenAnyIP(settings.LanPort, listenOptions => listenOptions.UseHttps(identity.TlsCertificate));
+                options.ListenAnyIP(settings.LanPort, listenOptions => listenOptions.UseHttps(httpsOptions => httpsOptions.ServerCertificateSelector = (_, _) => identity.TlsCertificate));
             }
             else if (IPAddress.TryParse(settings.LanBindAddress, out IPAddress? bindAddress))
             {
-                options.Listen(bindAddress, settings.LanPort, listenOptions => listenOptions.UseHttps(identity.TlsCertificate));
+                options.Listen(bindAddress, settings.LanPort, listenOptions => listenOptions.UseHttps(httpsOptions => httpsOptions.ServerCertificateSelector = (_, _) => identity.TlsCertificate));
             }
             else
             {

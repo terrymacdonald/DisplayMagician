@@ -31,13 +31,14 @@ public sealed class ControlClientPipeServer
     private readonly StoragePaths _storagePaths;
     private readonly ControlRequestReplayStore _requestReplayStore;
     private readonly GatewaySettingsStore _gatewaySettingsStore;
+    private readonly GatewayFirewallManager _gatewayFirewallManager;
     private readonly DevicePairingCoordinator _devicePairingCoordinator;
     private readonly GatewayIdentityRegistry _gatewayIdentityRegistry;
     private readonly MachineDiagnosticLogLevelStore _machineDiagnosticLogLevelStore;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
     private readonly SemaphoreSlim _replayableMutationLock = new SemaphoreSlim(1, 1);
 
-    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore, GatewaySettingsStore gatewaySettingsStore, DevicePairingCoordinator devicePairingCoordinator, GatewayIdentityRegistry gatewayIdentityRegistry, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
+    public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore, GatewaySettingsStore gatewaySettingsStore, GatewayFirewallManager gatewayFirewallManager, DevicePairingCoordinator devicePairingCoordinator, GatewayIdentityRegistry gatewayIdentityRegistry, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
     {
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
@@ -50,6 +51,7 @@ public sealed class ControlClientPipeServer
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
         _requestReplayStore = requestReplayStore ?? throw new ArgumentNullException(nameof(requestReplayStore));
         _gatewaySettingsStore = gatewaySettingsStore ?? throw new ArgumentNullException(nameof(gatewaySettingsStore));
+        _gatewayFirewallManager = gatewayFirewallManager ?? throw new ArgumentNullException(nameof(gatewayFirewallManager));
         _devicePairingCoordinator = devicePairingCoordinator ?? throw new ArgumentNullException(nameof(devicePairingCoordinator));
         _gatewayIdentityRegistry = gatewayIdentityRegistry ?? throw new ArgumentNullException(nameof(gatewayIdentityRegistry));
         _machineDiagnosticLogLevelStore = machineDiagnosticLogLevelStore ?? throw new ArgumentNullException(nameof(machineDiagnosticLogLevelStore));
@@ -471,7 +473,20 @@ public sealed class ControlClientPipeServer
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "Gateway settings are required." };
         }
 
-        return new ControlResponse { IsSuccessful = true, Message = "Gateway settings updated.", GatewaySettings = _gatewaySettingsStore.Update(settings) };
+        try
+        {
+            GatewaySettings updated = _gatewayFirewallManager.UpdateAndApply(settings);
+            return new ControlResponse { IsSuccessful = true, Message = "Gateway settings and firewall rules updated.", GatewaySettings = updated };
+        }
+        catch (ArgumentException ex)
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = ex.Message };
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "ControlClientPipeServer/UpdateGatewaySettings: Could not save Gateway settings and firewall rules.");
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "Gateway settings or firewall rules could not be updated. Check the Control Service log and retry." };
+        }
     }
 
     private ControlResponse GetGatewayIdentity()
@@ -479,19 +494,19 @@ public sealed class ControlClientPipeServer
         GatewayPairingIdentity? gateway = _gatewayIdentityRegistry.Get();
         return gateway == null
             ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The Gateway has not registered its identity yet." }
-            : new ControlResponse { IsSuccessful = true, GatewayIdentity = new GatewayIdentityView { HostId = gateway.HostId, HostIdentityPublicKeyJwk = gateway.HostIdentityPublicKeyJwk, TlsCertificateSha256 = gateway.TlsCertificateSha256 } };
+            : new ControlResponse { IsSuccessful = true, GatewayIdentity = new GatewayIdentityView { HostId = gateway.HostId, HostIdentityPublicKeyJwk = gateway.HostIdentityPublicKeyJwk, TlsSpkiSha256 = gateway.TlsSpkiSha256, TlsCertificateSha256 = gateway.TlsCertificateSha256 } };
     }
 
     private ControlResponse CreateDevicePairingQr(PipeClientIdentity identity, ControlEnvelope request)
     {
         CreateDevicePairingQrRequest? pairingRequest = JsonSerializer.Deserialize<CreateDevicePairingQrRequest>(request.Payload);
         GatewayPairingIdentity? registeredGateway = _gatewayIdentityRegistry.Get();
-        if (pairingRequest == null || !Uri.TryCreate(pairingRequest.GatewayUri, UriKind.Absolute, out Uri? gatewayUri) || gatewayUri.Scheme != Uri.UriSchemeHttps || registeredGateway == null)
+        if (pairingRequest == null || !Uri.TryCreate(pairingRequest.GatewayUri, UriKind.Absolute, out Uri? gatewayUri) || registeredGateway == null || !_gatewayIdentityRegistry.AllowsGatewayUri(gatewayUri))
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A registered Gateway and valid HTTPS endpoint are required." };
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The pairing endpoint must match a registered Gateway HTTPS endpoint." };
         }
 
-        GatewayPairingIdentity gateway = new GatewayPairingIdentity { GatewayUri = gatewayUri.AbsoluteUri.TrimEnd('/'), HostId = registeredGateway.HostId, HostIdentityPublicKeyJwk = registeredGateway.HostIdentityPublicKeyJwk, TlsCertificateSha256 = registeredGateway.TlsCertificateSha256 };
+        GatewayPairingIdentity gateway = new GatewayPairingIdentity { GatewayUri = gatewayUri.AbsoluteUri.TrimEnd('/'), HostId = registeredGateway.HostId, HostIdentityPublicKeyJwk = registeredGateway.HostIdentityPublicKeyJwk, TlsSpkiSha256 = registeredGateway.TlsSpkiSha256, TlsCertificateSha256 = registeredGateway.TlsCertificateSha256 };
         return new ControlResponse { IsSuccessful = true, DevicePairingQrCode = _devicePairingCoordinator.CreateQrCode(identity.UserSid, identity.SessionId, gateway, DateTime.UtcNow) };
     }
 

@@ -4,11 +4,13 @@
 
 **Status:** Target client workflows - not fully implemented
 
-**Transport:** HTTPS and Server-Sent Events (SSE) on local and routed private networks
+**Transport:** HTTPS and Server-Sent Events (SSE) on enabled local or routed networks
 
 ## 1. Start here
 
 Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the current prototype, not these target workflows.
+
+Gateway firewall access is enabled for Windows Private and Domain networks by default. An administrator can also enable Public networks in the desktop Server Settings form; phone clients use the same HTTPS and pairing flow on each profile.
 
 The examples below illustrate target interactions. Exact schemas and several lifecycle details still need to be finalized in the [roadmap](REST-API-ROADMAP.md). Do not generate a target production client from the prototype OpenAPI or assume an example is a complete schema.
 

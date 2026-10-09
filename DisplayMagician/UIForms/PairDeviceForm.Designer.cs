@@ -78,13 +78,14 @@ namespace DisplayMagician.UIForms
             rdo_local_lan.ForeColor = System.Drawing.Color.White;
             rdo_local_lan.Location = new System.Drawing.Point(20, 18);
             rdo_local_lan.Name = "rdo_local_lan";
-            rdo_local_lan.Text = "Local LAN";
+            rdo_local_lan.Text = "Local or routed network";
             rdo_local_lan.CheckedChanged += rdo_gateway_location_CheckedChanged;
             rdo_remote_network.AutoSize = true;
             rdo_remote_network.ForeColor = System.Drawing.Color.White;
             rdo_remote_network.Location = new System.Drawing.Point(140, 18);
             rdo_remote_network.Name = "rdo_remote_network";
             rdo_remote_network.Text = "Remote Network";
+            rdo_remote_network.Visible = false;
             rdo_remote_network.CheckedChanged += rdo_gateway_location_CheckedChanged;
             pb_qr_code.BackColor = System.Drawing.Color.White;
             pb_qr_code.Location = new System.Drawing.Point(166, 50);

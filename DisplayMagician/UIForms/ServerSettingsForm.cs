@@ -15,6 +15,7 @@ public partial class ServerSettingsForm : DisplayMagicianForm
 {
     private readonly ControlServicePipeClient _controlServiceClient = new ControlServicePipeClient();
     private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+    private bool _originalAllowPublicNetworks;
 
     public ServerSettingsForm()
     {
@@ -35,6 +36,8 @@ public partial class ServerSettingsForm : DisplayMagicianForm
         txt_lan_port.Text = settings.LanPort.ToString();
         txt_remote_host.Text = settings.RemoteHost;
         txt_remote_port.Text = settings.RemotePort.ToString();
+        chk_allow_public_networks.Checked = settings.AllowPublicNetworks;
+        _originalAllowPublicNetworks = settings.AllowPublicNetworks;
     }
 
     private async void btn_refresh_Click(object sender, EventArgs e)
@@ -194,12 +197,20 @@ public partial class ServerSettingsForm : DisplayMagicianForm
             return;
         }
 
-        ControlResponse response = await _controlServiceClient.UpdateGatewaySettingsAsync(new GatewaySettings { LanBindAddress = cbo_lan_bind_address.SelectedItem?.ToString() ?? "*", LanAdvertisedHost = txt_lan_host.Text, LanPort = lanPort, RemoteHost = txt_remote_host.Text, RemotePort = remotePort }, CancellationToken.None);
+        if (chk_allow_public_networks.Checked && !_originalAllowPublicNetworks &&
+            MessageBox.Show(this, "Allow Gateway access on Public Windows networks? Devices on those networks can reach its HTTPS port, but must still pair and authenticate. This setting does not configure router port forwarding.", "Allow Public Network Access?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+        {
+            return;
+        }
+
+        ControlResponse response = await _controlServiceClient.UpdateGatewaySettingsAsync(new GatewaySettings { LanBindAddress = cbo_lan_bind_address.SelectedItem?.ToString() ?? "*", LanAdvertisedHost = txt_lan_host.Text, LanPort = lanPort, AllowPublicNetworks = chk_allow_public_networks.Checked, RemoteHost = txt_remote_host.Text, RemotePort = remotePort }, CancellationToken.None);
         if (!response.IsSuccessful)
         {
             lbl_result.Text = response.Message;
             return;
         }
+
+        _originalAllowPublicNetworks = chk_allow_public_networks.Checked;
 
         using Process process = Process.Start(new ProcessStartInfo(Application.ExecutablePath, Program.RestartGatewayCommandLineOption) { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden })!;
         await process.WaitForExitAsync();
