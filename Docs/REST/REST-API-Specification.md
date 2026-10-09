@@ -105,6 +105,8 @@ Requirements:
 
 If the client loses the one-time credential delivery or later loses its stored credential, it must pair again. The server does not provide a credential-recovery endpoint or return the credential through device, status, or support resources.
 
+The 10-minute QR and pairing-request expiry applies only while establishing a new pairing. A paired device's bearer credential has no routine expiry: a phone may reconnect after six months of inactivity with the same credential, provided it has not been revoked or invalidated by a host-identity or TLS-key reset.
+
 The target REST API does not require custom request signatures, timestamps, or nonce headers. HTTPS protects the credential in transit. Capability checks, revocation, rate limits, and idempotency remain mandatory.
 
 ## 4. Resource model
@@ -119,7 +121,7 @@ These are reusable definitions:
 
 They can be listed and individually retrieved. Remote editing is intentionally excluded.
 
-Saved display-profile, audio-profile, and shortcut IDs are opaque, case-sensitive strings. Renaming an item retains its ID. Deleting an item and later creating another with the same name assigns a new ID; clients must not use names as identity. An imported item keeps its ID when that ID is free in the user's repository. If it collides, the imported copy receives a new ID and references within the same import are rewritten to that new ID. Host-identity reset does not change the underlying saved-definition IDs, though remote clients must re-pair before reading them.
+Saved display-profile, audio-profile, and shortcut IDs are opaque strings returned exactly as stored in the user's repository. Lookup is case-insensitive, matching the current repositories, and responses always return the stored spelling. Clients should retain and send the returned spelling. Renaming an item retains its ID. Deleting an item and later creating another with the same name assigns a new ID; clients must not use names as identity. An imported item keeps its ID when that ID is free in the user's repository under case-insensitive comparison. If it collides, the imported copy receives a new ID and references within the same import are rewritten to that new ID. Host-identity reset does not change the underlying saved-definition IDs, though remote clients must re-pair before reading them.
 
 ### 4.2 Operations
 
@@ -462,6 +464,7 @@ Rules:
 - only visible operations for the authenticated user/default target are returned;
 - terminal operations cannot be cancelled;
 - cancellation of work that can no longer be stopped safely returns `409 Conflict` with `operation-not-cancellable` and leaves the operation running;
+- every operation representation includes `canCancel`; it is `true` only while that operation is active, authoritative, and currently at a safe cancellation point. Clients may use it to enable Cancel, but must handle a later `409` if eligibility changes before the request arrives;
 - cancellation acceptance is not operation completion;
 - terminal history is retained for up to seven days and capped at 100 operations per user; the oldest terminal records are evicted first when the cap is reached;
 - once a terminal operation is evicted, its detail route returns the same `404` as an unknown or non-visible operation; clients must not infer whether an inaccessible ID ever existed;
@@ -485,9 +488,10 @@ Example:
   "startedAt": "2026-10-08T09:58:12Z",
   "updatedAt": "2026-10-08T10:16:42Z",
   "completedAt": null,
-  "isTerminal": false,
+  "isFinished": false,
   "isStale": false,
   "staleReason": null,
+  "canCancel": false,
   "source": {
     "type": "shortcut",
     "id": "iracing",
@@ -538,9 +542,11 @@ An operation is not required to report a percentage. Many phases have an unknown
 
 The operation `sequence` increases whenever authoritative status changes. Clients must ignore an event or cached representation with a lower sequence than the newest representation already processed for that operation.
 
+The sequence is persisted with the operation and remains monotonic across ControlService and UserAgent restarts. While UserAgent is unavailable, ControlService returns its retained active snapshot with `isStale: true` and `canCancel: false`. When UserAgent reconnects, ControlService reconciles active operation IDs. If the Agent no longer has an operation, ControlService advances its sequence and marks it terminal `failed` with a safe `target-unavailable` error. A client must not automatically resubmit that operation, because partial execution may have occurred.
+
 When an operation is terminal:
 
-- `isTerminal` is `true`;
+- `isFinished` is `true`;
 - `status` is `succeeded`, `failed`, or `cancelled`;
 - `completedAt` is populated;
 - `error` is populated only for failure information;
@@ -809,7 +815,7 @@ Rules:
 - Gateway maps it to internal ControlService replay protection;
 - the response echoes the accepted key where appropriate.
 
-Pairing submission has no authenticated device yet; its key is scoped to the one-time pairing session and validated QR secret. A retry must also supply the same phone-generated polling secret and request content. The 24-hour idempotency window does not extend the pairing session or polling secret expiry.
+Pairing submission has no authenticated device yet; its key is scoped to the one-time pairing session and validated QR secret. ControlService stores the session ID, a hash of the validated QR secret, the key, the request-identity hash, and the accepted HTTP result; it never stores the plaintext QR or polling secret in the replay record. A retry must supply the same phone-generated polling secret and request content. Gateway checks the QR session's 10-minute expiry before replay lookup: after expiry, even an identical retry of an accepted submission returns `410 pairing-expired`, not its former `202`. The 24-hour idempotency record does not extend the pairing session or the lifetime of an unused QR. Once a phone has received and stored its device credential, this QR expiry has no effect on that pairing.
 
 ### 6.4 Correlation and tracing
 

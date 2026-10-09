@@ -908,9 +908,9 @@
       "Operation": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "type", "status", "phase", "message", "sequence", "startedAt", "updatedAt", "completedAt", "isTerminal", "isStale", "staleReason", "source", "error", "links"],
+        "required": ["id", "type", "status", "phase", "message", "sequence", "startedAt", "updatedAt", "completedAt", "isFinished", "isStale", "staleReason", "canCancel", "source", "error", "links"],
         "allOf": [
-          { "if": { "properties": { "status": { "enum": ["succeeded", "failed", "cancelled"] } }, "required": ["status"] }, "then": { "properties": { "isTerminal": { "const": true }, "completedAt": { "type": "string" } } }, "else": { "properties": { "isTerminal": { "const": false }, "completedAt": { "type": "null" } } } },
+          { "if": { "properties": { "status": { "enum": ["succeeded", "failed", "cancelled"] } }, "required": ["status"] }, "then": { "properties": { "isFinished": { "const": true }, "completedAt": { "type": "string" } } }, "else": { "properties": { "isFinished": { "const": false }, "completedAt": { "type": "null" } } } },
           { "if": { "properties": { "isStale": { "const": true } }, "required": ["isStale"] }, "then": { "properties": { "staleReason": { "type": "string", "minLength": 1 } } }, "else": { "properties": { "staleReason": { "type": "null" } } } },
           { "if": { "properties": { "status": { "const": "failed" } }, "required": ["status"] }, "then": { "properties": { "error": { "$ref": "#/components/schemas/OperationError" } } }, "else": { "properties": { "error": { "type": "null" } } } }
         ],
@@ -924,9 +924,10 @@
           "startedAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
           "completedAt": { "type": ["string", "null"], "format": "date-time" },
-          "isTerminal": { "type": "boolean" },
+          "isFinished": { "type": "boolean", "description": "True when status is succeeded, failed, or cancelled; false while the operation is still in progress." },
           "isStale": { "type": "boolean" },
           "staleReason": { "type": ["string", "null"], "maxLength": 256 },
+          "canCancel": { "type": "boolean", "description": "True only while active, authoritative, and at a safe cancellation point. A later cancellation can still return 409 if eligibility changes. False for stale and terminal operations." },
           "source": { "oneOf": [{ "$ref": "#/components/schemas/OperationSource" }, { "type": "null" }] },
           "error": { "oneOf": [{ "$ref": "#/components/schemas/OperationError" }, { "type": "null" }] },
           "links": { "$ref": "#/components/schemas/OperationLinks" }
@@ -1024,7 +1025,7 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 128,
-        "description": "Opaque case-sensitive ID. Stable across rename; recreated items receive a new ID."
+        "description": "Opaque ID returned exactly as stored. Lookup is case-insensitive, matching the user's repository, and responses return the stored spelling. Stable across rename; recreated items receive a new ID."
       },
       "PngArtwork": {
         "type": "string",

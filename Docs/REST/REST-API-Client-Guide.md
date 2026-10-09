@@ -124,6 +124,8 @@ Approved response:
 
 The first approved poll consumes the one-time bearer-credential delivery. An expired request or consumed delivery returns `410 Gone` with a specific Problem Details code. The credential is never returned again by another poll, general status, device-list, or support API. If that response is lost, or the app later loses the credential, the device must pair again. A lost submission response can be retried with the same `Idempotency-Key`, pairing secret, polling secret, and body while the pairing session is valid.
 
+The QR expires after 10 minutes if pairing has not completed. This does not expire a successful pairing: the stored bearer credential has no routine expiry and may still work after six months without opening the app. A submission retry after the QR expires returns `410 pairing-expired`, including when its original request received `202`.
+
 ### 2.2 Normal application startup
 
 On later launches, the phone:
@@ -192,18 +194,48 @@ Idempotency-Key: 6f057fc5-22a9-4532-ac15-c76e04e31f08
 }
 ```
 
-The app retrieves the initial operation and then follows `operation.updated` events. If the submission response is lost, it retries the identical request with the same `Idempotency-Key`. It must not create a new key until it intentionally requests another application.
+`202 Accepted` means the display-profile application has started, not that the display has changed successfully. The device needs `status-read` to track it. Save the returned `operationId` and `Location`, then:
 
-Audio-profile application and shortcut runs follow the same lifecycle:
+1. `GET` the operation URL, and poll it with bounded backoff while `isFinished` is `false`. An SSE client may use `operation.updated` events between reads.
+2. Show `phase` and `message` as progress. Use `sequence` to ignore an older update, and show a temporarily unavailable state when `isStale` is `true`.
+3. Show Cancel only when the device has `operations-cancel` and the latest operation says `canCancel: true`. Submit `POST /v1/operations/{operationId}/cancellations` with a new `Idempotency-Key`, then keep tracking that same operation.
+4. Finish only when `isFinished` is `true`: show success for `succeeded`, the safe `error` for `failed`, or cancellation for `cancelled`. A `202` cancellation response is not the final result.
 
-```text
-POST /v1/audio-profiles/{profileId}/applications
-POST /v1/shortcuts/{shortcutId}/runs
+If the application submission response is lost, retry the identical request with the same `Idempotency-Key`. Do not create a new key until the user intentionally starts another application. The common [tracking](#26-track-and-recover-an-operation) and [cancellation](#27-cancel-an-operation) sections cover reconnects and `409` races.
+
+### 2.4 List and apply an audio profile
+
+Retrieve saved audio profiles with `GET /v1/audio-profiles`, or one selected item with `GET /v1/audio-profiles/{profileId}`. Listing needs `audio-profiles-read`; applying needs `audio-profiles-apply`. Use the returned opaque ID, not the profile name.
+
+```http
+POST /v1/audio-profiles/speakers/applications HTTP/1.1
+Authorization: Bearer <device-credential>
+Idempotency-Key: b79c8074-e21e-4f37-b2ba-105fd3263a09
+Content-Length: 0
 ```
 
-### 2.4 Track and recover an operation
+On `202 Accepted`, save the returned operation `Location` and `operationId`. The device needs `status-read` to track it. An audio change can take longer than the HTTP request. Retrieve `GET /v1/operations/{operationId}` immediately, then poll with bounded backoff while `isFinished` is `false`; SSE is optional. Display the latest `phase` and `message`, such as `applying-audio-profile`, and ignore updates with an older `sequence`.
 
-The phone can always retrieve the authoritative state:
+Keep the operation visible until it reaches `succeeded`, `failed`, or `cancelled`; show its safe `error` when failed. If it is stale, show that progress is temporarily unknown and continue recovery rather than reporting success. If the device has `operations-cancel` and `canCancel` is true, offer Cancel through `POST /v1/operations/{operationId}/cancellations` with a new `Idempotency-Key`. Continue watching the original operation after `202` until it becomes terminal. Handle a later `409 operation-not-cancellable` by refreshing its status. Retry a lost application response with the original request and idempotency key.
+
+### 2.5 Run a shortcut and follow the game
+
+Retrieve saved shortcuts with `GET /v1/shortcuts`, or one selected item with `GET /v1/shortcuts/{shortcutId}`. Listing needs `shortcuts-read`; running needs `shortcuts-run`. The phone submits only the saved shortcut ID; it does not send executable paths or game arguments.
+
+```http
+POST /v1/shortcuts/iracing/runs HTTP/1.1
+Authorization: Bearer <device-credential>
+Idempotency-Key: d2418817-5e7c-448e-bd99-e38139539e2c
+Content-Length: 0
+```
+
+On `202 Accepted`, save the operation `Location` and `operationId`, and `GET /v1/operations/{operationId}` using the `status-read` grant. Poll that resource with bounded backoff until `isFinished` is true. A shortcut can report `starting-game`, `waiting-for-game-to-start`, and `waiting-for-game-to-close` while `status` remains `running`. The game closing may be followed by after-programs and display/audio restoration. **Do not treat game launch or game exit alone as completion**; wait for terminal `succeeded`, `failed`, or `cancelled`. Show the server's current `phase` and `message` so the user can see when the game is running and when cleanup is in progress.
+
+Use `sequence` to reject old updates after reconnecting. If `isStale` is true, show that progress is temporarily unknown and refresh when UserAgent returns. If `status` becomes `waiting-for-decision`, a device with `decisions-read` can fetch the pending decision; answering it also needs `decisions-answer`. Offer Cancel only with `operations-cancel` and `canCancel: true`; submit `POST /v1/operations/{operationId}/cancellations` using a new `Idempotency-Key`, then continue tracking the same operation through any restoration. A `409 operation-not-cancellable` means refresh the operation and remove the Cancel action. Show the safe `error` on terminal failure. Retry a lost run submission response with the original request and idempotency key so it does not start the game twice.
+
+### 2.6 Track and recover an operation
+
+With `status-read`, the phone retrieves the latest retained operation state:
 
 ```http
 GET /v1/operations/4eca79f6-8fcf-418c-b55d-61dfa14ba5bd HTTP/1.1
@@ -225,9 +257,11 @@ SSE is optional for the phone. A client that uses it can process `operation.upda
 3. retrieve any operation still shown as active locally;
 4. replace local state only with an equal or newer authoritative sequence.
 
-Polling `GET /v1/operations/{operationId}` is a complete supported workflow. Clients should use bounded backoff and should not poll rapidly while a healthy SSE stream is active.
+Polling `GET /v1/operations/{operationId}` is a complete supported workflow. Clients should use bounded backoff, honor `429` and `Retry-After`, and avoid rapid polling while a healthy SSE stream is active. Keep the operation ID across app suspension or restart so a later launch can retrieve its latest retained state.
 
-### 2.5 Cancel an operation
+### 2.7 Cancel an operation
+
+Use the latest operation's `canCancel` value to enable or disable Cancel. It is false for stale and terminal operations. If the value changes before the cancellation request arrives, handle `409 operation-not-cancellable` and refresh the operation.
 
 ```http
 POST /v1/operations/4eca79f6-8fcf-418c-b55d-61dfa14ba5bd/cancellations HTTP/1.1
@@ -244,7 +278,7 @@ Expected failures include:
 - `404 Not Found` for an unknown or non-visible operation;
 - `409 Conflict` when the operation is already terminal or cannot be cancelled safely.
 
-### 2.6 Receive and answer a decision
+### 2.8 Receive and answer a decision
 
 The phone may learn about a decision from:
 
@@ -278,7 +312,7 @@ Repeating the identical response is safe. A different second response, an expire
 
 The phone continues tracking the parent operation after the answer.
 
-### 2.7 Watch interaction
+### 2.9 Watch interaction
 
 The watch sends a narrow internal request to its companion phone, for example:
 
@@ -313,7 +347,7 @@ Example compact relay:
 
 The watch never receives the Gateway bearer credential and never calls Gateway directly.
 
-### 2.8 Telegram connector interaction
+### 2.10 Telegram connector interaction
 
 The local connector long-polls Telegram over outbound HTTPS. After validating the bot, immutable Telegram user ID, and private-chat ID, it maps an approved command to the same Gateway REST workflow.
 
@@ -333,7 +367,7 @@ Connector flow:
 
 The connector's Gateway credential is independent of the phone credential and normally excludes device-management and pairing-approval capabilities.
 
-### 2.9 Device revocation
+### 2.11 Device revocation
 
 An authorized phone lists devices:
 
@@ -352,7 +386,7 @@ Idempotency-Key: 96d0e496-62d7-4a69-a636-014290702c33
 
 After `204 No Content`, the revoked credential must fail immediately with `401 Unauthorized`, including on an existing SSE reconnect. Device revocation does not revoke other independently paired clients.
 
-### 2.10 General client error behavior
+### 2.12 General client error behavior
 
 Clients should handle errors by HTTP status and Problem Details:
 
