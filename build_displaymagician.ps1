@@ -4,7 +4,8 @@
 
 .DESCRIPTION
     Builds the entire DisplayMagician.sln using MSBuild, which respects the
-    project dependency order defined in the solution file.
+    project dependency order defined in the solution file. Run
+    prepare_displaymagician.ps1 once on a new developer machine first.
 
 .PARAMETER Configuration
     Debug or Release (default: Debug).
@@ -29,6 +30,25 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $root = $PSScriptRoot
+
+$requiredSetupFiles = @(
+    'DisplayMagicianIdentityPkg\AppxManifest.xml',
+    'DisplayMagicianBundle\RuntimeConfig.props'
+)
+$missingSetupFiles = @($requiredSetupFiles | Where-Object { -not (Test-Path -LiteralPath (Join-Path $root $_)) })
+if ($missingSetupFiles.Count -gt 0) {
+    Write-Host 'Developer setup is incomplete. Missing generated files:' -ForegroundColor Red
+    foreach ($missingFile in $missingSetupFiles) {
+        Write-Host "  $missingFile" -ForegroundColor Red
+    }
+    Write-Host 'Run .\prepare_displaymagician.ps1 in an elevated PowerShell session, then rerun .\build_displaymagician.ps1.' -ForegroundColor Yellow
+    Write-Host 'Setup creates the identity manifest, runtime bundle configuration, and local signing certificate/configuration.' -ForegroundColor Yellow
+    exit 1
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $root 'SigningConfig.props'))) {
+    Write-Warning 'SigningConfig.props is missing. The build may succeed without signatures, but the resulting local installer cannot be used for installed Windows Sandbox checks. Run .\prepare_displaymagician.ps1 to configure local signing.'
+}
 
 # ---------------------------------------------------------------------------
 # Locate VS MSBuild.exe (required for ResolveComReference in the main application)

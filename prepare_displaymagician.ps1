@@ -25,11 +25,15 @@
 
 .NOTES
     Run once per developer machine, or whenever you need a new certificate.
+    Use -ImageMagickOnly to retry just the optional image-generation tool.
     Re-running is safe - existing entries are detected and skipped.
     Administrator rights are required to trust a self-signed certificate in
     LocalMachine\TrustedPeople for MSIX registration.
 #>
 
+param(
+    [switch]$ImageMagickOnly
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -42,6 +46,7 @@ Write-Host ""
 # 1. Install WiX Toolset v7.0.0 dotnet global tool
 # ---------------------------------------------------------------------------
 $requiredWixVersion = '7.0.0'
+if (-not $ImageMagickOnly) {
 Write-Host "Checking WiX Toolset dotnet global tool..."
 
 $wixInstalled = $false
@@ -78,12 +83,15 @@ if (-not $wixInstalled) {
     }
 }
 Write-Host ""
+}
 
 # ---------------------------------------------------------------------------
 # 2. Install ImageMagick portable for deterministic branding asset generation
 # ---------------------------------------------------------------------------
 $imageMagickVersion = '7.1.2-31'
-$imageMagickArchiveUrl = "https://download.imagemagick.org/archive/binaries/ImageMagick-$imageMagickVersion-portable-Q8-x64.7z"
+# The binary mirror rotates old releases; GitHub's versioned release asset remains available.
+$imageMagickArchiveUrl = "https://github.com/ImageMagick/ImageMagick/releases/download/$imageMagickVersion/ImageMagick-$imageMagickVersion-portable-Q8-x64.7z"
+$imageMagickArchiveSha256 = '4eb7914050902c52bf388bae188fdbdb04154ca89d105b2f6200a29cb774241b'
 $imageMagickToolDir = Join-Path $PSScriptRoot '.tools\ImageMagick'
 $imageMagickExe = Join-Path $imageMagickToolDir 'magick.exe'
 $imageMagickVersionFile = Join-Path $imageMagickToolDir 'version.txt'
@@ -98,6 +106,8 @@ if ($imageMagickInstalled) {
     try {
         Write-Host "  Downloading ImageMagick $imageMagickVersion portable..."
         Invoke-WebRequest -Uri $imageMagickArchiveUrl -OutFile $imageMagickArchive -UseBasicParsing
+        $downloadedHash = (Get-FileHash -LiteralPath $imageMagickArchive -Algorithm SHA256).Hash
+        if ($downloadedHash -ne $imageMagickArchiveSha256) { throw "ImageMagick archive SHA-256 did not match the pinned release asset." }
         New-Item -ItemType Directory -Path $imageMagickExtractDir -Force | Out-Null
         & tar.exe -xf $imageMagickArchive -C $imageMagickExtractDir
         if ($LASTEXITCODE -ne 0) { throw "Could not extract the downloaded ImageMagick archive (tar exit code $LASTEXITCODE)." }
@@ -106,9 +116,10 @@ if ($imageMagickInstalled) {
         if (Test-Path $imageMagickToolDir) { Remove-Item -LiteralPath $imageMagickToolDir -Recurse -Force }
         New-Item -ItemType Directory -Path $imageMagickToolDir -Force | Out-Null
         Copy-Item -Path (Join-Path $downloadedMagickExe.Directory.FullName '*') -Destination $imageMagickToolDir -Recurse -Force
-        Set-Content -Path $imageMagickVersionFile -Value $imageMagickVersion -Encoding ASCII
         & $imageMagickExe -version | Select-Object -First 1 | Write-Host
         if ($LASTEXITCODE -ne 0) { throw "ImageMagick exited with code $LASTEXITCODE after installation." }
+        Set-Content -Path $imageMagickVersionFile -Value $imageMagickVersion -Encoding ASCII
+        $imageMagickInstalled = $true
         Write-Host "  ImageMagick installed at $imageMagickToolDir." -ForegroundColor Green
     } catch {
         Write-Warning "Could not install ImageMagick automatically: $_"
@@ -120,6 +131,10 @@ if ($imageMagickInstalled) {
     }
 }
 Write-Host ""
+if ($ImageMagickOnly) {
+    if (-not $imageMagickInstalled) { exit 1 }
+    return
+}
 
 # ---------------------------------------------------------------------------
 # 3. Restore WiX NuGet SDK packages (required by both VS and VS Code)
@@ -735,7 +750,11 @@ Write-Host "=== Setup complete ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Tools installed:" -ForegroundColor White
 Write-Host "  WiX Toolset v$requiredWixVersion (dotnet global tool)"
-Write-Host "  ImageMagick $imageMagickVersion portable ($imageMagickToolDir)"
+if ($imageMagickInstalled) {
+    Write-Host "  ImageMagick $imageMagickVersion portable ($imageMagickToolDir)"
+} else {
+    Write-Host "  ImageMagick $imageMagickVersion portable was not installed; retry with -ImageMagickOnly." -ForegroundColor Yellow
+}
 Write-Host "  HeatWave VS extension (.wixproj support in Visual Studio)"
 Write-Host "  Microsoft.Build.NoTargets SDK (DisplayMagicianIdentityPkg NuGet restore)"
 Write-Host "  .NET $($desktopRuntime.Version) Desktop Runtime installer"

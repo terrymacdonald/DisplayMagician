@@ -9,8 +9,11 @@ This WiX project builds the DisplayMagician MSI. It publishes and packages the d
 Use the repository release build workflow:
 
 ```powershell
+.\prepare_displaymagician.ps1 # one-time interactive setup on a new machine
 .\build_displaymagician.ps1
 ```
+
+Run the preparation step in an elevated PowerShell session. It generates the local MSIX manifest and runtime bundle config, configures a development signing certificate, and exports a public certificate for Windows Sandbox. The build script checks for those generated prerequisites before cleaning or building the solution.
 
 For development, build the WiX project after its payload projects have built:
 
