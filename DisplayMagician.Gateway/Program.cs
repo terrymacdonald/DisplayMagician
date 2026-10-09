@@ -56,6 +56,7 @@ internal static class Program
         });
 
         WebApplication app = builder.Build();
+        app.UseMiddleware<GatewayProtocolMiddleware>();
         app.UseMiddleware<GatewayRequestAuthenticationMiddleware>();
         app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity) => Results.Ok(gatewayIdentity.ToView()));
         app.MapPost("/v1/pairing/request", async (DevicePairingRequest request, HttpContext httpContext, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>

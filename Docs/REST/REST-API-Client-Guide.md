@@ -4,7 +4,7 @@
 
 **Status:** Target client workflows - not fully implemented
 
-**Transport:** HTTPS and Server-Sent Events (SSE) on the local network
+**Transport:** HTTPS and Server-Sent Events (SSE) on local and routed private networks
 
 ## 1. Start here
 

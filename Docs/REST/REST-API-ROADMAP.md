@@ -12,7 +12,7 @@ There is no released REST API to migrate. Update the implementation and [openapi
 
 ## 2. Delivery plan
 
-### P0: Approve and freeze the target contract
+### P0: Approve the target design
 
 1. Review the target design requirements in the [specification](REST-API-Specification.md#2-target-design-requirements).
 2. Confirm the target route tree.
@@ -21,29 +21,30 @@ There is no released REST API to migrate. Update the implementation and [openapi
 5. Confirm server-generated operation IDs.
 6. Confirm capability renames.
 7. Confirm removal of Windows SID/session fields.
-8. Finalize target schemas and update [openapi.yaml](openapi.yaml) alongside implemented routes. Keep any design-only schemas explicitly marked as unavailable; do not publish them as the implemented API.
-9. Resolve the decisions in the [contract completion register](#6-contract-completion-register) before declaring the target contract frozen. Record each decision in the specification and applicable schemas.
-10. Check that pairing, trust setup, credentials, paging, and operation polling can be implemented with ordinary Swift and Kotlin HTTP/JSON clients. Keep SSE optional for phone clients, and avoid schema unions where a simple status field is sufficient.
+8. Approve the target route and behavior design. Final schema validation and [openapi.yaml](openapi.yaml) updates remain delivery and release checks as routes are implemented. Keep design-only schemas explicitly marked as unavailable.
+9. Record approved decisions in the specification and the [contract completion register](#6-contract-completion-register). Track remaining implementation and validation work there without treating it as completed P0 work.
+10. Approve ordinary Swift and Kotlin HTTP/JSON clients as a design goal. Keep SSE optional for phone clients and avoid schema unions where a simple status field is sufficient. Verify generated models and native pairing/TLS behavior before client release.
 
-P0 status (2026-10-09): the project owner approved the remaining saved-resource ID, pairing retry, interrupted-operation, and cancellation-display policies. The target contract is **not yet frozen**. Remaining P0 work is schema/example validation, checking generated Swift/Kotlin models, and a native TLS-trust/pairing feasibility check. The current [openapi.yaml](openapi.yaml) continues to describe the implemented prototype while the design-only [target-openapi.json](target-openapi.json) is validated.
+P0 status (2026-10-09): **complete as design approval**. The project owner accepted the remaining checks as later delivery/release gates, not as checks already performed. Schema/example validation, generated Swift/Kotlin model compilation, and native TLS-trust/pairing feasibility still must pass before the target schema is published as a finished client contract. The current [openapi.yaml](openapi.yaml) describes implemented Gateway behavior and is updated alongside each delivered slice; the design-only [target-openapi.json](target-openapi.json) remains the approved target baseline.
 
 ### P1: Identity, credential, and HTTP foundation
 
-1. Implement automatic TLS certificate renewal with the existing TLS key and a DNS/IP subject alternative name matching the advertised HTTPS URI.
-2. Replace the prototype certificate fingerprint with the target Base64 SHA-256 SPKI pin, and replace the prototype serialized-JWK hash with the RFC 7638 `hostId` thumbprint. Normal certificate renewal retains the TLS key; TLS private-key replacement requires local WinForms approval and re-pairing. Host-identity reset invalidates all paired credentials and pairing sessions.
-3. Implement one-time issuance and hashed storage of device credentials.
-4. Implement bearer authentication and revocation.
-5. Implement RFC 9457 Problem Details.
-6. Implement idempotency storage and conflict detection.
-7. Implement trace/request correlation.
-8. Add authentication, capability, cross-user, revocation, and rate-limit tests.
-9. Implement the documented request, pairing-poll, failed-authentication, and concurrent-stream limits, including bounded work queues and `Retry-After` where applicable. Test enforcement as well as configured values.
-10. Keep bearer credentials and credential hashes out of logs, audit events, support ZIPs, and configuration snapshots. Update the existing machine-owned support snapshot before storing credential hashes in paired-client state.
-11. Enforce the approved LAN-only boundary in Gateway listener settings and the installer firewall rule. Define the allowed local interfaces and source-address scope, keep the rule in sync with configured port and network changes, and test that ordinary off-LAN access and router port forwarding do not expose the service. Treat deliberate firewall or network-address-translation overrides as outside the application's enforceable boundary.
+1. Implement the approved first-release network policy: support local and routed private networks without a hard-coded same-subnet source check. Do not configure router forwarding or advertise WAN access; an explicit user-enabled port-forwarding feature is deferred. Set and test the default listener and installer firewall scope for the selected Windows network profile and configured port, including settings or interface changes. Document that deliberate router/firewall changes can expose Gateway despite the first-release support boundary. Keep HTTPS, pairing, authentication, authorization, and traffic limits effective regardless of source address.
+2. Use the advertised HTTPS URI and approved listener settings when creating a TLS certificate with matching DNS/IP subject alternative names. Reject a pairing QR URI that the certificate does not cover. Renew the certificate automatically before expiry, including while Gateway stays running or its advertised host changes, while retaining the TLS private key.
+3. Replace the prototype certificate fingerprint with the target Base64 SHA-256 SPKI pin, and replace the prototype serialized-JWK hash with the RFC 7638 `hostId` thumbprint. TLS private-key replacement requires local WinForms approval and re-pairing. Host-identity reset invalidates all paired credentials and pairing sessions.
+4. Update the machine-owned support snapshot and log redaction before storing bearer-credential hashes. Keep credentials, hashes, pairing secrets, and private keys out of logs, audit events, support ZIPs, and configuration snapshots.
+5. Implement one-time issuance and hashed, durable ControlService storage of device credentials, then bearer authentication and revocation for Gateway requests. Keep user and grant authority in ControlService.
+6. Complete RFC 9457 Problem Details for authentication, authorization, pairing, validation, and route failures. The shared-protocol middleware already covers negotiation errors only.
+7. Implement durable HTTP idempotency storage and conflict detection in ControlService/Gateway. Wire the shared mechanism into each mutation as its P2 route is built; pairing submission has its own unpaired-session scope.
+8. Complete trace/request correlation through ControlService and UserAgent. Gateway already emits a request ID and shared protocol welcome, but downstream propagation is not complete.
+9. Implement common 64 KiB request-body, authentication, mutation-rate, bounded-queue, and `Retry-After` enforcement. Add the two-second pairing poll limit with the P2 pairing routes and concurrent SSE stream limits with the P3 event route.
+10. Test authentication, capabilities, cross-user isolation, revocation, idempotency, traffic limits, TLS renewal, and identity reset across the affected components.
+
+P1 progress (2026-10-09): Gateway now validates `DisplayMagician-Protocol-Hello`, returns a welcome on successful responses, assigns request IDs, and maps protocol negotiation failures to Problem Details. Other prototype routes still use signed requests. The installed firewall rule currently has `Scope="any"` and the default listener binds all IP interfaces; item 1 needs implementation and verification against the approved policy.
 
 ### P2: Resource routes
 
-1. Implement capabilities and identity routes.
+1. Convert the prototype identity route to the approved public representation and implement the public capabilities route.
 2. Implement pairing-request resources.
 3. Implement device resources, including authenticated `GET /v1/devices/current` grant discovery without the `devices-read` grant.
 4. Implement display-profile list/detail/application routes.
@@ -56,7 +57,7 @@ P0 status (2026-10-09): the project owner approved the remaining saved-resource 
 
 ### P3: Events, efficiency, and clients
 
-1. Implement SSE snapshots, event IDs, resume, and reconnect behavior.
+1. Implement SSE snapshots, event IDs, resume, reconnect behavior, and the published per-device/per-user concurrent-stream limits.
 2. Implement ETags and compact/artwork representations.
 3. Implement cursor pagination and bounded retention.
 4. Generate Swift and Kotlin client foundations.
@@ -89,7 +90,7 @@ A route is not complete until it has:
 ## 4. Explicitly deferred
 
 - Direct Gateway connectivity from watches
-- Direct Internet exposure of Gateway
+- Official user-enabled port-forwarding or other direct Internet access to Gateway
 - Cloud relay hosted by DisplayMagician
 - Remote profile/audio/shortcut editing
 - Browser clients
@@ -103,9 +104,9 @@ A route is not complete until it has:
 
 ## 5. Approved target decisions
 
-The project owner approved the target design in the [specification](REST-API-Specification.md) on 2026-10-08. These decisions define the P0 baseline. The wire details in the [contract completion register](#6-contract-completion-register) still need resolution before the contract is frozen.
+The project owner approved the target design in the [specification](REST-API-Specification.md) and locked its route and behavior decisions for implementation on 2026-10-09. The [contract completion register](#6-contract-completion-register) tracks the corresponding implementation and validation work before client release.
 
-- [x] Gateway remains LAN-only.
+- [x] First-release support covers local and routed private networks without a hard-coded same-subnet check. Gateway does not configure port forwarding; official user-enabled Internet access is deferred.
 - [x] HTTPS is mandatory.
 - [x] Pairing pins TLS SPKI plus stable host identity.
 - [x] TLS renewal normally retains the pinned TLS key.
@@ -130,7 +131,7 @@ The project owner approved the target design in the [specification](REST-API-Spe
 
 ## 6. Contract completion register
 
-The target design sets the API direction, but the following details must be settled before developers can implement conforming clients. These are open contract items, not silently chosen defaults.
+The target design sets the API direction. The following register records approved behavior and the remaining implementation or validation work needed before clients can rely on it. Do not treat a design-only schema as an available route.
 
 | Area | Required completion | Why clients need it |
 |---|---|---|
@@ -165,7 +166,7 @@ Resolve policy questions with the project owner before consequential implementat
 - Publish the `https://displaymagician.org/problems/{errorCode}` documentation pages used as Problem Details type URIs before release.
 - Test accepted-but-not-completed behavior, duplicate mutations, lost responses, decisions answered by another client, SSE continuity loss, and service/Agent restarts.
 - Test cross-user isolation, revoked credentials, forged discovery, unexpected TLS key changes, and secret redaction.
-- Verify fresh installation, upgrade, uninstall, certificate renewal, LAN listener/firewall scope, and component identity using Windows Sandbox where applicable; use a separate network test setup for off-LAN and port-forward checks.
+- Verify fresh installation, upgrade, uninstall, certificate renewal, listener/firewall scope, and component identity using Windows Sandbox where applicable; use a separate network test setup for routed private networks and deliberate port forwarding.
 - Inspect support ZIP contents and logs for bearer credentials, credential hashes, pairing secrets, and private keys.
 - Publish concrete limits and retention guarantees before claiming the API is ready for client use.
 - Keep incomplete features visibly marked unavailable; do not describe prototype endpoints as implementing the target contract.

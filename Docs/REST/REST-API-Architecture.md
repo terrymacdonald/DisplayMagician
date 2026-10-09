@@ -2,7 +2,7 @@
 
 **Status:** Target architecture - not fully implemented
 
-**Network boundary:** Local-network HTTPS Gateway
+**Network boundary:** HTTPS Gateway for local and routed private networks in the first release
 
 **Watch model:** Companion-phone relay only
 
@@ -10,7 +10,7 @@
 
 This guide explains component responsibilities, client topology, and design rationale. It does not duplicate the normative endpoint catalogue or authentication contract in the [specification](REST-API-Specification.md).
 
-The target should provide a clear resource-oriented controller API, minimize certificate and credential usability failures, support first-party phones and companion watches, and allow future integrations without exposing Gateway to the Internet. ControlService remains authoritative for authorization, operations, decisions, and machine coordination.
+The target should provide a clear resource-oriented controller API, minimize certificate and credential usability failures, support first-party phones and companion watches, and allow future integrations. The first release does not configure Internet exposure. ControlService remains authoritative for authorization, operations, decisions, and machine coordination.
 
 For existing internal IPC flows, see [internal component communication](../IPC/Internal-Component-Communication.md). For implementation work, see the [roadmap](REST-API-ROADMAP.md).
 
@@ -21,7 +21,7 @@ For existing internal IPC flows, see [internal component communication](../IPC/I
 ```text
 Android or Apple application
         |
-        | HTTPS on local network
+        | HTTPS on local or routed private network
         v
 DisplayMagician.Gateway
         |
@@ -158,7 +158,7 @@ The connector should:
 - expose a local disable/revoke control;
 - stop processing immediately after its Gateway credential is revoked.
 
-The Telegram Bot API and account become part of the integration's threat model, but Gateway remains unreachable from the Internet.
+The Telegram Bot API and account become part of the integration's threat model; the connector needs no inbound Internet port or router forwarding for Gateway.
 
 ## 6. Runtime and contract boundaries
 
@@ -185,13 +185,13 @@ paired client
 
 REST clients never choose an internal pipe, inspect protected machine paths, or perform direct display/audio work.
 
-## 7. Limits of LAN-only scope
+## 7. Network exposure and trust
 
-LAN-only is a product boundary, not proof that a caller is trusted. Gateway still requires pairing, credentials, capability checks, and user isolation.
+First-release support covers local and routed private networks. A same-subnet source-address check is not part of Gateway trust. Gateway still requires pairing, credentials, capability checks, and user isolation.
 
 - Network advertisements can be forged; trust remains anchored in pairing and the pinned host.
-- Do not enable port forwarding, automatic router exposure, or direct Internet access as part of discovery.
-- A Telegram connector introduces an external command source but does not move Gateway onto the Internet.
+- Do not configure port forwarding, automatic router exposure, or direct Internet access as part of discovery. Official user-enabled Internet access is deferred; deliberate router/firewall changes may still expose Gateway.
+- A Telegram connector introduces an external command source but requires no inbound Internet access to Gateway.
 - A controller running on the same PC does not automatically turn remote-origin input into trusted local IPC.
 - Explicit revocation disables that device independently of marketplace entitlement and other paired devices.
 

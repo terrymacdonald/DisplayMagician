@@ -16,7 +16,7 @@ This document defines the target remote-controller API for DisplayMagician v4 (D
 
 No REST client has shipped against the prototype. Implement the target directly; no migration routes, compatibility aliases, or deprecation periods are required.
 
-The target supports Android and Apple phone/tablet applications, companion-relayed watches, and explicitly paired integrations. Gateway remains LAN-only. Editing, diagnostics, and machine administration remain local IPC responsibilities.
+The target supports Android and Apple phone/tablet applications, companion-relayed watches, and explicitly paired integrations. The first release supports local and routed private networks. Gateway does not configure router port forwarding or offer user-enabled Internet access in that release. Editing, diagnostics, and machine administration remain local IPC responsibilities.
 
 This specification is not a claim that the target routes already exist. [openapi.yaml](openapi.yaml) documents the available prototype behavior, which still differs in routes, authentication, response bodies, and events. Use that file when testing the current build. Target examples must not be used unchanged against the prototype.
 
@@ -28,7 +28,7 @@ The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY**, w
 
 | Area | Target decision |
 |---|---|
-| Network exposure | Gateway listens on the local network only. No direct Internet exposure or port forwarding. |
+| Network exposure | First-release support includes local and routed private networks, without a hard-coded same-subnet client check. Gateway does not configure router forwarding or advertise WAN access. Official user-enabled port-forwarding support is deferred; deliberate router/firewall changes may still make Gateway reachable from the Internet. |
 | Transport | All Gateway requests use HTTPS. |
 | Server trust | Pairing pins the Gateway TLS public key/SPKI and stable host identity, not a short-lived complete certificate fingerprint. |
 | TLS renewal | Gateway renews its TLS certificate automatically while retaining the pinned TLS key/SPKI whenever possible. |

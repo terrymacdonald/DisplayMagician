@@ -11,7 +11,11 @@ info:
     This API is intentionally narrower than the local named-pipe API. The
     implementation currently returns a shared ControlResponse with HTTP 200 for
     many downstream failures; the response body's isSuccessful and errorCode
-    fields are therefore authoritative.
+    fields are therefore authoritative. Every request now carries the shared
+    ProtocolHello in DisplayMagician-Protocol-Hello. Successful responses carry
+    DisplayMagician-Protocol-Welcome, and every response carries
+    DisplayMagician-Request-Id. The target bearer authentication and resource
+    routes are not implemented yet.
 servers:
   - url: https://{host}:{port}
     description: Gateway endpoint advertised in the pairing QR code.
@@ -37,6 +41,8 @@ tags:
     description: Resolve pending operation decisions.
 paths:
   /v1/identity:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     get:
       tags: [Identity]
       operationId: getIdentity
@@ -56,6 +62,8 @@ paths:
         4XX:
           description: The HTTP request was malformed or rejected before route execution.
   /v1/pairing/request:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     post:
       tags: [Pairing]
       operationId: requestPairing
@@ -81,6 +89,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/DevicePairingResult'
   /v1/pairing/status:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     post:
       tags: [Pairing]
       operationId: getPairingStatus
@@ -102,6 +112,8 @@ paths:
         4XX:
           description: The HTTP request or JSON body was malformed or exceeded host limits.
   /v1/status:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     get:
       tags: [Status]
       operationId: getStatus
@@ -134,6 +146,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/status/stream:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     get:
       tags: [Status]
       operationId: streamStatus
@@ -167,6 +181,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/display-profiles:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     get:
       tags: [Profiles]
       operationId: listDisplayProfiles
@@ -189,6 +205,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/display-profiles/apply:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     post:
       tags: [Profiles]
       operationId: applyDisplayProfile
@@ -217,6 +235,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/audio-profiles:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     get:
       tags: [Audio profiles]
       operationId: listAudioProfiles
@@ -239,6 +259,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/audio-profiles/apply:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     post:
       tags: [Audio profiles]
       operationId: applyAudioProfile
@@ -267,6 +289,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/shortcuts:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     get:
       tags: [Shortcuts]
       operationId: listShortcuts
@@ -289,6 +313,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/shortcuts/run:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     post:
       tags: [Shortcuts]
       operationId: runShortcut
@@ -317,6 +343,8 @@ paths:
           Nonce: []
           Signature: []
   /v1/decisions/answer:
+    parameters:
+      - $ref: '#/components/parameters/ProtocolHello'
     post:
       tags: [Decisions]
       operationId: answerDecision
@@ -371,6 +399,21 @@ components:
         LF + UTC timestamp formatted with round-trip O + LF + nonce. METHOD is
         uppercase and PATH excludes the query string.
   parameters:
+    ProtocolHello:
+      name: DisplayMagician-Protocol-Hello
+      in: header
+      required: true
+      description: >-
+        Unpadded base64url of UTF-8 JSON for the shared ProtocolHello contract.
+        Negotiation happens before authentication, including on public routes.
+        Missing or malformed values return 400 protocol-hello-invalid; an
+        incompatible version returns 409 protocol-version-incompatible; an
+        unsupported required protocol capability returns 412
+        protocol-capability-unavailable. These failures use application/problem+json.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 16384
     TargetSessionId:
       name: targetSessionId
       in: query

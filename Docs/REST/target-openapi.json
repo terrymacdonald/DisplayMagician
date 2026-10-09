@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "DisplayMagician v4 target REST API (P0 draft)",
+    "title": "DisplayMagician v4 target REST API (design-only draft)",
     "version": "1.0.0-draft",
     "description": "Design-only schemas for the target REST API. This file does not describe routes available in the current Gateway build. Docs/REST/openapi.yaml remains the implemented prototype contract. Only the routes with completed draft schemas are listed here."
   },
@@ -9,7 +9,7 @@
   "servers": [
     {
       "url": "https://{host}:{port}",
-      "description": "Trusted LAN Gateway from a verified pairing QR.",
+      "description": "Gateway on a local or routed private network, using a verified pairing QR.",
       "variables": {
         "host": { "default": "displaymagician.local" },
         "port": { "default": "22846" }
