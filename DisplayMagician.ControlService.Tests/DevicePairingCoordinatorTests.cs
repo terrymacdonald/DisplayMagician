@@ -99,7 +99,7 @@ public sealed class DevicePairingCoordinatorTests
     }
 
     [Fact]
-    public void BearerPairingDoesNotRequireADeviceKeyPairAndAllowsPartialGrants()
+    public void BearerPairingDoesNotRequireADeviceKeyPairAndGrantsAllRequestedCapabilities()
     {
         string root = CreateStorageRoot();
         try
@@ -113,9 +113,10 @@ public sealed class DevicePairingCoordinatorTests
             request.DevicePublicKeyJwk = string.Empty;
 
             Assert.Equal(DevicePairingState.AwaitingApproval, coordinator.Submit(request, now.AddMinutes(1)).State);
-            Assert.Equal(DevicePairingState.Approved, coordinator.ApproveFromLocalClient("owner", new ApproveDevicePairingRequest { PairingSessionId = qr.PairingSessionId, GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead } }, now.AddMinutes(2)).State);
+            Assert.Equal(DevicePairingState.Rejected, coordinator.ApproveFromLocalClient("owner", new ApproveDevicePairingRequest { PairingSessionId = qr.PairingSessionId, GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead } }, now.AddMinutes(2)).State);
+            Assert.Equal(DevicePairingState.Approved, coordinator.ApproveFromLocalClient("owner", new ApproveDevicePairingRequest { PairingSessionId = qr.PairingSessionId, GrantedCapabilities = request.RequestedCapabilities }, now.AddMinutes(2)).State);
             DevicePairingResult delivered = coordinator.GetStatus(new DevicePairingStatusRequest { PairingSessionId = qr.PairingSessionId, PollingSecret = PollingSecret, DeviceId = request.DeviceId }, now.AddMinutes(3));
-            Assert.Equal(new[] { RemoteClientCapabilities.StatusRead }, delivered.GrantedCapabilities);
+            Assert.Equal(request.RequestedCapabilities, delivered.GrantedCapabilities);
             Assert.True(new GatewayRequestAuthenticator(clients).Authenticate(new GatewayAuthenticationRequest { BearerCredential = Assert.IsType<string>(delivered.Credential) }, now.AddMinutes(3)).IsAuthenticated);
         }
         finally
@@ -136,11 +137,13 @@ public sealed class DevicePairingCoordinatorTests
             DateTime now = DateTime.UtcNow;
             DevicePairingQrCode firstQr = coordinator.CreateQrCode("owner", CreateGateway(), now);
             coordinator.Submit(CreateRequest(firstQr), now.AddMinutes(1));
-            coordinator.ApproveFromLocalClient("owner", new ApproveDevicePairingRequest { PairingSessionId = firstQr.PairingSessionId, GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead } }, now.AddMinutes(2));
+            coordinator.ApproveFromLocalClient("owner", new ApproveDevicePairingRequest { PairingSessionId = firstQr.PairingSessionId, GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.PairingApprove } }, now.AddMinutes(2));
             string firstCredential = Assert.IsType<string>(coordinator.GetStatus(new DevicePairingStatusRequest { PairingSessionId = firstQr.PairingSessionId, PollingSecret = PollingSecret, DeviceId = "phone-123" }, now.AddMinutes(3)).Credential);
 
             DevicePairingQrCode secondQr = coordinator.CreateQrCode("owner", CreateGateway(), now.AddMinutes(3));
-            coordinator.Submit(CreateRequest(secondQr), now.AddMinutes(4));
+            DevicePairingRequest secondRequest = CreateRequest(secondQr);
+            secondRequest.RequestedCapabilities = new[] { RemoteClientCapabilities.PairingApprove };
+            coordinator.Submit(secondRequest, now.AddMinutes(4));
             Assert.Equal(DevicePairingState.Approved, coordinator.ApproveFromLocalClient("owner", new ApproveDevicePairingRequest { PairingSessionId = secondQr.PairingSessionId, GrantedCapabilities = new[] { RemoteClientCapabilities.PairingApprove } }, now.AddMinutes(5)).State);
             Assert.Null(clients.FindActiveByCredential(firstCredential));
             string secondCredential = Assert.IsType<string>(coordinator.GetStatus(new DevicePairingStatusRequest { PairingSessionId = secondQr.PairingSessionId, PollingSecret = PollingSecret, DeviceId = "phone-123" }, now.AddMinutes(6)).Credential);
@@ -175,6 +178,13 @@ public sealed class DevicePairingCoordinatorTests
 
             Assert.Equal(DevicePairingState.Rejected, result.State);
             Assert.DoesNotContain(repository.GetActiveForUser("S-1-5-21-100"), client => client.DeviceId == "phone-123");
+
+            repository.Upsert(new PairedClient { DeviceId = "approved-device", OwnerUserSid = "S-1-5-21-100", DisplayName = "Existing Phone", PublicKeyJwk = ValidP256Jwk, PublicKeyFingerprint = "fingerprint", GrantedCapabilities = new[] { RemoteClientCapabilities.PairingApprove }, PairedUtc = now });
+            DevicePairingSessionView pending = Assert.Single(coordinator.GetPendingForUser("S-1-5-21-100", now.AddMinutes(2)));
+            DevicePairingResult approved = coordinator.ApproveFromPairedClient("S-1-5-21-100", "approved-device", new ApproveDevicePairingRequest { PairingSessionId = qrCode.PairingSessionId, GrantedCapabilities = pending.RequestedCapabilities }, now.AddMinutes(3));
+            Assert.Equal(DevicePairingState.Approved, approved.State);
+            DevicePairingResult delivered = coordinator.GetStatus(new DevicePairingStatusRequest { PairingSessionId = qrCode.PairingSessionId, PollingSecret = PollingSecret }, now.AddMinutes(4));
+            Assert.Equal(pending.RequestedCapabilities, delivered.GrantedCapabilities);
         }
         finally
         {

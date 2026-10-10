@@ -6,7 +6,7 @@
 
 **Documentation reorganized:** 2026-10-08
 
-**Available prototype contract:** [openapi.yaml](openapi.yaml)
+**Available Gateway contract:** [openapi.yaml](openapi.yaml)
 
 **Design-only target schemas in progress:** [target-openapi.json](target-openapi.json)
 
@@ -18,7 +18,7 @@ No REST client has shipped against the prototype. Implement the target directly;
 
 The target supports Android and Apple phone/tablet applications, companion-relayed watches, and explicitly paired integrations. The first release supports local and routed private networks. Gateway does not configure router port forwarding or offer user-enabled Internet access in that release. Editing, diagnostics, and machine administration remain local IPC responsibilities.
 
-This specification is not a claim that the target routes already exist. [openapi.yaml](openapi.yaml) documents the available prototype behavior, which still differs in routes, authentication, response bodies, and events. Use that file when testing the current build. Target examples must not be used unchanged against the prototype.
+This specification is not a claim that every target behavior already exists. [openapi.yaml](openapi.yaml) documents the currently implemented P2 routes. Cursor pagination, ETags, event streaming, and retention guarantees remain P3 work. Use the implemented contract when testing the current build.
 
 See the [client guide](REST-API-Client-Guide.md) for usage, the [architecture guide](REST-API-Architecture.md) for topology and rationale, and the [roadmap](REST-API-ROADMAP.md) for delivery work and unresolved contract details.
 
@@ -281,12 +281,7 @@ Decision body:
 
 ```json
 {
-  "decision": "approved",
-  "grantedCapabilities": [
-    "status-read",
-    "display-profiles-read",
-    "display-profiles-apply"
-  ]
+  "decision": "approved"
 }
 ```
 
@@ -298,14 +293,13 @@ or:
 }
 ```
 
-Both choices use the same JSON object shape. `grantedCapabilities` is required and nonempty for `approved`, must be a subset of the requested capabilities, and must be absent for `rejected`. Clients can submit one model with an optional grants field.
+Both choices use the same JSON object shape. Approval grants exactly the capabilities in the candidate's request; the approver does not select a subset. Clients submit only the decision field.
 
 Rules:
 
 - a candidate cannot approve itself;
 - requests are user-scoped;
-- grants cannot exceed the candidate request;
-- the approver may grant a strict subset of the requested capabilities;
+- grants equal the candidate request;
 - when the same user approves re-pairing with an existing device ID, ControlService replaces that device's old credential and grants; the old credential is invalid immediately, and a lost new-credential delivery requires another pairing;
 - the same opaque device ID under a different Windows user is a separate association and cannot be replaced by this request;
 - expired or resolved requests return Problem Details;
@@ -1012,4 +1006,4 @@ Examples illustrate behavior and resource relationships. They are not a substitu
 
 ### 9.2 Items required before the target is implementation-ready
 
-The [design-only target schema](target-openapi.json) records the intended routes, wire types, headers, and limits. It is separate from the [implemented prototype contract](openapi.yaml). The [roadmap's contract completion register](REST-API-ROADMAP.md#6-contract-completion-register) tracks the remaining contract decisions and checks, including mobile client feasibility, restart continuity, and publishing Problem Details type pages. Validate each conditional field rule in the Gateway and client conformance checks as routes are implemented. Update the implemented OpenAPI alongside each route; do not present the design draft as an available API.
+The [design-only target schema](target-openapi.json) records the intended routes, wire types, headers, and limits. It is separate from the [implemented Gateway contract](openapi.yaml). The [roadmap's contract completion register](REST-API-ROADMAP.md#6-contract-completion-register) tracks the remaining contract decisions and checks, including mobile client feasibility, restart continuity, and publishing Problem Details type pages. Validate each conditional field rule in the Gateway and client conformance checks as routes are implemented. Update the implemented OpenAPI alongside each route; do not present the design draft as an available API.

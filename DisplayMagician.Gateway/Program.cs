@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
 using Microsoft.AspNetCore.Builder;
@@ -36,10 +35,8 @@ internal static class Program
         builder.Services.AddSingleton(settings);
         builder.Services.AddSingleton<GatewayControlServiceClient>();
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddSingleton<GatewayStatusFeed>();
         builder.Services.AddSingleton<GatewayTrafficLimiter>();
         builder.Services.AddSingleton<GatewayRegistrationState>();
-        builder.Services.AddHostedService(provider => provider.GetRequiredService<GatewayStatusFeed>());
         builder.Services.AddSingleton<IGatewayAuthenticationClient>(provider => provider.GetRequiredService<GatewayControlServiceClient>());
         builder.Services.AddHostedService<GatewayRegistrationService>();
         builder.Services.AddHostedService<GatewayCertificateRenewalService>();
@@ -85,85 +82,68 @@ internal static class Program
         app.UseMiddleware<GatewayJsonResponseLimitMiddleware>();
         app.UseMiddleware<GatewayRequestAuthenticationMiddleware>();
         app.UseMiddleware<GatewayIdempotencyMiddleware>();
-        app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity, GatewaySettings gatewaySettings) => Results.Ok(gatewayIdentity.ToView(gatewaySettings.LanPort)));
-        app.MapPost("/v1/pairing/request", async (DevicePairingRequest request, HttpContext httpContext, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
+        app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity) => Results.Ok(new GatewayPublicIdentityView
         {
-            request.SourceIpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-            DevicePairingResult result = await controlServiceClient.SubmitDevicePairingAsync(request, cancellationToken).ConfigureAwait(false);
-            return result.State == DevicePairingState.AwaitingApproval
-                ? Results.Json(result, statusCode: StatusCodes.Status202Accepted)
-                : GatewayProblemDetails.CreateResult(httpContext, result.State == DevicePairingState.Expired ? StatusCodes.Status410Gone : StatusCodes.Status400BadRequest, string.IsNullOrWhiteSpace(result.ProblemCode) ? "validation-failed" : result.ProblemCode, "Pairing request unavailable", result.Message);
-        });
-        app.MapPost("/v1/pairing/status", async (DevicePairingStatusRequest request, HttpContext context, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
+            HostId = gatewayIdentity.HostId,
+            HostIdentityPublicKeyJwk = gatewayIdentity.HostIdentityPublicKeyJwk,
+            TlsSpkiSha256 = gatewayIdentity.TlsSpkiSha256
+        }));
+        app.MapGet("/v1/capabilities", (GatewayIdentity gatewayIdentity) => Results.Ok(new GatewayCapabilitiesView
         {
-            DevicePairingResult result = await controlServiceClient.GetDevicePairingStatusAsync(request, cancellationToken).ConfigureAwait(false);
-            if (result.ProblemCode == "rate-limited")
+            GatewayVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.0.0",
+            HostId = gatewayIdentity.HostId,
+            KnownCapabilities = RemoteClientCapabilities.All.ToArray(),
+            SupportedFeatures = new[] { "pairing", "devices", "display-profiles", "audio-profiles", "shortcuts", "operations", "decisions" }
+        }));
+        app.MapPost("/v1/pairing-requests", async (PairingSubmissionRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        {
+            context.Response.Headers.CacheControl = "no-store";
+            DevicePairingRequest controlRequest = request.ToControlRequest();
+            controlRequest.SourceIpAddress = context.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+            DevicePairingResult result = await client.SubmitDevicePairingAsync(controlRequest, token).ConfigureAwait(false);
+            if (result.ProblemCode == "target-unavailable") return GatewayProblemDetails.CreateResult(context, StatusCodes.Status503ServiceUnavailable, "target-unavailable", "Control Service unavailable", "The pairing request could not be accepted now.", true, 1);
+            if (result.State != DevicePairingState.AwaitingApproval)
             {
-                return GatewayProblemDetails.CreateResult(context, StatusCodes.Status429TooManyRequests, "rate-limited", "Pairing poll too frequent", result.Message, true, 2);
-            }
-            return result.State == DevicePairingState.Expired
-                ? GatewayProblemDetails.CreateResult(context, StatusCodes.Status410Gone, result.ProblemCode ?? "pairing-expired", "Pairing delivery unavailable", result.Message)
-                : Results.Json(result);
-        });
-        app.MapGet("/v1/status", async (HttpContext context, int? targetSessionId, DateTime? changedSinceUtc, GatewayControlServiceClient controlServiceClient, CancellationToken cancellationToken) =>
-        {
-            GatewayAuthenticationResult authentication = GatewayRequestAuthenticationMiddleware.GetAuthentication(context);
-            if (!authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal))
-            {
-                return GatewayProblemDetails.CreateResult(context, StatusCodes.Status403Forbidden, "capability-denied", "Capability denied", "The paired device is not authorised to read status.");
+                return GatewayProblemDetails.CreateResult(context, result.State == DevicePairingState.Expired ? StatusCodes.Status410Gone : StatusCodes.Status422UnprocessableEntity, result.ProblemCode ?? "validation-failed", "Pairing request unavailable", result.Message);
             }
 
-            try
-            {
-                return Results.Ok(await controlServiceClient.GetRemoteUserStatusAsync(authentication, targetSessionId, changedSinceUtc, cancellationToken).ConfigureAwait(false));
-            }
-            catch (InvalidOperationException)
-            {
-                return GatewayProblemDetails.CreateResult(context, StatusCodes.Status503ServiceUnavailable, "target-unavailable", "Target unavailable", "The paired user's status is temporarily unavailable.", true, 1);
-            }
+            string href = $"/v1/pairing-requests/{request.PairingRequestId:D}";
+            context.Response.Headers.Location = href;
+            return Results.Json(new PairingSubmissionAccepted { PairingRequestId = request.PairingRequestId, Href = href, ExpiresAt = result.ExpiresUtc }, statusCode: StatusCodes.Status202Accepted);
         });
-        app.MapGet("/v1/status/stream", async (HttpContext context, int? targetSessionId, GatewayStatusFeed statusFeed, CancellationToken cancellationToken) =>
+        app.MapGet("/v1/pairing-requests/{pairingRequestId:guid}", async (Guid pairingRequestId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
         {
-            GatewayAuthenticationResult authentication = GatewayRequestAuthenticationMiddleware.GetAuthentication(context);
-            if (!authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal))
+            context.Response.Headers.CacheControl = "no-store";
+            string authorization = context.Request.Headers.Authorization.ToString();
+            if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
-                await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status403Forbidden, "capability-denied", "Capability denied", "The paired device is not authorised to read status.").ConfigureAwait(false);
-                return;
+                ControlResponse pairedResponse = await client.RemoteResourceAsync(ControlMessageType.GetRemotePairingRequest, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), pairingRequestId.ToString("D"), token).ConfigureAwait(false);
+                return pairedResponse.IsSuccessful && pairedResponse.DevicePairingRequest != null
+                    ? Results.Ok(GatewayResourceRoutes.ToPairingItem(pairedResponse.DevicePairingRequest))
+                    : GatewayResponseMapper.Map(context, pairedResponse);
+            }
+            const string prefix = "DisplayMagician-Pairing ";
+            if (!authorization.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || authorization.Length <= prefix.Length || authorization.AsSpan(prefix.Length).Contains(' '))
+            {
+                return GatewayProblemDetails.CreateResult(context, StatusCodes.Status401Unauthorized, "authentication-required", "Pairing secret required", "Send the phone-generated polling secret in the DisplayMagician-Pairing Authorization scheme.");
             }
 
-            context.Response.ContentType = "text/event-stream";
-            context.Response.Headers.CacheControl = "no-cache";
-            ChannelReader<RemoteUserStatus> updates = statusFeed.Subscribe(authentication, targetSessionId, cancellationToken);
-            while (!cancellationToken.IsCancellationRequested)
+            DevicePairingResult result = await client.GetDevicePairingStatusAsync(new DevicePairingStatusRequest { PairingSessionId = pairingRequestId, PollingSecret = authorization.Substring(prefix.Length) }, token).ConfigureAwait(false);
+            if (result.ProblemCode == "target-unavailable") return GatewayProblemDetails.CreateResult(context, StatusCodes.Status503ServiceUnavailable, "target-unavailable", "Control Service unavailable", "The pairing request could not be checked now.", true, 1);
+            if (result.ProblemCode == "rate-limited") return GatewayProblemDetails.CreateResult(context, StatusCodes.Status429TooManyRequests, "rate-limited", "Pairing poll too frequent", result.Message, true, 2);
+            if (result.State == DevicePairingState.Expired) return GatewayProblemDetails.CreateResult(context, StatusCodes.Status410Gone, result.ProblemCode ?? "pairing-expired", "Pairing delivery unavailable", result.Message);
+            if (string.IsNullOrEmpty(result.DeviceId)) return GatewayProblemDetails.CreateResult(context, StatusCodes.Status404NotFound, "resource-not-found", "Pairing request not found", "The pairing request is unavailable.");
+            return Results.Ok(new PairingPollView
             {
-                using CancellationTokenSource keepAliveCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                keepAliveCancellation.CancelAfter(TimeSpan.FromSeconds(15));
-
-                try
-                {
-                    RemoteUserStatus status = await updates.ReadAsync(keepAliveCancellation.Token).ConfigureAwait(false);
-                    string json = System.Text.Json.JsonSerializer.Serialize(status);
-                    await context.Response.WriteAsync($"event: status\ndata: {json}\n\n", cancellationToken).ConfigureAwait(false);
-                    await context.Response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-                {
-                    await context.Response.WriteAsync(": keep-alive\n\n", cancellationToken).ConfigureAwait(false);
-                    await context.Response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);
-                }
-                catch (ChannelClosedException)
-                {
-                    break;
-                }
-            }
+                PairingRequestId = pairingRequestId,
+                Status = result.State == DevicePairingState.Approved ? "approved" : result.State == DevicePairingState.Rejected ? "rejected" : "awaiting-approval",
+                ExpiresAt = result.ExpiresUtc,
+                DeviceId = result.DeviceId,
+                Credential = result.Credential,
+                GrantedCapabilities = result.GrantedCapabilities
+            });
         });
-        app.MapGet("/v1/display-profiles", async (int? targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => GatewayResponseMapper.Map(context, await client.ListRemoteAsync(ControlMessageType.ListRemoteProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token)));
-        app.MapGet("/v1/audio-profiles", async (int? targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => GatewayResponseMapper.Map(context, await client.ListRemoteAsync(ControlMessageType.ListRemoteAudioProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token)));
-        app.MapGet("/v1/shortcuts", async (int? targetSessionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => GatewayResponseMapper.Map(context, await client.ListRemoteAsync(ControlMessageType.ListRemoteShortcuts, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, token)));
-        app.MapPost("/v1/display-profiles/apply", async (int? targetSessionId, ApplyProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => GatewayResponseMapper.Map(context, await client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token)));
-        app.MapPost("/v1/audio-profiles/apply", async (int? targetSessionId, ApplyAudioProfileRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => GatewayResponseMapper.Map(context, await client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteAudioProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token)));
-        app.MapPost("/v1/shortcuts/run", async (int? targetSessionId, StartShortcutRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => GatewayResponseMapper.Map(context, await client.ExecuteRemoteAsync(ControlMessageType.StartRemoteShortcut, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token)));
-        app.MapPost("/v1/decisions/answer", async (int? targetSessionId, ResolveOperationDecisionRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) => GatewayResponseMapper.Map(context, await client.ExecuteRemoteAsync(ControlMessageType.ResolveRemoteOperationDecision, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), targetSessionId, System.Text.Json.JsonSerializer.Serialize(request), token)));
+        GatewayResourceRoutes.Map(app);
         app.Run();
     }
 

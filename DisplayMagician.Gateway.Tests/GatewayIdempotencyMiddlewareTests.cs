@@ -16,7 +16,7 @@ public sealed class GatewayIdempotencyMiddlewareTests
         GatewayIdempotencyMiddleware middleware = new GatewayIdempotencyMiddleware(_ => { executed = true; return Task.CompletedTask; });
         DefaultHttpContext context = new DefaultHttpContext();
         context.Request.Method = "POST";
-        context.Request.Path = "/v1/display-profiles/apply";
+        context.Request.Path = "/v1/display-profiles/example/applications";
         context.Response.Body = new MemoryStream();
         GatewayControlServiceClient client = new GatewayControlServiceClient(new HttpContextAccessor());
 

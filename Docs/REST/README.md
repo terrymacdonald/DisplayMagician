@@ -8,15 +8,15 @@ The REST API is the deliberately narrow remote-controller surface exposed by `Di
 - [REST API client guide](REST-API-Client-Guide.md) provides pairing, command, progress, retry, reconnection, and integration walkthroughs.
 - [REST API architecture](REST-API-Architecture.md) explains component responsibilities, trust boundaries, credential/certificate rationale, watches, and the future Telegram connector.
 - [REST API implementation roadmap](REST-API-ROADMAP.md) tracks delivery phases, acceptance criteria, deferred features, and incomplete contract details.
-- [Current prototype OpenAPI description](openapi.yaml) documents only routes currently implemented by the Gateway.
+- [Current Gateway OpenAPI description](openapi.yaml) documents P2 routes currently implemented by the Gateway.
 - [Target OpenAPI draft](target-openapi.json) records approved design-only schemas as they are completed; it does not describe current Gateway behavior and still requires validation before client release.
 - [Cross-transport gap analysis](../IPC/API-Gap-Analysis.md) records gaps spanning IPC, REST, contracts, and tooling.
 
 ## Read this first
 
-The specification and client guide describe the **target API, which is not fully implemented**. The prototype OpenAPI still describes different routes, signed requests, shared response envelopes, and status streaming.
+The specification and client guide describe the **target API, which is not fully implemented**. The current OpenAPI covers P2 resource routes. Cursor pagination, ETags, SSE, and bounded retention remain P3 work.
 
-- **Developing against today's build:** use the current prototype OpenAPI and inspect the matching implementation.
+- **Developing against today's build:** use the current Gateway OpenAPI and inspect the matching implementation.
 - **Planning the target client:** read the specification, then the client guide; track unspecified details in the roadmap.
 - **Working on server components:** read the architecture and roadmap alongside the specification.
 

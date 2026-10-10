@@ -154,6 +154,18 @@ public sealed class GatewayPairingPipeServer
                 ControlMessageType.ApplyRemoteAudioProfile => ExecuteRemote(request, RemoteClientCapabilities.AudioProfilesApply, ControlMessageType.ApplyAudioProfile),
                 ControlMessageType.StartRemoteShortcut => ExecuteRemote(request, RemoteClientCapabilities.ShortcutsRun, ControlMessageType.StartShortcut),
                 ControlMessageType.ResolveRemoteOperationDecision => ResolveRemoteDecision(request),
+                ControlMessageType.ListRemotePairingRequests => ListRemotePairingRequests(request),
+                ControlMessageType.GetRemotePairingRequest => GetRemotePairingRequest(request),
+                ControlMessageType.DecideRemotePairingRequest => DecideRemotePairingRequest(request),
+                ControlMessageType.ListRemoteDevices => ListRemoteDevices(request),
+                ControlMessageType.GetRemoteCurrentDevice => GetRemoteCurrentDevice(request),
+                ControlMessageType.RevokeRemoteDevice => RevokeRemoteDevice(request),
+                ControlMessageType.ListRemoteOperations => ListRemoteOperations(request),
+                ControlMessageType.GetRemoteOperation => GetRemoteOperation(request),
+                ControlMessageType.CancelRemoteOperation => CancelRemoteOperation(request),
+                ControlMessageType.ListRemoteDecisions => ListRemoteDecisions(request),
+                ControlMessageType.GetRemoteDecision => GetRemoteDecision(request),
+                ControlMessageType.AnswerRemoteDecision => AnswerRemoteDecision(request),
                 _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Gateway operation is not supported." }
             };
             response.ProtocolWelcome = welcome;
@@ -281,6 +293,140 @@ public sealed class GatewayPairingPipeServer
         if (!TryGetVerifiedTargetSession(authentication, command!.TargetSessionId, out int sessionId, out ControlResponse failure)) return failure;
         OperationDecision? decision = _operationDecisionStore.Resolve(authentication.OwnerUserSid, sessionId, resolution.PromptId, resolution.Choice, DateTime.UtcNow);
         return decision == null ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DecisionUnavailable, Message = "The operation decision is unavailable, expired, or already resolved." } : new ControlResponse { IsSuccessful = true, Message = "Operation decision recorded.", OperationDecision = decision };
+    }
+
+    private ControlResponse ListRemotePairingRequests(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.PairingApprove, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot approve pairing." };
+        return new ControlResponse { IsSuccessful = true, DevicePairingRequests = _pairingCoordinator.GetPendingForUser(authentication.OwnerUserSid, DateTime.UtcNow) };
+    }
+
+    private ControlResponse GetRemotePairingRequest(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.PairingApprove, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot approve pairing." };
+        if (!Guid.TryParse(command?.Payload, out Guid pairingRequestId)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A pairing request ID is required." };
+        DevicePairingSessionView? pairing = _pairingCoordinator.GetForUser(authentication.OwnerUserSid, pairingRequestId, DateTime.UtcNow);
+        return pairing == null || pairing.State == DevicePairingState.Expired ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingRequired, Message = "The pairing request is unavailable." } : new ControlResponse { IsSuccessful = true, DevicePairingRequest = pairing };
+    }
+
+    private ControlResponse DecideRemotePairingRequest(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.PairingApprove, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot approve pairing." };
+        RemotePairingDecisionCommand? decision = command == null ? null : JsonSerializer.Deserialize<RemotePairingDecisionCommand>(command.Payload);
+        if (decision == null || decision.PairingRequestId == Guid.Empty || decision.Decision != "approved" && decision.Decision != "rejected") return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid pairing decision is required." };
+        DevicePairingSessionView? pending = _pairingCoordinator.GetForUser(authentication.OwnerUserSid, decision.PairingRequestId, DateTime.UtcNow);
+        if (pending == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingRequired, Message = "The pairing request is unavailable." };
+        if (pending.State != DevicePairingState.AwaitingApproval) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingAlreadyResolved, Message = "The pairing request is already resolved." };
+        DevicePairingResult result = decision.Decision == "approved"
+            ? _pairingCoordinator.ApproveFromPairedClient(authentication.OwnerUserSid, authentication.DeviceId, new ApproveDevicePairingRequest { PairingSessionId = decision.PairingRequestId, GrantedCapabilities = pending.RequestedCapabilities }, DateTime.UtcNow)
+            : _pairingCoordinator.Reject(authentication.OwnerUserSid, decision.PairingRequestId, DateTime.UtcNow);
+        if (result.DeviceId.Length == 0) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingAlreadyResolved, Message = result.Message };
+        return new ControlResponse { IsSuccessful = true, DevicePairingRequest = _pairingCoordinator.GetForUser(authentication.OwnerUserSid, decision.PairingRequestId, DateTime.UtcNow) };
+    }
+
+    private ControlResponse ListRemoteDevices(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DevicesRead, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot list devices." };
+        return new ControlResponse { IsSuccessful = true, PairedClients = _pairingCoordinator.GetPairedClients(authentication.OwnerUserSid) };
+    }
+
+    private ControlResponse GetRemoteCurrentDevice(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "A paired device is required." };
+        PairedClientView? current = _pairingCoordinator.GetPairedClients(authentication.OwnerUserSid).FirstOrDefault(device => string.Equals(device.DeviceId, authentication.DeviceId, StringComparison.Ordinal));
+        return current == null ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingRequired, Message = "The device is no longer paired." } : new ControlResponse { IsSuccessful = true, PairedClients = new[] { current } };
+    }
+
+    private ControlResponse RevokeRemoteDevice(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DevicesRevoke, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot revoke devices." };
+        if (string.IsNullOrWhiteSpace(command?.Payload)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A device ID is required." };
+        bool revoked = _pairingCoordinator.RevokePairedClient(authentication.OwnerUserSid, command.Payload, DateTime.UtcNow);
+        return revoked ? new ControlResponse { IsSuccessful = true } : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingRequired, Message = "The device is unavailable." };
+    }
+
+    private ControlResponse ListRemoteOperations(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot read operations." };
+        OperationStatus[] statuses = _operationStatusStore.GetAll(authentication.OwnerUserSid);
+        if (authentication.PreferredSessionId.HasValue) statuses = statuses.Where(status => status.OwnerSessionId == authentication.PreferredSessionId.Value).ToArray();
+        return new ControlResponse { IsSuccessful = true, OperationStatuses = statuses };
+    }
+
+    private ControlResponse GetRemoteOperation(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot read operations." };
+        if (!Guid.TryParse(command?.Payload, out Guid operationId)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An operation ID is required." };
+        OperationStatus? status = _operationStatusStore.Get(authentication.OwnerUserSid, operationId);
+        if (status == null || authentication.PreferredSessionId.HasValue && status.OwnerSessionId != authentication.PreferredSessionId.Value) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "The operation is unavailable." };
+        return new ControlResponse { IsSuccessful = true, OperationStatus = status };
+    }
+
+    private ControlResponse CancelRemoteOperation(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.OperationsCancel, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot cancel operations." };
+        if (!Guid.TryParse(command?.Payload, out Guid operationId)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An operation ID is required." };
+        OperationStatus? status = _operationStatusStore.Get(authentication.OwnerUserSid, operationId);
+        if (status == null || authentication.PreferredSessionId.HasValue && status.OwnerSessionId != authentication.PreferredSessionId.Value) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "The operation is unavailable." };
+        if (status.IsTerminal || status.IsStale || !status.IsAuthoritative || status.OperationType != DisplayOperationType.StartShortcut) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotCancellable, Message = "The operation cannot be cancelled safely now." };
+        ControlResponse cancellation = _profileOperationRouter.ManageProfileAsync(authentication.OwnerUserSid, status.OwnerSessionId, new ControlEnvelope { MessageType = ControlMessageType.CancelOperation, RequestId = request.RequestId, Payload = JsonSerializer.Serialize(new CancelOperationRequest { OperationId = operationId }) }, CancellationToken.None).GetAwaiter().GetResult();
+        return cancellation.IsSuccessful ? cancellation : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotCancellable, Message = "The operation cannot be cancelled safely now." };
+    }
+
+    private ControlResponse ListRemoteDecisions(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsRead, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot read decisions." };
+        if (string.IsNullOrEmpty(command?.Payload)) return new ControlResponse { IsSuccessful = true, OperationDecisions = _operationDecisionStore.GetPending(authentication.OwnerUserSid, authentication.PreferredSessionId ?? -1).Where(decision => !authentication.PreferredSessionId.HasValue || decision.OwnerSessionId == authentication.PreferredSessionId.Value).ToArray() };
+        if (!Guid.TryParse(command.Payload, out Guid operationId)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An operation ID is required." };
+        OperationStatus? status = _operationStatusStore.Get(authentication.OwnerUserSid, operationId);
+        if (status == null || authentication.PreferredSessionId.HasValue && status.OwnerSessionId != authentication.PreferredSessionId.Value) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "The operation is unavailable." };
+        return new ControlResponse { IsSuccessful = true, OperationDecisions = _operationDecisionStore.GetForOperation(authentication.OwnerUserSid, operationId) };
+    }
+
+    private ControlResponse GetRemoteDecision(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsRead, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot read decisions." };
+        RemoteOperationDecisionRequest? requested = command == null ? null : JsonSerializer.Deserialize<RemoteOperationDecisionRequest>(command.Payload);
+        if (requested == null || requested.OperationId == Guid.Empty || requested.DecisionId == Guid.Empty) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "Operation and decision IDs are required." };
+        OperationDecision? decision = _operationDecisionStore.Get(authentication.OwnerUserSid, requested.DecisionId);
+        if (decision == null || decision.OperationId != requested.OperationId || authentication.PreferredSessionId.HasValue && decision.OwnerSessionId != authentication.PreferredSessionId.Value) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "The decision is unavailable." };
+        return new ControlResponse { IsSuccessful = true, OperationDecision = decision };
+    }
+
+    private ControlResponse AnswerRemoteDecision(ControlEnvelope request)
+    {
+        GatewayRemoteCommand? command = JsonSerializer.Deserialize<GatewayRemoteCommand>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsAnswer, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot answer decisions." };
+        RemoteOperationDecisionRequest? answer = command == null ? null : JsonSerializer.Deserialize<RemoteOperationDecisionRequest>(command.Payload);
+        if (answer == null || answer.OperationId == Guid.Empty || answer.DecisionId == Guid.Empty || answer.Choice == OperationDecisionChoice.Unknown) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid decision answer is required." };
+        OperationDecision? decision = _operationDecisionStore.Get(authentication.OwnerUserSid, answer.DecisionId);
+        if (decision == null || decision.OperationId != answer.OperationId || authentication.PreferredSessionId.HasValue && decision.OwnerSessionId != authentication.PreferredSessionId.Value) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "The decision is unavailable." };
+        if (!decision.AllowedChoices.Contains(answer.Choice)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The choice is not allowed for this decision." };
+        OperationDecision? resolved = _operationDecisionStore.Resolve(authentication.OwnerUserSid, decision.OwnerSessionId, decision.PromptId, answer.Choice, DateTime.UtcNow);
+        return resolved == null ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DecisionUnavailable, Message = "The decision is already resolved or the answer is invalid." } : new ControlResponse { IsSuccessful = true, OperationDecision = resolved };
     }
 
     private bool TryGetVerifiedTargetSession(GatewayAuthenticationResult authentication, int? targetSessionId, out int sessionId, out ControlResponse failure)

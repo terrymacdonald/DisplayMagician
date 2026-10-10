@@ -103,7 +103,7 @@ Pairing establishes trust from locally approved QR data, not from an unverified 
 
 Automatic certificate renewal and long-lived independently revocable credentials reduce routine maintenance. They do not remove the need for secure storage, certificate validation, capability checks, revocation, or explicit handling of key loss and replacement.
 
-The target uses bearer credentials rather than custom request signatures, HMAC, or client certificates. Current prototype request signing must not be assumed to be the target authentication contract.
+The Gateway uses bearer credentials rather than custom request signatures, HMAC, or client certificates.
 
 ### 3.1 Marketplace entitlement
 

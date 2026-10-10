@@ -112,18 +112,22 @@ public static class RemoteClientCapabilities
     public const string StatusRead = "status-read";
     public const string DecisionsRead = "decisions-read";
     public const string DecisionsAnswer = "decisions-answer";
-    public const string ProfilesRead = "profiles-read";
-    public const string ProfilesApply = "profiles-apply";
+    public const string ProfilesRead = "display-profiles-read";
+    public const string ProfilesApply = "display-profiles-apply";
     public const string AudioProfilesRead = "audio-profiles-read";
     public const string AudioProfilesApply = "audio-profiles-apply";
     public const string ShortcutsRead = "shortcuts-read";
     public const string ShortcutsRun = "shortcuts-run";
     public const string PairingApprove = "pairing-approve";
+    public const string OperationsCancel = "operations-cancel";
+    public const string DevicesRead = "devices-read";
+    public const string DevicesRevoke = "devices-revoke";
 
     public static readonly string[] All = new[]
     {
         StatusRead, DecisionsRead, DecisionsAnswer, ProfilesRead, ProfilesApply,
-        AudioProfilesRead, AudioProfilesApply, ShortcutsRead, ShortcutsRun, PairingApprove
+        AudioProfilesRead, AudioProfilesApply, ShortcutsRead, ShortcutsRun, PairingApprove,
+        OperationsCancel, DevicesRead, DevicesRevoke
     };
 }
 
@@ -208,7 +212,19 @@ public enum ControlMessageType
     GatewayIdempotencyBegin = 80,
     GatewayIdempotencyComplete = 81,
     ValidateDevicePairingSession = 82,
-    ApproveGatewayTlsKeyReplacement = 83
+    ApproveGatewayTlsKeyReplacement = 83,
+    ListRemotePairingRequests = 84,
+    GetRemotePairingRequest = 85,
+    DecideRemotePairingRequest = 86,
+    ListRemoteDevices = 87,
+    RevokeRemoteDevice = 88,
+    GetRemoteCurrentDevice = 89,
+    ListRemoteOperations = 90,
+    GetRemoteOperation = 91,
+    CancelRemoteOperation = 92,
+    ListRemoteDecisions = 93,
+    GetRemoteDecision = 94,
+    AnswerRemoteDecision = 95
 }
 
 public enum ControlErrorCode
@@ -236,7 +252,9 @@ public enum ControlErrorCode
     IncompatibleProtocolVersion = 20,
     RequiredCapabilityUnavailable = 21,
     AuthenticationRequired = 22,
-    PairingRequired = 23
+    PairingRequired = 23,
+    PairingAlreadyResolved = 24,
+    OperationNotCancellable = 25
 }
 
 public enum ControlClientKind
@@ -305,6 +323,37 @@ public sealed class GatewayIdentityView
     public string TlsSpkiSha256 { get; set; } = string.Empty;
 }
 
+/// <summary>Public REST identity without local transport version or listener details.</summary>
+public sealed class GatewayPublicIdentityView
+{
+    public string HostId { get; set; } = string.Empty;
+    public string HostIdentityPublicKeyJwk { get; set; } = string.Empty;
+    public string TlsSpkiSha256 { get; set; } = string.Empty;
+}
+
+public sealed class GatewayCapabilitiesView
+{
+    public int[] ApiVersions { get; set; } = new[] { 1 };
+    public string GatewayVersion { get; set; } = string.Empty;
+    public string HostId { get; set; } = string.Empty;
+    public string[] SupportedFeatures { get; set; } = Array.Empty<string>();
+    public string[] KnownCapabilities { get; set; } = Array.Empty<string>();
+    public GatewayPublishedLimits Limits { get; set; } = new GatewayPublishedLimits();
+    public string[] EventTransports { get; set; } = Array.Empty<string>();
+}
+
+public sealed class GatewayPublishedLimits
+{
+    public int MaxRequestBodyBytes { get; set; } = 65536;
+    public int MaxJsonResponseBytes { get; set; } = 1048576;
+    public int MaxArtworkBytes { get; set; } = 262144;
+    public int MinPairingPollSeconds { get; set; } = 2;
+    public int AuthenticatedRequestsPerMinute { get; set; } = 120;
+    public int MutationsPerMinute { get; set; } = 10;
+    public int FailedAuthenticationsPerIpPerMinute { get; set; } = 20;
+    public int IdempotencyRetentionHours { get; set; } = 24;
+}
+
 /// <summary>Machine-owned Gateway listener and QR advertisement settings.</summary>
 public sealed class GatewaySettings
 {
@@ -354,6 +403,105 @@ public sealed class DevicePairingRequest
     public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
 }
 
+public sealed class PairingSubmissionRequest
+{
+    public Guid PairingRequestId { get; set; }
+    public string PairingSecret { get; set; } = string.Empty;
+    public string PollingSecret { get; set; } = string.Empty;
+    public string DeviceId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
+    public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
+
+    public DevicePairingRequest ToControlRequest() => new DevicePairingRequest
+    {
+        PairingSessionId = PairingRequestId,
+        PairingSecret = PairingSecret,
+        PollingSecret = PollingSecret,
+        DeviceId = DeviceId,
+        DeviceDisplayName = DisplayName,
+        ClientType = ClientType,
+        RequestedCapabilities = RequestedCapabilities
+    };
+}
+
+public sealed class PairingSubmissionAccepted
+{
+    public Guid PairingRequestId { get; set; }
+    public string Status { get; set; } = "awaiting-approval";
+    public string Href { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+}
+
+public sealed class PairingPollView
+{
+    public Guid PairingRequestId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTime? ExpiresAt { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DeviceId { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Credential { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string[]? GrantedCapabilities { get; set; }
+}
+
+public sealed class PairingDecisionRequest
+{
+    public string Decision { get; set; } = string.Empty;
+}
+
+public sealed class RemotePairingDecisionCommand
+{
+    public Guid PairingRequestId { get; set; }
+    public string Decision { get; set; } = string.Empty;
+}
+
+public sealed class PairingRequestItem
+{
+    public Guid PairingRequestId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string DeviceId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
+    public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string[]? GrantedCapabilities { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+}
+
+public sealed class PairingRequestPage
+{
+    public PairingRequestItem[] Items { get; set; } = Array.Empty<PairingRequestItem>();
+    public string? NextCursor { get; set; }
+}
+
+public sealed class CurrentDeviceView
+{
+    public string Id { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
+    public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
+}
+
+public sealed class DeviceItem
+{
+    public string Id { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string ClientType { get; set; } = string.Empty;
+    public string[] GrantedCapabilities { get; set; } = Array.Empty<string>();
+    public DateTime PairedAt { get; set; }
+    public DateTime? LastSeenAt { get; set; }
+}
+
+public sealed class DevicePage
+{
+    public DeviceItem[] Items { get; set; } = Array.Empty<DeviceItem>();
+    public string? NextCursor { get; set; }
+}
+
 /// <summary>Client-safe pairing state. It deliberately excludes the one-time QR secret and public-key material.</summary>
 public sealed class DevicePairingSessionView
 {
@@ -366,6 +514,7 @@ public sealed class DevicePairingSessionView
     public string DeviceDisplayName { get; set; } = string.Empty;
     public string ClientType { get; set; } = string.Empty;
     public string[] RequestedCapabilities { get; set; } = Array.Empty<string>();
+    public string[]? GrantedCapabilities { get; set; }
 }
 
 /// <summary>Request made by an authorised local or paired client to approve a pending device. Granted capabilities may be a subset of the candidate's request.</summary>
@@ -401,6 +550,7 @@ public sealed class DevicePairingResult
     public DevicePairingState State { get; set; }
     public string DeviceId { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+    public DateTime ExpiresUtc { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ProblemCode { get; set; }
     /// <summary>Returned exactly once on the first approved poll; never persisted or logged.</summary>
@@ -768,6 +918,13 @@ public sealed class ResolveOperationDecisionRequest
     public OperationDecisionChoice Choice { get; set; }
 }
 
+public sealed class RemoteOperationDecisionRequest
+{
+    public Guid OperationId { get; set; }
+    public Guid DecisionId { get; set; }
+    public OperationDecisionChoice Choice { get; set; }
+}
+
 public sealed class RequestOperationDecisionRequest
 {
     public Guid OperationId { get; set; }
@@ -1117,6 +1274,8 @@ public sealed class ControlResponse
     public DevicePairingQrCode? DevicePairingQrCode { get; set; }
 
     public DevicePairingSessionView[] DevicePairingRequests { get; set; } = Array.Empty<DevicePairingSessionView>();
+
+    public DevicePairingSessionView? DevicePairingRequest { get; set; }
 
     public PairedClientView[] PairedClients { get; set; } = Array.Empty<PairedClientView>();
 

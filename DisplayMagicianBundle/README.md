@@ -10,6 +10,8 @@ Build through the repository release workflow:
 .\build_displaymagician.ps1
 ```
 
+Run `.\prepare_displaymagician.ps1` once to obtain the .NET runtime installers used by the bundle. Later runs reuse valid signed installers already in `Packages`; use `.\prepare_displaymagician.ps1 -RefreshRuntimes` when you want to download newer runtime versions.
+
 For a development build, build the MSI first and then the bundle:
 
 ```powershell

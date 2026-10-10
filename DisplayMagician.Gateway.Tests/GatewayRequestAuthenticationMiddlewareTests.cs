@@ -17,7 +17,8 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
         bool nextCalled = false;
         GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         DefaultHttpContext context = new DefaultHttpContext();
-        context.Request.Path = "/v1/pairing/request";
+        context.Request.Method = "POST";
+        context.Request.Path = "/v1/pairing-requests";
         await middleware.InvokeAsync(context, new FakeClient(), new GatewayTrafficLimiter(), RegisteredState());
         Assert.True(nextCalled);
     }
@@ -28,7 +29,8 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
         bool nextCalled = false;
         GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         DefaultHttpContext context = new DefaultHttpContext();
-        context.Request.Path = "/v1/pairing/request";
+        context.Request.Method = "POST";
+        context.Request.Path = "/v1/pairing-requests";
         context.Response.Body = new MemoryStream();
         await middleware.InvokeAsync(context, new FakeClient(), new GatewayTrafficLimiter(), new GatewayRegistrationState());
         Assert.False(nextCalled);
@@ -40,7 +42,7 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
     {
         GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => Task.CompletedTask);
         DefaultHttpContext context = new DefaultHttpContext();
-        context.Request.Path = "/v1/status";
+        context.Request.Path = "/v1/operations";
         context.Response.Body = new MemoryStream();
         await middleware.InvokeAsync(context, new FakeClient(), new GatewayTrafficLimiter(), RegisteredState());
         Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
@@ -56,7 +58,7 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
             return Task.CompletedTask;
         });
         DefaultHttpContext context = new DefaultHttpContext();
-        context.Request.Path = "/v1/status";
+        context.Request.Path = "/v1/operations";
         context.Request.Headers.Authorization = "Bearer sample-credential";
         context.Request.Body = new MemoryStream();
 
@@ -71,7 +73,7 @@ public sealed class GatewayRequestAuthenticationMiddlewareTests
         bool nextCalled = false;
         GatewayRequestAuthenticationMiddleware middleware = new GatewayRequestAuthenticationMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
         DefaultHttpContext context = new DefaultHttpContext();
-        context.Request.Path = "/v1/status";
+        context.Request.Path = "/v1/operations";
         context.Request.Headers.Authorization = "Bearer sample-credential";
         context.Request.Body = new MemoryStream();
 

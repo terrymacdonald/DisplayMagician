@@ -25,13 +25,13 @@ public sealed class GatewayRequestAuthenticationMiddleware
 
         try
         {
-        if (!registrationState.IsRegistered && context.Request.Path != "/v1/identity")
+        if (!registrationState.IsRegistered && context.Request.Path != "/v1/identity" && context.Request.Path != "/v1/capabilities")
         {
             await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status503ServiceUnavailable, "target-unavailable", "Gateway not ready", "The Gateway identity is still registering with Control Service.", true, 1).ConfigureAwait(false);
             return;
         }
 
-        if (IsPublicPath(context.Request.Path))
+        if (IsPublicPath(context.Request))
         {
             await _next(context).ConfigureAwait(false);
             return;
@@ -75,6 +75,7 @@ public sealed class GatewayRequestAuthenticationMiddleware
         }
 
         context.Items[AuthenticationItemName] = authentication;
+        context.Response.Headers.CacheControl = "no-store";
         await _next(context).ConfigureAwait(false);
         }
         finally
@@ -85,6 +86,11 @@ public sealed class GatewayRequestAuthenticationMiddleware
 
     public static GatewayAuthenticationResult GetAuthentication(HttpContext context) => context.Items.TryGetValue(AuthenticationItemName, out object? value) && value is GatewayAuthenticationResult authentication ? authentication : throw new InvalidOperationException("The Gateway request was not authenticated.");
 
-    private static bool IsPublicPath(PathString path) => path == "/v1/identity" || path == "/v1/pairing/request" || path == "/v1/pairing/status";
+    private static bool IsPublicPath(HttpRequest request)
+    {
+        if (request.Path == "/v1/identity" || request.Path == "/v1/capabilities") return true;
+        if (request.Path == "/v1/pairing-requests") return HttpMethods.IsPost(request.Method);
+        return HttpMethods.IsGet(request.Method) && request.Headers.Authorization.ToString().StartsWith("DisplayMagician-Pairing ", StringComparison.OrdinalIgnoreCase) && request.Path.StartsWithSegments("/v1/pairing-requests", out PathString remaining) && remaining.HasValue && !remaining.Value!.Trim('/').Contains('/');
+    }
 
 }

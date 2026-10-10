@@ -26,13 +26,16 @@
 .NOTES
     Run once per developer machine, or whenever you need a new certificate.
     Use -ImageMagickOnly to retry just the optional image-generation tool.
+    Existing signed .NET runtime installers are reused; use -RefreshRuntimes
+    to download the latest installers again.
     Re-running is safe - existing entries are detected and skipped.
     Administrator rights are required to trust a self-signed certificate in
     LocalMachine\TrustedPeople for MSIX registration.
 #>
 
 param(
-    [switch]$ImageMagickOnly
+    [switch]$ImageMagickOnly,
+    [switch]$RefreshRuntimes
 )
 
 Set-StrictMode -Version Latest
@@ -98,6 +101,17 @@ $imageMagickVersionFile = Join-Path $imageMagickToolDir 'version.txt'
 
 Write-Host "Checking ImageMagick portable tool..."
 $imageMagickInstalled = (Test-Path $imageMagickExe) -and (Test-Path $imageMagickVersionFile) -and ((Get-Content $imageMagickVersionFile -Raw).Trim() -eq $imageMagickVersion)
+if (-not $imageMagickInstalled -and (Test-Path $imageMagickExe)) {
+    try {
+        $installedVersionOutput = & $imageMagickExe -version
+        if ($LASTEXITCODE -eq 0 -and $installedVersionOutput[0] -match "^Version: ImageMagick $([regex]::Escape($imageMagickVersion)) ") {
+            Set-Content -Path $imageMagickVersionFile -Value $imageMagickVersion -Encoding ASCII
+            $imageMagickInstalled = $true
+        }
+    } catch {
+        # An incomplete previous install will be replaced by the normal download path.
+    }
+}
 if ($imageMagickInstalled) {
     Write-Host "  ImageMagick $imageMagickVersion is already installed - skipping." -ForegroundColor Green
 } else {
@@ -116,8 +130,10 @@ if ($imageMagickInstalled) {
         if (Test-Path $imageMagickToolDir) { Remove-Item -LiteralPath $imageMagickToolDir -Recurse -Force }
         New-Item -ItemType Directory -Path $imageMagickToolDir -Force | Out-Null
         Copy-Item -Path (Join-Path $downloadedMagickExe.Directory.FullName '*') -Destination $imageMagickToolDir -Recurse -Force
-        & $imageMagickExe -version | Select-Object -First 1 | Write-Host
+        $installedVersionOutput = & $imageMagickExe -version
         if ($LASTEXITCODE -ne 0) { throw "ImageMagick exited with code $LASTEXITCODE after installation." }
+        if ($installedVersionOutput[0] -notmatch "^Version: ImageMagick $([regex]::Escape($imageMagickVersion)) ") { throw "ImageMagick version did not match $imageMagickVersion after installation." }
+        Write-Host $installedVersionOutput[0]
         Set-Content -Path $imageMagickVersionFile -Value $imageMagickVersion -Encoding ASCII
         $imageMagickInstalled = $true
         Write-Host "  ImageMagick installed at $imageMagickToolDir." -ForegroundColor Green
@@ -597,6 +613,35 @@ function Get-DotNetRuntimeInstaller {
         [Parameter(Mandatory = $true)]
         [string] $CleanupFilter
     )
+
+    if (-not $RefreshRuntimes) {
+        $runtimeNamePattern = "^$([regex]::Escape($FilenamePrefix))-(?<version>10\.0\.\d+)-win-x64\.exe$"
+        $cachedRuntimeFiles = @(
+            Get-ChildItem -LiteralPath $bundlePackagesDir -Filter $CleanupFilter -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -match $runtimeNamePattern } |
+                Sort-Object { [version]([regex]::Match($_.Name, '10\.0\.\d+').Value) } -Descending
+        )
+
+        foreach ($cachedRuntimeFile in $cachedRuntimeFiles) {
+            $cachedVersion = [regex]::Match($cachedRuntimeFile.Name, '10\.0\.\d+').Value
+            $cachedSignature = Get-AuthenticodeSignature -FilePath $cachedRuntimeFile.FullName
+            if (
+                $cachedRuntimeFile.Length -ge 5MB -and
+                $cachedRuntimeFile.VersionInfo.ProductVersion -match "^$([regex]::Escape($cachedVersion))([. ]|$)" -and
+                $cachedSignature.Status -eq 'Valid' -and
+                $null -ne $cachedSignature.SignerCertificate -and
+                $cachedSignature.SignerCertificate.Subject -match 'O=Microsoft Corporation'
+            ) {
+                Write-Host "Using existing .NET $runtimeChannel $DisplayName installer: $($cachedRuntimeFile.Name)" -ForegroundColor Green
+                return [PSCustomObject]@{
+                    Version  = $cachedVersion
+                    Filename = $cachedRuntimeFile.Name
+                    Path     = $cachedRuntimeFile.FullName
+                }
+            }
+            Write-Warning "Ignoring invalid cached $DisplayName installer: $($cachedRuntimeFile.Name)"
+        }
+    }
 
     $tempRuntimePath = Join-Path `
         $env:TEMP `

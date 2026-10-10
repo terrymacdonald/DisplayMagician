@@ -3,7 +3,7 @@
   "info": {
     "title": "DisplayMagician v4 target REST API (design-only draft)",
     "version": "1.0.0-draft",
-    "description": "Design-only schemas for the target REST API. This file does not describe routes available in the current Gateway build. Docs/REST/openapi.yaml remains the implemented prototype contract. Only the routes with completed draft schemas are listed here."
+    "description": "Design-only schemas for the target REST API. This file does not describe routes available in the current Gateway build. Docs/REST/openapi.yaml describes the implemented P2 routes. Only the routes with completed draft schemas are listed here."
   },
   "x-displaymagician-contractStatus": "design-only-incomplete",
   "servers": [
@@ -1217,11 +1217,10 @@
       "PairingDecisionRequest": {
         "type": "object",
         "additionalProperties": false,
-        "description": "For approved, grantedCapabilities is required and must be a nonempty subset of requested capabilities. For rejected, grantedCapabilities must be absent.",
+        "description": "Approval grants exactly the candidate-requested capabilities. Rejection grants none.",
         "required": ["decision"],
         "properties": {
-          "decision": { "type": "string", "enum": ["approved", "rejected"] },
-          "grantedCapabilities": { "type": "array", "items": { "$ref": "#/components/schemas/RemoteCapability" }, "minItems": 1, "maxItems": 13, "uniqueItems": true }
+          "decision": { "type": "string", "enum": ["approved", "rejected"] }
         }
       },
       "ErrorCode": {

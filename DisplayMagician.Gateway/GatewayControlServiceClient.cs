@@ -22,6 +22,7 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
     public GatewayControlServiceClient(IHttpContextAccessor httpContextAccessor) => _httpContextAccessor = httpContextAccessor;
 
     public Task<ControlResponse> ExecuteRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int? targetSessionId, string payload, CancellationToken cancellationToken) => SendAsync(messageType, JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, TargetSessionId = targetSessionId, Payload = payload }), cancellationToken);
+    public Task<ControlResponse> RemoteResourceAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, string payload, CancellationToken cancellationToken) => ExecuteRemoteAsync(messageType, authentication, null, payload, cancellationToken);
     public async Task<ControlResponse> ListRemoteAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, int? targetSessionId, CancellationToken cancellationToken)
     {
         return await SendAsync(messageType, JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, TargetSessionId = targetSessionId }), cancellationToken).ConfigureAwait(false);
@@ -64,7 +65,7 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
         ControlResponse response = await SendAsync(ControlMessageType.SubmitDevicePairing, JsonSerializer.Serialize(request), cancellationToken).ConfigureAwait(false);
         return response.IsSuccessful && response.DevicePairingResult != null
             ? response.DevicePairingResult
-            : new DevicePairingResult { State = DevicePairingState.Rejected, Message = string.IsNullOrWhiteSpace(response.Message) ? "The pairing request could not be processed." : response.Message };
+            : new DevicePairingResult { State = response.ErrorCode == ControlErrorCode.AgentUnavailable ? DevicePairingState.Unknown : DevicePairingState.Rejected, ProblemCode = response.ErrorCode == ControlErrorCode.AgentUnavailable ? "target-unavailable" : "validation-failed", Message = string.IsNullOrWhiteSpace(response.Message) ? "The pairing request could not be processed." : response.Message };
     }
 
     public async Task<DevicePairingState> ValidatePairingSubmissionAsync(DevicePairingRequest request, CancellationToken cancellationToken)
@@ -77,7 +78,7 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
     {
         ArgumentNullException.ThrowIfNull(request);
         ControlResponse response = await SendAsync(ControlMessageType.GetDevicePairingStatus, JsonSerializer.Serialize(request), cancellationToken).ConfigureAwait(false);
-        return response.IsSuccessful && response.DevicePairingResult != null ? response.DevicePairingResult : new DevicePairingResult { State = DevicePairingState.Rejected, Message = string.IsNullOrWhiteSpace(response.Message) ? "The pairing status could not be retrieved." : response.Message };
+        return response.IsSuccessful && response.DevicePairingResult != null ? response.DevicePairingResult : new DevicePairingResult { State = response.ErrorCode == ControlErrorCode.AgentUnavailable ? DevicePairingState.Unknown : DevicePairingState.Rejected, ProblemCode = response.ErrorCode == ControlErrorCode.AgentUnavailable ? "target-unavailable" : "validation-failed", Message = string.IsNullOrWhiteSpace(response.Message) ? "The pairing status could not be retrieved." : response.Message };
     }
 
     private async Task<ControlResponse> SendAsync(ControlMessageType messageType, string payload, CancellationToken cancellationToken)

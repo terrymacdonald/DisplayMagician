@@ -88,7 +88,7 @@ public sealed class DevicePairingCoordinator
 
             if (session.State == DevicePairingState.AwaitingApproval && string.Equals(session.DeviceId, request.DeviceId, StringComparison.Ordinal) && string.Equals(session.DeviceDisplayName, request.DeviceDisplayName, StringComparison.Ordinal) && string.Equals(session.DevicePublicKeyJwk, request.DevicePublicKeyJwk, StringComparison.Ordinal) && FixedTimeEquals(session.PollingSecretHash, GetHash(request.PollingSecret)) && session.RequestedCapabilities.SequenceEqual(request.RequestedCapabilities, StringComparer.Ordinal))
             {
-                return new DevicePairingResult { State = DevicePairingState.AwaitingApproval, DeviceId = request.DeviceId, Message = "Awaiting approval." };
+                return new DevicePairingResult { State = DevicePairingState.AwaitingApproval, DeviceId = request.DeviceId, ExpiresUtc = session.ExpiresUtc, Message = "Awaiting approval." };
             }
 
             if (session.State != DevicePairingState.AwaitingDevice)
@@ -105,7 +105,7 @@ public sealed class DevicePairingCoordinator
             session.RequestedCapabilities = (request.RequestedCapabilities ?? Array.Empty<string>()).ToArray();
             session.State = DevicePairingState.AwaitingApproval;
             PersistUnsafe();
-            return new DevicePairingResult { State = DevicePairingState.AwaitingApproval, DeviceId = request.DeviceId, Message = "Awaiting approval." };
+            return new DevicePairingResult { State = DevicePairingState.AwaitingApproval, DeviceId = request.DeviceId, ExpiresUtc = session.ExpiresUtc, Message = "Awaiting approval." };
         }
     }
 
@@ -128,6 +128,17 @@ public sealed class DevicePairingCoordinator
         {
             ExpireUnsafe(utcNow);
             return _sessions.Where(session => string.Equals(session.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) && session.State == DevicePairingState.AwaitingApproval).Select(ToView).ToArray();
+        }
+    }
+
+    public DevicePairingSessionView? GetForUser(string ownerUserSid, Guid pairingSessionId, DateTime utcNow)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
+        lock (_syncRoot)
+        {
+            ExpireUnsafe(utcNow);
+            PairingSessionRecord? session = _sessions.LastOrDefault(candidate => candidate.PairingSessionId == pairingSessionId && string.Equals(candidate.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase));
+            return session == null ? null : ToView(session);
         }
     }
 
@@ -174,24 +185,24 @@ public sealed class DevicePairingCoordinator
         {
             ExpireUnsafe(utcNow);
             PairingSessionRecord? session = _sessions.LastOrDefault(candidate => candidate.PairingSessionId == request.PairingSessionId);
-            if (session == null || !FixedTimeEquals(session.PollingSecretHash, GetHash(request.PollingSecret)) || !string.Equals(session.DeviceId, request.DeviceId, StringComparison.Ordinal))
+            if (session == null || !FixedTimeEquals(session.PollingSecretHash, GetHash(request.PollingSecret)) || !string.IsNullOrEmpty(request.DeviceId) && !string.Equals(session.DeviceId, request.DeviceId, StringComparison.Ordinal))
             {
                 return new DevicePairingResult { State = DevicePairingState.Rejected, Message = "The pairing session is unavailable." };
             }
 
             if (session.State == DevicePairingState.Approved && session.CredentialDelivered)
             {
-                return new DevicePairingResult { State = DevicePairingState.Expired, DeviceId = session.DeviceId, ProblemCode = "pairing-delivery-consumed", Message = "The one-time credential delivery was already consumed." };
+                return new DevicePairingResult { State = DevicePairingState.Expired, DeviceId = session.DeviceId, ExpiresUtc = session.ExpiresUtc, ProblemCode = "pairing-delivery-consumed", Message = "The one-time credential delivery was already consumed." };
             }
 
             if (session.State == DevicePairingState.Expired)
             {
-                return new DevicePairingResult { State = DevicePairingState.Expired, DeviceId = session.DeviceId, ProblemCode = "pairing-expired", Message = "The pairing session expired." };
+                return new DevicePairingResult { State = DevicePairingState.Expired, DeviceId = session.DeviceId, ExpiresUtc = session.ExpiresUtc, ProblemCode = "pairing-expired", Message = "The pairing session expired." };
             }
 
             if (session.LastPolledUtc.HasValue && utcNow.ToUniversalTime() - session.LastPolledUtc.Value < TimeSpan.FromSeconds(2))
             {
-                return new DevicePairingResult { State = DevicePairingState.Unknown, DeviceId = session.DeviceId, ProblemCode = "rate-limited", Message = "Pairing status may be polled every two seconds." };
+                return new DevicePairingResult { State = DevicePairingState.Unknown, DeviceId = session.DeviceId, ExpiresUtc = session.ExpiresUtc, ProblemCode = "rate-limited", Message = "Pairing status may be polled every two seconds." };
             }
 
             session.LastPolledUtc = utcNow.ToUniversalTime();
@@ -218,10 +229,10 @@ public sealed class DevicePairingCoordinator
                     GrantedCapabilities = session.GrantedCapabilities.ToArray(),
                     PairedUtc = pairedUtc
                 });
-                return new DevicePairingResult { State = DevicePairingState.Approved, DeviceId = session.DeviceId, Credential = credential, GrantedCapabilities = session.GrantedCapabilities.ToArray(), Message = "Pairing was approved." };
+                return new DevicePairingResult { State = DevicePairingState.Approved, DeviceId = session.DeviceId, ExpiresUtc = session.ExpiresUtc, Credential = credential, GrantedCapabilities = session.GrantedCapabilities.ToArray(), Message = "Pairing was approved." };
             }
 
-            return new DevicePairingResult { State = session.State, DeviceId = session.DeviceId, ProblemCode = session.State == DevicePairingState.Expired ? "pairing-expired" : string.Empty, Message = session.State switch { DevicePairingState.AwaitingApproval => "Awaiting approval.", DevicePairingState.Expired => "The pairing session expired.", _ => "Pairing was rejected." } };
+            return new DevicePairingResult { State = session.State, DeviceId = session.DeviceId, ExpiresUtc = session.ExpiresUtc, ProblemCode = session.State == DevicePairingState.Expired ? "pairing-expired" : string.Empty, Message = session.State switch { DevicePairingState.AwaitingApproval => "Awaiting approval.", DevicePairingState.Expired => "The pairing session expired.", _ => "Pairing was rejected." } };
         }
     }
 
@@ -293,7 +304,7 @@ public sealed class DevicePairingCoordinator
     private static bool AreGrantedCapabilitiesValid(PairingSessionRecord session, string[]? grantedCapabilities)
     {
         string[] granted = grantedCapabilities ?? Array.Empty<string>();
-        return granted.Length > 0 && granted.Length <= session.RequestedCapabilities.Length && granted.Length <= ControlProtocol.MaximumRequiredCapabilities && granted.All(IsValidCapability) && granted.Distinct(StringComparer.Ordinal).Count() == granted.Length && granted.All(capability => session.RequestedCapabilities.Contains(capability, StringComparer.Ordinal));
+        return granted.Length == session.RequestedCapabilities.Length && granted.Length > 0 && granted.Length <= ControlProtocol.MaximumRequiredCapabilities && granted.All(IsValidCapability) && granted.Distinct(StringComparer.Ordinal).Count() == granted.Length && granted.All(capability => session.RequestedCapabilities.Contains(capability, StringComparer.Ordinal));
     }
 
     private static bool IsP256PublicKeyJwk(string? publicKeyJwk)
@@ -378,7 +389,7 @@ public sealed class DevicePairingCoordinator
 
     private static DevicePairingSessionView ToView(PairingSessionRecord session)
     {
-        return new DevicePairingSessionView { PairingSessionId = session.PairingSessionId, OwnerUserSid = session.OwnerUserSid, State = session.State, CreatedUtc = session.CreatedUtc, ExpiresUtc = session.ExpiresUtc, DeviceId = session.DeviceId, DeviceDisplayName = session.DeviceDisplayName, ClientType = session.ClientType, RequestedCapabilities = (session.RequestedCapabilities ?? Array.Empty<string>()).ToArray() };
+        return new DevicePairingSessionView { PairingSessionId = session.PairingSessionId, OwnerUserSid = session.OwnerUserSid, State = session.State, CreatedUtc = session.CreatedUtc, ExpiresUtc = session.ExpiresUtc, DeviceId = session.DeviceId, DeviceDisplayName = session.DeviceDisplayName, ClientType = session.ClientType, RequestedCapabilities = (session.RequestedCapabilities ?? Array.Empty<string>()).ToArray(), GrantedCapabilities = session.State == DevicePairingState.Approved ? (session.GrantedCapabilities ?? Array.Empty<string>()).ToArray() : null };
     }
 
     private static GatewayPairingIdentity Copy(GatewayPairingIdentity gateway)

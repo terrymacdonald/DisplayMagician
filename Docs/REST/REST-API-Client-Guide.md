@@ -8,11 +8,11 @@
 
 ## 1. Start here
 
-Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the current prototype, not these target workflows.
+Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the routes in the current Gateway build; pagination, ETags, and SSE remain P3 work.
 
 Gateway firewall access is enabled for Windows Private and Domain networks by default. An administrator can also enable Public networks in the desktop Server Settings form; phone clients use the same HTTPS and pairing flow on each profile.
 
-The examples below illustrate target interactions. Exact schemas and several lifecycle details still need to be finalized in the [roadmap](REST-API-ROADMAP.md). Do not generate a target production client from the prototype OpenAPI or assume an example is a complete schema.
+The examples below illustrate target interactions. Exact schemas and several lifecycle details still need to be finalized in the [roadmap](REST-API-ROADMAP.md). Check the implemented OpenAPI before using an example against today's build.
 
 Every request also sends `DisplayMagician-Protocol-Hello` containing unpadded base64url encoded UTF-8 JSON for the shared `ProtocolHello` contract. Every successful response supplies `DisplayMagician-Protocol-Welcome` in the same encoding for `ProtocolWelcome`. The examples omit these repeated headers for readability; they are required even on public pairing and identity requests.
 

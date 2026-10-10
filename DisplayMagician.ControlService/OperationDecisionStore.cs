@@ -151,6 +151,19 @@ public sealed class OperationDecisionStore
         }
     }
 
+    public OperationDecision[] GetForOperation(string ownerUserSid, Guid operationId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
+        lock (_syncRoot)
+        {
+            return _decisions.Values
+                .Where(decision => decision.OperationId == operationId && string.Equals(decision.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(decision => decision.CreatedUtc)
+                .Select(Copy)
+                .ToArray();
+        }
+    }
+
     private void ResolveUnsafe(OperationDecision decision, OperationDecisionChoice choice, DateTime utcNow)
     {
         decision.IsResolved = true;

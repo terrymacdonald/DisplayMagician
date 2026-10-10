@@ -21,8 +21,7 @@ public sealed class GatewayIdempotencyMiddleware
 
     public async Task InvokeAsync(HttpContext context, GatewayControlServiceClient controlServiceClient)
     {
-        if (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method) ||
-            context.Request.Path == "/v1/pairing/status")
+        if (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))
         {
             await _next(context).ConfigureAwait(false);
             return;
@@ -46,12 +45,12 @@ public sealed class GatewayIdempotencyMiddleware
         await context.Request.Body.CopyToAsync(requestBody, context.RequestAborted).ConfigureAwait(false);
         context.Request.Body.Position = 0;
         string scopeHash;
-        if (context.Request.Path == "/v1/pairing/request")
+        if (context.Request.Path == "/v1/pairing-requests")
         {
             DevicePairingRequest? pairingRequest;
             try
             {
-                pairingRequest = JsonSerializer.Deserialize<DevicePairingRequest>(requestBody.ToArray(), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                pairingRequest = JsonSerializer.Deserialize<PairingSubmissionRequest>(requestBody.ToArray(), new JsonSerializerOptions(JsonSerializerDefaults.Web))?.ToControlRequest();
             }
             catch (JsonException)
             {

@@ -25,7 +25,7 @@ public sealed class GatewayCrossUserIsolationTests
             string firstCredential = new string('A', 43);
             string secondCredential = new string('B', 43);
             clients.Upsert(new PairedClient { DeviceId = "first-phone", OwnerUserSid = "S-1-5-21-100", PreferredSessionId = 10,
-                CredentialHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(firstCredential))), GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.ProfilesRead } });
+                CredentialHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(firstCredential))), GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.ProfilesRead, RemoteClientCapabilities.DecisionsRead } });
             clients.Upsert(new PairedClient { DeviceId = "second-phone", OwnerUserSid = "S-1-5-21-200", PreferredSessionId = 20,
                 CredentialHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(secondCredential))), GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead } });
             GatewayRequestAuthenticator authenticator = new GatewayRequestAuthenticator(clients);
@@ -67,6 +67,19 @@ public sealed class GatewayCrossUserIsolationTests
             Assert.True(second.IsSuccessful);
             Assert.Equal(secondOperation, Assert.Single(second.RemoteUserStatus!.Operations).OperationId);
             Assert.Equal(secondOperation, Assert.Single(second.RemoteUserStatus.PendingDecisions).OperationId);
+
+            ControlResponse ownOperation = ReadResource(server, "GetRemoteOperation", firstAuthentication, firstOperation.ToString("D"));
+            ControlResponse otherOperation = ReadResource(server, "GetRemoteOperation", firstAuthentication, secondOperation.ToString("D"));
+            Assert.Equal(firstOperation, ownOperation.OperationStatus?.OperationId);
+            Assert.Equal(ControlErrorCode.OperationNotFound, otherOperation.ErrorCode);
+
+            ControlResponse ownDecisions = ReadResource(server, "ListRemoteDecisions", firstAuthentication, firstOperation.ToString("D"));
+            ControlResponse otherDecisions = ReadResource(server, "ListRemoteDecisions", firstAuthentication, secondOperation.ToString("D"));
+            Assert.Single(ownDecisions.OperationDecisions);
+            Assert.Equal(ControlErrorCode.OperationNotFound, otherDecisions.ErrorCode);
+
+            ControlResponse currentDevice = ReadResource(server, "GetRemoteCurrentDevice", firstAuthentication, string.Empty);
+            Assert.Equal("first-phone", Assert.Single(currentDevice.PairedClients).DeviceId);
         }
         finally
         {
@@ -78,6 +91,13 @@ public sealed class GatewayCrossUserIsolationTests
     {
         MethodInfo method = typeof(GatewayPairingPipeServer).GetMethod("GetRemoteUserStatus", BindingFlags.Instance | BindingFlags.NonPublic)!;
         ControlEnvelope request = new ControlEnvelope { Payload = JsonSerializer.Serialize(new GatewayRemoteStatusRequest { Authentication = authentication, TargetSessionId = targetSessionId }) };
+        return (ControlResponse)method.Invoke(server, new object[] { request })!;
+    }
+
+    private static ControlResponse ReadResource(GatewayPairingPipeServer server, string methodName, GatewayAuthenticationResult authentication, string payload)
+    {
+        MethodInfo method = typeof(GatewayPairingPipeServer).GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)!;
+        ControlEnvelope request = new ControlEnvelope { Payload = JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication, Payload = payload }) };
         return (ControlResponse)method.Invoke(server, new object[] { request })!;
     }
 
