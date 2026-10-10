@@ -2799,7 +2799,7 @@
           "idempotency-key-required",
           "idempotency-key-invalid",
           "idempotency-key-conflict",
-          "idempotency-pending",
+          "idempotency-pending", "idempotency-outcome-unknown",
           "authentication-required",
           "credential-invalid",
           "capability-denied",

@@ -83,7 +83,7 @@ internal static class GatewayResourceRoutes
 
         app.MapPost("/v1/display-profiles/{profileId}/applications", async (string profileId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
         {
-            Guid operationId = Guid.NewGuid();
+            Guid operationId = GatewayIdempotencyMiddleware.GetOperationId(context);
             ControlResponse response = await client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId, OperationId = operationId }), token).ConfigureAwait(false);
             return AcceptedOperation(context, response, operationId);
         });
@@ -108,7 +108,7 @@ internal static class GatewayResourceRoutes
 
         app.MapPost("/v1/audio-profiles/{profileId}/applications", async (string profileId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
         {
-            Guid operationId = Guid.NewGuid();
+            Guid operationId = GatewayIdempotencyMiddleware.GetOperationId(context);
             ControlResponse response = await client.ExecuteRemoteAsync(ControlMessageType.ApplyRemoteAudioProfile, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = profileId, OperationId = operationId }), token).ConfigureAwait(false);
             return AcceptedOperation(context, response, operationId);
         });
@@ -133,7 +133,7 @@ internal static class GatewayResourceRoutes
 
         app.MapPost("/v1/shortcuts/{shortcutId}/runs", async (string shortcutId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
         {
-            Guid operationId = Guid.NewGuid();
+            Guid operationId = GatewayIdempotencyMiddleware.GetOperationId(context);
             ControlResponse response = await client.ExecuteRemoteAsync(ControlMessageType.StartRemoteShortcut, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId, OperationId = operationId }), token).ConfigureAwait(false);
             return AcceptedOperation(context, response, operationId);
         });

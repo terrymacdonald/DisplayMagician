@@ -12,6 +12,7 @@ namespace DisplayMagician.ControlService;
 public sealed class GatewayHttpIdempotencyStore
 {
     private static readonly TimeSpan Retention = TimeSpan.FromHours(24);
+    private static readonly TimeSpan PendingWindow = TimeSpan.FromMinutes(2);
     private readonly object _syncRoot = new object();
     private readonly string _storagePath;
     private readonly List<Record> _records;
@@ -22,11 +23,12 @@ public sealed class GatewayHttpIdempotencyStore
         _records = File.Exists(_storagePath)
             ? JsonSerializer.Deserialize<List<Record>>(File.ReadAllText(_storagePath)) ?? new List<Record>()
             : new List<Record>();
+        foreach (Record record in _records.Where(record => !record.Completed)) record.RecoveredAfterRestart = true;
     }
 
-    public GatewayHttpIdempotencyResult Begin(string scopeHash, string key, string requestHash, DateTime utcNow)
+    public GatewayHttpIdempotencyResult Begin(string scopeHash, string key, string requestHash, Guid gatewayInstanceId, DateTime utcNow)
     {
-        if (string.IsNullOrWhiteSpace(scopeHash) || string.IsNullOrWhiteSpace(requestHash) || !IsCanonicalUuidV4(key))
+        if (string.IsNullOrWhiteSpace(scopeHash) || string.IsNullOrWhiteSpace(requestHash) || gatewayInstanceId == Guid.Empty || !IsCanonicalUuidV4(key))
         {
             return new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Invalid };
         }
@@ -42,14 +44,21 @@ public sealed class GatewayHttpIdempotencyStore
                     return new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Conflict };
                 }
 
-                return existing.Completed
-                    ? new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Replay, StatusCode = existing.StatusCode, ContentType = existing.ContentType, Location = existing.Location, RetryAfter = existing.RetryAfter, ResponseJson = existing.ResponseJson }
-                    : new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Pending };
+                if (existing.Completed)
+                {
+                    return new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Replay, OperationId = existing.OperationId, StatusCode = existing.StatusCode, ContentType = existing.ContentType, Location = existing.Location, RetryAfter = existing.RetryAfter, ResponseJson = existing.ResponseJson };
+                }
+
+                bool outcomeUnknown = existing.RecoveredAfterRestart || existing.GatewayInstanceId != gatewayInstanceId ||
+                    utcNow.ToUniversalTime() - existing.AcceptedUtc >= PendingWindow;
+                return new GatewayHttpIdempotencyResult { State = outcomeUnknown ? GatewayHttpIdempotencyState.OutcomeUnknown : GatewayHttpIdempotencyState.Pending, OperationId = existing.OperationId };
             }
 
-            _records.Add(new Record { ScopeHash = scopeHash, Key = key, RequestHash = requestHash, AcceptedUtc = utcNow.ToUniversalTime() });
-            PersistUnsafe();
-            return new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Accepted };
+            Record accepted = new Record { ScopeHash = scopeHash, Key = key, RequestHash = requestHash, GatewayInstanceId = gatewayInstanceId, OperationId = Guid.NewGuid(), AcceptedUtc = utcNow.ToUniversalTime() };
+            _records.Add(accepted);
+            try { PersistUnsafe(); }
+            catch { _records.Remove(accepted); throw; }
+            return new GatewayHttpIdempotencyResult { State = GatewayHttpIdempotencyState.Accepted, OperationId = accepted.OperationId };
         }
     }
 
@@ -69,19 +78,34 @@ public sealed class GatewayHttpIdempotencyStore
                 throw new InvalidOperationException("A completed Gateway idempotency result cannot be replaced.");
             }
 
+            int oldStatusCode = record.StatusCode;
+            string oldContentType = record.ContentType;
+            string oldLocation = record.Location;
+            string oldRetryAfter = record.RetryAfter;
+            string oldResponseJson = record.ResponseJson;
             record.StatusCode = statusCode;
             record.ContentType = contentType;
             record.Location = location;
             record.RetryAfter = retryAfter;
             record.ResponseJson = responseJson;
             record.Completed = true;
-            PersistUnsafe();
+            try { PersistUnsafe(); }
+            catch
+            {
+                record.StatusCode = oldStatusCode;
+                record.ContentType = oldContentType;
+                record.Location = oldLocation;
+                record.RetryAfter = oldRetryAfter;
+                record.ResponseJson = oldResponseJson;
+                record.Completed = false;
+                throw;
+            }
         }
     }
 
     private void PruneUnsafe(DateTime utcNow)
     {
-        if (_records.RemoveAll(record => record.AcceptedUtc.Add(Retention) <= utcNow.ToUniversalTime()) > 0) PersistUnsafe();
+        if (_records.RemoveAll(record => record.Completed && record.AcceptedUtc.Add(Retention) <= utcNow.ToUniversalTime()) > 0) PersistUnsafe();
     }
 
     private void PersistUnsafe() => AtomicFileStore.WriteAllText(_storagePath, JsonSerializer.Serialize(_records), $"{_storagePath}.bak");
@@ -94,7 +118,11 @@ public sealed class GatewayHttpIdempotencyStore
         public string ScopeHash { get; set; } = string.Empty;
         public string Key { get; set; } = string.Empty;
         public string RequestHash { get; set; } = string.Empty;
+        public Guid GatewayInstanceId { get; set; }
+        public Guid OperationId { get; set; }
         public DateTime AcceptedUtc { get; set; }
+        [System.Text.Json.Serialization.JsonIgnore]
+        public bool RecoveredAfterRestart { get; set; }
         public bool Completed { get; set; }
         public int StatusCode { get; set; }
         public string ContentType { get; set; } = string.Empty;

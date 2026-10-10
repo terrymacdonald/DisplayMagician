@@ -1225,7 +1225,7 @@
       },
       "ErrorCode": {
         "type": "string",
-        "enum": ["protocol-hello-invalid", "protocol-version-incompatible", "protocol-capability-unavailable", "idempotency-key-required", "idempotency-key-invalid", "idempotency-key-conflict", "idempotency-pending", "authentication-required", "credential-invalid", "capability-denied", "resource-not-found", "pairing-expired", "pairing-delivery-consumed", "pairing-already-resolved", "decision-already-resolved", "operation-not-cancellable", "operation-busy", "recovery-conflict", "cursor-invalid", "cursor-expired", "validation-failed", "request-too-large", "rate-limited", "target-unavailable", "execution-failed", "internal-error"]
+        "enum": ["protocol-hello-invalid", "protocol-version-incompatible", "protocol-capability-unavailable", "idempotency-key-required", "idempotency-key-invalid", "idempotency-key-conflict", "idempotency-pending", "idempotency-outcome-unknown", "authentication-required", "credential-invalid", "capability-denied", "resource-not-found", "pairing-expired", "pairing-delivery-consumed", "pairing-already-resolved", "decision-already-resolved", "operation-not-cancellable", "operation-busy", "recovery-conflict", "cursor-invalid", "cursor-expired", "validation-failed", "request-too-large", "rate-limited", "target-unavailable", "execution-failed", "internal-error"]
       },
       "ProblemDetails": {
         "type": "object",

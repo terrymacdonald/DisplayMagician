@@ -15,9 +15,14 @@ namespace DisplayMagician.Gateway;
 /// <summary>Reserves each paired-device mutation before route work and replays its retained HTTP result.</summary>
 public sealed class GatewayIdempotencyMiddleware
 {
+    private static readonly Guid GatewayInstanceId = Guid.NewGuid();
     private readonly RequestDelegate _next;
 
     public GatewayIdempotencyMiddleware(RequestDelegate next) => _next = next;
+
+    internal static Guid GetOperationId(HttpContext context) => context.Items.TryGetValue(typeof(GatewayIdempotencyMiddleware), out object? value) && value is Guid operationId
+        ? operationId
+        : throw new InvalidOperationException("The operation was not reserved.");
 
     public async Task InvokeAsync(HttpContext context, GatewayControlServiceClient controlServiceClient)
     {
@@ -101,7 +106,8 @@ public sealed class GatewayIdempotencyMiddleware
         {
             ScopeHash = scopeHash,
             Key = key,
-            RequestHash = Convert.ToHexString(SHA256.HashData(fingerprint))
+            RequestHash = Convert.ToHexString(SHA256.HashData(fingerprint)),
+            GatewayInstanceId = GatewayInstanceId
         };
 
         GatewayHttpIdempotencyResult result;
@@ -134,6 +140,19 @@ public sealed class GatewayIdempotencyMiddleware
             return;
         }
 
+        if (result.State == GatewayHttpIdempotencyState.OutcomeUnknown)
+        {
+            string? path = context.Request.Path.Value;
+            if (result.OperationId != Guid.Empty &&
+                (path?.EndsWith("/applications", StringComparison.Ordinal) == true || path?.EndsWith("/runs", StringComparison.Ordinal) == true))
+            {
+                context.Response.Headers.Location = $"/v1/operations/{result.OperationId:D}";
+            }
+            await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status409Conflict, "idempotency-outcome-unknown", "Mutation outcome unknown",
+                "Check the affected resource or operation before deciding whether to start a new action. This request will not be run again.").ConfigureAwait(false);
+            return;
+        }
+
         if (result.State == GatewayHttpIdempotencyState.Replay)
         {
             context.Response.StatusCode = result.StatusCode;
@@ -145,6 +164,7 @@ public sealed class GatewayIdempotencyMiddleware
             return;
         }
 
+        context.Items[typeof(GatewayIdempotencyMiddleware)] = result.OperationId;
         Stream originalBody = context.Response.Body;
         using MemoryStream responseBody = new MemoryStream();
         context.Response.Body = responseBody;

@@ -15,7 +15,7 @@ Every HTTP request sends `DisplayMagician-Protocol-Hello` as unpadded base64url 
 
 The single pairing-request GET is reserved for candidate polling with `DisplayMagician-Pairing` authorization. Already-paired approvers use the pairing-request list and decision routes. If ControlService cannot verify a bearer credential, Gateway returns retryable `503` without counting it as an invalid credential.
 
-Gateway limits HTTP request bodies to 64 KiB and non-streaming JSON responses to 1 MiB. Oversized JSON results return `500 response-too-large` until the corresponding target collection supports paging. Protected devices are limited to 120 requests and 10 mutations per minute; source IPs are limited to 20 failed authentications per minute. Gateway also bounds concurrent requests and returns `429` with `Retry-After` when a limit is reached. Mutations require a lowercase UUID v4 `Idempotency-Key`; ControlService retains accepted results for 24 hours.
+Gateway limits HTTP request bodies to 64 KiB and non-streaming JSON responses to 1 MiB. Oversized JSON results return `500 response-too-large` until the corresponding target collection supports paging. Protected devices are limited to 120 requests and 10 mutations per minute; source IPs are limited to 20 failed authentications per minute. Gateway also bounds concurrent requests and returns `429` with `Retry-After` when a limit is reached. Mutations require a lowercase UUID v4 `Idempotency-Key`; ControlService retains completed results for 24 hours. An interrupted reservation returns `409 idempotency-outcome-unknown` and stays blocked from duplicate execution; operation actions include a reserved status URL in `Location`.
 
 ## Development
 

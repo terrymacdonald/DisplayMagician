@@ -509,7 +509,9 @@ if the retained result is returned, follow its operation resource
 if the outcome cannot be recovered, surface uncertainty rather than start new work
 ```
 
-The server retains an accepted REST idempotency result for 24 hours, including across Gateway and ControlService restarts. A retry after that window can create a new operation; the client must reconcile operation history or ask the user before repeating the action.
+The server retains a completed REST idempotency result for 24 hours, including across Gateway and ControlService restarts. An incomplete reservation survives as an outcome-unknown tombstone and is never executed again with that key. A retry after the completed-result window can create a new operation; the client must reconcile operation history or ask the user before repeating the action.
+
+If a retry returns `409 idempotency-outcome-unknown`, stop automatic retries and keep the original key with the local action record. For a display, audio, or shortcut action, read the `Location` operation URL and poll it if found. A `404` means the server has no retained status for that ID; it does not establish that the action was never performed. For cancellation, pairing approval, device revocation, or a decision answer, fetch the relevant resource to check its current state. For pairing submission, poll the pairing request using the candidate's polling secret while the QR remains valid. If state cannot establish the outcome, show the uncertainty and let the user decide whether to start a new action with a new key.
 
 After mobile suspension or a reconnect:
 

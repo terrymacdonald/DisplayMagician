@@ -582,13 +582,14 @@ public sealed class GatewayAuthenticationRequest
     public string SourceIpAddress { get; set; } = string.Empty;
 }
 
-public enum GatewayHttpIdempotencyState { Invalid, Accepted, Pending, Conflict, Replay }
+public enum GatewayHttpIdempotencyState { Invalid, Accepted, Pending, Conflict, Replay, OutcomeUnknown }
 
 public sealed class GatewayHttpIdempotencyRequest
 {
     public string ScopeHash { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
     public string RequestHash { get; set; } = string.Empty;
+    public Guid GatewayInstanceId { get; set; }
     public int StatusCode { get; set; }
     public string ContentType { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
@@ -599,6 +600,7 @@ public sealed class GatewayHttpIdempotencyRequest
 public sealed class GatewayHttpIdempotencyResult
 {
     public GatewayHttpIdempotencyState State { get; set; }
+    public Guid OperationId { get; set; }
     public int StatusCode { get; set; }
     public string ContentType { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;

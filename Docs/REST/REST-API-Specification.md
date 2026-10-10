@@ -753,6 +753,7 @@ The stable `errorCode` values and their primary HTTP statuses are:
 | `idempotency-key-required`, `idempotency-key-invalid` | 400 | Missing or malformed UUID v4 mutation key |
 | `idempotency-key-conflict` | 409 | Key reused for a different request identity |
 | `idempotency-pending` | 409 | Same-key work is still being accepted; retryable with `Retry-After` |
+| `idempotency-outcome-unknown` | 409 | An interrupted mutation may have run; inspect the affected resource before another action |
 | `authentication-required`, `credential-invalid` | 401 | Missing or invalid route credential |
 | `capability-denied` | 403 | Authenticated device lacks a route grant |
 | `resource-not-found` | 404 | Unknown, expired from retention, or outside the caller's scope |
@@ -803,8 +804,10 @@ Rules:
 - the key is scoped to the authenticated device;
 - retrying the same HTTP method, escaped path, raw query string, content type, and request-body bytes returns the retained mutation result, including its status, `Location` if present, and resource body; per-request correlation and compatibility headers are generated for the retry; clients should preserve the request bytes for a retry;
 - reusing a key with different request content returns `409 Conflict`;
-- a key and its first accepted result are retained for 24 hours after acceptance, including across Gateway/ControlService restarts;
+- a completed result is retained for 24 hours after acceptance, including across Gateway/ControlService restarts;
 - concurrent identical retries wait up to two seconds for the first HTTP result; if it is still pending, they return retryable `409 idempotency-pending` with `Retry-After: 1` rather than starting duplicate work;
+- if Gateway or ControlService restarts with an incomplete reservation, or its original request remains incomplete beyond two minutes, identical retries return non-retryable `409 idempotency-outcome-unknown`; Gateway never runs that reserved request again. For display, audio, and shortcut operation mutations, the response includes `Location: /v1/operations/{operationId}` with the ID reserved before dispatch. A `404` at that URL does not prove that the action never started. Inspect current state or ask the user before using a new key;
+- unresolved reservations remain as durable tombstones even after 24 hours, so the same key cannot later start duplicate work. A late completion from the original request can still replace the tombstone with its retained HTTP result;
 - the key is not an authentication credential;
 - Gateway maps it to internal ControlService replay protection;
 - the response echoes the accepted key where appropriate.
