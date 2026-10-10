@@ -13,6 +13,8 @@ Current network endpoints include public identity and capabilities, pairing and 
 
 Every HTTP request sends `DisplayMagician-Protocol-Hello` as unpadded base64url UTF-8 JSON for the shared `ProtocolHello` contract. Gateway validates it before authentication and returns `DisplayMagician-Protocol-Welcome` on successful responses. Every response includes `DisplayMagician-Request-Id`. Protected routes use a long-lived per-device bearer credential; ControlService holds only its SHA-256 hash and current grants. Pairing requests use a candidate-generated polling secret and deliver the credential on the first approved poll only. Approval grants every capability requested by the candidate. [openapi.yaml](../Docs/REST/openapi.yaml) describes available routes; [target-openapi.json](../Docs/REST/target-openapi.json) is the approved target.
 
+The single pairing-request GET is reserved for candidate polling with `DisplayMagician-Pairing` authorization. Already-paired approvers use the pairing-request list and decision routes. If ControlService cannot verify a bearer credential, Gateway returns retryable `503` without counting it as an invalid credential.
+
 Gateway limits HTTP request bodies to 64 KiB and non-streaming JSON responses to 1 MiB. Oversized JSON results return `500 response-too-large` until the corresponding target collection supports paging. Protected devices are limited to 120 requests and 10 mutations per minute; source IPs are limited to 20 failed authentications per minute. Gateway also bounds concurrent requests and returns `429` with `Retry-After` when a limit is reached. Mutations require a lowercase UUID v4 `Idempotency-Key`; ControlService retains accepted results for 24 hours.
 
 ## Development

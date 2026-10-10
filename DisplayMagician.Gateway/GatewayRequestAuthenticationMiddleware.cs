@@ -46,6 +46,13 @@ public sealed class GatewayRequestAuthenticationMiddleware
         }
 
         string authorization = context.Request.Headers.Authorization.ToString();
+        if (IsCandidatePollPath(context.Request))
+        {
+            trafficLimiter.RecordFailedAuthentication(sourceIp, now);
+            await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status401Unauthorized, "authentication-required", "Pairing secret required", "Send the phone-generated polling secret in the DisplayMagician-Pairing Authorization scheme.", authenticationScheme: "DisplayMagician-Pairing").ConfigureAwait(false);
+            return;
+        }
+
         if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) || authorization.Length <= 7 || authorization.AsSpan(7).Contains(' '))
         {
             trafficLimiter.RecordFailedAuthentication(sourceIp, now);
@@ -53,13 +60,22 @@ public sealed class GatewayRequestAuthenticationMiddleware
             return;
         }
 
-        GatewayAuthenticationResult authentication = await controlServiceClient.AuthenticateAsync(new GatewayAuthenticationRequest
+        GatewayAuthenticationResult authentication;
+        try
         {
-            BearerCredential = authorization.Substring(7),
-            Method = context.Request.Method,
-            Path = context.Request.Path,
-            SourceIpAddress = sourceIp
-        }, context.RequestAborted).ConfigureAwait(false);
+            authentication = await controlServiceClient.AuthenticateAsync(new GatewayAuthenticationRequest
+            {
+                BearerCredential = authorization.Substring(7),
+                Method = context.Request.Method,
+                Path = context.Request.Path,
+                SourceIpAddress = sourceIp
+            }, context.RequestAborted).ConfigureAwait(false);
+        }
+        catch (GatewayControlServiceUnavailableException)
+        {
+            await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status503ServiceUnavailable, "target-unavailable", "Control Service unavailable", "The paired-device credential could not be verified now.", true, 1).ConfigureAwait(false);
+            return;
+        }
 
         if (!authentication.IsAuthenticated)
         {
@@ -90,7 +106,8 @@ public sealed class GatewayRequestAuthenticationMiddleware
     {
         if (request.Path == "/v1/identity" || request.Path == "/v1/capabilities") return true;
         if (request.Path == "/v1/pairing-requests") return HttpMethods.IsPost(request.Method);
-        return HttpMethods.IsGet(request.Method) && request.Headers.Authorization.ToString().StartsWith("DisplayMagician-Pairing ", StringComparison.OrdinalIgnoreCase) && request.Path.StartsWithSegments("/v1/pairing-requests", out PathString remaining) && remaining.HasValue && !remaining.Value!.Trim('/').Contains('/');
+        return IsCandidatePollPath(request) && request.Headers.Authorization.ToString().StartsWith("DisplayMagician-Pairing ", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool IsCandidatePollPath(HttpRequest request) => HttpMethods.IsGet(request.Method) && request.Path.StartsWithSegments("/v1/pairing-requests", out PathString remaining) && remaining.HasValue && !remaining.Value!.Trim('/').Contains('/');
 }

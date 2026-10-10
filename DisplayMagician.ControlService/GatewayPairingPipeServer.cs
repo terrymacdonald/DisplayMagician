@@ -310,7 +310,7 @@ public sealed class GatewayPairingPipeServer
         if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.PairingApprove, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot approve pairing." };
         if (!Guid.TryParse(command?.Payload, out Guid pairingRequestId)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A pairing request ID is required." };
         DevicePairingSessionView? pairing = _pairingCoordinator.GetForUser(authentication.OwnerUserSid, pairingRequestId, DateTime.UtcNow);
-        return pairing == null || pairing.State == DevicePairingState.Expired ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingRequired, Message = "The pairing request is unavailable." } : new ControlResponse { IsSuccessful = true, DevicePairingRequest = pairing };
+        return pairing == null || pairing.State == DevicePairingState.Expired ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ResourceNotFound, Message = "The pairing request is unavailable." } : new ControlResponse { IsSuccessful = true, DevicePairingRequest = pairing };
     }
 
     private ControlResponse DecideRemotePairingRequest(ControlEnvelope request)
@@ -321,7 +321,7 @@ public sealed class GatewayPairingPipeServer
         RemotePairingDecisionCommand? decision = command == null ? null : JsonSerializer.Deserialize<RemotePairingDecisionCommand>(command.Payload);
         if (decision == null || decision.PairingRequestId == Guid.Empty || decision.Decision != "approved" && decision.Decision != "rejected") return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "A valid pairing decision is required." };
         DevicePairingSessionView? pending = _pairingCoordinator.GetForUser(authentication.OwnerUserSid, decision.PairingRequestId, DateTime.UtcNow);
-        if (pending == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingRequired, Message = "The pairing request is unavailable." };
+        if (pending == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ResourceNotFound, Message = "The pairing request is unavailable." };
         if (pending.State != DevicePairingState.AwaitingApproval) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingAlreadyResolved, Message = "The pairing request is already resolved." };
         DevicePairingResult result = decision.Decision == "approved"
             ? _pairingCoordinator.ApproveFromPairedClient(authentication.OwnerUserSid, authentication.DeviceId, new ApproveDevicePairingRequest { PairingSessionId = decision.PairingRequestId, GrantedCapabilities = pending.RequestedCapabilities }, DateTime.UtcNow)
@@ -354,7 +354,7 @@ public sealed class GatewayPairingPipeServer
         if (!authentication.IsAuthenticated || !authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DevicesRevoke, StringComparer.Ordinal)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot revoke devices." };
         if (string.IsNullOrWhiteSpace(command?.Payload)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A device ID is required." };
         bool revoked = _pairingCoordinator.RevokePairedClient(authentication.OwnerUserSid, command.Payload, DateTime.UtcNow);
-        return revoked ? new ControlResponse { IsSuccessful = true } : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.PairingRequired, Message = "The device is unavailable." };
+        return revoked ? new ControlResponse { IsSuccessful = true } : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ResourceNotFound, Message = "The device is unavailable." };
     }
 
     private ControlResponse ListRemoteOperations(ControlEnvelope request)

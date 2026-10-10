@@ -14,6 +14,11 @@ public interface IGatewayAuthenticationClient
     Task<GatewayAuthenticationResult> AuthenticateAsync(GatewayAuthenticationRequest request, CancellationToken cancellationToken);
 }
 
+internal sealed class GatewayControlServiceUnavailableException : Exception
+{
+    public GatewayControlServiceUnavailableException() : base("Control Service could not verify the Gateway request.") { }
+}
+
 /// <summary>Uses the narrow LocalService-only pipe; it cannot invoke normal desktop client operations.</summary>
 public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
 {
@@ -38,6 +43,10 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
     {
         ArgumentNullException.ThrowIfNull(request);
         ControlResponse response = await SendAsync(ControlMessageType.AuthenticateGatewayRequest, JsonSerializer.Serialize(request), cancellationToken).ConfigureAwait(false);
+        if (response.ErrorCode == ControlErrorCode.AgentUnavailable || response.IsSuccessful && response.GatewayAuthentication == null)
+        {
+            throw new GatewayControlServiceUnavailableException();
+        }
         return response.IsSuccessful && response.GatewayAuthentication != null ? response.GatewayAuthentication : new GatewayAuthenticationResult { Message = string.IsNullOrWhiteSpace(response.Message) ? "Authentication could not be verified." : response.Message };
     }
 

@@ -115,17 +115,10 @@ internal static class Program
         {
             context.Response.Headers.CacheControl = "no-store";
             string authorization = context.Request.Headers.Authorization.ToString();
-            if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-            {
-                ControlResponse pairedResponse = await client.RemoteResourceAsync(ControlMessageType.GetRemotePairingRequest, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), pairingRequestId.ToString("D"), token).ConfigureAwait(false);
-                return pairedResponse.IsSuccessful && pairedResponse.DevicePairingRequest != null
-                    ? Results.Ok(GatewayResourceRoutes.ToPairingItem(pairedResponse.DevicePairingRequest))
-                    : GatewayResponseMapper.Map(context, pairedResponse);
-            }
             const string prefix = "DisplayMagician-Pairing ";
             if (!authorization.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || authorization.Length <= prefix.Length || authorization.AsSpan(prefix.Length).Contains(' '))
             {
-                return GatewayProblemDetails.CreateResult(context, StatusCodes.Status401Unauthorized, "authentication-required", "Pairing secret required", "Send the phone-generated polling secret in the DisplayMagician-Pairing Authorization scheme.");
+                return GatewayProblemDetails.CreateResult(context, StatusCodes.Status401Unauthorized, "authentication-required", "Pairing secret required", "Send the phone-generated polling secret in the DisplayMagician-Pairing Authorization scheme.", authenticationScheme: "DisplayMagician-Pairing");
             }
 
             DevicePairingResult result = await client.GetDevicePairingStatusAsync(new DevicePairingStatusRequest { PairingSessionId = pairingRequestId, PollingSecret = authorization.Substring(prefix.Length) }, token).ConfigureAwait(false);

@@ -25,7 +25,7 @@ public sealed class GatewayCrossUserIsolationTests
             string firstCredential = new string('A', 43);
             string secondCredential = new string('B', 43);
             clients.Upsert(new PairedClient { DeviceId = "first-phone", OwnerUserSid = "S-1-5-21-100", PreferredSessionId = 10,
-                CredentialHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(firstCredential))), GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.ProfilesRead, RemoteClientCapabilities.DecisionsRead } });
+                CredentialHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(firstCredential))), GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead, RemoteClientCapabilities.ProfilesRead, RemoteClientCapabilities.DecisionsRead, RemoteClientCapabilities.DevicesRevoke } });
             clients.Upsert(new PairedClient { DeviceId = "second-phone", OwnerUserSid = "S-1-5-21-200", PreferredSessionId = 20,
                 CredentialHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(secondCredential))), GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead } });
             GatewayRequestAuthenticator authenticator = new GatewayRequestAuthenticator(clients);
@@ -80,6 +80,14 @@ public sealed class GatewayCrossUserIsolationTests
 
             ControlResponse currentDevice = ReadResource(server, "GetRemoteCurrentDevice", firstAuthentication, string.Empty);
             Assert.Equal("first-phone", Assert.Single(currentDevice.PairedClients).DeviceId);
+
+            ControlResponse crossUserRevocation = ReadResource(server, "RevokeRemoteDevice", firstAuthentication, "second-phone");
+            Assert.Equal(ControlErrorCode.ResourceNotFound, crossUserRevocation.ErrorCode);
+            Assert.NotNull(clients.FindActiveByCredential(secondCredential));
+
+            clients.Revoke("S-1-5-21-100", "first-phone", now.AddMinutes(1));
+            ControlResponse revokedCurrentDevice = ReadResource(server, "GetRemoteCurrentDevice", firstAuthentication, string.Empty);
+            Assert.Equal(ControlErrorCode.PairingRequired, revokedCurrentDevice.ErrorCode);
         }
         finally
         {

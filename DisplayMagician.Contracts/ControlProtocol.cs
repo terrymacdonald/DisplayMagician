@@ -254,7 +254,8 @@ public enum ControlErrorCode
     AuthenticationRequired = 22,
     PairingRequired = 23,
     PairingAlreadyResolved = 24,
-    OperationNotCancellable = 25
+    OperationNotCancellable = 25,
+    ResourceNotFound = 26
 }
 
 public enum ControlClientKind

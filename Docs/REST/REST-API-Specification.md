@@ -780,7 +780,7 @@ The IPC-to-HTTP mapping for shared failure codes is:
 | `DisplayControlBusy` | `409 operation-busy` |
 | `RecoveryRequired` | `409 recovery-conflict` |
 | `Unauthorized`, `AdministratorRequired` | `403 capability-denied` after valid device authentication |
-| `ProfileNotFound`, `AudioProfileNotFound`, `ShortcutNotFound`, `OperationNotFound` | `404 resource-not-found` |
+| `ProfileNotFound`, `AudioProfileNotFound`, `ShortcutNotFound`, `OperationNotFound`, `ResourceNotFound` | `404 resource-not-found` |
 | `ValidationFailed` | `422 validation-failed` |
 | `ExecutionFailed` | `500 execution-failed` for synchronous failure; asynchronous failure is retained in the operation resource |
 | `DecisionUnavailable` | `409 decision-already-resolved` for a visible resolved decision; otherwise `404 resource-not-found` |

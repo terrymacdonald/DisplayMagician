@@ -8,23 +8,23 @@ namespace DisplayMagician.Gateway;
 /// <summary>Writes the shared REST error shape without including credentials or query parameters.</summary>
 public static class GatewayProblemDetails
 {
-    public static async Task WriteAsync(HttpContext context, int status, string code, string title, string detail, bool retryable = false, int? retryAfterSeconds = null)
+    public static async Task WriteAsync(HttpContext context, int status, string code, string title, string detail, bool retryable = false, int? retryAfterSeconds = null, string? authenticationScheme = null)
     {
-        object payload = CreatePayload(context, code, title, status, detail, retryable, retryAfterSeconds);
+        object payload = CreatePayload(context, code, title, status, detail, retryable, retryAfterSeconds, authenticationScheme);
         context.Response.StatusCode = status;
         context.Response.ContentType = "application/problem+json";
         await context.Response.WriteAsync(JsonSerializer.Serialize(payload), context.RequestAborted).ConfigureAwait(false);
     }
 
-    public static IResult CreateResult(HttpContext context, int status, string code, string title, string detail, bool retryable = false, int? retryAfterSeconds = null)
+    public static IResult CreateResult(HttpContext context, int status, string code, string title, string detail, bool retryable = false, int? retryAfterSeconds = null, string? authenticationScheme = null)
     {
-        return Results.Json(CreatePayload(context, code, title, status, detail, retryable, retryAfterSeconds), statusCode: status, contentType: "application/problem+json");
+        return Results.Json(CreatePayload(context, code, title, status, detail, retryable, retryAfterSeconds, authenticationScheme), statusCode: status, contentType: "application/problem+json");
     }
 
-    private static object CreatePayload(HttpContext context, string code, string title, int status, string detail, bool retryable, int? retryAfterSeconds)
+    private static object CreatePayload(HttpContext context, string code, string title, int status, string detail, bool retryable, int? retryAfterSeconds, string? authenticationScheme = null)
     {
         context.Response.Headers.CacheControl = "no-store";
-        if (status == StatusCodes.Status401Unauthorized) context.Response.Headers.WWWAuthenticate = "Bearer";
+        if (status == StatusCodes.Status401Unauthorized) context.Response.Headers.WWWAuthenticate = authenticationScheme ?? "Bearer";
         if (retryAfterSeconds.HasValue)
         {
             context.Response.Headers.RetryAfter = retryAfterSeconds.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
