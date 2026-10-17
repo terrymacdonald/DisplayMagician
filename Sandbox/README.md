@@ -18,4 +18,6 @@ This harness is for installer, service, migration, and storage debugging. It doe
 
 Use [OPERATION_STATUS_DECISION_TEST_PLAN.md](OPERATION_STATUS_DECISION_TEST_PLAN.md) to validate Phase E Part 3 operation status and shared-decision behaviour in the sandbox.
 
+Use [REST_P2_TEST_PLAN.md](REST_P2_TEST_PLAN.md) to validate the installed Gateway, pairing UI, saved-resource routes, operations, decisions, retries, and cross-user boundaries for REST P2.
+
 `Generated` is machine-specific and intentionally excluded from source control.

@@ -14,6 +14,70 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class GatewayCrossUserIsolationTests
 {
     [Fact]
+    public void P2ResourcesRequireTheirGrantWhileCurrentDeviceRemainsAvailable()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            StoragePaths paths = new StoragePaths(root);
+            PairedClientRepository clients = new PairedClientRepository(paths);
+            clients.Upsert(new PairedClient { DeviceId = "phone", OwnerUserSid = "owner", GrantedCapabilities = Array.Empty<string>() });
+            DevicePairingCoordinator pairing = new DevicePairingCoordinator(paths, clients);
+            ControlStateCoordinator coordinator = new ControlStateCoordinator();
+            GatewayPairingPipeServer server = new GatewayPairingPipeServer(pairing, new GatewayIdentityRegistry(),
+                new GatewayRequestAuthenticator(clients), new GatewayHttpIdempotencyStore(paths), new OperationStatusStore(paths),
+                new OperationDecisionStore(paths), new ProfileOperationRouter(coordinator, new UnusedAgentCommandClient()), coordinator);
+            GatewayAuthenticationResult authentication = new GatewayAuthenticationResult { IsAuthenticated = true, OwnerUserSid = "owner", DeviceId = "phone" };
+            ControlEnvelope request = new ControlEnvelope { Payload = JsonSerializer.Serialize(new GatewayRemoteCommand { Authentication = authentication }) };
+            string[] protectedMethods =
+            {
+                "ListRemotePairingRequests", "GetRemotePairingRequest", "DecideRemotePairingRequest",
+                "ListRemoteDevices", "RevokeRemoteDevice", "ListRemoteOperations", "GetRemoteOperation",
+                "CancelRemoteOperation", "ListRemoteDecisions", "GetRemoteDecision", "AnswerRemoteDecision"
+            };
+
+            foreach (string methodName in protectedMethods)
+            {
+                MethodInfo method = typeof(GatewayPairingPipeServer).GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)!;
+                ControlResponse response = (ControlResponse)method.Invoke(server, new object[] { request })!;
+                Assert.Equal(ControlErrorCode.Unauthorized, response.ErrorCode);
+            }
+
+            MethodInfo listMethod = typeof(GatewayPairingPipeServer).GetMethod("ListRemote", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            foreach ((string grant, ControlMessageType messageType) in new[]
+            {
+                (RemoteClientCapabilities.ProfilesRead, ControlMessageType.ListProfiles),
+                (RemoteClientCapabilities.AudioProfilesRead, ControlMessageType.ListAudioProfiles),
+                (RemoteClientCapabilities.ShortcutsRead, ControlMessageType.ListShortcuts)
+            })
+            {
+                ControlResponse response = (ControlResponse)listMethod.Invoke(server, new object[] { request, grant, messageType })!;
+                Assert.Equal(ControlErrorCode.Unauthorized, response.ErrorCode);
+            }
+
+            MethodInfo executeMethod = typeof(GatewayPairingPipeServer).GetMethod("ExecuteRemote", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            foreach ((string grant, ControlMessageType messageType) in new[]
+            {
+                (RemoteClientCapabilities.ProfilesApply, ControlMessageType.ApplyProfile),
+                (RemoteClientCapabilities.AudioProfilesApply, ControlMessageType.ApplyAudioProfile),
+                (RemoteClientCapabilities.ShortcutsRun, ControlMessageType.StartShortcut)
+            })
+            {
+                ControlResponse response = (ControlResponse)executeMethod.Invoke(server, new object[] { request, grant, messageType })!;
+                Assert.Equal(ControlErrorCode.Unauthorized, response.ErrorCode);
+            }
+
+            ControlResponse current = ReadResource(server, "GetRemoteCurrentDevice", authentication, string.Empty);
+            Assert.True(current.IsSuccessful);
+            Assert.Equal("phone", Assert.Single(current.PairedClients).DeviceId);
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
     public void PairedCredentialCanReadOnlyItsOwnersStatusAndDecisions()
     {
         string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));

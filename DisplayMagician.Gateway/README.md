@@ -23,4 +23,6 @@ Gateway limits HTTP request bodies to 64 KiB and non-streaming JSON responses to
 dotnet build .\DisplayMagician.Gateway\DisplayMagician.Gateway.csproj
 ```
 
+Run `verify_rest_p2_routes.ps1` from the repository root to compare every mapped P2 method/path with the implemented OpenAPI document and check its protocol, idempotency, response, and security declarations. This checks route declarations; the Gateway and ControlService test projects cover behavior.
+
 Do not run this host directly on a production machine until it has been installed by the DisplayMagician package: the installer provisions the `LocalService` account, firewall rule, and machine data access.
