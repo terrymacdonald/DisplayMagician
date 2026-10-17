@@ -37,6 +37,7 @@ internal static class Program
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddSingleton<GatewayTrafficLimiter>();
         builder.Services.AddSingleton<GatewayCursorPageStore>();
+        builder.Services.AddSingleton<GatewayEventStreamLimiter>();
         builder.Services.AddSingleton<GatewayRegistrationState>();
         builder.Services.AddSingleton<IGatewayAuthenticationClient>(provider => provider.GetRequiredService<GatewayControlServiceClient>());
         builder.Services.AddHostedService<GatewayRegistrationService>();
@@ -95,7 +96,7 @@ internal static class Program
             GatewayVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.0.0",
             HostId = gatewayIdentity.HostId,
             KnownCapabilities = RemoteClientCapabilities.All.ToArray(),
-            SupportedFeatures = new[] { "pairing", "devices", "display-profiles", "audio-profiles", "shortcuts", "operations", "decisions" }
+            SupportedFeatures = new[] { "pairing", "devices", "display-profiles", "audio-profiles", "shortcuts", "operations", "decisions", "events" }
         }));
         app.MapPost("/v1/pairing-requests", async (PairingSubmissionRequest request, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
         {

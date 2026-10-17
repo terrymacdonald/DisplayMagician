@@ -3,7 +3,7 @@
   "info": {
     "title": "DisplayMagician v4 Gateway REST API (implemented routes)",
     "version": "1.0.0-p3-in-progress",
-    "description": "Routes available in the current Gateway build. Collection GETs support ten-minute snapshot cursors and saved-resource GETs support ETags. Terminal operations are retained for seven days or the newest 100 per user. SSE and generated clients remain P3 work. Every request requires DisplayMagician-Protocol-Hello; successful responses include DisplayMagician-Protocol-Welcome."
+    "description": "Routes available in the current Gateway build. Collection GETs support ten-minute snapshot cursors and saved-resource GETs support ETags. Terminal operations are retained for seven days or the newest 100 per user. Gateway offers optional SSE event streaming; generated clients remain P3 work. Every request requires DisplayMagician-Protocol-Hello; successful responses include DisplayMagician-Protocol-Welcome."
   },
   "x-displaymagician-contractStatus": "implemented-p3-in-progress",
   "servers": [
@@ -1314,6 +1314,36 @@
           }
         }
       }
+    },
+    "/v1/events": {
+      "parameters": [{ "$ref": "#/components/parameters/ProtocolHello" }],
+      "get": {
+        "operationId": "streamEvents",
+        "summary": "Stream authorized operation, decision, and saved-resource changes",
+        "security": [{ "deviceBearer": [] }],
+        "parameters": [{ "name": "Last-Event-ID", "in": "header", "required": false, "schema": { "type": "string", "minLength": 1, "maxLength": 128 } }],
+        "responses": {
+          "200": {
+            "description": "UTF-8 Server-Sent Events. New or unresumable streams begin with an id-bearing snapshot; retained cursors replay subsequent typed changes without a snapshot. Keep-alive comments are sent at least every 15 seconds.",
+            "headers": {
+              "DisplayMagician-Protocol-Welcome": { "$ref": "#/components/headers/ProtocolWelcome" },
+              "DisplayMagician-Request-Id": { "$ref": "#/components/headers/RequestId" },
+              "Cache-Control": { "$ref": "#/components/headers/NoStore" }
+            },
+            "content": { "text/event-stream": { "schema": { "type": "string", "description": "UTF-8 SSE frames. Every data field is JSON for its named event schema." } } },
+            "x-sse-eventSchemas": {
+              "snapshot": { "$ref": "#/components/schemas/SseSnapshot" },
+              "operation.updated": { "$ref": "#/components/schemas/SseOperationUpdated" },
+              "decision.updated": { "$ref": "#/components/schemas/SseDecisionUpdated" },
+              "display-profile.changed": { "$ref": "#/components/schemas/SseResourceChanged" },
+              "audio-profile.changed": { "$ref": "#/components/schemas/SseResourceChanged" },
+              "shortcut.changed": { "$ref": "#/components/schemas/SseResourceChanged" }
+            }
+          },
+          "429": { "$ref": "#/components/responses/Problem" },
+          "default": { "$ref": "#/components/responses/Problem" }
+        }
+      }
     }
   },
   "components": {
@@ -2489,6 +2519,43 @@
           "choice": {
             "$ref": "#/components/schemas/DecisionChoice"
           }
+        }
+      },
+      "SseSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["capturedAt", "resetReason"],
+        "dependentRequired": { "operations": ["operationsHasMore"], "operationsHasMore": ["operations"], "pendingDecisions": ["pendingDecisionsHasMore"], "pendingDecisionsHasMore": ["pendingDecisions"] },
+        "properties": {
+          "capturedAt": { "type": "string", "format": "date-time" },
+          "resetReason": { "type": ["string", "null"], "enum": ["cursor-expired", "cursor-unknown", null] },
+          "operations": { "type": "array", "items": { "$ref": "#/components/schemas/Operation" }, "maxItems": 100 },
+          "operationsHasMore": { "type": "boolean" },
+          "pendingDecisions": { "type": "array", "items": { "$ref": "#/components/schemas/Decision" }, "maxItems": 100 },
+          "pendingDecisionsHasMore": { "type": "boolean" }
+        }
+      },
+      "SseOperationUpdated": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation"],
+        "properties": { "operation": { "$ref": "#/components/schemas/Operation" } }
+      },
+      "SseDecisionUpdated": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision"],
+        "properties": { "decision": { "$ref": "#/components/schemas/Decision" } }
+      },
+      "SseResourceChanged": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["resourceType", "id", "action", "href"],
+        "properties": {
+          "resourceType": { "type": "string", "enum": ["display-profile", "audio-profile", "shortcut"] },
+          "id": { "$ref": "#/components/schemas/SavedResourceId" },
+          "action": { "type": "string", "enum": ["upsert", "deleted"] },
+          "href": { "type": ["string", "null"] }
         }
       },
       "SavedResourceId": {

@@ -17,6 +17,7 @@ internal static class GatewayResourceRoutes
         MapPairingAndDevices(app);
         MapSavedResources(app);
         MapOperationsAndDecisions(app);
+        GatewayEventRoutes.Map(app);
     }
 
     private static void MapPairingAndDevices(WebApplication app)
@@ -273,7 +274,7 @@ internal static class GatewayResourceRoutes
         return Results.Json(new OperationAccepted { OperationId = operationId, Href = href }, statusCode: StatusCodes.Status202Accepted);
     }
 
-    private static GatewayOperationView ToOperation(OperationStatus operation)
+    internal static GatewayOperationView ToOperation(OperationStatus operation)
     {
         string status = operation.IsTerminal ? operation.IsSuccessful ? "succeeded" : operation.Phase == OperationPhase.Cancelled ? "cancelled" : "failed" : operation.Phase == OperationPhase.AwaitingUserDecision ? "waiting-for-decision" : operation.Phase == OperationPhase.Requested ? "requested" : "running";
         string href = $"/v1/operations/{operation.OperationId:D}";
@@ -297,7 +298,7 @@ internal static class GatewayResourceRoutes
         };
     }
 
-    private static GatewayDecisionView ToDecision(OperationDecision decision)
+    internal static GatewayDecisionView ToDecision(OperationDecision decision)
     {
         string operationHref = $"/v1/operations/{decision.OperationId:D}";
         return new GatewayDecisionView

@@ -15,7 +15,7 @@ public sealed class GatewayJsonResponseLimitMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (context.Request.Path == "/v1/status/stream")
+        if (context.Request.Path == "/v1/events")
         {
             await _next(context).ConfigureAwait(false);
             return;

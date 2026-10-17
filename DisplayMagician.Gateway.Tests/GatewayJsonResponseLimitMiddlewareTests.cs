@@ -11,6 +11,26 @@ namespace DisplayMagician.Gateway.Tests;
 public sealed class GatewayJsonResponseLimitMiddlewareTests
 {
     [Fact]
+    public async Task EventsBypassTheJsonBuffer()
+    {
+        DefaultHttpContext context = new DefaultHttpContext();
+        context.Request.Path = "/v1/events";
+        Stream output = new MemoryStream();
+        context.Response.Body = output;
+        GatewayJsonResponseLimitMiddleware middleware = new GatewayJsonResponseLimitMiddleware(async request =>
+        {
+            Assert.Same(output, request.Response.Body);
+            request.Response.ContentType = "text/event-stream";
+            await request.Response.WriteAsync("event: snapshot\n\n");
+        });
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal("text/event-stream", context.Response.ContentType);
+        Assert.True(output.Length > 0);
+    }
+
+    [Fact]
     public async Task JsonAtLimitIsReturnedWithoutChanges()
     {
         string json = "\"" + new string('a', GatewayJsonResponseLimitMiddleware.MaximumJsonResponseBytes - 2) + "\"";

@@ -23,6 +23,16 @@ public sealed class GatewayRequestAuthenticationMiddleware
             return;
         }
 
+        int slotReleased = 0;
+        if (HttpMethods.IsGet(context.Request.Method) && context.Request.Path == "/v1/events")
+        {
+            context.Response.OnStarting(() =>
+            {
+                if (Interlocked.Exchange(ref slotReleased, 1) == 0) _requestSlots.Release();
+                return Task.CompletedTask;
+            });
+        }
+
         try
         {
         if (!registrationState.IsRegistered && context.Request.Path != "/v1/identity" && context.Request.Path != "/v1/capabilities")
@@ -96,7 +106,7 @@ public sealed class GatewayRequestAuthenticationMiddleware
         }
         finally
         {
-            _requestSlots.Release();
+            if (Interlocked.Exchange(ref slotReleased, 1) == 0) _requestSlots.Release();
         }
     }
 

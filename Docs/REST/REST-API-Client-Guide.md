@@ -8,7 +8,7 @@
 
 ## 1. Start here
 
-Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the routes in the current Gateway build, including cursor pagination and saved-resource ETags. SSE remains P3 work.
+Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the routes in the current Gateway build, including cursor pagination, saved-resource ETags, and optional SSE events. Installed SSE validation remains P3 work.
 
 Gateway firewall access is enabled for Windows Private and Domain networks by default. An administrator can also enable Public networks in the desktop Server Settings form; phone clients use the same HTTPS and pairing flow on each profile.
 

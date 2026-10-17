@@ -9,7 +9,7 @@ $mappedRoutes = @{}
 $documentedRoutes = @{}
 $errors = [System.Collections.Generic.List[string]]::new()
 
-foreach ($relativePath in @('DisplayMagician.Gateway/Program.cs', 'DisplayMagician.Gateway/GatewayResourceRoutes.cs')) {
+foreach ($relativePath in @('DisplayMagician.Gateway/Program.cs', 'DisplayMagician.Gateway/GatewayResourceRoutes.cs', 'DisplayMagician.Gateway/GatewayEventRoutes.cs')) {
     $source = Get-Content -Raw -LiteralPath (Join-Path $repositoryRoot $relativePath)
     foreach ($match in [regex]::Matches($source, 'app\.Map(Get|Post|Put|Delete)\("([^"]+)"')) {
         $method = $match.Groups[1].Value.ToUpperInvariant()
@@ -63,8 +63,19 @@ foreach ($route in $mappedRoutes.Keys) {
 foreach ($route in $documentedRoutes.Keys) {
     if (-not $mappedRoutes.ContainsKey($route)) { $errors.Add("OpenAPI route missing from Gateway: $route") }
 }
-if ($mappedRoutes.Count -ne 25) {
-    $errors.Add("Expected 25 P2 routes; found $($mappedRoutes.Count).")
+$events = $spec.paths.'/v1/events'.get
+if ($null -eq $events -or $events.operationId -ne 'streamEvents' -or
+    $null -eq $events.responses.'200'.content.'text/event-stream' -or
+    'Last-Event-ID' -notin @($events.parameters | ForEach-Object { $_.name })) {
+    $errors.Add('The implemented SSE route is missing its event-stream or resume declaration.')
+}
+foreach ($name in @('snapshot', 'operation.updated', 'decision.updated', 'display-profile.changed', 'audio-profile.changed', 'shortcut.changed')) {
+    if ($null -eq $events.responses.'200'.'x-sse-eventSchemas'.$name) {
+        $errors.Add("The implemented SSE route is missing the $name event schema.")
+    }
+}
+if ($mappedRoutes.Count -ne 26) {
+    $errors.Add("Expected 26 implemented routes; found $($mappedRoutes.Count).")
 }
 
 if ($errors.Count -gt 0) {
@@ -72,4 +83,4 @@ if ($errors.Count -gt 0) {
     exit 1
 }
 
-Write-Output "P2 route declaration check passed: $($mappedRoutes.Count) Gateway methods/paths match implemented OpenAPI, including protocol, mutation-key, response, and security declarations."
+Write-Output "REST route declaration check passed: $($mappedRoutes.Count) Gateway methods/paths match implemented OpenAPI, including protocol, mutation-key, response, and security declarations."
