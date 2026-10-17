@@ -4,6 +4,8 @@ This class library is the stable cross-process contract shared by the desktop ap
 
 It contains versioned control envelopes, protocol message types, request/response models, shared enums, client events, Gateway event replay records, retry policy, and the common support-log layout and correlation scope. It contains no UI, hardware access, files, or static application state.
 
+Successful saved-definition edits may include `SavedResourceChanges` with the repository kind, stable ID, and upsert/deleted action. Gateway replay records use the corresponding REST resource type, ID, action, and link for upserts.
+
 ## Compatibility rules
 
 - Treat public serialized fields and enum numeric values as compatibility contracts.

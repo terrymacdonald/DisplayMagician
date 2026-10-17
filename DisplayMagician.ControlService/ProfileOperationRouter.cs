@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +17,9 @@ public sealed class ProfileOperationRouter
     private readonly ISessionLauncherClient _sessionLauncherClient;
     private readonly RecoveryAdministrationStore? _recoveryAdministrationStore;
     private readonly MachineDiagnosticLogLevelStore? _machineDiagnosticLogLevelStore;
+    private readonly GatewayEventJournal? _gatewayEventJournal;
     private readonly SemaphoreSlim _agentLaunchLock = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _savedResourceMutationLock = new SemaphoreSlim(1, 1);
 
     public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient)
         : this(coordinator, agentCommandClient, new UnavailableSessionLauncherClient())
@@ -41,10 +44,11 @@ public sealed class ProfileOperationRouter
         _recoveryAdministrationStore = recoveryAdministrationStore;
     }
 
-    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, RecoveryAdministrationStore? recoveryAdministrationStore, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
+    public ProfileOperationRouter(ControlStateCoordinator coordinator, IAgentCommandClient agentCommandClient, ISessionLauncherClient sessionLauncherClient, RecoveryAdministrationStore? recoveryAdministrationStore, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore, GatewayEventJournal? gatewayEventJournal = null)
         : this(coordinator, agentCommandClient, sessionLauncherClient, recoveryAdministrationStore)
     {
         _machineDiagnosticLogLevelStore = machineDiagnosticLogLevelStore ?? throw new ArgumentNullException(nameof(machineDiagnosticLogLevelStore));
+        _gatewayEventJournal = gatewayEventJournal;
     }
 
     public Task<ControlResponse> ListProfilesAsync(string userSid, int sessionId, CancellationToken cancellationToken)
@@ -113,9 +117,72 @@ public sealed class ProfileOperationRouter
         _recoveryAdministrationStore?.Record("RestartUserAgent", outcome, userSid, sessionId);
     }
 
-    public Task<ControlResponse> ManageProfileAsync(string userSid, int sessionId, ControlEnvelope request, CancellationToken cancellationToken)
+    public async Task<ControlResponse> ManageProfileAsync(string userSid, int sessionId, ControlEnvelope request, CancellationToken cancellationToken)
     {
-        return SendToAgentAsync(userSid, sessionId, request, cancellationToken);
+        RepositoryKind kind = request.MessageType switch
+        {
+            ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings => RepositoryKind.DisplayProfiles,
+            ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => RepositoryKind.AudioProfiles,
+            ControlMessageType.CommitRepositorySnapshot => JsonSerializer.Deserialize<RepositoryCommitRequest>(request.Payload)?.Repository ?? RepositoryKind.Unknown,
+            _ => RepositoryKind.Unknown
+        };
+        if (request.MessageType == ControlMessageType.CommitRepositorySnapshot && kind is not (RepositoryKind.DisplayProfiles or RepositoryKind.AudioProfiles or RepositoryKind.Shortcuts))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The saved collection type is invalid." };
+        }
+        if (_gatewayEventJournal == null || kind == RepositoryKind.Unknown) return await SendToAgentAsync(userSid, sessionId, request, cancellationToken).ConfigureAwait(false);
+
+        await _savedResourceMutationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            RepositoryCommitRequest? commit = request.MessageType == ControlMessageType.CommitRepositorySnapshot ? JsonSerializer.Deserialize<RepositoryCommitRequest>(request.Payload) : null;
+            RepositorySnapshot? before = null;
+            if (commit != null)
+            {
+                ControlResponse snapshotResponse = await SendToAgentAsync(userSid, sessionId,
+                    new ControlEnvelope { MessageType = ControlMessageType.GetRepositorySnapshot, Payload = JsonSerializer.Serialize(new RepositorySnapshotRequest { Repository = kind }) }, cancellationToken).ConfigureAwait(false);
+                if (!snapshotResponse.IsSuccessful) return snapshotResponse;
+                before = snapshotResponse.RepositorySnapshot;
+                if (before == null || before.Repository != kind) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The saved collection could not be read before the edit. Retry the edit." };
+                try
+                {
+                    SavedResourceChangeDetector.Validate(kind, before.Json);
+                    SavedResourceChangeDetector.Validate(kind, commit.Json);
+                }
+                catch (JsonException)
+                {
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The saved collection could not be validated before the edit." };
+                }
+            }
+
+            ControlResponse response = await SendToAgentAsync(userSid, sessionId, request, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessful || response.RepositoryCommit?.WasConflict == true) return response;
+
+            try
+            {
+                GatewaySavedResourceChange[] changes = commit != null
+                    ? SavedResourceChangeDetector.Detect(kind, before!.Json, commit.Json)
+                    : response.SavedResourceChanges.Where(change => change.Repository == kind)
+                        .Select(change => SavedResourceChangeDetector.Create(change.Repository, change.ResourceId, change.Action)).ToArray();
+                if (commit == null && changes.Length == 0)
+                {
+                    Logger.Error("ProfileOperationRouter/ManageProfileAsync: User Agent reported no saved-resource change for successful {0} in SID {1}, session {2}.", request.MessageType, userSid, sessionId);
+                }
+                else
+                {
+                    _gatewayEventJournal.AppendBatch(userSid, sessionId, changes, DateTime.UtcNow);
+                }
+            }
+            catch (Exception ex) when (ex is ArgumentException or JsonException or IOException or UnauthorizedAccessException)
+            {
+                Logger.Error(ex, "ProfileOperationRouter/ManageProfileAsync: Could not retain saved-resource changes for successful {0} in SID {1}, session {2}.", request.MessageType, userSid, sessionId);
+            }
+            return response;
+        }
+        finally
+        {
+            _savedResourceMutationLock.Release();
+        }
     }
 
     public async Task<ControlResponse> ApplyProfileAsync(string userSid, int sessionId, string profileId, CancellationToken cancellationToken)

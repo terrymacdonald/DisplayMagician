@@ -6,6 +6,8 @@ The Agent is the owner of interactive desktop work. It starts its command pipe a
 
 Profile list responses include compact layout thumbnails. A client may request a labelled preview and multi-size desktop `.ico` for one selected profile or a preview for the current layout; the Agent renders these from its authoritative display and saved wallpaper configuration, falling back to the display colour when a saved wallpaper cannot be read. Compact thumbnails are used for list and game shortcut overlays. Shortcut-list icons prefer the user's saved composite image over an executable-derived fallback.
 
+Successful direct display and audio profile edits return the saved profile ID and change action to ControlService. This lets the service publish precise saved-resource events after the Agent commits the edit. Bulk repository edits are compared by saved ID in ControlService.
+
 ## Development
 
 ```powershell

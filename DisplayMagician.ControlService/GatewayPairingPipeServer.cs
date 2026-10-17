@@ -451,9 +451,12 @@ public sealed class GatewayPairingPipeServer
 
         GatewayEventReplay replay = _gatewayEventJournal.ReadAfter(authentication.OwnerUserSid, command.Cursor, DateTime.UtcNow);
         replay.Events = replay.Events.Where(item =>
-            (!authentication.PreferredSessionId.HasValue || item.OperationStatus?.OwnerSessionId == authentication.PreferredSessionId.Value || item.OperationDecision?.OwnerSessionId == authentication.PreferredSessionId.Value) &&
+            (!authentication.PreferredSessionId.HasValue || item.OwnerSessionId == authentication.PreferredSessionId.Value) &&
             (item.EventType == ControlClientEventType.OperationStatusUpdated && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal) ||
-             item.EventType == ControlClientEventType.OperationDecisionUpdated && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsRead, StringComparer.Ordinal)))
+             item.EventType == ControlClientEventType.OperationDecisionUpdated && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsRead, StringComparer.Ordinal) ||
+             item.EventType == ControlClientEventType.DisplayProfileChanged && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.ProfilesRead, StringComparer.Ordinal) ||
+             item.EventType == ControlClientEventType.AudioProfileChanged && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.AudioProfilesRead, StringComparer.Ordinal) ||
+             item.EventType == ControlClientEventType.ShortcutChanged && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.ShortcutsRead, StringComparer.Ordinal)))
             .ToArray();
         return new ControlResponse { IsSuccessful = true, GatewayEventReplay = replay };
     }

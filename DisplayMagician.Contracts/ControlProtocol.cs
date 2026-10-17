@@ -1029,6 +1029,20 @@ public enum RepositoryKind
     Shortcuts = 3
 }
 
+public enum SavedResourceChangeAction
+{
+    Upsert = 1,
+    Deleted = 2
+}
+
+/// <summary>Agent-reported result of an authoritative saved-definition edit.</summary>
+public sealed class SavedResourceChange
+{
+    public RepositoryKind Repository { get; set; }
+    public string ResourceId { get; set; } = string.Empty;
+    public SavedResourceChangeAction Action { get; set; }
+}
+
 public sealed class DisplayProfileView
 {
     public string Id { get; set; } = string.Empty;
@@ -1258,6 +1272,8 @@ public sealed class ControlResponse
     public RepositorySnapshot? RepositorySnapshot { get; set; }
 
     public RepositoryCommitResult? RepositoryCommit { get; set; }
+
+    public SavedResourceChange[] SavedResourceChanges { get; set; } = Array.Empty<SavedResourceChange>();
 
     public ApplyProfileResult? ApplyProfile { get; set; }
 

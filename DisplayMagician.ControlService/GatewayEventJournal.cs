@@ -34,13 +34,46 @@ public sealed class GatewayEventJournal
     public void Append(OperationStatus status, DateTime utcNow)
     {
         ArgumentNullException.ThrowIfNull(status);
-        Append(status.OwnerUserSid, ControlClientEventType.OperationStatusUpdated, status, null, utcNow);
+        Append(status.OwnerUserSid, status.OwnerSessionId, ControlClientEventType.OperationStatusUpdated, status, null, null, utcNow);
     }
 
     public void Append(OperationDecision decision, DateTime utcNow)
     {
         ArgumentNullException.ThrowIfNull(decision);
-        Append(decision.OwnerUserSid, ControlClientEventType.OperationDecisionUpdated, null, decision, utcNow);
+        Append(decision.OwnerUserSid, decision.OwnerSessionId, ControlClientEventType.OperationDecisionUpdated, null, decision, null, utcNow);
+    }
+
+    public void Append(string ownerUserSid, int ownerSessionId, GatewaySavedResourceChange change, DateTime utcNow)
+    {
+        AppendBatch(ownerUserSid, ownerSessionId, new[] { change }, utcNow);
+    }
+
+    public void AppendBatch(string ownerUserSid, int ownerSessionId, GatewaySavedResourceChange[] changes, DateTime utcNow)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
+        ArgumentNullException.ThrowIfNull(changes);
+        if (changes.Length == 0) return;
+        ControlClientEventType[] eventTypes = changes.Select(change =>
+        {
+            if (change == null || string.IsNullOrWhiteSpace(change.Id) || change.Action is not ("upsert" or "deleted")) throw new ArgumentException("The saved resource change is invalid.", nameof(changes));
+            return change.ResourceType switch
+            {
+                "display-profile" => ControlClientEventType.DisplayProfileChanged,
+                "audio-profile" => ControlClientEventType.AudioProfileChanged,
+                "shortcut" => ControlClientEventType.ShortcutChanged,
+                _ => throw new ArgumentException("The saved resource type is invalid.", nameof(changes))
+            };
+        }).ToArray();
+        lock (_syncRoot)
+        {
+            UserEvents user = GetOrCreateUserUnsafe(ownerUserSid);
+            for (int index = 0; index < changes.Length; index++)
+            {
+                AddRecordUnsafe(user, ownerUserSid, ownerSessionId, eventTypes[index], null, null, changes[index], utcNow);
+            }
+            PruneUnsafe(user, utcNow);
+            PersistUnsafe();
+        }
     }
 
     public GatewayEventReplay ReadAfter(string ownerUserSid, string cursor, DateTime utcNow)
@@ -84,27 +117,34 @@ public sealed class GatewayEventJournal
         }
     }
 
-    private void Append(string ownerUserSid, ControlClientEventType eventType, OperationStatus? status, OperationDecision? decision, DateTime utcNow)
+    private void Append(string ownerUserSid, int ownerSessionId, ControlClientEventType eventType, OperationStatus? status, OperationDecision? decision, GatewaySavedResourceChange? resourceChange, DateTime utcNow)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
         lock (_syncRoot)
         {
             UserEvents user = GetOrCreateUserUnsafe(ownerUserSid);
-            long sequence = user.NextSequence++;
-            GatewayEventRecord record = new GatewayEventRecord
-            {
-                Id = CreateCursor(user, sequence),
-                OwnerUserSid = ownerUserSid,
-                PublishedUtc = utcNow.ToUniversalTime(),
-                EventType = eventType,
-                OperationStatus = status,
-                OperationDecision = decision
-            };
-            user.Events.Add(record);
-            user.RetainedBytes += JsonSerializer.SerializeToUtf8Bytes(record).Length + 1;
+            AddRecordUnsafe(user, ownerUserSid, ownerSessionId, eventType, status, decision, resourceChange, utcNow);
             PruneUnsafe(user, utcNow);
             PersistUnsafe();
         }
+    }
+
+    private static void AddRecordUnsafe(UserEvents user, string ownerUserSid, int ownerSessionId, ControlClientEventType eventType, OperationStatus? status, OperationDecision? decision, GatewaySavedResourceChange? resourceChange, DateTime utcNow)
+    {
+        long sequence = user.NextSequence++;
+        GatewayEventRecord record = new GatewayEventRecord
+        {
+            Id = CreateCursor(user, sequence),
+            OwnerUserSid = ownerUserSid,
+            OwnerSessionId = ownerSessionId,
+            PublishedUtc = utcNow.ToUniversalTime(),
+            EventType = eventType,
+            OperationStatus = status,
+            OperationDecision = decision,
+            ResourceChange = resourceChange
+        };
+        user.Events.Add(record);
+        user.RetainedBytes += JsonSerializer.SerializeToUtf8Bytes(record).Length + 1;
     }
 
     private UserEvents GetOrCreateUserUnsafe(string ownerUserSid)
@@ -194,6 +234,10 @@ public sealed class GatewayEventJournal
                 user.Events ??= new List<GatewayEventRecord>();
                 user.Events = user.Events.Where(item => item.OwnerUserSid.Equals(user.OwnerUserSid, StringComparison.OrdinalIgnoreCase) && TryParseSequence(item.Id, out long sequence) && sequence > 0 && IsValidCursor(user, item.Id, sequence))
                     .OrderBy(item => ParseSequence(item.Id)).ToList();
+                foreach (GatewayEventRecord item in user.Events)
+                {
+                    if (item.OwnerSessionId == 0) item.OwnerSessionId = item.OperationStatus?.OwnerSessionId ?? item.OperationDecision?.OwnerSessionId ?? 0;
+                }
                 user.RetainedBytes = user.Events.Sum(item => (long)JsonSerializer.SerializeToUtf8Bytes(item).Length + 1);
                 user.NextSequence = Math.Max(user.NextSequence, user.Events.Count == 0 ? 1 : ParseSequence(user.Events[^1].Id) + 1);
                 PruneUnsafe(user, DateTime.UtcNow);

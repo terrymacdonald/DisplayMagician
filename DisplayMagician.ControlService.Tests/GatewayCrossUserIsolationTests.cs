@@ -88,6 +88,9 @@ public sealed class GatewayCrossUserIsolationTests
         journal.Append(new OperationStatus { OwnerUserSid = "owner", OwnerSessionId = 10, OperationId = Guid.NewGuid() }, now);
         journal.Append(new OperationDecision { OwnerUserSid = "owner", OwnerSessionId = 10, PromptId = Guid.NewGuid(), OperationId = Guid.NewGuid() }, now);
         journal.Append(new OperationStatus { OwnerUserSid = "owner", OwnerSessionId = 20, OperationId = Guid.NewGuid() }, now);
+        journal.Append("owner", 10, new GatewaySavedResourceChange { ResourceType = "display-profile", Id = "display-id", Action = "upsert", Href = "/v1/display-profiles/display-id" }, now);
+        journal.Append("owner", 20, new GatewaySavedResourceChange { ResourceType = "audio-profile", Id = "audio-id", Action = "upsert", Href = "/v1/audio-profiles/audio-id" }, now);
+        journal.Append("owner", 10, new GatewaySavedResourceChange { ResourceType = "shortcut", Id = "shortcut-id", Action = "deleted" }, now);
         ControlStateCoordinator coordinator = new ControlStateCoordinator();
         PairedClientRepository clients = new PairedClientRepository(paths);
         GatewayPairingPipeServer server = new GatewayPairingPipeServer(new DevicePairingCoordinator(paths, clients), new GatewayIdentityRegistry(),
@@ -107,6 +110,15 @@ public sealed class GatewayCrossUserIsolationTests
         Assert.False(response.GatewayEventReplay.HasMore);
         authentication.GrantedCapabilities = new[] { RemoteClientCapabilities.DecisionsRead };
         Assert.Equal(ControlClientEventType.OperationDecisionUpdated, Assert.Single(ReadEvents(server, authentication, cursor).GatewayEventReplay!.Events).EventType);
+        authentication.GrantedCapabilities = new[] { RemoteClientCapabilities.ProfilesRead, RemoteClientCapabilities.ShortcutsRead };
+        GatewayEventRecord[] savedChanges = ReadEvents(server, authentication, cursor).GatewayEventReplay!.Events;
+        Assert.Equal(2, savedChanges.Length);
+        Assert.Contains(savedChanges, item => item.ResourceChange?.Id == "display-id");
+        Assert.Contains(savedChanges, item => item.ResourceChange?.Id == "shortcut-id");
+        authentication.GrantedCapabilities = new[] { RemoteClientCapabilities.AudioProfilesRead };
+        Assert.Empty(ReadEvents(server, authentication, cursor).GatewayEventReplay!.Events);
+        authentication.PreferredSessionId = null;
+        Assert.Equal("audio-id", Assert.Single(ReadEvents(server, authentication, cursor).GatewayEventReplay!.Events).ResourceChange?.Id);
         authentication.GrantedCapabilities = Array.Empty<string>();
         Assert.Equal(ControlErrorCode.Unauthorized, ReadEvents(server, authentication, cursor).ErrorCode);
     }

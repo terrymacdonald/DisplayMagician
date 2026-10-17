@@ -8,7 +8,10 @@ public enum ControlClientEventType
     ClientSyncCompleted = 1,
     OperationStatusUpdated = 2,
     OperationDecisionUpdated = 3,
-    SubscriptionHeartbeat = 4
+    SubscriptionHeartbeat = 4,
+    DisplayProfileChanged = 5,
+    AudioProfileChanged = 6,
+    ShortcutChanged = 7
 }
 
 /// <summary>Defines whether a local event is delivered to one Windows session or every subscribed session for its user.</summary>

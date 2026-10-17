@@ -72,4 +72,26 @@ public sealed class GatewayEventJournalTests
         Assert.False(second.HasMore);
         Assert.Equal(first.HeadId, second.Events[0].Id);
     }
+
+    [Fact]
+    public void SavedResourceBatchKeepsActionsAndLinksAcrossRestart()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        DateTime now = DateTime.UtcNow;
+        string cursor = journal.GetHead("owner", now);
+        journal.AppendBatch("owner", 10, new[]
+        {
+            new GatewaySavedResourceChange { ResourceType = "display-profile", Id = "new", Action = "upsert", Href = "/v1/display-profiles/new" },
+            new GatewaySavedResourceChange { ResourceType = "display-profile", Id = "old", Action = "deleted" }
+        }, now);
+
+        GatewayEventRecord[] events = new GatewayEventJournal(paths).ReadAfter("owner", cursor, now).Events;
+
+        Assert.Equal(2, events.Length);
+        Assert.Equal("upsert", events[0].ResourceChange?.Action);
+        Assert.Equal("/v1/display-profiles/new", events[0].ResourceChange?.Href);
+        Assert.Equal("deleted", events[1].ResourceChange?.Action);
+        Assert.Null(events[1].ResourceChange?.Href);
+    }
 }

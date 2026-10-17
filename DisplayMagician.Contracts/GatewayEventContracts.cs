@@ -7,10 +7,20 @@ public sealed class GatewayEventRecord
 {
     public string Id { get; set; } = string.Empty;
     public string OwnerUserSid { get; set; } = string.Empty;
+    public int OwnerSessionId { get; set; }
     public DateTime PublishedUtc { get; set; }
     public ControlClientEventType EventType { get; set; }
     public OperationStatus? OperationStatus { get; set; }
     public OperationDecision? OperationDecision { get; set; }
+    public GatewaySavedResourceChange? ResourceChange { get; set; }
+}
+
+public sealed class GatewaySavedResourceChange
+{
+    public string ResourceType { get; set; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public string? Href { get; set; }
 }
 
 public enum GatewayEventReplayState

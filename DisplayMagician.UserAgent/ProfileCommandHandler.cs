@@ -590,7 +590,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current audio settings could not be saved." };
             }
 
-            return new ControlResponse { IsSuccessful = true, Message = "Audio profile created." };
+            return SuccessfulResourceChange("Audio profile created.", RepositoryKind.AudioProfiles, profile.UUID, SavedResourceChangeAction.Upsert);
         }
 
         if (request.MessageType == ControlMessageType.RenameAudioProfile)
@@ -603,7 +603,7 @@ public sealed class ProfileCommandHandler
             }
 
             return AudioProfileRepository.RenameAudioProfile(profile, renameRequest!.Name)
-                ? new ControlResponse { IsSuccessful = true, Message = "Audio profile renamed." }
+                ? SuccessfulResourceChange("Audio profile renamed.", RepositoryKind.AudioProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The audio profile could not be renamed." };
         }
 
@@ -617,7 +617,7 @@ public sealed class ProfileCommandHandler
             }
 
             return AudioProfileRepository.RemoveAudioProfile(profile)
-                ? new ControlResponse { IsSuccessful = true, Message = "Audio profile deleted." }
+                ? SuccessfulResourceChange("Audio profile deleted.", RepositoryKind.AudioProfiles, profile.UUID, SavedResourceChangeAction.Deleted)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The audio profile could not be deleted." };
         }
 
@@ -635,7 +635,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current audio settings could not update the audio profile." };
             }
 
-            return new ControlResponse { IsSuccessful = true, Message = "Audio profile updated." };
+            return SuccessfulResourceChange("Audio profile updated.", RepositoryKind.AudioProfiles, profile.UUID, SavedResourceChangeAction.Upsert);
         }
 
         if (request.MessageType == ControlMessageType.CreateProfileFromCurrent)
@@ -656,7 +656,7 @@ public sealed class ProfileCommandHandler
 
             profile.Name = createRequest.Name;
             return ProfileRepository.AddProfile(profile)
-                ? new ControlResponse { IsSuccessful = true, Message = "Display profile created." }
+                ? SuccessfulResourceChange("Display profile created.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be saved." };
         }
 
@@ -674,7 +674,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The display profile could not be renamed." };
             }
 
-            return new ControlResponse { IsSuccessful = true, Message = "Display profile renamed." };
+            return SuccessfulResourceChange("Display profile renamed.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Upsert);
         }
 
         if (request.MessageType == ControlMessageType.DeleteProfile)
@@ -687,7 +687,7 @@ public sealed class ProfileCommandHandler
             }
 
             return ProfileRepository.RemoveProfile(profile)
-                ? new ControlResponse { IsSuccessful = true, Message = "Display profile deleted." }
+                ? SuccessfulResourceChange("Display profile deleted.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Deleted)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be deleted." };
         }
 
@@ -701,7 +701,7 @@ public sealed class ProfileCommandHandler
             }
 
             return ProfileRepository.CopyCurrentLayoutToProfile(profile)
-                ? new ControlResponse { IsSuccessful = true, Message = "Display profile updated." }
+                ? SuccessfulResourceChange("Display profile updated.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be updated." };
         }
 
@@ -724,7 +724,7 @@ public sealed class ProfileCommandHandler
             profile.ApplyProfileDelay = settingsRequest.Settings.ApplyProfileDelay;
             profile.ForceExplorerRestart = settingsRequest.Settings.ForceExplorerRestart;
             return ProfileRepository.SaveProfiles()
-                ? new ControlResponse { IsSuccessful = true, Message = "Display profile settings updated." }
+                ? SuccessfulResourceChange("Display profile settings updated.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile settings could not be saved." };
         }
 
@@ -1129,6 +1129,16 @@ public sealed class ProfileCommandHandler
             Repository = repository,
             Revision = content.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(content), 0),
             Json = content.Length == 0 ? string.Empty : System.Text.Encoding.Unicode.GetString(content).TrimStart('\uFEFF')
+        };
+    }
+
+    private static ControlResponse SuccessfulResourceChange(string message, RepositoryKind repository, string id, SavedResourceChangeAction action)
+    {
+        return new ControlResponse
+        {
+            IsSuccessful = true,
+            Message = message,
+            SavedResourceChanges = new[] { new SavedResourceChange { Repository = repository, ResourceId = id, Action = action } }
         };
     }
 }

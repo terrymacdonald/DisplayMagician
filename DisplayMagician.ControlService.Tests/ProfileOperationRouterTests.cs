@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
@@ -9,6 +10,114 @@ namespace DisplayMagician.ControlService.Tests;
 
 public sealed class ProfileOperationRouterTests
 {
+    [Fact]
+    public async Task RepositoryCommitPublishesOnlyChangedAndDeletedIds()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        const string before = "{\"Shortcuts\":[{\"UUID\":\"same\",\"Name\":\"Same\"},{\"UUID\":\"rename\",\"Name\":\"Old\"},{\"UUID\":\"gone\",\"Name\":\"Gone\"}]}";
+        const string after = "{\"Shortcuts\":[{\"UUID\":\"same\",\"Name\":\"Same\"},{\"UUID\":\"rename\",\"Name\":\"New\"},{\"UUID\":\"added\",\"Name\":\"Added\"}]}";
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient
+        {
+            ResponseFactory = request => request.MessageType == ControlMessageType.GetRepositorySnapshot
+                ? new ControlResponse { IsSuccessful = true, RepositorySnapshot = new RepositorySnapshot { Repository = RepositoryKind.Shortcuts, Json = before } }
+                : new ControlResponse { IsSuccessful = true, RepositoryCommit = new RepositoryCommitResult { Snapshot = new RepositorySnapshot { Repository = RepositoryKind.Shortcuts, Json = after } } }
+        };
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), null, new MachineDiagnosticLogLevelStore(paths), journal);
+        string cursor = journal.GetHead(agent.UserSid, DateTime.UtcNow);
+        ControlEnvelope commit = new ControlEnvelope { MessageType = ControlMessageType.CommitRepositorySnapshot, Payload = JsonSerializer.Serialize(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, Json = after }) };
+
+        ControlResponse result = await router.ManageProfileAsync(agent.UserSid, agent.SessionId, commit, CancellationToken.None);
+
+        Assert.True(result.IsSuccessful);
+        GatewayEventRecord[] events = journal.ReadAfter(agent.UserSid, cursor, DateTime.UtcNow).Events;
+        Assert.Equal(3, events.Length);
+        Assert.All(events, item => Assert.Equal(ControlClientEventType.ShortcutChanged, item.EventType));
+        Assert.Contains(events, item => item.ResourceChange?.Id == "rename" && item.ResourceChange.Action == "upsert");
+        Assert.Contains(events, item => item.ResourceChange?.Id == "added" && item.ResourceChange.Action == "upsert");
+        Assert.Contains(events, item => item.ResourceChange?.Id == "gone" && item.ResourceChange.Action == "deleted" && item.ResourceChange.Href == null);
+    }
+
+    [Fact]
+    public async Task RepositoryCommitRejectsUnavailableBeforeSnapshotWithoutEditing()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        int sent = 0;
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient
+        {
+            ResponseFactory = request =>
+            {
+                sent++;
+                Assert.Equal(ControlMessageType.GetRepositorySnapshot, request.MessageType);
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable };
+            }
+        };
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), null, new MachineDiagnosticLogLevelStore(paths), journal);
+        ControlEnvelope commit = new ControlEnvelope { MessageType = ControlMessageType.CommitRepositorySnapshot, Payload = JsonSerializer.Serialize(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, Json = "{\"Shortcuts\":[]}" }) };
+
+        ControlResponse result = await router.ManageProfileAsync(agent.UserSid, agent.SessionId, commit, CancellationToken.None);
+
+        Assert.False(result.IsSuccessful);
+        Assert.Equal(ControlErrorCode.AgentUnavailable, result.ErrorCode);
+        Assert.Equal(1, sent);
+    }
+
+    [Fact]
+    public async Task DirectAgentEditPublishesItsReportedResourceId()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient
+        {
+            Response = new ControlResponse { IsSuccessful = true, SavedResourceChanges = new[] { new SavedResourceChange { Repository = RepositoryKind.AudioProfiles, ResourceId = "audio-id", Action = SavedResourceChangeAction.Deleted } } }
+        };
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), null, new MachineDiagnosticLogLevelStore(paths), journal);
+        string cursor = journal.GetHead(agent.UserSid, DateTime.UtcNow);
+
+        ControlResponse result = await router.ManageProfileAsync(agent.UserSid, agent.SessionId,
+            new ControlEnvelope { MessageType = ControlMessageType.DeleteAudioProfile, Payload = JsonSerializer.Serialize(new DeleteProfileRequest { ProfileId = "audio-id" }) }, CancellationToken.None);
+
+        Assert.True(result.IsSuccessful);
+        GatewayEventRecord record = Assert.Single(journal.ReadAfter(agent.UserSid, cursor, DateTime.UtcNow).Events);
+        Assert.Equal(ControlClientEventType.AudioProfileChanged, record.EventType);
+        Assert.Equal("audio-id", record.ResourceChange?.Id);
+        Assert.Equal("deleted", record.ResourceChange?.Action);
+    }
+
+    [Fact]
+    public async Task ConflictedRepositoryCommitDoesNotPublishChangeEvents()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient
+        {
+            ResponseFactory = request => request.MessageType == ControlMessageType.GetRepositorySnapshot
+                ? new ControlResponse { IsSuccessful = true, RepositorySnapshot = new RepositorySnapshot { Repository = RepositoryKind.Shortcuts, Json = "{\"Shortcuts\":[]}" } }
+                : new ControlResponse { IsSuccessful = true, RepositoryCommit = new RepositoryCommitResult { WasConflict = true } }
+        };
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), null, new MachineDiagnosticLogLevelStore(paths), journal);
+        string cursor = journal.GetHead(agent.UserSid, DateTime.UtcNow);
+        ControlEnvelope commit = new ControlEnvelope { MessageType = ControlMessageType.CommitRepositorySnapshot, Payload = JsonSerializer.Serialize(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, Json = "{\"Shortcuts\":[{\"UUID\":\"new\"}]}" }) };
+
+        ControlResponse result = await router.ManageProfileAsync(agent.UserSid, agent.SessionId, commit, CancellationToken.None);
+
+        Assert.True(result.RepositoryCommit?.WasConflict);
+        Assert.Empty(journal.ReadAfter(agent.UserSid, cursor, DateTime.UtcNow).Events);
+    }
+
     [Fact]
     public async Task ListProfilesAsync_ReturnsExecutionFailedWhenAgentAndLauncherAreUnavailable()
     {
@@ -350,6 +459,8 @@ public sealed class ProfileOperationRouterTests
 
         public Action<AgentRegistration, ControlEnvelope>? OnSend { get; init; }
 
+        public Func<ControlEnvelope, ControlResponse>? ResponseFactory { get; init; }
+
         public ControlResponse Response { get; init; } = new ControlResponse { IsSuccessful = true, Message = "Test command response." };
 
         public Task<ControlResponse> SendAsync(AgentRegistration agent, ControlEnvelope request, CancellationToken cancellationToken)
@@ -358,7 +469,7 @@ public sealed class ProfileOperationRouterTests
             Agent = agent;
             Request = request;
             OnSend?.Invoke(agent, request);
-            return Task.FromResult(Response);
+            return Task.FromResult(ResponseFactory?.Invoke(request) ?? Response);
         }
     }
 
