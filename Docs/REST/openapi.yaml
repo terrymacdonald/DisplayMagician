@@ -1,11 +1,11 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "DisplayMagician v4 Gateway REST API (implemented P2 routes)",
-    "version": "1.0.0-p2",
-    "description": "Routes available in the current Gateway build. Collections are currently unpaged and may return response-too-large for large libraries. ETags, cursor pagination, terminal retention guarantees, and SSE are planned for P3. Every request requires DisplayMagician-Protocol-Hello; successful responses include DisplayMagician-Protocol-Welcome."
+    "title": "DisplayMagician v4 Gateway REST API (implemented routes)",
+    "version": "1.0.0-p3-in-progress",
+    "description": "Routes available in the current Gateway build. Collection GETs support ten-minute snapshot cursors and saved-resource GETs support ETags. Terminal operations are retained for seven days or the newest 100 per user. SSE and generated clients remain P3 work. Every request requires DisplayMagician-Protocol-Hello; successful responses include DisplayMagician-Protocol-Welcome."
   },
-  "x-displaymagician-contractStatus": "implemented-p2-in-progress",
+  "x-displaymagician-contractStatus": "implemented-p3-in-progress",
   "servers": [
     {
       "url": "https://{host}:{port}",
@@ -181,10 +181,21 @@
               }
             }
           },
+          "410": {
+            "$ref": "#/components/responses/Problem"
+          },
           "default": {
             "$ref": "#/components/responses/Problem"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ]
       }
     },
     "/v1/pairing-requests/{pairingRequestId}": {
@@ -382,10 +393,21 @@
               }
             }
           },
+          "410": {
+            "$ref": "#/components/responses/Problem"
+          },
           "default": {
             "$ref": "#/components/responses/Problem"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ]
       }
     },
     "/v1/devices/{deviceId}": {
@@ -469,10 +491,21 @@
               }
             }
           },
+          "410": {
+            "$ref": "#/components/responses/Problem"
+          },
           "default": {
             "$ref": "#/components/responses/Problem"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ]
       }
     },
     "/v1/operations/{operationId}": {
@@ -615,10 +648,21 @@
               }
             }
           },
+          "410": {
+            "$ref": "#/components/responses/Problem"
+          },
           "default": {
             "$ref": "#/components/responses/Problem"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ]
       }
     },
     "/v1/operations/{operationId}/decisions/{decisionId}": {
@@ -761,6 +805,12 @@
               "type": "string",
               "const": "pending"
             }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
           }
         ],
         "responses": {
@@ -784,6 +834,9 @@
                 }
               }
             }
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem"
           },
           "default": {
             "$ref": "#/components/responses/Problem"
@@ -809,11 +862,47 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IncludeArtwork"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/IfNoneMatch"
           }
         ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/DisplayProfilePageSuccess"
+          },
+          "304": {
+            "description": "Representation unchanged; no response body.",
+            "headers": {
+              "ETag": {
+                "description": "Current representation tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private revalidation.",
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-cache"
+                }
+              },
+              "DisplayMagician-Protocol-Welcome": {
+                "$ref": "#/components/headers/ProtocolWelcome"
+              },
+              "DisplayMagician-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem"
           },
           "default": {
             "$ref": "#/components/responses/Problem"
@@ -842,11 +931,38 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IncludeArtwork"
+          },
+          {
+            "$ref": "#/components/parameters/IfNoneMatch"
           }
         ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/DisplayProfileDetailSuccess"
+          },
+          "304": {
+            "description": "Representation unchanged; no response body.",
+            "headers": {
+              "ETag": {
+                "description": "Current representation tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private revalidation.",
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-cache"
+                }
+              },
+              "DisplayMagician-Protocol-Welcome": {
+                "$ref": "#/components/headers/ProtocolWelcome"
+              },
+              "DisplayMagician-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           },
           "default": {
             "$ref": "#/components/responses/Problem"
@@ -906,10 +1022,48 @@
           "200": {
             "$ref": "#/components/responses/AudioProfilePageSuccess"
           },
+          "304": {
+            "description": "Representation unchanged; no response body.",
+            "headers": {
+              "ETag": {
+                "description": "Current representation tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private revalidation.",
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-cache"
+                }
+              },
+              "DisplayMagician-Protocol-Welcome": {
+                "$ref": "#/components/headers/ProtocolWelcome"
+              },
+              "DisplayMagician-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem"
+          },
           "default": {
             "$ref": "#/components/responses/Problem"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/IfNoneMatch"
+          }
+        ]
       }
     },
     "/v1/audio-profiles/{profileId}": {
@@ -934,10 +1088,39 @@
           "200": {
             "$ref": "#/components/responses/AudioProfileDetailSuccess"
           },
+          "304": {
+            "description": "Representation unchanged; no response body.",
+            "headers": {
+              "ETag": {
+                "description": "Current representation tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private revalidation.",
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-cache"
+                }
+              },
+              "DisplayMagician-Protocol-Welcome": {
+                "$ref": "#/components/headers/ProtocolWelcome"
+              },
+              "DisplayMagician-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
           "default": {
             "$ref": "#/components/responses/Problem"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IfNoneMatch"
+          }
+        ]
       }
     },
     "/v1/audio-profiles/{profileId}/applications": {
@@ -991,11 +1174,47 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IncludeArtwork"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/IfNoneMatch"
           }
         ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/ShortcutPageSuccess"
+          },
+          "304": {
+            "description": "Representation unchanged; no response body.",
+            "headers": {
+              "ETag": {
+                "description": "Current representation tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private revalidation.",
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-cache"
+                }
+              },
+              "DisplayMagician-Protocol-Welcome": {
+                "$ref": "#/components/headers/ProtocolWelcome"
+              },
+              "DisplayMagician-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem"
           },
           "default": {
             "$ref": "#/components/responses/Problem"
@@ -1024,11 +1243,38 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IncludeArtwork"
+          },
+          {
+            "$ref": "#/components/parameters/IfNoneMatch"
           }
         ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/ShortcutDetailSuccess"
+          },
+          "304": {
+            "description": "Representation unchanged; no response body.",
+            "headers": {
+              "ETag": {
+                "description": "Current representation tag.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private revalidation.",
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-cache"
+                }
+              },
+              "DisplayMagician-Protocol-Welcome": {
+                "$ref": "#/components/headers/ProtocolWelcome"
+              },
+              "DisplayMagician-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           },
           "default": {
             "$ref": "#/components/responses/Problem"
@@ -1164,6 +1410,38 @@
           "type": "boolean",
           "default": false
         }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 25
+        },
+        "description": "Maximum items per page; the response-size cap can yield fewer."
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "description": "Opaque ten-minute device-scoped snapshot cursor from nextCursor."
+      },
+      "IfNoneMatch": {
+        "name": "If-None-Match",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Revalidate this saved-resource representation."
       }
     },
     "headers": {
@@ -2799,7 +3077,8 @@
           "idempotency-key-required",
           "idempotency-key-invalid",
           "idempotency-key-conflict",
-          "idempotency-pending", "idempotency-outcome-unknown",
+          "idempotency-pending",
+          "idempotency-outcome-unknown",
           "authentication-required",
           "credential-invalid",
           "capability-denied",
@@ -2815,7 +3094,7 @@
           "cursor-expired",
           "validation-failed",
           "request-too-large",
-        "response-too-large",
+          "response-too-large",
           "rate-limited",
           "target-unavailable",
           "execution-failed",

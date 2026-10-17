@@ -14,7 +14,8 @@ namespace DisplayMagician.ControlService;
 /// </summary>
 public sealed class OperationStatusStore
 {
-    private const int MaximumCompletedOperations = 100;
+    private const int MaximumCompletedOperationsPerUser = 100;
+    private static readonly TimeSpan CompletedOperationLifetime = TimeSpan.FromDays(7);
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly object _syncRoot = new object();
     private readonly string _storagePath;
@@ -82,7 +83,7 @@ public sealed class OperationStatusStore
             status.ErrorCode = update.ErrorCode;
             status.LastUpdateId = update.UpdateId;
             _operations[status.OperationId] = status;
-            RemoveOldCompletedOperations();
+            PruneCompletedOperationsUnsafe(utcNow);
             Persist();
         }
 
@@ -95,6 +96,7 @@ public sealed class OperationStatusStore
     {
         lock (_syncRoot)
         {
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
             return _operations.TryGetValue(operationId, out OperationStatus? status) && string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase)
                 ? Copy(status)
                 : null;
@@ -105,6 +107,7 @@ public sealed class OperationStatusStore
     {
         lock (_syncRoot)
         {
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
             return _operations.Values
                 .Where(status => string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(status => status.UpdatedUtc)
@@ -117,6 +120,7 @@ public sealed class OperationStatusStore
     {
         lock (_syncRoot)
         {
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
             return _operations.Values
                 .Where(status => string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) && status.UpdatedUtc >= changedSinceUtc.ToUniversalTime())
                 .OrderBy(status => status.UpdatedUtc)
@@ -191,6 +195,7 @@ public sealed class OperationStatusStore
             {
                 _operations[status.OperationId] = status;
             }
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
         {
@@ -211,18 +216,24 @@ public sealed class OperationStatusStore
         }
     }
 
-    private void RemoveOldCompletedOperations()
+    private bool PruneCompletedOperationsUnsafe(DateTime utcNow)
     {
-        Guid[] obsoleteOperationIds = _operations.Values
-            .Where(status => status.IsTerminal)
-            .OrderByDescending(status => status.UpdatedUtc)
-            .Skip(MaximumCompletedOperations)
+        Guid[] expiredOperationIds = _operations.Values
+            .Where(status => status.IsTerminal && status.UpdatedUtc.ToUniversalTime().Add(CompletedOperationLifetime) <= utcNow.ToUniversalTime())
             .Select(status => status.OperationId)
             .ToArray();
-        foreach (Guid operationId in obsoleteOperationIds)
+        Guid[] excessOperationIds = _operations.Values
+            .Where(status => status.IsTerminal && !expiredOperationIds.Contains(status.OperationId))
+            .GroupBy(status => status.OwnerUserSid, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.OrderByDescending(status => status.UpdatedUtc).ThenBy(status => status.OperationId)
+                .Skip(MaximumCompletedOperationsPerUser))
+            .Select(status => status.OperationId)
+            .ToArray();
+        foreach (Guid operationId in expiredOperationIds.Concat(excessOperationIds))
         {
             _operations.Remove(operationId);
         }
+        return expiredOperationIds.Length + excessOperationIds.Length > 0;
     }
 
     private static OperationStatus Copy(OperationStatus status)

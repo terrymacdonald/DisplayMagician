@@ -25,11 +25,12 @@ public sealed class GatewayPairingPipeServer
     private readonly GatewayHttpIdempotencyStore _idempotencyStore;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
+    private readonly GatewayEventJournal? _gatewayEventJournal;
     private readonly ProfileOperationRouter _profileOperationRouter;
     private readonly ControlStateCoordinator _controlStateCoordinator;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
-    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, GatewayHttpIdempotencyStore idempotencyStore, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter, ControlStateCoordinator controlStateCoordinator)
+    public GatewayPairingPipeServer(DevicePairingCoordinator pairingCoordinator, GatewayIdentityRegistry identityRegistry, GatewayRequestAuthenticator requestAuthenticator, GatewayHttpIdempotencyStore idempotencyStore, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ProfileOperationRouter profileOperationRouter, ControlStateCoordinator controlStateCoordinator, GatewayEventJournal? gatewayEventJournal = null)
     {
         _pairingCoordinator = pairingCoordinator ?? throw new ArgumentNullException(nameof(pairingCoordinator));
         _identityRegistry = identityRegistry ?? throw new ArgumentNullException(nameof(identityRegistry));
@@ -37,6 +38,7 @@ public sealed class GatewayPairingPipeServer
         _idempotencyStore = idempotencyStore ?? throw new ArgumentNullException(nameof(idempotencyStore));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
         _operationDecisionStore = operationDecisionStore ?? throw new ArgumentNullException(nameof(operationDecisionStore));
+        _gatewayEventJournal = gatewayEventJournal;
         _profileOperationRouter = profileOperationRouter ?? throw new ArgumentNullException(nameof(profileOperationRouter));
         _controlStateCoordinator = controlStateCoordinator ?? throw new ArgumentNullException(nameof(controlStateCoordinator));
     }
@@ -166,6 +168,7 @@ public sealed class GatewayPairingPipeServer
                 ControlMessageType.ListRemoteDecisions => ListRemoteDecisions(request),
                 ControlMessageType.GetRemoteDecision => GetRemoteDecision(request),
                 ControlMessageType.AnswerRemoteDecision => AnswerRemoteDecision(request),
+                ControlMessageType.ReadRemoteEvents => ReadRemoteEvents(request),
                 _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Gateway operation is not supported." }
             };
             response.ProtocolWelcome = welcome;
@@ -427,6 +430,32 @@ public sealed class GatewayPairingPipeServer
         if (!decision.AllowedChoices.Contains(answer.Choice)) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The choice is not allowed for this decision." };
         OperationDecision? resolved = _operationDecisionStore.Resolve(authentication.OwnerUserSid, decision.OwnerSessionId, decision.PromptId, answer.Choice, DateTime.UtcNow);
         return resolved == null ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DecisionUnavailable, Message = "The decision is already resolved or the answer is invalid." } : new ControlResponse { IsSuccessful = true, OperationDecision = resolved };
+    }
+
+    private ControlResponse ReadRemoteEvents(ControlEnvelope request)
+    {
+        GatewayEventReadRequest? command = JsonSerializer.Deserialize<GatewayEventReadRequest>(request.Payload);
+        GatewayAuthenticationResult authentication = command?.Authentication ?? new GatewayAuthenticationResult();
+        if (!authentication.IsAuthenticated || string.IsNullOrWhiteSpace(authentication.OwnerUserSid) ||
+            !authentication.GrantedCapabilities.Any(capability => capability is RemoteClientCapabilities.StatusRead or RemoteClientCapabilities.DecisionsRead or RemoteClientCapabilities.ProfilesRead or RemoteClientCapabilities.AudioProfilesRead or RemoteClientCapabilities.ShortcutsRead))
+        {
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.Unauthorized, Message = "The paired device cannot read events." };
+        }
+        if (_gatewayEventJournal == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "Gateway event replay is unavailable." };
+
+        if (string.IsNullOrEmpty(command!.Cursor))
+        {
+            string headId = _gatewayEventJournal.GetHead(authentication.OwnerUserSid, DateTime.UtcNow);
+            return new ControlResponse { IsSuccessful = true, GatewayEventReplay = new GatewayEventReplay { State = GatewayEventReplayState.Available, HeadId = headId, NextCursor = headId } };
+        }
+
+        GatewayEventReplay replay = _gatewayEventJournal.ReadAfter(authentication.OwnerUserSid, command.Cursor, DateTime.UtcNow);
+        replay.Events = replay.Events.Where(item =>
+            (!authentication.PreferredSessionId.HasValue || item.OperationStatus?.OwnerSessionId == authentication.PreferredSessionId.Value || item.OperationDecision?.OwnerSessionId == authentication.PreferredSessionId.Value) &&
+            (item.EventType == ControlClientEventType.OperationStatusUpdated && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.StatusRead, StringComparer.Ordinal) ||
+             item.EventType == ControlClientEventType.OperationDecisionUpdated && authentication.GrantedCapabilities.Contains(RemoteClientCapabilities.DecisionsRead, StringComparer.Ordinal)))
+            .ToArray();
+        return new ControlResponse { IsSuccessful = true, GatewayEventReplay = replay };
     }
 
     private bool TryGetVerifiedTargetSession(GatewayAuthenticationResult authentication, int? targetSessionId, out int sessionId, out ControlResponse failure)

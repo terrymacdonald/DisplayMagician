@@ -18,7 +18,7 @@ No REST client has shipped against the prototype. Implement the target directly;
 
 The target supports Android and Apple phone/tablet applications, companion-relayed watches, and explicitly paired integrations. The first release supports local and routed private networks. Gateway does not configure router port forwarding or offer user-enabled Internet access in that release. Editing, diagnostics, and machine administration remain local IPC responsibilities.
 
-This specification is not a claim that every target behavior already exists. [openapi.yaml](openapi.yaml) documents the currently implemented P2 routes. Cursor pagination, ETags, event streaming, and retention guarantees remain P3 work. Use the implemented contract when testing the current build.
+This specification is not a claim that every target behavior already exists. [openapi.yaml](openapi.yaml) documents the currently implemented routes, including cursor pagination, saved-resource ETags, and terminal-operation retention. Event streaming and client/platform validation remain P3 work. Use the implemented contract when testing the current build.
 
 See the [client guide](REST-API-Client-Guide.md) for usage, the [architecture guide](REST-API-Architecture.md) for topology and rationale, and the [roadmap](REST-API-ROADMAP.md) for delivery work and unresolved contract details.
 

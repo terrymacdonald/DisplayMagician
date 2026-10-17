@@ -33,7 +33,7 @@ public sealed class GatewayCrossUserIsolationTests
             {
                 "ListRemotePairingRequests", "GetRemotePairingRequest", "DecideRemotePairingRequest",
                 "ListRemoteDevices", "RevokeRemoteDevice", "ListRemoteOperations", "GetRemoteOperation",
-                "CancelRemoteOperation", "ListRemoteDecisions", "GetRemoteDecision", "AnswerRemoteDecision"
+                "CancelRemoteOperation", "ListRemoteDecisions", "GetRemoteDecision", "AnswerRemoteDecision", "ReadRemoteEvents"
             };
 
             foreach (string methodName in protectedMethods)
@@ -75,6 +75,40 @@ public sealed class GatewayCrossUserIsolationTests
         {
             if (Directory.Exists(root)) Directory.Delete(root, true);
         }
+    }
+
+    [Fact]
+    public void EventReplayFiltersGrantsAndPreferredSession()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        StoragePaths paths = new StoragePaths(root);
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        DateTime now = DateTime.UtcNow;
+        string cursor = journal.GetHead("owner", now);
+        journal.Append(new OperationStatus { OwnerUserSid = "owner", OwnerSessionId = 10, OperationId = Guid.NewGuid() }, now);
+        journal.Append(new OperationDecision { OwnerUserSid = "owner", OwnerSessionId = 10, PromptId = Guid.NewGuid(), OperationId = Guid.NewGuid() }, now);
+        journal.Append(new OperationStatus { OwnerUserSid = "owner", OwnerSessionId = 20, OperationId = Guid.NewGuid() }, now);
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        PairedClientRepository clients = new PairedClientRepository(paths);
+        GatewayPairingPipeServer server = new GatewayPairingPipeServer(new DevicePairingCoordinator(paths, clients), new GatewayIdentityRegistry(),
+            new GatewayRequestAuthenticator(clients), new GatewayHttpIdempotencyStore(paths), new OperationStatusStore(paths),
+            new OperationDecisionStore(paths), new ProfileOperationRouter(coordinator, new UnusedAgentCommandClient()), coordinator, journal);
+        GatewayAuthenticationResult authentication = new GatewayAuthenticationResult
+        {
+            IsAuthenticated = true, OwnerUserSid = "owner", DeviceId = "phone", PreferredSessionId = 10,
+            GrantedCapabilities = new[] { RemoteClientCapabilities.StatusRead }
+        };
+
+        ControlResponse response = ReadEvents(server, authentication, cursor);
+
+        Assert.True(response.IsSuccessful);
+        Assert.Equal(ControlClientEventType.OperationStatusUpdated, Assert.Single(response.GatewayEventReplay!.Events).EventType);
+        Assert.True(response.GatewayEventReplay.NextCursor.Length > 0);
+        Assert.False(response.GatewayEventReplay.HasMore);
+        authentication.GrantedCapabilities = new[] { RemoteClientCapabilities.DecisionsRead };
+        Assert.Equal(ControlClientEventType.OperationDecisionUpdated, Assert.Single(ReadEvents(server, authentication, cursor).GatewayEventReplay!.Events).EventType);
+        authentication.GrantedCapabilities = Array.Empty<string>();
+        Assert.Equal(ControlErrorCode.Unauthorized, ReadEvents(server, authentication, cursor).ErrorCode);
     }
 
     [Fact]
@@ -163,6 +197,13 @@ public sealed class GatewayCrossUserIsolationTests
     {
         MethodInfo method = typeof(GatewayPairingPipeServer).GetMethod("GetRemoteUserStatus", BindingFlags.Instance | BindingFlags.NonPublic)!;
         ControlEnvelope request = new ControlEnvelope { Payload = JsonSerializer.Serialize(new GatewayRemoteStatusRequest { Authentication = authentication, TargetSessionId = targetSessionId }) };
+        return (ControlResponse)method.Invoke(server, new object[] { request })!;
+    }
+
+    private static ControlResponse ReadEvents(GatewayPairingPipeServer server, GatewayAuthenticationResult authentication, string cursor)
+    {
+        MethodInfo method = typeof(GatewayPairingPipeServer).GetMethod("ReadRemoteEvents", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        ControlEnvelope request = new ControlEnvelope { Payload = JsonSerializer.Serialize(new GatewayEventReadRequest { Authentication = authentication, Cursor = cursor }) };
         return (ControlResponse)method.Invoke(server, new object[] { request })!;
     }
 

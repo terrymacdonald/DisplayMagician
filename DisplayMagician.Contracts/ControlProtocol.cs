@@ -224,7 +224,8 @@ public enum ControlMessageType
     CancelRemoteOperation = 92,
     ListRemoteDecisions = 93,
     GetRemoteDecision = 94,
-    AnswerRemoteDecision = 95
+    AnswerRemoteDecision = 95,
+    ReadRemoteEvents = 96
 }
 
 public enum ControlErrorCode
@@ -1267,6 +1268,8 @@ public sealed class ControlResponse
     public OperationDecision? OperationDecision { get; set; }
 
     public OperationDecision[] OperationDecisions { get; set; } = Array.Empty<OperationDecision>();
+
+    public GatewayEventReplay? GatewayEventReplay { get; set; }
 
     public DevicePairingResult? DevicePairingResult { get; set; }
 

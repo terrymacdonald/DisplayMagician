@@ -2,7 +2,7 @@
 
 This class library is the stable cross-process contract shared by the desktop application, console, Control Service, Session Launcher, and User Agent.
 
-It contains versioned control envelopes, protocol message types, request/response models, shared enums, client events, retry policy, and the common support-log layout and correlation scope. It contains no UI, hardware access, files, or static application state.
+It contains versioned control envelopes, protocol message types, request/response models, shared enums, client events, Gateway event replay records, retry policy, and the common support-log layout and correlation scope. It contains no UI, hardware access, files, or static application state.
 
 ## Compatibility rules
 

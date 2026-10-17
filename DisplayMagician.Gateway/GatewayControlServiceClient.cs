@@ -39,6 +39,12 @@ public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
         return response.IsSuccessful && response.RemoteUserStatus != null ? response.RemoteUserStatus : throw new InvalidOperationException(response.Message);
     }
 
+    public async Task<GatewayEventReplay> ReadRemoteEventsAsync(GatewayAuthenticationResult authentication, string? cursor, CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendAsync(ControlMessageType.ReadRemoteEvents, JsonSerializer.Serialize(new GatewayEventReadRequest { Authentication = authentication, Cursor = cursor }), cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.GatewayEventReplay != null ? response.GatewayEventReplay : throw new InvalidOperationException(response.Message);
+    }
+
     public async Task<GatewayAuthenticationResult> AuthenticateAsync(GatewayAuthenticationRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);

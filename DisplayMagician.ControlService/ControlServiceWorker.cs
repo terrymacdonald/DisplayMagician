@@ -22,10 +22,11 @@ public sealed class ControlServiceWorker : BackgroundService
     private readonly ControlClientEventHub _eventHub;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly OperationDecisionStore _operationDecisionStore;
+    private readonly GatewayEventJournal _gatewayEventJournal;
     private readonly ControlStateCoordinator _controlStateCoordinator;
     private readonly GatewayFirewallManager _gatewayFirewallManager;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, GatewayPairingPipeServer gatewayPairingPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, ControlStateCoordinator controlStateCoordinator, GatewayFirewallManager gatewayFirewallManager)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, GatewayPairingPipeServer gatewayPairingPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, GatewayEventJournal gatewayEventJournal, ControlStateCoordinator controlStateCoordinator, GatewayFirewallManager gatewayFirewallManager)
     {
         _pipeServer = pipeServer;
         _clientPipeServer = clientPipeServer;
@@ -38,6 +39,7 @@ public sealed class ControlServiceWorker : BackgroundService
         _eventHub = eventHub;
         _operationStatusStore = operationStatusStore;
         _operationDecisionStore = operationDecisionStore;
+        _gatewayEventJournal = gatewayEventJournal;
         _controlStateCoordinator = controlStateCoordinator;
         _gatewayFirewallManager = gatewayFirewallManager;
         _operationStatusStore.StatusUpdated += PublishOperationStatus;
@@ -153,11 +155,27 @@ public sealed class ControlServiceWorker : BackgroundService
 
     private void PublishOperationStatus(OperationStatus status)
     {
+        try
+        {
+            _gatewayEventJournal.Append(status, DateTime.UtcNow);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error(ex, "ControlServiceWorker/PublishOperationStatus: Could not retain Gateway event for operation {0}.", status.OperationId);
+        }
         _eventHub.Publish(status.OwnerUserSid, status.OwnerSessionId, new ControlClientEvent { EventType = ControlClientEventType.OperationStatusUpdated, PublishedUtc = DateTime.UtcNow, OperationStatus = status });
     }
 
     private void PublishOperationDecision(OperationDecision decision)
     {
+        try
+        {
+            _gatewayEventJournal.Append(decision, DateTime.UtcNow);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error(ex, "ControlServiceWorker/PublishOperationDecision: Could not retain Gateway event for decision {0}.", decision.PromptId);
+        }
         _eventHub.Publish(decision.OwnerUserSid, decision.OwnerSessionId, new ControlClientEvent { EventType = ControlClientEventType.OperationDecisionUpdated, Scope = ControlClientEventScope.User, PublishedUtc = DateTime.UtcNow, OperationDecision = decision });
     }
 }

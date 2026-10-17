@@ -36,6 +36,7 @@ internal static class Program
         builder.Services.AddSingleton<GatewayControlServiceClient>();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddSingleton<GatewayTrafficLimiter>();
+        builder.Services.AddSingleton<GatewayCursorPageStore>();
         builder.Services.AddSingleton<GatewayRegistrationState>();
         builder.Services.AddSingleton<IGatewayAuthenticationClient>(provider => provider.GetRequiredService<GatewayControlServiceClient>());
         builder.Services.AddHostedService<GatewayRegistrationService>();
@@ -81,6 +82,7 @@ internal static class Program
         app.UseMiddleware<GatewayProtocolMiddleware>();
         app.UseMiddleware<GatewayJsonResponseLimitMiddleware>();
         app.UseMiddleware<GatewayRequestAuthenticationMiddleware>();
+        app.UseMiddleware<GatewaySavedResourceETagMiddleware>();
         app.UseMiddleware<GatewayIdempotencyMiddleware>();
         app.MapGet("/v1/identity", (GatewayIdentity gatewayIdentity) => Results.Ok(new GatewayPublicIdentityView
         {

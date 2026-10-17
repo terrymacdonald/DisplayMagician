@@ -36,6 +36,7 @@ internal static class Program
         builder.Services.AddSingleton<ControlStateCoordinator>();
         builder.Services.AddSingleton<OperationStatusStore>();
         builder.Services.AddSingleton<OperationDecisionStore>();
+        builder.Services.AddSingleton<GatewayEventJournal>();
         builder.Services.AddSingleton<ControlRequestReplayStore>();
         builder.Services.AddSingleton<GatewayHttpIdempotencyStore>();
         builder.Services.AddSingleton<ControlClientEventHub>();

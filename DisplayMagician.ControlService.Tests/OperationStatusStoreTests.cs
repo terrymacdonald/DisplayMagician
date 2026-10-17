@@ -148,4 +148,55 @@ public sealed class OperationStatusStoreTests
         Assert.Equal(first.Sequence, replay.Sequence);
         Assert.Equal(updateId, replay.LastUpdateId);
     }
+
+    [Fact]
+    public void TerminalHistoryIsLimitedPerUserWithoutRemovingActiveOperations()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            StoragePaths paths = new StoragePaths(root);
+            OperationStatusStore store = new OperationStatusStore(paths);
+            DateTime now = DateTime.UtcNow;
+            Guid oldestFirstUser = Guid.Empty;
+            for (int index = 0; index < 101; index++)
+            {
+                Guid operationId = Guid.NewGuid();
+                if (index == 0) oldestFirstUser = operationId;
+                store.Publish("first-user", 1, new OperationStatusUpdate { OperationId = operationId, Phase = OperationPhase.Completed, IsTerminal = true, IsSuccessful = true },
+                    now.AddMinutes(index - 101));
+            }
+            Guid secondUserOperation = Guid.NewGuid();
+            Guid activeOperation = Guid.NewGuid();
+            store.Publish("second-user", 2, new OperationStatusUpdate { OperationId = secondUserOperation, Phase = OperationPhase.Completed, IsTerminal = true, IsSuccessful = true }, now);
+            store.Publish("first-user", 1, new OperationStatusUpdate { OperationId = activeOperation, Phase = OperationPhase.Requested }, now);
+
+            OperationStatusStore reloaded = new OperationStatusStore(paths);
+            Assert.Null(reloaded.Get("first-user", oldestFirstUser));
+            Assert.Equal(101, reloaded.GetAll("first-user").Length);
+            Assert.NotNull(reloaded.Get("first-user", activeOperation));
+            Assert.Equal(secondUserOperation, Assert.Single(reloaded.GetAll("second-user")).OperationId);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void TerminalHistoryExpiresAfterSevenDays()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            StoragePaths paths = new StoragePaths(root);
+            OperationStatusStore store = new OperationStatusStore(paths);
+            Guid expiredOperation = Guid.NewGuid();
+            Guid retainedOperation = Guid.NewGuid();
+            DateTime now = DateTime.UtcNow;
+            store.Publish("owner", 1, new OperationStatusUpdate { OperationId = expiredOperation, Phase = OperationPhase.Completed, IsTerminal = true }, now.AddDays(-8));
+            store.Publish("owner", 1, new OperationStatusUpdate { OperationId = retainedOperation, Phase = OperationPhase.Completed, IsTerminal = true }, now);
+
+            Assert.Null(new OperationStatusStore(paths).Get("owner", expiredOperation));
+            Assert.Equal(retainedOperation, Assert.Single(store.GetAll("owner")).OperationId);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
 }

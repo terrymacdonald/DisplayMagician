@@ -21,12 +21,12 @@ internal static class GatewayResourceRoutes
 
     private static void MapPairingAndDevices(WebApplication app)
     {
-        app.MapGet("/v1/pairing-requests", async (HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/pairing-requests", (int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
-            ControlResponse response = await client.RemoteResourceAsync(ControlMessageType.ListRemotePairingRequests, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token).ConfigureAwait(false);
-            return response.IsSuccessful
-                ? Results.Ok(new PairingRequestPage { Items = response.DevicePairingRequests.Select(ToPairingItem).ToArray() })
-                : GatewayResponseMapper.Map(context, response);
+            return PageAsync(context, pages, RemoteClientCapabilities.PairingApprove, limit, cursor, string.Empty,
+                () => client.RemoteResourceAsync(ControlMessageType.ListRemotePairingRequests, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token),
+                response => response.DevicePairingRequests.Select(ToPairingItem).OrderByDescending(item => item.CreatedAt).ThenBy(item => item.PairingRequestId.ToString("D"), StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new PairingRequestPage { Items = items, NextCursor = nextCursor });
         });
 
         app.MapPut("/v1/pairing-requests/{pairingRequestId:guid}/decision", async (Guid pairingRequestId, PairingDecisionRequest body, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
@@ -46,12 +46,13 @@ internal static class GatewayResourceRoutes
             return Results.Ok(new CurrentDeviceView { Id = device.DeviceId, DisplayName = device.DisplayName, ClientType = device.ClientType, GrantedCapabilities = device.GrantedCapabilities });
         });
 
-        app.MapGet("/v1/devices", async (HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/devices", (int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
-            ControlResponse response = await client.RemoteResourceAsync(ControlMessageType.ListRemoteDevices, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token).ConfigureAwait(false);
-            return response.IsSuccessful
-                ? Results.Ok(new DevicePage { Items = response.PairedClients.Select(device => new DeviceItem { Id = device.DeviceId, DisplayName = device.DisplayName, ClientType = device.ClientType, GrantedCapabilities = device.GrantedCapabilities, PairedAt = device.PairedUtc, LastSeenAt = device.LastAuthenticatedUtc }).ToArray() })
-                : GatewayResponseMapper.Map(context, response);
+            return PageAsync(context, pages, RemoteClientCapabilities.DevicesRead, limit, cursor, string.Empty,
+                () => client.RemoteResourceAsync(ControlMessageType.ListRemoteDevices, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token),
+                response => response.PairedClients.Select(device => new DeviceItem { Id = device.DeviceId, DisplayName = device.DisplayName, ClientType = device.ClientType, GrantedCapabilities = device.GrantedCapabilities, PairedAt = device.PairedUtc, LastSeenAt = device.LastAuthenticatedUtc })
+                    .OrderByDescending(item => item.PairedAt).ThenBy(item => item.Id, StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new DevicePage { Items = items, NextCursor = nextCursor });
         });
 
         app.MapDelete("/v1/devices/{deviceId}", async (string deviceId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
@@ -63,12 +64,13 @@ internal static class GatewayResourceRoutes
 
     private static void MapSavedResources(WebApplication app)
     {
-        app.MapGet("/v1/display-profiles", async (bool? includeArtwork, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/display-profiles", (bool? includeArtwork, int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
-            ControlResponse response = await client.ListRemoteAsync(ControlMessageType.ListRemoteProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, token).ConfigureAwait(false);
-            return response.IsSuccessful && response.ProfileList != null
-                ? Results.Ok(new DisplayProfilePage { Items = response.ProfileList.SavedProfiles.Select(profile => ToDisplaySummary(profile, includeArtwork == true)).ToArray() })
-                : GatewayResponseMapper.Map(context, response);
+            return PageAsync(context, pages, RemoteClientCapabilities.ProfilesRead, limit, cursor, $"includeArtwork={includeArtwork == true}",
+                () => client.ListRemoteAsync(ControlMessageType.ListRemoteProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, token),
+                response => response.ProfileList?.SavedProfiles.Select(profile => ToDisplaySummary(profile, includeArtwork == true))
+                    .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ThenBy(item => item.Id, StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new DisplayProfilePage { Items = items, NextCursor = nextCursor });
         });
 
         app.MapGet("/v1/display-profiles/{profileId}", async (string profileId, bool? includeArtwork, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
@@ -88,12 +90,13 @@ internal static class GatewayResourceRoutes
             return AcceptedOperation(context, response, operationId);
         });
 
-        app.MapGet("/v1/audio-profiles", async (HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/audio-profiles", (int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
-            ControlResponse response = await client.ListRemoteAsync(ControlMessageType.ListRemoteAudioProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, token).ConfigureAwait(false);
-            return response.IsSuccessful && response.AudioProfileList != null
-                ? Results.Ok(new AudioProfilePage { Items = response.AudioProfileList.SavedProfiles.Select(profile => new AudioProfileSummary { Id = profile.Id, Name = profile.Name, IsActive = profile.IsActive, Href = ResourceHref("audio-profiles", profile.Id) }).ToArray() })
-                : GatewayResponseMapper.Map(context, response);
+            return PageAsync(context, pages, RemoteClientCapabilities.AudioProfilesRead, limit, cursor, string.Empty,
+                () => client.ListRemoteAsync(ControlMessageType.ListRemoteAudioProfiles, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, token),
+                response => response.AudioProfileList?.SavedProfiles.Select(profile => new AudioProfileSummary { Id = profile.Id, Name = profile.Name, IsActive = profile.IsActive, Href = ResourceHref("audio-profiles", profile.Id) })
+                    .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ThenBy(item => item.Id, StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new AudioProfilePage { Items = items, NextCursor = nextCursor });
         });
 
         app.MapGet("/v1/audio-profiles/{profileId}", async (string profileId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
@@ -113,12 +116,13 @@ internal static class GatewayResourceRoutes
             return AcceptedOperation(context, response, operationId);
         });
 
-        app.MapGet("/v1/shortcuts", async (bool? includeArtwork, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/shortcuts", (bool? includeArtwork, int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
-            ControlResponse response = await client.ListRemoteAsync(ControlMessageType.ListRemoteShortcuts, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, token).ConfigureAwait(false);
-            return response.IsSuccessful && response.ShortcutList != null
-                ? Results.Ok(new ShortcutPage { Items = response.ShortcutList.Shortcuts.Select(shortcut => ToShortcutSummary(shortcut, includeArtwork == true)).ToArray() })
-                : GatewayResponseMapper.Map(context, response);
+            return PageAsync(context, pages, RemoteClientCapabilities.ShortcutsRead, limit, cursor, $"includeArtwork={includeArtwork == true}",
+                () => client.ListRemoteAsync(ControlMessageType.ListRemoteShortcuts, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), null, token),
+                response => response.ShortcutList?.Shortcuts.Select(shortcut => ToShortcutSummary(shortcut, includeArtwork == true))
+                    .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ThenBy(item => item.Id, StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new ShortcutPage { Items = items, NextCursor = nextCursor });
         });
 
         app.MapGet("/v1/shortcuts/{shortcutId}", async (string shortcutId, bool? includeArtwork, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
@@ -141,12 +145,12 @@ internal static class GatewayResourceRoutes
 
     private static void MapOperationsAndDecisions(WebApplication app)
     {
-        app.MapGet("/v1/operations", async (HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/operations", (int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
-            ControlResponse response = await client.RemoteResourceAsync(ControlMessageType.ListRemoteOperations, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token).ConfigureAwait(false);
-            return response.IsSuccessful
-                ? Results.Ok(new GatewayOperationPage { Items = response.OperationStatuses.Select(ToOperation).ToArray() })
-                : GatewayResponseMapper.Map(context, response);
+            return PageAsync(context, pages, RemoteClientCapabilities.StatusRead, limit, cursor, string.Empty,
+                () => client.RemoteResourceAsync(ControlMessageType.ListRemoteOperations, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token),
+                response => response.OperationStatuses.Select(ToOperation).OrderByDescending(item => item.StartedAt).ThenBy(item => item.Id.ToString("D"), StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new GatewayOperationPage { Items = items, NextCursor = nextCursor });
         });
 
         app.MapGet("/v1/operations/{operationId:guid}", async (Guid operationId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
@@ -163,17 +167,21 @@ internal static class GatewayResourceRoutes
             return Results.StatusCode(StatusCodes.Status202Accepted);
         });
 
-        app.MapGet("/v1/decisions", async (string? status, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/decisions", async (string? status, int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
             if (status != "pending") return GatewayProblemDetails.CreateResult(context, StatusCodes.Status400BadRequest, "validation-failed", "Invalid decision filter", "Use status=pending to read the pending decision inbox.");
-            ControlResponse response = await client.RemoteResourceAsync(ControlMessageType.ListRemoteDecisions, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token).ConfigureAwait(false);
-            return response.IsSuccessful ? Results.Ok(new GatewayDecisionPage { Items = response.OperationDecisions.Select(ToDecision).ToArray() }) : GatewayResponseMapper.Map(context, response);
+            return await PageAsync(context, pages, RemoteClientCapabilities.DecisionsRead, limit, cursor, "status=pending",
+                () => client.RemoteResourceAsync(ControlMessageType.ListRemoteDecisions, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), string.Empty, token),
+                response => response.OperationDecisions.Select(ToDecision).OrderByDescending(item => item.CreatedAt).ThenBy(item => item.Id.ToString("D"), StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new GatewayDecisionPage { Items = items, NextCursor = nextCursor }).ConfigureAwait(false);
         });
 
-        app.MapGet("/v1/operations/{operationId:guid}/decisions", async (Guid operationId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
+        app.MapGet("/v1/operations/{operationId:guid}/decisions", (Guid operationId, int? limit, string? cursor, HttpContext context, GatewayControlServiceClient client, GatewayCursorPageStore pages, CancellationToken token) =>
         {
-            ControlResponse response = await client.RemoteResourceAsync(ControlMessageType.ListRemoteDecisions, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), operationId.ToString("D"), token).ConfigureAwait(false);
-            return response.IsSuccessful ? Results.Ok(new GatewayDecisionPage { Items = response.OperationDecisions.Select(ToDecision).ToArray() }) : GatewayResponseMapper.Map(context, response);
+            return PageAsync(context, pages, RemoteClientCapabilities.DecisionsRead, limit, cursor, string.Empty,
+                () => client.RemoteResourceAsync(ControlMessageType.ListRemoteDecisions, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), operationId.ToString("D"), token),
+                response => response.OperationDecisions.Select(ToDecision).OrderByDescending(item => item.CreatedAt).ThenBy(item => item.Id.ToString("D"), StringComparer.Ordinal).ToArray(),
+                (items, nextCursor) => new GatewayDecisionPage { Items = items, NextCursor = nextCursor });
         });
 
         app.MapGet("/v1/operations/{operationId:guid}/decisions/{decisionId:guid}", async (Guid operationId, Guid decisionId, HttpContext context, GatewayControlServiceClient client, CancellationToken token) =>
@@ -191,6 +199,47 @@ internal static class GatewayResourceRoutes
             ControlResponse response = await client.RemoteResourceAsync(ControlMessageType.AnswerRemoteDecision, GatewayRequestAuthenticationMiddleware.GetAuthentication(context), JsonSerializer.Serialize(answer), token).ConfigureAwait(false);
             return response.IsSuccessful && response.OperationDecision != null ? Results.Ok(ToDecision(response.OperationDecision)) : GatewayResponseMapper.Map(context, response);
         });
+    }
+
+    private static async Task<IResult> PageAsync<T>(HttpContext context, GatewayCursorPageStore pages, string requiredCapability,
+        int? requestedLimit, string? cursor, string filters, Func<Task<ControlResponse>> load, Func<ControlResponse, T[]?> select,
+        Func<T[], string?, object> createPage)
+    {
+        GatewayAuthenticationResult authentication = GatewayRequestAuthenticationMiddleware.GetAuthentication(context);
+        if (!authentication.GrantedCapabilities.Contains(requiredCapability, StringComparer.Ordinal))
+        {
+            return GatewayProblemDetails.CreateResult(context, StatusCodes.Status403Forbidden, "capability-denied", "Capability denied", "The paired device is not authorised for this resource.");
+        }
+
+        int limit = requestedLimit ?? 25;
+        if (limit is < 1 or > 100)
+        {
+            return GatewayProblemDetails.CreateResult(context, StatusCodes.Status400BadRequest, "validation-failed", "Invalid page limit", "Use a limit from 1 to 100.");
+        }
+
+        string deviceScope = authentication.OwnerUserSid + "\n" + authentication.DeviceId;
+        string route = context.Request.Path.Value ?? string.Empty;
+        GatewayCursorPageResult<T> page;
+        if (context.Request.Query.ContainsKey("cursor"))
+        {
+            page = pages.Read<T>(deviceScope, route, filters, cursor ?? string.Empty, limit, DateTime.UtcNow);
+        }
+        else
+        {
+            ControlResponse response = await load().ConfigureAwait(false);
+            if (!response.IsSuccessful) return GatewayResponseMapper.Map(context, response);
+            T[]? items = select(response);
+            if (items == null) return GatewayResponseMapper.Map(context, response);
+            page = pages.Create(deviceScope, route, filters, items, limit, DateTime.UtcNow);
+        }
+
+        return page.State switch
+        {
+            GatewayCursorPageState.Success => Results.Ok(createPage(page.Items, page.NextCursor)),
+            GatewayCursorPageState.Expired => GatewayProblemDetails.CreateResult(context, StatusCodes.Status410Gone, "cursor-expired", "Page snapshot expired", "Start a new first-page request."),
+            GatewayCursorPageState.TooLarge => GatewayProblemDetails.CreateResult(context, StatusCodes.Status500InternalServerError, "response-too-large", "Collection too large", "The collection exceeds the Gateway's snapshot limit."),
+            _ => GatewayProblemDetails.CreateResult(context, StatusCodes.Status400BadRequest, "cursor-invalid", "Invalid page cursor", "The cursor does not match this device, route, or filter.")
+        };
     }
 
     internal static PairingRequestItem ToPairingItem(DevicePairingSessionView session) => new PairingRequestItem

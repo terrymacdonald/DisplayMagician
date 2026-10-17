@@ -8,7 +8,7 @@
 
 ## 1. Start here
 
-Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the routes in the current Gateway build; pagination, ETags, and SSE remain P3 work.
+Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the routes in the current Gateway build, including cursor pagination and saved-resource ETags. SSE remains P3 work.
 
 Gateway firewall access is enabled for Windows Private and Domain networks by default. An administrator can also enable Public networks in the desktop Server Settings form; phone clients use the same HTTPS and pairing flow on each profile.
 
@@ -163,6 +163,8 @@ GET /v1/display-profiles?includeArtwork=true HTTP/1.1
 Authorization: Bearer <device-credential>
 If-None-Match: "display-profiles-42"
 ```
+
+Collection responses contain `items` and `nextCursor`. Use `?limit=25` for a page of up to 25 items (100 maximum). When `nextCursor` is non-null, request the same route and filters with `cursor=<nextCursor>`; keep following the returned cursor until it is null. The cursor is opaque, belongs to this paired device, and expires ten minutes after the first page. If Gateway returns `410 cursor-expired`, discard the partial list and start again at the first page. An invalid or mismatched cursor returns `400 cursor-invalid`. Gateway keeps at most eight snapshots per device and 128 overall within a 64 MiB serialized snapshot budget; a collection exceeding that budget returns `500 response-too-large`.
 
 Possible results:
 
