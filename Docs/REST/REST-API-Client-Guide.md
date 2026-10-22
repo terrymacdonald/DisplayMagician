@@ -10,6 +10,8 @@
 
 Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the routes in the current Gateway build, including cursor pagination, saved-resource ETags, and optional SSE events. Installed SSE validation remains P3 work.
 
+The repository now includes [Swift and Kotlin client foundations](../../Clients/README.md) for iOS 16+ and Android API 26+. They include generated models/routes and native pairing, TLS pinning, secure credential storage, durable mutation retries, polling, and a shared phone/watch status fixture. Native device acceptance is tracked separately from the Windows and JVM checks.
+
 Gateway firewall access is enabled for Windows Private and Domain networks by default. An administrator can also enable Public networks in the desktop Server Settings form; phone clients use the same HTTPS and pairing flow on each profile.
 
 The examples below illustrate target interactions. Exact schemas and several lifecycle details still need to be finalized in the [roadmap](REST-API-ROADMAP.md). Check the implemented OpenAPI before using an example against today's build.

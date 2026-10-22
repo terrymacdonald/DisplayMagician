@@ -67,18 +67,26 @@ P3 SSE progress (2026-10-17): Gateway now maps `/v1/events` to an optional SSE s
 
 Retry recovery: interrupted reservations return non-retryable `409 idempotency-outcome-unknown` after a Gateway/ControlService restart or two minutes without completion. The reserved operation ID is returned through `Location` for operation mutations. Unresolved reservations remain blocked beyond 24 hours; clients inspect resource state or ask the user before creating a new action.
 
+P3 implementation and verification (2026-10-22): Saved edits now use durable pending-publication markers. Interrupted event publication retires only the affected user's replay generation; startup reconciles persisted operations/decisions with the journal. Empty retained history has a usable signed snapshot boundary. SSE tests now exercise snapshot/resume, grants, connection limits, revoked credentials, and stalled reads; a five-second cancellation deadline bounds credential revalidation even during blocked I/O. Public capabilities advertise SSE. Both OpenAPI documents declare 64-bit operation sequences to match the shared C# contract.
+
+[Swift and Kotlin foundations](../../Clients/README.md) now include generated models and all 25 polling routes, native HTTPS/SPKI/host verification, QR pairing, secure credentials, durable exact-request idempotency recovery, polling, and compact watch status relay contracts. Generation has a deterministic drift check and native CI jobs. Minimum versions are iOS 16 and Android API 26, approved by the owner. The Kotlin sources compile against the Android SDK and their portable JSON/watch/QR/pin/renewal checks run on the JVM. Apple Security/Keychain builds and native device flows still require Xcode/devices; added CI is not evidence of an executed GitHub run. The owner deferred the containing iOS app's ATS exception choice for arbitrary private DNS until the Xcode/device test; no ATS exception has been approved or applied.
+
+The [installed P3 plan](../../Sandbox/REST_P3_TEST_PLAN.md) and a developer-only HTTPS harness are prepared. `test_rest_p3.ps1 -PrepareSandbox` builds and stages the harness in the existing read-only local-assets mapping. It pairs and revokes temporary clients and tests actual paging, ETags, SSE limits/resume, and revocation without executing hardware actions. The owner has left installed runs, installer lifecycle, and phone/watch platform acceptance for their test PC and device environments (2026-10-22). These checks have not been marked passed. **P3 remains open for those acceptance checks; Telegram conformance stays conditional on starting that product.**
+
+Local verification (2026-10-22): ControlService tests pass (128); Gateway tests pass (46), including the shared native-client fixture; the 26-route/OpenAPI check passes; Kotlin Android compilation and portable JSON/watch/QR/pinning/renewal checks pass; the installed harness builds and stages successfully; PowerShell entry points parse; NLog audit reports zero issues. Swift/Xcode, GitHub workflow execution, installed HTTPS results, and actual phone/watch channels are not included in these results.
+
 ### P3: Events, efficiency, and clients
 
-1. Implement SSE snapshots, event IDs, resume, reconnect behavior, and the published per-device/per-user concurrent-stream limits.
-2. Implement ETags and compact/artwork representations.
-3. Implement cursor pagination and bounded retention.
-4. Generate Swift and Kotlin client foundations.
-5. Add handwritten pairing, pinning, credential, and idempotency layers. Add SSE support only for phone clients that choose to use events; ordinary HTTPS polling must cover the complete phone workflow.
-6. Add phone/watch relay contract tests.
-7. Add Telegram connector conformance tests when that product is started.
-8. Add Windows Sandbox installed-environment validation.
-9. Test the pairing, TLS trust, credential storage, and operation polling flows on the supported phone platforms, including suspension and process restart. Test event recovery only for clients that elect to use SSE.
-10. Verify install, service start/restart, upgrade, and uninstall behavior for the Gateway, ControlService, local UI, certificate renewal, configured listener port, and firewall rule. Check that an interrupted update leaves a usable installation and valid identity state.
+1. [x] Implement SSE snapshots, event IDs, resume, reconnect behavior, and the published per-device/per-user concurrent-stream limits. Installed acceptance is tracked below.
+2. [x] Implement ETags and compact/artwork representations.
+3. [x] Implement cursor pagination and bounded retention.
+4. [x] Generate Swift and Kotlin client foundations. Kotlin compilation/JVM checks run here; Apple native compilation still needs its macOS runner.
+5. [x] Add handwritten pairing, pinning, credential, and idempotency layers. Add SSE support only for phone clients that choose to use events; ordinary HTTPS polling covers the phone workflow. Device acceptance and the iOS ATS choice remain below.
+6. [x] Add phone/watch status relay contract tests. Actual WatchConnectivity/Wear OS channels are tested with their applications.
+7. Deferred: Add Telegram connector conformance tests when that product is started.
+8. [ ] Execute Windows Sandbox installed-environment validation; the harness and test plan are ready.
+9. [ ] Compile/test the Apple package in Xcode and test pairing, TLS trust, secure storage, and operation polling on supported phones, including suspension and process restart. Confirm the iOS ATS configuration for custom private DNS. Test event recovery only for clients that elect to use SSE.
+10. [ ] Verify install, service start/restart, upgrade, and uninstall behavior for Gateway, ControlService, local UI, certificate renewal, configured listener port, and firewall rules. Check that an interrupted update leaves a usable installation and valid identity state.
 
 ## 3. Definition of done for each route
 

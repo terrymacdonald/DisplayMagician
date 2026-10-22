@@ -1,0 +1,207 @@
+{
+  "specSha256": "c15ae9d5d8b95ffef6aead6995066770162ee7b04c3ac54de688ebf1e215d0a0",
+  "protocolVersion": 1,
+  "models": [
+    "Uuid",
+    "UuidV4",
+    "Secret256",
+    "SpkiPin",
+    "HostId",
+    "GatewayIdentity",
+    "PairingQrPayload",
+    "Capabilities",
+    "PublishedLimits",
+    "RemoteCapability",
+    "CurrentDevice",
+    "DeviceItem",
+    "DevicePage",
+    "OperationStatus",
+    "OperationPhase",
+    "OperationSource",
+    "OperationError",
+    "OperationLinks",
+    "Operation",
+    "OperationPage",
+    "DecisionChoice",
+    "Decision",
+    "DecisionPage",
+    "DecisionAnswerRequest",
+    "SseSnapshot",
+    "SseOperationUpdated",
+    "SseDecisionUpdated",
+    "SseResourceChanged",
+    "SavedResourceId",
+    "PngArtwork",
+    "DisplayProfileSummary",
+    "DisplayProfileDetail",
+    "DisplayProfilePage",
+    "AudioProfileSummary",
+    "AudioProfileDetail",
+    "AudioProfilePage",
+    "ShortcutSummary",
+    "ShortcutDetail",
+    "ShortcutPage",
+    "OperationAccepted",
+    "PairingSubmissionRequest",
+    "PairingSubmissionAccepted",
+    "PairingPollResult",
+    "PairingRequestItem",
+    "PairingRequestPage",
+    "PairingDecisionRequest",
+    "ErrorCode",
+    "ProblemDetails"
+  ],
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/v1/identity",
+      "operationId": "getIdentity",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/capabilities",
+      "operationId": "getCapabilities",
+      "responseStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/pairing-requests",
+      "operationId": "requestPairing",
+      "responseStatus": 202
+    },
+    {
+      "method": "GET",
+      "path": "/v1/pairing-requests",
+      "operationId": "listPairingRequests",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/pairing-requests/{pairingRequestId}",
+      "operationId": "getPairingRequest",
+      "responseStatus": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/pairing-requests/{pairingRequestId}/decision",
+      "operationId": "decidePairingRequest",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/devices/current",
+      "operationId": "getCurrentDevice",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/devices",
+      "operationId": "listDevices",
+      "responseStatus": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/devices/{deviceId}",
+      "operationId": "revokeDevice",
+      "responseStatus": 204
+    },
+    {
+      "method": "GET",
+      "path": "/v1/operations",
+      "operationId": "listOperations",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/operations/{operationId}",
+      "operationId": "getOperation",
+      "responseStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/operations/{operationId}/cancellations",
+      "operationId": "cancelOperation",
+      "responseStatus": 202
+    },
+    {
+      "method": "GET",
+      "path": "/v1/operations/{operationId}/decisions",
+      "operationId": "listOperationDecisions",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/operations/{operationId}/decisions/{decisionId}",
+      "operationId": "getOperationDecision",
+      "responseStatus": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/operations/{operationId}/decisions/{decisionId}/response",
+      "operationId": "answerDecision",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/decisions",
+      "operationId": "listPendingDecisions",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/display-profiles",
+      "operationId": "listDisplayProfiles",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/display-profiles/{profileId}",
+      "operationId": "getDisplayProfile",
+      "responseStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/display-profiles/{profileId}/applications",
+      "operationId": "applyDisplayProfile",
+      "responseStatus": 202
+    },
+    {
+      "method": "GET",
+      "path": "/v1/audio-profiles",
+      "operationId": "listAudioProfiles",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/audio-profiles/{profileId}",
+      "operationId": "getAudioProfile",
+      "responseStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/audio-profiles/{profileId}/applications",
+      "operationId": "applyAudioProfile",
+      "responseStatus": 202
+    },
+    {
+      "method": "GET",
+      "path": "/v1/shortcuts",
+      "operationId": "listShortcuts",
+      "responseStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/shortcuts/{shortcutId}",
+      "operationId": "getShortcut",
+      "responseStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/shortcuts/{shortcutId}/runs",
+      "operationId": "runShortcut",
+      "responseStatus": 202
+    }
+  ],
+  "optionalSse": true
+}

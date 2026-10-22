@@ -155,29 +155,41 @@ public sealed class ProfileOperationRouter
                 }
             }
 
-            ControlResponse response = await SendToAgentAsync(userSid, sessionId, request, cancellationToken).ConfigureAwait(false);
-            if (!response.IsSuccessful || response.RepositoryCommit?.WasConflict == true) return response;
+            GatewayEventJournal.SavedResourceEdit edit;
+            try { edit = _gatewayEventJournal.BeginSavedResourceEdit(userSid); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Logger.Error(ex, "ProfileOperationRouter/ManageProfileAsync: Could not prepare saved-resource event recovery for {0}.", request.MessageType);
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The saved edit cannot be safely recorded now. Retry the edit." };
+            }
+            using (edit)
+            {
+                ControlResponse response = await SendToAgentAsync(userSid, sessionId, request, cancellationToken).ConfigureAwait(false);
+                if (!response.IsSuccessful) return response;
+                if (response.RepositoryCommit?.WasConflict == true) { edit.Complete(); return response; }
 
-            try
-            {
-                GatewaySavedResourceChange[] changes = commit != null
-                    ? SavedResourceChangeDetector.Detect(kind, before!.Json, commit.Json)
-                    : response.SavedResourceChanges.Where(change => change.Repository == kind)
-                        .Select(change => SavedResourceChangeDetector.Create(change.Repository, change.ResourceId, change.Action)).ToArray();
-                if (commit == null && changes.Length == 0)
+                try
                 {
-                    Logger.Error("ProfileOperationRouter/ManageProfileAsync: User Agent reported no saved-resource change for successful {0} in SID {1}, session {2}.", request.MessageType, userSid, sessionId);
+                    GatewaySavedResourceChange[] changes = commit != null
+                        ? SavedResourceChangeDetector.Detect(kind, before!.Json, commit.Json)
+                        : response.SavedResourceChanges.Where(change => change.Repository == kind)
+                            .Select(change => SavedResourceChangeDetector.Create(change.Repository, change.ResourceId, change.Action)).ToArray();
+                    if (commit == null && changes.Length == 0)
+                    {
+                        Logger.Error("ProfileOperationRouter/ManageProfileAsync: User Agent reported no saved-resource change for successful {0} in SID {1}, session {2}.", request.MessageType, userSid, sessionId);
+                    }
+                    else
+                    {
+                        _gatewayEventJournal.AppendBatch(userSid, sessionId, changes, DateTime.UtcNow);
+                        edit.Complete();
+                    }
                 }
-                else
+                catch (Exception ex) when (ex is ArgumentException or JsonException or IOException or UnauthorizedAccessException)
                 {
-                    _gatewayEventJournal.AppendBatch(userSid, sessionId, changes, DateTime.UtcNow);
+                    Logger.Error(ex, "ProfileOperationRouter/ManageProfileAsync: Could not retain saved-resource changes for successful {0} in SID {1}, session {2}.", request.MessageType, userSid, sessionId);
                 }
+                return response;
             }
-            catch (Exception ex) when (ex is ArgumentException or JsonException or IOException or UnauthorizedAccessException)
-            {
-                Logger.Error(ex, "ProfileOperationRouter/ManageProfileAsync: Could not retain saved-resource changes for successful {0} in SID {1}, session {2}.", request.MessageType, userSid, sessionId);
-            }
-            return response;
         }
         finally
         {

@@ -920,7 +920,7 @@
           "status": { "$ref": "#/components/schemas/OperationStatus" },
           "phase": { "$ref": "#/components/schemas/OperationPhase" },
           "message": { "type": "string", "maxLength": 1024 },
-          "sequence": { "type": "integer", "minimum": 0 },
+          "sequence": { "type": "integer", "format": "int64", "minimum": 0 },
           "startedAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
           "completedAt": { "type": ["string", "null"], "format": "date-time" },

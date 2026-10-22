@@ -257,3 +257,7 @@ ModelManifest.xml
 DisplayMagicianIdentityPkg/AppxManifest.xml
 DisplayMagicianBundle/RuntimeConfig.props
 Sandbox/Local/
+
+# Native phone foundation build state
+/Clients/Swift/.build/
+/Clients/Swift/.swiftpm/

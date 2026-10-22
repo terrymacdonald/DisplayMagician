@@ -1,0 +1,7 @@
+{
+  "kotlinVersion": "2.4.21",
+  "kotlinCompilerUrl": "https://github.com/JetBrains/kotlin/releases/download/v2.4.21/kotlin-compiler-2.4.21.zip",
+  "kotlinCompilerSha256": "7cc140e76daf416a0424a5557f99afd7ca89ebd463ea1101261e3e01c33e75cd",
+  "jsonUrl": "https://repo.maven.apache.org/maven2/org/json/json/20250517/json-20250517.jar",
+  "jsonSha256": "3ea61b2a06e31edf1c91134fe9106b0ebb16628be169f3db75bc7a2b06b45796"
+}

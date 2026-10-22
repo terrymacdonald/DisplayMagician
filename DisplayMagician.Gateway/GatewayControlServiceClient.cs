@@ -14,13 +14,19 @@ public interface IGatewayAuthenticationClient
     Task<GatewayAuthenticationResult> AuthenticateAsync(GatewayAuthenticationRequest request, CancellationToken cancellationToken);
 }
 
+public interface IGatewayEventClient : IGatewayAuthenticationClient
+{
+    Task<GatewayEventReplay> ReadRemoteEventsAsync(GatewayAuthenticationResult authentication, string? cursor, CancellationToken cancellationToken);
+    Task<ControlResponse> RemoteResourceAsync(ControlMessageType messageType, GatewayAuthenticationResult authentication, string payload, CancellationToken cancellationToken);
+}
+
 internal sealed class GatewayControlServiceUnavailableException : Exception
 {
     public GatewayControlServiceUnavailableException() : base("Control Service could not verify the Gateway request.") { }
 }
 
 /// <summary>Uses the narrow LocalService-only pipe; it cannot invoke normal desktop client operations.</summary>
-public sealed class GatewayControlServiceClient : IGatewayAuthenticationClient
+public sealed class GatewayControlServiceClient : IGatewayEventClient
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 

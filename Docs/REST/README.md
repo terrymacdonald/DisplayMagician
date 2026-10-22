@@ -8,17 +8,19 @@ The REST API is the deliberately narrow remote-controller surface exposed by `Di
 - [REST API client guide](REST-API-Client-Guide.md) provides pairing, command, progress, retry, reconnection, and integration walkthroughs.
 - [REST API architecture](REST-API-Architecture.md) explains component responsibilities, trust boundaries, credential/certificate rationale, watches, and the future Telegram connector.
 - [REST API implementation roadmap](REST-API-ROADMAP.md) tracks delivery phases, acceptance criteria, deferred features, and incomplete contract details.
-- [Current Gateway OpenAPI description](openapi.yaml) documents P2 routes currently implemented by the Gateway.
+- [Current Gateway OpenAPI description](openapi.yaml) documents implemented resource routes, cursor pagination, ETags, and optional SSE.
 - [Target OpenAPI draft](target-openapi.json) records approved design-only schemas as they are completed; it does not describe current Gateway behavior and still requires validation before client release.
 - [Cross-transport gap analysis](../IPC/API-Gap-Analysis.md) records gaps spanning IPC, REST, contracts, and tooling.
 
 ## Read this first
 
-The specification and client guide describe the **target API, which is not fully implemented**. The current OpenAPI covers P2 resource routes. Cursor pagination, ETags, SSE, and bounded retention remain P3 work.
+The specification and client guide describe the approved target API. The current OpenAPI includes the implemented resource routes, cursor pagination, ETags, SSE, and bounded retention. P3 release acceptance still requires installed Windows and native-device validation; see the roadmap for actual evidence and outstanding checks.
 
 - **Developing against today's build:** use the current Gateway OpenAPI and inspect the matching implementation.
 - **Planning the target client:** read the specification, then the client guide; track unspecified details in the roadmap.
 - **Working on server components:** read the architecture and roadmap alongside the specification.
+
+The [Swift and Kotlin foundations](../../Clients/README.md) are generated from implemented OpenAPI and include native pairing, pinning, secure storage, safe mutation recovery, polling, and a compact phone/watch status relay. Run `generate_rest_clients.ps1` after contract changes and `verify_rest_clients.ps1 -CompileKotlin` to check generation and the Android/JVM contracts. Apple validation runs with `swift test` on macOS.
 
 No REST client has shipped against the prototype. No migration routes, compatibility aliases, or deprecation periods are needed.
 

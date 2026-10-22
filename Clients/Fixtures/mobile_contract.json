@@ -1,0 +1,43 @@
+{
+  "operation": {
+    "id": "4eca79f6-8fcf-418c-b55d-61dfa14ba5bd",
+    "type": "run-shortcut",
+    "status": "running",
+    "phase": "waiting-for-game-to-close",
+    "message": "Game running",
+    "sequence": 4294967296,
+    "startedAt": "2026-10-22T00:00:00Z",
+    "updatedAt": "2026-10-22T00:01:00Z",
+    "completedAt": null,
+    "isFinished": false,
+    "isStale": false,
+    "staleReason": null,
+    "canCancel": true,
+    "source": null,
+    "error": null,
+    "links": {
+      "self": "/v1/operations/4eca79f6-8fcf-418c-b55d-61dfa14ba5bd",
+      "decisions": "/v1/operations/4eca79f6-8fcf-418c-b55d-61dfa14ba5bd/decisions",
+      "cancellations": "/v1/operations/4eca79f6-8fcf-418c-b55d-61dfa14ba5bd/cancellations"
+    }
+  },
+  "watch": {
+    "operationId": "4eca79f6-8fcf-418c-b55d-61dfa14ba5bd",
+    "title": "iRacing",
+    "status": "running",
+    "message": "Game running",
+    "sequence": 4294967296,
+    "isFinished": false,
+    "canCancel": true
+  },
+  "problem": {
+    "type": "https://displaymagician.org/problems/idempotency-outcome-unknown",
+    "title": "Outcome unknown",
+    "status": 409,
+    "detail": "Check current operation state before starting another action.",
+    "instance": "/v1/shortcuts/example/runs",
+    "errorCode": "idempotency-outcome-unknown",
+    "requestId": "194e3fa6-aa96-4caa-ad22-3efcd48f01f2",
+    "retryable": false
+  }
+}

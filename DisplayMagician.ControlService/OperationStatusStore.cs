@@ -30,6 +30,11 @@ public sealed class OperationStatusStore
 
     public event Action<OperationStatus>? StatusUpdated;
 
+    internal OperationStatus[] GetReplayState()
+    {
+        lock (_syncRoot) return _operations.Values.Select(Copy).ToArray();
+    }
+
     public OperationStatus Publish(string ownerUserSid, int ownerSessionId, OperationStatusUpdate update, DateTime utcNow)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);

@@ -11,6 +11,26 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class ProfileOperationRouterTests
 {
     [Fact]
+    public async Task EditDoesNotReachAgentWhenItsRecoveryMarkerCannotBeSaved()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        Directory.CreateDirectory(Path.Combine(paths.MachinePath, "GatewayEventJournal.pending.json"));
+        ControlStateCoordinator coordinator = new ControlStateCoordinator();
+        AgentRegistration agent = CreateAgent();
+        coordinator.RegisterAgent(agent, DateTime.UtcNow);
+        RecordingAgentCommandClient commandClient = new RecordingAgentCommandClient();
+        ProfileOperationRouter router = new ProfileOperationRouter(coordinator, commandClient, new RegisteringSessionLauncherClient(coordinator, agent), null, new MachineDiagnosticLogLevelStore(paths), journal);
+
+        ControlResponse response = await router.ManageProfileAsync(agent.UserSid, agent.SessionId,
+            new ControlEnvelope { MessageType = ControlMessageType.DeleteAudioProfile, Payload = JsonSerializer.Serialize(new DeleteProfileRequest { ProfileId = "test" }) }, CancellationToken.None);
+
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.AgentUnavailable, response.ErrorCode);
+        Assert.False(commandClient.WasCalled);
+    }
+
+    [Fact]
     public async Task RepositoryCommitPublishesOnlyChangedAndDeletedIds()
     {
         StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));

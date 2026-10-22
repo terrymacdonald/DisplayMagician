@@ -20,7 +20,7 @@ internal static class GatewayEventRoutes
 
     public static void Map(WebApplication app) => app.MapGet("/v1/events", StreamAsync);
 
-    private static async Task StreamAsync(HttpContext context, GatewayControlServiceClient client, GatewayEventStreamLimiter limiter)
+    internal static async Task StreamAsync(HttpContext context, IGatewayEventClient client, GatewayEventStreamLimiter limiter)
     {
         GatewayAuthenticationResult authentication = GatewayRequestAuthenticationMiddleware.GetAuthentication(context);
         if (!HasReadGrant(authentication))
@@ -96,47 +96,65 @@ internal static class GatewayEventRoutes
             }
         }
 
+        using CancellationTokenSource streamLifetime = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+        streamLifetime.CancelAfter(TimeSpan.FromSeconds(5));
+        CancellationToken streamToken = streamLifetime.Token;
+        string credential = context.Request.Headers.Authorization.ToString().Substring(7);
+        string sourceIp = context.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+        try
+        {
+            GatewayAuthenticationResult current = await client.AuthenticateAsync(new GatewayAuthenticationRequest { BearerCredential = credential, Method = "GET", Path = "/v1/events", SourceIpAddress = sourceIp }, streamToken).ConfigureAwait(false);
+            if (!SameAuthentication(authentication, current))
+            {
+                await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status401Unauthorized, "credential-invalid", "Credential changed", "Reconnect using the current paired-device credential.").ConfigureAwait(false);
+                return;
+            }
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or IOException or InvalidOperationException or GatewayControlServiceUnavailableException)
+        {
+            if (!context.RequestAborted.IsCancellationRequested) await GatewayProblemDetails.WriteAsync(context, StatusCodes.Status503ServiceUnavailable, "target-unavailable", "Credential check unavailable", "The event stream cannot start now.", true, 1).ConfigureAwait(false);
+            return;
+        }
+        streamLifetime.CancelAfter(TimeSpan.FromSeconds(5));
         context.Response.StatusCode = StatusCodes.Status200OK;
         context.Response.ContentType = "text/event-stream; charset=utf-8";
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers["X-Accel-Buffering"] = "no";
         try
         {
-            await context.Response.StartAsync(context.RequestAborted).ConfigureAwait(false);
-            if (snapshot != null) await WriteEventAsync(context, cursor!, "snapshot", snapshot).ConfigureAwait(false);
+            await context.Response.StartAsync(streamToken).ConfigureAwait(false);
+            if (snapshot != null) await WriteEventAsync(context, cursor!, "snapshot", snapshot, streamToken).ConfigureAwait(false);
             DateTime nextCredentialCheck = DateTime.UtcNow.AddSeconds(4);
-            DateTime nextHeartbeat = DateTime.UtcNow.AddSeconds(15);
-            string credential = context.Request.Headers.Authorization.ToString().Substring(7);
-            string sourceIp = context.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+            DateTime nextHeartbeat = DateTime.UtcNow.AddSeconds(10);
             while (!context.RequestAborted.IsCancellationRequested)
             {
                 if (DateTime.UtcNow >= nextCredentialCheck)
                 {
-                    GatewayAuthenticationResult current = await client.AuthenticateAsync(new GatewayAuthenticationRequest { BearerCredential = credential, Method = "GET", Path = "/v1/events", SourceIpAddress = sourceIp }, context.RequestAborted).ConfigureAwait(false);
-                    if (!current.IsAuthenticated || current.DeviceId != authentication.DeviceId || current.OwnerUserSid != authentication.OwnerUserSid || current.PreferredSessionId != authentication.PreferredSessionId ||
-                        !current.GrantedCapabilities.OrderBy(item => item, StringComparer.Ordinal).SequenceEqual(authentication.GrantedCapabilities.OrderBy(item => item, StringComparer.Ordinal))) break;
+                    GatewayAuthenticationResult current = await client.AuthenticateAsync(new GatewayAuthenticationRequest { BearerCredential = credential, Method = "GET", Path = "/v1/events", SourceIpAddress = sourceIp }, streamToken).ConfigureAwait(false);
+                    if (!SameAuthentication(authentication, current)) break;
+                    streamLifetime.CancelAfter(TimeSpan.FromSeconds(5));
                     nextCredentialCheck = DateTime.UtcNow.AddSeconds(4);
                 }
 
-                GatewayEventReplay replay = pendingReplay ?? await client.ReadRemoteEventsAsync(authentication, cursor, context.RequestAborted).ConfigureAwait(false);
+                GatewayEventReplay replay = pendingReplay ?? await client.ReadRemoteEventsAsync(authentication, cursor, streamToken).ConfigureAwait(false);
                 pendingReplay = null;
                 if (replay.State != GatewayEventReplayState.Available) break;
                 foreach (GatewayEventRecord record in replay.Events)
                 {
-                    if (TryCreateEvent(record, out string name, out object? data)) await WriteEventAsync(context, record.Id, name, data!).ConfigureAwait(false);
+                    if (TryCreateEvent(record, out string name, out object? data)) await WriteEventAsync(context, record.Id, name, data!, streamToken).ConfigureAwait(false);
                 }
                 cursor = replay.NextCursor;
                 if (replay.HasMore) continue;
                 if (DateTime.UtcNow >= nextHeartbeat)
                 {
-                    await context.Response.WriteAsync(": keep-alive\n\n", context.RequestAborted).ConfigureAwait(false);
-                    await context.Response.Body.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                    nextHeartbeat = DateTime.UtcNow.AddSeconds(15);
+                    await context.Response.WriteAsync(": keep-alive\n\n", streamToken).ConfigureAwait(false);
+                    await context.Response.Body.FlushAsync(streamToken).ConfigureAwait(false);
+                    nextHeartbeat = DateTime.UtcNow.AddSeconds(10);
                 }
-                await Task.Delay(TimeSpan.FromSeconds(1), context.RequestAborted).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(1), streamToken).ConfigureAwait(false);
             }
         }
-        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        catch (OperationCanceledException) when (streamLifetime.IsCancellationRequested)
         {
             // The client disconnected or the host is shutting down.
         }
@@ -163,10 +181,14 @@ internal static class GatewayEventRoutes
     internal static string FormatEvent(string id, string name, object data) =>
         "id: " + id + "\nevent: " + name + "\ndata: " + JsonSerializer.Serialize(data, JsonOptions) + "\n\n";
 
-    private static async Task WriteEventAsync(HttpContext context, string id, string name, object data)
+    private static bool SameAuthentication(GatewayAuthenticationResult expected, GatewayAuthenticationResult current) =>
+        current.IsAuthenticated && current.DeviceId == expected.DeviceId && current.OwnerUserSid == expected.OwnerUserSid && current.PreferredSessionId == expected.PreferredSessionId &&
+        current.GrantedCapabilities.OrderBy(item => item, StringComparer.Ordinal).SequenceEqual(expected.GrantedCapabilities.OrderBy(item => item, StringComparer.Ordinal));
+
+    private static async Task WriteEventAsync(HttpContext context, string id, string name, object data, CancellationToken token)
     {
-        await context.Response.WriteAsync(FormatEvent(id, name, data), context.RequestAborted).ConfigureAwait(false);
-        await context.Response.Body.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+        await context.Response.WriteAsync(FormatEvent(id, name, data), token).ConfigureAwait(false);
+        await context.Response.Body.FlushAsync(token).ConfigureAwait(false);
     }
 
     private static bool HasReadGrant(GatewayAuthenticationResult authentication) => authentication.GrantedCapabilities.Any(capability =>

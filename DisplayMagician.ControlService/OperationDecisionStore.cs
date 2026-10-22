@@ -28,6 +28,11 @@ public sealed class OperationDecisionStore
 
     public event Action<OperationDecision>? DecisionUpdated;
 
+    internal OperationDecision[] GetReplayState()
+    {
+        lock (_syncRoot) return _decisions.Values.Select(Copy).ToArray();
+    }
+
     public OperationDecision Create(string ownerUserSid, int ownerSessionId, Guid operationId, string title, string message, OperationDecisionChoice[] allowedChoices, OperationDecisionChoice defaultChoice, DateTime expiresUtc, DateTime utcNow)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);

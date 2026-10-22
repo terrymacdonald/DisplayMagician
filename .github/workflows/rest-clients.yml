@@ -1,0 +1,28 @@
+name: REST client foundations
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['Clients/**', 'BuildScripts/generate_rest_clients.mjs', 'generate_rest_clients.ps1', 'verify_rest_clients.ps1', 'Docs/REST/openapi.yaml', 'DisplayMagician.Contracts/ControlProtocol.cs', '.github/workflows/rest-clients.yml']
+  push:
+    branches: [main, master]
+    paths: ['Clients/**', 'BuildScripts/generate_rest_clients.mjs', 'Docs/REST/openapi.yaml', '.github/workflows/rest-clients.yml']
+permissions:
+  contents: read
+jobs:
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node BuildScripts/generate_rest_clients.mjs --check
+      - run: swift test --package-path Clients/Swift
+  kotlin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compile Android sources and run contract checks
+        shell: pwsh
+        run: ./verify_rest_clients.ps1 -CompileKotlin -InstallTools

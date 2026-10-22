@@ -20,4 +20,6 @@ Use [OPERATION_STATUS_DECISION_TEST_PLAN.md](OPERATION_STATUS_DECISION_TEST_PLAN
 
 Use [REST_P2_TEST_PLAN.md](REST_P2_TEST_PLAN.md) to validate the installed Gateway, pairing UI, saved-resource routes, operations, decisions, retries, and cross-user boundaries for REST P2.
 
+Use [REST_P3_TEST_PLAN.md](REST_P3_TEST_PLAN.md) for paging, ETags, SSE, replay recovery, revocation, TLS renewal, and installer lifecycle. Run `test_rest_p3.ps1 -PrepareSandbox` on the host to stage its developer-only HTTPS test harness under the existing `Sandbox/Local` mapping.
+
 `Generated` is machine-specific and intentionally excluded from source control.

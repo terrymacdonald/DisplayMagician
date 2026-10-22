@@ -8,6 +8,121 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class GatewayEventJournalTests
 {
     [Fact]
+    public void InterruptedSavedEditRetiresItsCursorAfterRestart()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        string cursor = journal.GetHead("owner", DateTime.UtcNow);
+        journal.BeginSavedResourceEdit("owner"); // Simulate process termination before publishing or disposing.
+
+        GatewayEventJournal restarted = new GatewayEventJournal(paths);
+
+        Assert.Equal(GatewayEventReplayState.CursorUnknown, restarted.ReadAfter("owner", cursor, DateTime.UtcNow).State);
+        Assert.NotEqual(cursor, restarted.GetHead("owner", DateTime.UtcNow));
+    }
+
+    [Fact]
+    public void CompletedSavedEditPreservesReplayAcrossRestart()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        string cursor = journal.GetHead("owner", DateTime.UtcNow);
+        using (GatewayEventJournal.SavedResourceEdit edit = journal.BeginSavedResourceEdit("owner"))
+        {
+            journal.Append("owner", 10, new GatewaySavedResourceChange { ResourceType = "shortcut", Id = "saved", Action = "deleted" }, DateTime.UtcNow);
+            edit.Complete();
+        }
+
+        GatewayEventReplay replay = new GatewayEventJournal(paths).ReadAfter("owner", cursor, DateTime.UtcNow);
+
+        Assert.Equal(GatewayEventReplayState.Available, replay.State);
+        Assert.Equal("saved", Assert.Single(replay.Events).ResourceChange?.Id);
+    }
+
+    [Fact]
+    public void FailedPublicationRetiresOnlyItsOwnersCursor()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        string ownerCursor = journal.GetHead("owner", DateTime.UtcNow);
+        string otherCursor = journal.GetHead("other", DateTime.UtcNow);
+        using (journal.BeginSavedResourceEdit("owner")) { }
+
+        Assert.Equal(GatewayEventReplayState.CursorUnknown, journal.ReadAfter("owner", ownerCursor, DateTime.UtcNow).State);
+        Assert.Equal(GatewayEventReplayState.Available, journal.ReadAfter("other", otherCursor, DateTime.UtcNow).State);
+    }
+
+    [Fact]
+    public void JournalWriteFailureAfterAnEditCannotLeaveAResumableGap()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        string cursor = journal.GetHead("owner", DateTime.UtcNow);
+        string blockedBackup = Path.Combine(paths.MachinePath, "GatewayEventJournal.json.bak");
+        using (journal.BeginSavedResourceEdit("owner"))
+        {
+            Directory.CreateDirectory(blockedBackup);
+            Exception? failure = Record.Exception(() => journal.Append("owner", 10, new GatewaySavedResourceChange { ResourceType = "shortcut", Id = "saved", Action = "deleted" }, DateTime.UtcNow));
+            Assert.True(failure is IOException or UnauthorizedAccessException);
+            Directory.Delete(blockedBackup);
+        }
+
+        Assert.Equal(GatewayEventReplayState.CursorUnknown, journal.ReadAfter("owner", cursor, DateTime.UtcNow).State);
+        Assert.Equal(GatewayEventReplayState.CursorUnknown, new GatewayEventJournal(paths).ReadAfter("owner", cursor, DateTime.UtcNow).State);
+    }
+
+    [Fact]
+    public void ReconcileDetectsStateCommittedBeforeTheEventAndPreservesSubsequentRestarts()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        string cursor = journal.GetHead("owner", DateTime.UtcNow);
+        OperationStatus status = new OperationStatus { OwnerUserSid = "owner", OperationId = Guid.NewGuid(), Sequence = 2, UpdatedUtc = DateTime.UtcNow };
+        journal.Reconcile(new[] { status }, Array.Empty<OperationDecision>(), DateTime.UtcNow);
+        Assert.Equal(GatewayEventReplayState.CursorUnknown, journal.ReadAfter("owner", cursor, DateTime.UtcNow).State);
+        string recovered = journal.GetHead("owner", DateTime.UtcNow);
+
+        GatewayEventJournal restarted = new GatewayEventJournal(paths);
+        restarted.Reconcile(new[] { status }, Array.Empty<OperationDecision>(), DateTime.UtcNow);
+
+        Assert.Equal(GatewayEventReplayState.Available, restarted.ReadAfter("owner", recovered, DateTime.UtcNow).State);
+    }
+
+    [Fact]
+    public void SnapshotBoundaryRemainsUsableWhenAllReplayRecordsHaveExpired()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        DateTime now = DateTime.UtcNow;
+        journal.Append(new OperationStatus { OwnerUserSid = "owner", OperationId = Guid.NewGuid() }, now.AddDays(-2));
+        string cursor = journal.GetHead("owner", now);
+
+        Assert.Equal(GatewayEventReplayState.Available, journal.ReadAfter("owner", cursor, now).State);
+        journal.Append(new OperationStatus { OwnerUserSid = "owner", OperationId = Guid.NewGuid() }, now);
+        Assert.Single(journal.ReadAfter("owner", cursor, now).Events);
+        Assert.Equal(GatewayEventReplayState.Available, new GatewayEventJournal(paths).ReadAfter("owner", cursor, now).State);
+    }
+
+    [Fact]
+    public void ReplayPrunesAtThePublishedItemAndByteLimits()
+    {
+        StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));
+        GatewayEventJournal journal = new GatewayEventJournal(paths);
+        DateTime now = DateTime.UtcNow;
+        string original = journal.GetHead("owner", now);
+        GatewaySavedResourceChange[] changes = new GatewaySavedResourceChange[10001];
+        for (int index = 0; index < changes.Length; index++) changes[index] = new GatewaySavedResourceChange { ResourceType = "shortcut", Id = index.ToString(), Action = "deleted" };
+        journal.AppendBatch("owner", 10, changes, now);
+        Assert.Equal(GatewayEventReplayState.CursorExpired, journal.ReadAfter("owner", original, now).State);
+
+        string beforeOversize = journal.GetHead("owner", now);
+        journal.Append("owner", 10, new GatewaySavedResourceChange { ResourceType = "shortcut", Id = "large", Action = "upsert", Href = new string('a', 11 * 1024 * 1024) }, now);
+
+        Assert.Equal(GatewayEventReplayState.CursorExpired, journal.ReadAfter("owner", beforeOversize, now).State);
+        Assert.Empty(journal.ReadAfter("owner", journal.GetHead("owner", now), now).Events);
+    }
+
+    [Fact]
     public void ReplaySurvivesRestartAndIsScopedToTheOwner()
     {
         StoragePaths paths = new StoragePaths(Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N")));

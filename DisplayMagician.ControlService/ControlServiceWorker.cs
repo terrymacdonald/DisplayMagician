@@ -42,6 +42,11 @@ public sealed class ControlServiceWorker : BackgroundService
         _gatewayEventJournal = gatewayEventJournal;
         _controlStateCoordinator = controlStateCoordinator;
         _gatewayFirewallManager = gatewayFirewallManager;
+        try { _gatewayEventJournal.Reconcile(_operationStatusStore.GetReplayState(), _operationDecisionStore.GetReplayState(), DateTime.UtcNow); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error(ex, "ControlServiceWorker/ControlServiceWorker: Gateway replay reconciliation is unavailable; local operation routing remains available.");
+        }
         _operationStatusStore.StatusUpdated += PublishOperationStatus;
         _operationDecisionStore.DecisionUpdated += PublishOperationDecision;
     }
@@ -162,6 +167,7 @@ public sealed class ControlServiceWorker : BackgroundService
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _logger.Error(ex, "ControlServiceWorker/PublishOperationStatus: Could not retain Gateway event for operation {0}.", status.OperationId);
+            ResetReplay(status.OwnerUserSid);
         }
         _eventHub.Publish(status.OwnerUserSid, status.OwnerSessionId, new ControlClientEvent { EventType = ControlClientEventType.OperationStatusUpdated, PublishedUtc = DateTime.UtcNow, OperationStatus = status });
     }
@@ -175,7 +181,18 @@ public sealed class ControlServiceWorker : BackgroundService
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _logger.Error(ex, "ControlServiceWorker/PublishOperationDecision: Could not retain Gateway event for decision {0}.", decision.PromptId);
+            ResetReplay(decision.OwnerUserSid);
         }
         _eventHub.Publish(decision.OwnerUserSid, decision.OwnerSessionId, new ControlClientEvent { EventType = ControlClientEventType.OperationDecisionUpdated, Scope = ControlClientEventScope.User, PublishedUtc = DateTime.UtcNow, OperationDecision = decision });
+    }
+
+    private void ResetReplay(string ownerUserSid)
+    {
+        try { _gatewayEventJournal.MarkContinuityLost(ownerUserSid); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // In-memory reads remain blocked until recovery succeeds; startup also reconciles persisted operation state.
+            _logger.Error(ex, "ControlServiceWorker/ResetReplay: Could not persist replay recovery for user {0}.", ownerUserSid);
+        }
     }
 }

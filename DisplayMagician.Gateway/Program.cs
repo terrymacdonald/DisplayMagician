@@ -40,6 +40,7 @@ internal static class Program
         builder.Services.AddSingleton<GatewayEventStreamLimiter>();
         builder.Services.AddSingleton<GatewayRegistrationState>();
         builder.Services.AddSingleton<IGatewayAuthenticationClient>(provider => provider.GetRequiredService<GatewayControlServiceClient>());
+        builder.Services.AddSingleton<IGatewayEventClient>(provider => provider.GetRequiredService<GatewayControlServiceClient>());
         builder.Services.AddHostedService<GatewayRegistrationService>();
         builder.Services.AddHostedService<GatewayCertificateRenewalService>();
         builder.WebHost.ConfigureKestrel(options =>
@@ -95,6 +96,7 @@ internal static class Program
         {
             GatewayVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.0.0",
             HostId = gatewayIdentity.HostId,
+            EventTransports = new[] { "sse" },
             KnownCapabilities = RemoteClientCapabilities.All.ToArray(),
             SupportedFeatures = new[] { "pairing", "devices", "display-profiles", "audio-profiles", "shortcuts", "operations", "decisions", "events" }
         }));

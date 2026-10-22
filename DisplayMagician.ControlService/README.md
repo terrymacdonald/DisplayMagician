@@ -10,6 +10,8 @@ Control Service routes work only to a ready Agent whose process and command-pipe
 
 An authorised session requesting display control takes over an idle lease from another session, including when the previous Agent is still heartbeating. Active operations and recovery-required leases remain reserved for their owner until the work or recovery is resolved.
 
+Saved-resource mutations write a durable pending-publication marker before reaching UserAgent. Successful event publication clears it; an interrupted or failed publication retires that user's old replay cursors and forces a fresh snapshot. Startup also reconciles persisted operation/decision state against journal records so a crash between state commit and its event callback cannot silently leave a replay gap. Replay boundaries remain usable when all retained events have expired or exceeded the item/byte limits.
+
 Every local request carries the shared transport-neutral protocol hello and receives a negotiated protocol/capability welcome before work is processed. This is a compatibility boundary only; remote authentication is verified by ControlService over the Gateway-only local pipe. ControlService remains the source of truth for pairing approval, expiry, revocation, ownership, and capability grants. Its support snapshot includes a redacted paired-device list and excludes credentials, credential hashes, polling secrets, and private keys.
 
 Administrator Gateway settings updates validate bind addresses, advertised DNS/IP hosts, and ports before saving so invalid endpoints cannot prevent Gateway startup.
