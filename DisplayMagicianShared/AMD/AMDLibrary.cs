@@ -56,18 +56,50 @@ namespace DisplayMagicianShared.AMD
         public override bool Equals(object obj) => obj is AMD_SLSMAP_CONFIG other && this.Equals(other);
 
         public bool Equals(AMD_SLSMAP_CONFIG other)
-        => SLSMap == other.SLSMap &&
-           SLSTargets.SequenceEqual(other.SLSTargets) &&
-           NativeModes.SequenceEqual(other.NativeModes) &&
-           NativeModeOffsets.SequenceEqual(other.NativeModeOffsets) &&
-           BezelModes.SequenceEqual(other.BezelModes) &&
-           TransientModes.SequenceEqual(other.TransientModes) &&
-           SLSOffsets.SequenceEqual(other.SLSOffsets) &&
-           BezelModePercent == other.BezelModePercent;
+        {
+            AMD_SLSMAP_CONFIG left = ForComparison();
+            AMD_SLSMAP_CONFIG right = other.ForComparison();
+            return left.SLSMap == right.SLSMap &&
+                left.SLSTargets.SequenceEqual(right.SLSTargets) &&
+                left.NativeModes.SequenceEqual(right.NativeModes) &&
+                left.NativeModeOffsets.SequenceEqual(right.NativeModeOffsets) &&
+                left.BezelModes.SequenceEqual(right.BezelModes) &&
+                left.TransientModes.SequenceEqual(right.TransientModes) &&
+                left.SLSOffsets.SequenceEqual(right.SLSOffsets) &&
+                left.BezelModePercent == right.BezelModePercent;
+        }
+
+        private AMD_SLSMAP_CONFIG ForComparison()
+        {
+            // ADL2 reallocates these handles when an Eyefinity group is recreated.
+            // Normalize copies only; the original handles are still needed for driver calls.
+            AMD_SLSMAP_CONFIG config = this;
+            config.SLSMap.SLSMapIndex = 0;
+            config.SLSMap.Grid.SLSGridIndex = 0;
+            config.SLSTargets = SLSTargets.Select(target =>
+            {
+                target.SLSMapIndex = 0;
+                target.DisplayTarget.DisplayMapIndex = 0;
+                return target;
+            }).ToList();
+            config.NativeModes = NativeModes.Select(mode => { mode.SLSMapIndex = 0; return mode; }).ToList();
+            config.NativeModeOffsets = NativeModeOffsets.Select(offset => { offset.SLSMapIndex = 0; return offset; }).ToList();
+            config.BezelModes = BezelModes.Select(mode => { mode.SLSMapIndex = 0; return mode; }).ToList();
+            config.TransientModes = TransientModes.Select(mode => { mode.SLSMapIndex = 0; return mode; }).ToList();
+            config.SLSOffsets = SLSOffsets.Select(offset => { offset.SLSMapIndex = 0; return offset; }).ToList();
+            return config;
+        }
 
         public override int GetHashCode()
         {
-            return (SLSMap, SLSTargets, NativeModes, NativeModeOffsets, BezelModes, TransientModes, SLSOffsets, BezelModePercent).GetHashCode();
+            AMD_SLSMAP_CONFIG config = ForComparison();
+            return HashCode.Combine(config.SLSMap, config.BezelModePercent,
+                config.SLSTargets.Aggregate(0, (hash, item) => HashCode.Combine(hash, item)),
+                config.NativeModes.Aggregate(0, (hash, item) => HashCode.Combine(hash, item)),
+                config.NativeModeOffsets.Aggregate(0, (hash, item) => HashCode.Combine(hash, item)),
+                config.BezelModes.Aggregate(0, (hash, item) => HashCode.Combine(hash, item)),
+                config.TransientModes.Aggregate(0, (hash, item) => HashCode.Combine(hash, item)),
+                config.SLSOffsets.Aggregate(0, (hash, item) => HashCode.Combine(hash, item)));
         }
         public static bool operator ==(AMD_SLSMAP_CONFIG lhs, AMD_SLSMAP_CONFIG rhs) => lhs.Equals(rhs);
 
@@ -431,6 +463,9 @@ namespace DisplayMagicianShared.AMD
                 SharedLogger.logger.Trace($"AMD_3DLUT_INFO/Equals: The IsCurrentSCEVividGaming values don't equal each other");
                 return false;
             }
+            // Inactive dynamic-contrast values may not be readable after a topology change.
+            if (IsCurrentSCEDisabled || IsCurrentSCEVividGaming)
+                return true;
             if (HasDynamicContrast != other.HasDynamicContrast)
             {
                 SharedLogger.logger.Trace($"AMD_3DLUT_INFO/Equals: The HasDynamicContrast values don't equal each other. Saved={HasDynamicContrast}, Current={other.HasDynamicContrast}, SavedSupported={IsSupportedSCEDynamicContrast}, CurrentSupported={other.IsSupportedSCEDynamicContrast}");
@@ -448,7 +483,8 @@ namespace DisplayMagicianShared.AMD
             }
             return true;
         }
-        public override int GetHashCode() => (IsSupportedSCE, IsSupportedSCEVividGaming, IsSupportedSCEDynamicContrast, IsSupportedUser3DLUT, IsCurrentSCEDisabled, IsCurrentSCEVividGaming, CurrentDynamicContrastValue, DynamicContrastRange).GetHashCode();
+        public override int GetHashCode() => (IsSupportedSCE, IsSupportedSCEVividGaming, IsSupportedSCEDynamicContrast, IsSupportedUser3DLUT, IsCurrentSCEDisabled, IsCurrentSCEVividGaming,
+            IsCurrentSCEDisabled || IsCurrentSCEVividGaming ? 0 : HashCode.Combine(HasDynamicContrast, CurrentDynamicContrastValue, DynamicContrastRange)).GetHashCode();
     }
 
     /// Range helper
@@ -3981,10 +4017,21 @@ namespace DisplayMagicianShared.AMD
                             var current3dLut = new AMD_3DLUT_INFO(display.GetThreeDLut());
                             if (!current3dLut.Equals(stored.ThreeDLUTSettings))
                             {
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: 3DLUT differs for display {display.UniqueId}, reapplying.");
-                                if (!display.TryReapplyThreeDLut())
+                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: 3DLUT differs for display {display.UniqueId}, applying saved settings.");
+                                try
                                 {
-                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT is no longer supported for display {display.UniqueId}, skipping.");
+                                    if (!display.TryApplyThreeDLut(stored.ThreeDLUTSettings.ToThreeDLUTDto()))
+                                    {
+                                        SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT is no longer supported for display {display.UniqueId}, skipping.");
+                                    }
+                                    else if (!new AMD_3DLUT_INFO(display.GetThreeDLut()).Equals(stored.ThreeDLUTSettings))
+                                    {
+                                        SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT readback does not match the saved settings for display {display.UniqueId}.");
+                                    }
+                                }
+                                catch (ADLXException ex)
+                                {
+                                    SharedLogger.logger.Warn(ex, $"AMDLibrary/SetActiveConfigOverride: Unable to restore the saved 3DLUT settings for display {display.UniqueId}; continuing with other overrides.");
                                 }
                             }
                             else
