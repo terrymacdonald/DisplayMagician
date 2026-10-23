@@ -19,4 +19,9 @@
     <ProjectReference Include="..\DisplayMagician.ControlService\DisplayMagician.ControlService.csproj" />
     <ProjectReference Include="..\DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="ADLXWrapper">
+      <HintPath>..\DisplayMagician.UserAgent\DLL\ADLXWrapper.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

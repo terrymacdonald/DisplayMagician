@@ -518,7 +518,7 @@
         </member>
         <member name="M:ADLXWrapper.ADLXDisplay.GetThreeDLut">
             <summary>
-            3DLUT info and reapply.
+            3DLUT info, saved-state application, and current-state reapply.
             </summary>
         </member>
         <member name="M:ADLXWrapper.ADLXDisplay.GetConnectivityExperience">
