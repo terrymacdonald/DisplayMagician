@@ -372,7 +372,7 @@ public sealed class ProfileCommandHandler
                     ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "This shortcut run cannot save window positions." }
                     : new ControlResponse { IsSuccessful = result.SavedWindowCount > 0, ErrorCode = result.SavedWindowCount > 0 ? ControlErrorCode.None : ControlErrorCode.ValidationFailed, Message = result.SavedWindowCount > 0 ? "Window positions saved." : "No eligible windows were found; the existing snapshot was kept.", SaveWindowPlacements = result };
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception || ex is ArgumentException)
             {
                 _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Could not save window positions for shortcut {0}.", capture.ShortcutId);
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "Window positions could not be saved." };

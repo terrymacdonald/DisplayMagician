@@ -82,6 +82,8 @@ public sealed class ShortcutWindowPlacementDefinition
     public int Top { get; init; }
     public int Right { get; init; }
     public int Bottom { get; init; }
+    public int? MaximizedLeft { get; init; }
+    public int? MaximizedTop { get; init; }
     public int ShowCommand { get; init; }
     public string[] DisplayNames { get; init; } = Array.Empty<string>();
 }

@@ -58,6 +58,16 @@ namespace DisplayMagician.UIForms
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
+            string selectedId = _selectedShortcut?.UUID;
+            try
+            {
+                if (ShortcutRepository.LoadShortcuts() && !string.IsNullOrWhiteSpace(selectedId))
+                    _selectedShortcut = ShortcutRepository.GetShortcut(selectedId);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutLibraryForm/OnActivated: Could not refresh the shortcut cache.");
+            }
             ShortcutRepository.IsValidRefresh();
             RefreshShortcutLibraryUI();
             UpdateShortcutStatusPanel();
@@ -812,7 +822,11 @@ namespace DisplayMagician.UIForms
 
         private async void btn_save_window_positions_Click(object sender, EventArgs e)
         {
+            string selectedId = _selectedShortcut?.UUID;
             await Program.SaveWindowPositionsAsync(_activeShortcutOperationId, this);
+            if (!string.IsNullOrWhiteSpace(selectedId))
+                _selectedShortcut = ShortcutRepository.GetShortcut(selectedId);
+            RefreshShortcutLibraryUI();
         }
 
         private async void tsmi_clear_window_positions_Click(object sender, EventArgs e)

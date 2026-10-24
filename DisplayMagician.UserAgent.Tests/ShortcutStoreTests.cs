@@ -25,12 +25,39 @@ public sealed class ShortcutStoreTests
             ShortcutStore store = new ShortcutStore(root);
             using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
             JsonElement shortcut = document.RootElement.GetProperty("Shortcuts")[0];
-            Assert.Equal("7", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal("8", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
             Assert.Equal("Original", shortcut.GetProperty("Name").GetString());
             Assert.True(Guid.TryParse(shortcut.GetProperty("StartPrograms")[0].GetProperty("Id").GetString(), out _));
             Assert.Equal(20, shortcut.GetProperty("WindowPlacementTimeoutSeconds").GetInt32());
             Assert.Empty(shortcut.GetProperty("WindowPlacements").EnumerateArray());
             Assert.Single(Directory.GetFiles(directory, "Shortcuts.json.v6.*.bak"));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void Constructor_PreservesVersionSevenPlacementsWithoutMaximizedCoordinates()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");
+        try
+        {
+            string directory = Path.Combine(root, "Shortcuts");
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(Path.Combine(directory, "Shortcuts.json"),
+                "{\"ShortcutFileVersion\":\"7\",\"Shortcuts\":[{\"UUID\":\"shortcut-one\",\"WindowPlacements\":[{\"ProgramId\":\"main\",\"ShowCommand\":3}]}]}", Encoding.Unicode);
+
+            ShortcutStore store = new ShortcutStore(root);
+            using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
+            JsonElement placement = document.RootElement.GetProperty("Shortcuts")[0].GetProperty("WindowPlacements")[0];
+            Assert.Equal("8", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal(3, placement.GetProperty("ShowCommand").GetInt32());
+            Assert.False(placement.TryGetProperty("MaximizedLeft", out _));
+            Assert.Single(Directory.GetFiles(directory, "Shortcuts.json.v7.*.bak"));
+            Assert.True(store.TryGetShortcutDefinition("shortcut-one", out ShortcutDefinition? migrated));
+            Assert.Null(Assert.Single(migrated!.WindowPlacements).MaximizedLeft);
         }
         finally
         {
@@ -54,7 +81,7 @@ public sealed class ShortcutStoreTests
             });
             int replaced = store.ReplaceWindowPlacements("shortcut-one", new[]
             {
-                new ShortcutWindowPlacementDefinition { ProgramId = "main", ExecutablePath = "C:\\Game.exe", WindowClass = "Game", Left = 10, Right = 200, ShowCommand = 3 }
+                new ShortcutWindowPlacementDefinition { ProgramId = "main", ExecutablePath = "C:\\Game.exe", WindowClass = "Game", Left = 10, Right = 200, MaximizedLeft = 5, MaximizedTop = 7, ShowCommand = 3 }
             });
 
             Assert.Equal(1, replaced);
@@ -64,6 +91,8 @@ public sealed class ShortcutStoreTests
             Assert.Equal("Original", shortcut.GetProperty("Name").GetString());
             Assert.Equal("main", shortcut.GetProperty("WindowPlacements")[0].GetProperty("ProgramId").GetString());
             Assert.Equal(3, shortcut.GetProperty("WindowPlacements")[0].GetProperty("ShowCommand").GetInt32());
+            Assert.Equal(5, shortcut.GetProperty("WindowPlacements")[0].GetProperty("MaximizedLeft").GetInt32());
+            Assert.Equal(7, shortcut.GetProperty("WindowPlacements")[0].GetProperty("MaximizedTop").GetInt32());
 
             int cleared = store.ReplaceWindowPlacements("shortcut-one", Array.Empty<ShortcutWindowPlacementDefinition>());
             Assert.Equal(1, cleared);

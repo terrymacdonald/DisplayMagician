@@ -180,7 +180,7 @@ public sealed class ShortcutStore
             int previousCount = (shortcut["WindowPlacements"] as JsonArray)?.Count ?? 0;
             shortcut["WindowPlacements"] = JsonSerializer.SerializeToNode(placements);
             shortcut["WindowPlacementTimeoutSeconds"] ??= 20;
-            root["ShortcutFileVersion"] = "7";
+            root["ShortcutFileVersion"] = "8";
             RepositoryCommitResult result = Commit(new RepositoryCommitRequest
             {
                 Repository = RepositoryKind.Shortcuts,
@@ -198,7 +198,9 @@ public sealed class ShortcutStore
         try
         {
             JsonObject? root = JsonNode.Parse(GetSnapshot().Json) as JsonObject;
-            if (root?["Shortcuts"] is not JsonArray shortcuts || root["ShortcutFileVersion"]?.GetValue<string>() == "7") return;
+            if (root?["Shortcuts"] is not JsonArray shortcuts) return;
+            string? storedVersion = root["ShortcutFileVersion"]?.GetValue<string>();
+            if (int.TryParse(storedVersion, out int versionNumber) && versionNumber >= 8) return;
             foreach (JsonObject shortcut in shortcuts.OfType<JsonObject>())
             {
                 shortcut["WindowPlacements"] ??= new JsonArray();
@@ -209,8 +211,10 @@ public sealed class ShortcutStore
                         program["Id"] ??= Guid.NewGuid().ToString("D");
                 }
             }
-            root["ShortcutFileVersion"] = "7";
-            string backupPath = $"{_shortcutFilePath}.v6.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
+            string previousVersion = int.TryParse(storedVersion, out versionNumber) && versionNumber >= 0
+                ? versionNumber.ToString() : "unknown";
+            root["ShortcutFileVersion"] = "8";
+            string backupPath = $"{_shortcutFilePath}.v{previousVersion}.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
             File.Copy(_shortcutFilePath, backupPath, overwrite: false);
             string temporaryPath = Path.Combine(Path.GetDirectoryName(_shortcutFilePath)!, $".Shortcuts.{Guid.NewGuid():N}.tmp");
             File.WriteAllText(temporaryPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);

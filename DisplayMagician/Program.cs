@@ -1866,7 +1866,11 @@ namespace DisplayMagician {
                     "Save Window Positions", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
                 ControlResponse result = await client.SaveWindowPlacementsAsync(session.OperationId, session.ShortcutId, CancellationToken.None);
-                if (result.IsSuccessful) ShortcutRepository.LoadShortcuts();
+                if (result.IsSuccessful)
+                {
+                    try { ShortcutRepository.LoadShortcuts(); }
+                    catch (Exception ex) { logger.Warn(ex, "Program/SaveWindowPositionsAsync: Window positions were saved, but the shortcut cache could not be refreshed."); }
+                }
                 ShowWindowPlacementToast(result.IsSuccessful && result.SaveWindowPlacements != null
                     ? $"Saved {result.SaveWindowPlacements.SavedWindowCount} window positions."
                     : result.Message);

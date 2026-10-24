@@ -60,7 +60,11 @@ public sealed class ShortcutRunner
             WindowPlacementRun? run = _activeWindowPlacementRun;
             if (run == null || !run.CanSave || run.OperationId != operationId || !string.Equals(run.Shortcut.Id, shortcutId, StringComparison.OrdinalIgnoreCase))
                 return null;
-            ShortcutWindowPlacementDefinition[] placements = WindowPlacementService.Capture(run.GetSources());
+            List<WindowPlacementService.Source> sources = run.GetSources(out bool sourcesComplete);
+            if (!sourcesComplete) throw new InvalidOperationException("A launched process could not be inspected, so the existing window snapshot was kept.");
+            WindowPlacementService.CaptureResult capture = WindowPlacementService.Capture(sources);
+            if (!capture.IsComplete) throw new InvalidOperationException("A window could not be inspected, so the existing window snapshot was kept.");
+            ShortcutWindowPlacementDefinition[] placements = capture.Placements;
             if (placements.Length == 0) return new SaveWindowPlacementsResult();
             if (_shortcutStore.ReplaceWindowPlacements(shortcutId, placements) < 0) return null;
             return new SaveWindowPlacementsResult
@@ -198,6 +202,7 @@ public sealed class ShortcutRunner
                 (shortcut.Category == ShortcutDefinitionCategory.Application && shortcut.ApplicationLibrary != 2)) &&
                 !string.IsNullOrWhiteSpace(shortcut.ExecutablePath))
             {
+                windowRun.RequireMainSource = true;
                 ProcessTreeMonitor? monitor = ProcessTreeMonitor.BeginWatching(string.IsNullOrWhiteSpace(shortcut.DifferentExecutablePathToMonitor) ? shortcut.ExecutablePath : shortcut.DifferentExecutablePathToMonitor, shortcut.StartTimeoutSeconds, continueTrackingDescendants: true);
                 try
                 {
@@ -278,6 +283,7 @@ public sealed class ShortcutRunner
 
                 if (shouldStartGame)
                 {
+                    windowRun.RequireMainSource = true;
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting game.", cancellationToken).ConfigureAwait(false);
                     gameLibrary.StartGame(game, shortcut.GameArguments, (ProcessPriority)(int)shortcut.ProcessPriority);
                     DateTime gameStartDeadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(shortcut.StartTimeoutSeconds, 1, 60));
@@ -698,16 +704,23 @@ public sealed class ShortcutRunner
     {
         if (run.DisplayProfileFailed || run.Shortcut.WindowPlacements.Count == 0) return;
         HashSet<int> completed = new HashSet<int>();
+        Dictionary<int, IntPtr> pending = new Dictionary<int, IntPtr>();
         List<string> programNames = new List<string>();
         int moved = 0;
         DateTime deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(run.Shortcut.WindowPlacementTimeoutSeconds, 1, 120));
         while (DateTime.UtcNow < deadlineUtc && completed.Count < run.Shortcut.WindowPlacements.Count)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            (int count, string[] programs) = WindowPlacementService.Restore(run.GetSources(), run.Shortcut.WindowPlacements, completed);
+            (int count, string[] programs) = WindowPlacementService.Restore(run.GetSources(), run.Shortcut.WindowPlacements, completed, pending);
             moved += count;
             programNames.AddRange(programs);
             if (completed.Count < run.Shortcut.WindowPlacements.Count) await Task.Delay(500, cancellationToken).ConfigureAwait(false);
+        }
+        if (pending.Count > 0)
+        {
+            (int count, string[] programs) = WindowPlacementService.Restore(run.GetSources(), run.Shortcut.WindowPlacements, completed, pending, verifyOnly: true);
+            moved += count;
+            programNames.AddRange(programs);
         }
         string[] names = programNames.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         string message = $"Moved {moved} window{(moved == 1 ? string.Empty : "s")}";
@@ -728,12 +741,17 @@ public sealed class ShortcutRunner
         public ShortcutDefinition Shortcut { get; }
         public bool DisplayProfileFailed { get; set; }
         public bool CanSave { get; set; }
+        public bool RequireMainSource { get; set; }
         public Game? Game { get; set; }
         public List<(string ProgramId, ProcessTreeMonitor Monitor)> Monitors { get; } = new List<(string, ProcessTreeMonitor)>();
         public List<ProcessTreeMonitor> OwnedHelperMonitors { get; } = new List<ProcessTreeMonitor>();
 
         public List<WindowPlacementService.Source> GetSources()
+            => GetSources(out _);
+
+        public List<WindowPlacementService.Source> GetSources(out bool isComplete)
         {
+            isComplete = true;
             List<WindowPlacementService.Source> sources = new List<WindowPlacementService.Source>();
             foreach ((string programId, ProcessTreeMonitor monitor) in Monitors)
             {
@@ -743,13 +761,16 @@ public sealed class ShortcutRunner
                     {
                         string path = process.MainModule?.FileName ?? string.Empty;
                         if (!string.IsNullOrWhiteSpace(path)) sources.Add(new WindowPlacementService.Source(programId, path, new HashSet<int> { process.Id }));
+                        else isComplete = false;
                     }
                     catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
                     {
+                        isComplete = false;
                         _logger.Debug(ex, "ShortcutRunner/GetSources: Could not inspect tracked process for shortcut {0}.", Shortcut.Id);
                     }
                     finally { process.Dispose(); }
                 }
+                if (monitor.HadTrackingError) isComplete = false;
             }
             if (Game != null)
             {
@@ -759,14 +780,17 @@ public sealed class ShortcutRunner
                     {
                         string path = process.MainModule?.FileName ?? string.Empty;
                         if (!string.IsNullOrWhiteSpace(path)) sources.Add(new WindowPlacementService.Source("main", path, new HashSet<int> { process.Id }));
+                        else isComplete = false;
                     }
                     catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
                     {
+                        isComplete = false;
                         _logger.Debug(ex, "ShortcutRunner/GetSources: Could not inspect game process for shortcut {0}.", Shortcut.Id);
                     }
                     finally { process.Dispose(); }
                 }
             }
+            if (RequireMainSource && !sources.Any(item => item.ProgramId == "main")) isComplete = false;
             return sources;
         }
     }

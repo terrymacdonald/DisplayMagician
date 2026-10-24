@@ -19,8 +19,9 @@ namespace DisplayMagician.Processes
         private readonly object _syncRoot = new object();
         private readonly string _expectedExecutablePath;
         private readonly string _expectedExecutableName;
-        private readonly HashSet<int> _existingExpectedProcessIds = new HashSet<int>();
+        private readonly Dictionary<int, DateTime> _existingExpectedProcessIds = new Dictionary<int, DateTime>();
         private readonly HashSet<int> _trackedProcessIds = new HashSet<int>();
+        private readonly Dictionary<int, DateTime> _trackedProcessStartTimes = new Dictionary<int, DateTime>();
         private readonly DateTime _deadlineUtc;
         private readonly bool _continueTrackingDescendants;
         private Timer? _snapshotTimer;
@@ -30,20 +31,24 @@ namespace DisplayMagician.Processes
         private bool _hasObservedExpectedProcess;
         private bool _discoveryComplete;
         private bool _disposed;
+        private bool _usingLongInterval;
+        private volatile bool _hadTrackingError;
+
+        public bool HadTrackingError => _hadTrackingError;
 
         private ProcessTreeMonitor(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants)
         {
             _continueTrackingDescendants = continueTrackingDescendants;
             _expectedExecutablePath = Path.GetFullPath(expectedExecutablePath);
             _expectedExecutableName = Path.GetFileName(expectedExecutablePath);
-            _deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(startTimeout, 1, 30));
+            _deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(startTimeout, 1, 60));
 
             foreach (Process process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(_expectedExecutableName)))
             {
                 try
                 {
                     if (PathsMatch(process))
-                        _existingExpectedProcessIds.Add(process.Id);
+                        _existingExpectedProcessIds[process.Id] = process.StartTime.ToUniversalTime();
                 }
                 catch (Exception ex)
                 {
@@ -78,23 +83,23 @@ namespace DisplayMagician.Processes
         {
             get
             {
-                int[] processIds;
+                KeyValuePair<int, DateTime>[] processIds;
                 bool waitingForDirectLaunchSnapshot;
                 lock (_syncRoot)
                 {
-                    processIds = _trackedProcessIds.ToArray();
+                    processIds = _trackedProcessStartTimes.ToArray();
                     waitingForDirectLaunchSnapshot = _hasObservedExpectedProcess &&
                         !_discoveryComplete &&
                         _completedSnapshotCount < _minimumSnapshotCountForDirectLaunch;
                 }
 
-                foreach (int processId in processIds)
+                foreach (KeyValuePair<int, DateTime> tracked in processIds)
                 {
                     try
                     {
-                        using (Process process = Process.GetProcessById(processId))
+                        using (Process process = Process.GetProcessById(tracked.Key))
                         {
-                            if (!process.HasExited)
+                            if (!process.HasExited && process.StartTime.ToUniversalTime() == tracked.Value)
                                 return true;
                         }
                     }
@@ -104,7 +109,7 @@ namespace DisplayMagician.Processes
                     }
                     catch (Exception ex)
                     {
-                        logger.Trace(ex, $"ProcessTreeMonitor/IsRunning: Could not query tracked PID {processId}.");
+                        logger.Trace(ex, $"ProcessTreeMonitor/IsRunning: Could not query tracked PID {tracked.Key}.");
                     }
                 }
 
@@ -118,19 +123,21 @@ namespace DisplayMagician.Processes
         public List<Process> GetTrackedProcesses()
         {
             List<Process> processes = new List<Process>();
-            int[] processIds;
+            KeyValuePair<int, DateTime>[] processIds;
             lock (_syncRoot)
-                processIds = _trackedProcessIds.ToArray();
+                processIds = _trackedProcessStartTimes.ToArray();
 
-            foreach (int processId in processIds)
+            foreach (KeyValuePair<int, DateTime> tracked in processIds)
             {
+                Process? process = null;
                 try
                 {
-                    Process process = Process.GetProcessById(processId);
-                    if (!process.HasExited)
+                    process = Process.GetProcessById(tracked.Key);
+                    if (!process.HasExited && process.StartTime.ToUniversalTime() == tracked.Value)
+                    {
                         processes.Add(process);
-                    else
-                        process.Dispose();
+                        process = null;
+                    }
                 }
                 catch (ArgumentException)
                 {
@@ -138,8 +145,10 @@ namespace DisplayMagician.Processes
                 }
                 catch (Exception ex)
                 {
-                    logger.Trace(ex, $"ProcessTreeMonitor/GetTrackedProcesses: Could not query tracked PID {processId}.");
+                    if (ex is System.ComponentModel.Win32Exception) _hadTrackingError = true;
+                    logger.Trace(ex, $"ProcessTreeMonitor/GetTrackedProcesses: Could not query tracked PID {tracked.Key}.");
                 }
+                finally { process?.Dispose(); }
             }
 
             return processes;
@@ -160,8 +169,12 @@ namespace DisplayMagician.Processes
 
                     lock (_syncRoot)
                     {
+                        DateTime startedUtc = process.StartTime.ToUniversalTime();
+                        if (_existingExpectedProcessIds.TryGetValue(process.Id, out DateTime existingStartedUtc) && existingStartedUtc == startedUtc)
+                            continue;
                         if (_trackedProcessIds.Add(process.Id))
                         {
+                            _trackedProcessStartTimes[process.Id] = startedUtc;
                             _hasObservedExpectedProcess = true;
                             int snapshotsRequired = _completedSnapshotCount +
                                 (Volatile.Read(ref _snapshotInProgress) != 0 ? 2 : 1);
@@ -175,6 +188,7 @@ namespace DisplayMagician.Processes
                 }
                 catch (Exception ex)
                 {
+                    if (ex is System.ComponentModel.Win32Exception) _hadTrackingError = true;
                     logger.Trace(ex, $"ProcessTreeMonitor/RegisterLaunchedProcesses: Could not register a launched process for {_expectedExecutablePath}.");
                 }
             }
@@ -283,6 +297,12 @@ namespace DisplayMagician.Processes
                 }
 
                 List<ProcessSnapshot> runningProcesses = CaptureProcessSnapshot();
+                if (_continueTrackingDescendants && DateTime.UtcNow > _deadlineUtc && !_usingLongInterval)
+                {
+                    _usingLongInterval = true;
+                    _snapshotTimer?.Change(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                }
+                RemoveExitedOrReusedProcesses(runningProcesses);
                 foreach (ProcessSnapshot process in runningProcesses)
                 {
                     if (DateTime.UtcNow > _deadlineUtc) break;
@@ -297,6 +317,7 @@ namespace DisplayMagician.Processes
             }
             catch (Exception ex)
             {
+                _hadTrackingError = true;
                 logger.Warn(ex, $"ProcessTreeMonitor/CaptureProcessTree: Could not capture the process tree for {_expectedExecutablePath}.");
             }
             finally
@@ -309,26 +330,23 @@ namespace DisplayMagician.Processes
 
         private void TryTrackExpectedProcess(int processId)
         {
-            lock (_syncRoot)
-            {
-                if (_existingExpectedProcessIds.Contains(processId))
-                    return;
-            }
-
             try
             {
                 using (Process process = Process.GetProcessById(processId))
                 {
                     if (!PathsMatch(process))
                         return;
-                }
-
-                lock (_syncRoot)
-                {
-                    if (_trackedProcessIds.Add(processId))
+                    DateTime startedUtc = process.StartTime.ToUniversalTime();
+                    lock (_syncRoot)
                     {
-                        _hasObservedExpectedProcess = true;
-                        logger.Debug($"ProcessTreeMonitor/TryTrackExpectedProcess: Tracking PID {processId} for {_expectedExecutablePath} as the expected executable.");
+                        if (_existingExpectedProcessIds.TryGetValue(processId, out DateTime existingStartedUtc) && existingStartedUtc == startedUtc)
+                            return;
+                        if (_trackedProcessIds.Add(processId))
+                        {
+                            _trackedProcessStartTimes[processId] = startedUtc;
+                            _hasObservedExpectedProcess = true;
+                            logger.Debug($"ProcessTreeMonitor/TryTrackExpectedProcess: Tracking PID {processId} for {_expectedExecutablePath} as the expected executable.");
+                        }
                     }
                 }
             }
@@ -352,10 +370,21 @@ namespace DisplayMagician.Processes
                 {
                     foreach (ProcessSnapshot process in runningProcesses)
                     {
-                        if (_trackedProcessIds.Contains(process.ParentProcessId) && _trackedProcessIds.Add(process.ProcessId))
+                        if (!_trackedProcessIds.Contains(process.ParentProcessId) || _trackedProcessIds.Contains(process.ProcessId))
+                            continue;
+                        try
                         {
+                            using Process child = Process.GetProcessById(process.ProcessId);
+                            if (child.HasExited) continue;
+                            _trackedProcessIds.Add(process.ProcessId);
+                            _trackedProcessStartTimes[process.ProcessId] = child.StartTime.ToUniversalTime();
                             changed = true;
                             logger.Trace($"ProcessTreeMonitor/ExpandTrackedDescendants: Tracking descendant PID {process.ProcessId} of PID {process.ParentProcessId} for {_expectedExecutablePath}.");
+                        }
+                        catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                        {
+                            if (ex is System.ComponentModel.Win32Exception) _hadTrackingError = true;
+                            logger.Trace(ex, "ProcessTreeMonitor/ExpandTrackedDescendants: Could not verify descendant PID {0}.", process.ProcessId);
                         }
                     }
                 }
@@ -363,12 +392,41 @@ namespace DisplayMagician.Processes
             while (changed);
         }
 
-        private static List<ProcessSnapshot> CaptureProcessSnapshot()
+        private void RemoveExitedOrReusedProcesses(List<ProcessSnapshot> runningProcesses)
+        {
+            HashSet<int> runningIds = runningProcesses.Select(item => item.ProcessId).ToHashSet();
+            lock (_syncRoot)
+            {
+                foreach (KeyValuePair<int, DateTime> tracked in _trackedProcessStartTimes.ToArray())
+                {
+                    if (!runningIds.Contains(tracked.Key) && DateTime.UtcNow <= _deadlineUtc) continue;
+                    bool sameProcess = false;
+                    try
+                    {
+                        using Process process = Process.GetProcessById(tracked.Key);
+                        sameProcess = !process.HasExited && process.StartTime.ToUniversalTime() == tracked.Value;
+                    }
+                    catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                    {
+                        if (runningIds.Contains(tracked.Key) && ex is System.ComponentModel.Win32Exception) _hadTrackingError = true;
+                        logger.Trace(ex, "ProcessTreeMonitor/RemoveExitedOrReusedProcesses: Could not verify tracked PID {0}.", tracked.Key);
+                    }
+                    if (!sameProcess)
+                    {
+                        _trackedProcessIds.Remove(tracked.Key);
+                        _trackedProcessStartTimes.Remove(tracked.Key);
+                    }
+                }
+            }
+        }
+
+        private List<ProcessSnapshot> CaptureProcessSnapshot()
         {
             List<ProcessSnapshot> processes = new List<ProcessSnapshot>();
             IntPtr snapshot = CreateToolhelp32Snapshot(SnapshotProcesses, 0);
             if (snapshot == InvalidHandle)
             {
+                _hadTrackingError = true;
                 logger.Warn($"ProcessTreeMonitor/CaptureProcessSnapshot: CreateToolhelp32Snapshot failed with Win32 error {Marshal.GetLastWin32Error()}.");
                 return processes;
             }
@@ -381,7 +439,11 @@ namespace DisplayMagician.Processes
                 };
 
                 if (!Process32First(snapshot, ref entry))
+                {
+                    _hadTrackingError = true;
+                    logger.Warn("ProcessTreeMonitor/CaptureProcessSnapshot: Process32First failed with Win32 error {0}.", Marshal.GetLastWin32Error());
                     return processes;
+                }
 
                 do
                 {

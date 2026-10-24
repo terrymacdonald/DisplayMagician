@@ -20,11 +20,14 @@ internal static class WindowPlacementService
 
     internal sealed record Source(string ProgramId, string ExecutablePath, HashSet<int> ProcessIds);
     internal sealed record Window(IntPtr Handle, string ProgramId, string ExecutablePath, string ClassName, string Title, NativePlacement Placement);
+    internal sealed record WindowScan(List<Window> Windows, bool IsComplete);
+    internal sealed record CaptureResult(ShortcutWindowPlacementDefinition[] Placements, bool IsComplete);
 
-    internal static List<Window> FindWindows(IReadOnlyList<Source> sources)
+    internal static WindowScan FindWindows(IReadOnlyList<Source> sources)
     {
         List<Window> windows = new List<Window>();
-        EnumWindows((handle, _) =>
+        bool complete = true;
+        bool enumerated = EnumWindows((handle, _) =>
         {
             if (!IsWindowVisible(handle) || GetWindow(handle, OwnerWindow) != IntPtr.Zero || (GetWindowLongPtr(handle, -20).ToInt64() & ToolWindowStyle) != 0)
                 return true;
@@ -40,34 +43,75 @@ internal static class WindowPlacementService
             StringBuilder className = new StringBuilder(256);
             GetWindowText(handle, title, title.Capacity);
             GetClassName(handle, className, className.Capacity);
-            if (string.IsNullOrWhiteSpace(title.ToString()) || string.IsNullOrWhiteSpace(className.ToString())) return true;
+            if (string.IsNullOrWhiteSpace(className.ToString()))
+            {
+                complete = false;
+                Logger.Warn("WindowPlacementService/FindWindows: Could not read the class for PID {0}.", processId);
+                return true;
+            }
 
             try
             {
                 using Process process = Process.GetProcessById((int)processId);
-                if (!string.Equals(process.MainModule?.FileName, source.ExecutablePath, StringComparison.OrdinalIgnoreCase)) return true;
+                if (!string.Equals(process.MainModule?.FileName, source.ExecutablePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    complete = false;
+                    Logger.Warn("WindowPlacementService/FindWindows: Executable changed for PID {0} during window capture.", processId);
+                    return true;
+                }
             }
             catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception || ex is ArgumentException)
             {
-                Logger.Debug(ex, "WindowPlacementService/FindWindows: Could not verify executable for PID {0}.", processId);
+                complete = false;
+                Logger.Warn(ex, "WindowPlacementService/FindWindows: Could not verify executable for PID {0}.", processId);
                 return true;
             }
 
             NativePlacement placement = new NativePlacement { Length = Marshal.SizeOf<NativePlacement>() };
             if (GetWindowPlacement(handle, ref placement))
                 windows.Add(new Window(handle, source.ProgramId, source.ExecutablePath, className.ToString(), title.ToString(), placement));
+            else
+            {
+                complete = false;
+                Logger.Warn("WindowPlacementService/FindWindows: GetWindowPlacement failed for PID {0}, Win32 error {1}.", processId, Marshal.GetLastWin32Error());
+            }
             return true;
         }, IntPtr.Zero);
-        return windows;
+        if (!enumerated)
+        {
+            complete = false;
+            Logger.Warn("WindowPlacementService/FindWindows: EnumWindows failed with Win32 error {0}.", Marshal.GetLastWin32Error());
+        }
+        return new WindowScan(windows, complete);
     }
 
-    internal static ShortcutWindowPlacementDefinition[] Capture(IReadOnlyList<Source> sources)
+    internal static CaptureResult Capture(IReadOnlyList<Source> sources)
     {
+        WindowScan scan = FindWindows(sources);
         List<ShortcutWindowPlacementDefinition> placements = new List<ShortcutWindowPlacementDefinition>();
-        foreach (Window window in FindWindows(sources))
+        foreach (Window window in scan.Windows)
         {
             Rectangle normal = window.Placement.Normal.ToRectangle();
-            string[] displays = Screen.AllScreens.Where(screen => screen.Bounds.IntersectsWith(normal)).Select(screen => screen.DeviceName).ToArray();
+            if (string.IsNullOrWhiteSpace(window.Title) && scan.Windows.Count(item => item.ProgramId == window.ProgramId &&
+                string.Equals(item.ExecutablePath, window.ExecutablePath, StringComparison.OrdinalIgnoreCase) && item.ClassName == window.ClassName) != 1)
+            {
+                Logger.Info("WindowPlacementService/Capture: Skipped ambiguous titleless window class {0} for {1}.", window.ClassName, window.ExecutablePath);
+                continue;
+            }
+            string[] displays;
+            if (window.Placement.ShowCommand == 2)
+                displays = new[] { Screen.FromHandle(window.Handle).DeviceName };
+            else
+            {
+                if (!GetWindowRect(window.Handle, out NativeRect currentRect))
+                {
+                    Logger.Warn("WindowPlacementService/Capture: GetWindowRect failed for {0}, Win32 error {1}.", window.ExecutablePath, Marshal.GetLastWin32Error());
+                    return new CaptureResult(Array.Empty<ShortcutWindowPlacementDefinition>(), false);
+                }
+                Rectangle current = currentRect.ToRectangle();
+                displays = Screen.AllScreens.Where(screen => screen.Bounds.IntersectsWith(current)).Select(screen => screen.DeviceName).ToArray();
+            }
+            if (displays.Length == 0) displays = new[] { Screen.FromHandle(window.Handle).DeviceName };
             int occurrence = placements.Count(item => item.ProgramId == window.ProgramId && item.WindowClass == window.ClassName);
             placements.Add(new ShortcutWindowPlacementDefinition
             {
@@ -80,31 +124,58 @@ internal static class WindowPlacementService
                 Top = normal.Top,
                 Right = normal.Right,
                 Bottom = normal.Bottom,
+                MaximizedLeft = window.Placement.Max.X,
+                MaximizedTop = window.Placement.Max.Y,
                 ShowCommand = window.Placement.ShowCommand,
                 DisplayNames = displays
             });
         }
-        return placements.ToArray();
+        return new CaptureResult(placements.ToArray(), scan.IsComplete);
     }
 
-    internal static (int Count, string[] Programs) Restore(IReadOnlyList<Source> sources, IReadOnlyList<ShortcutWindowPlacementDefinition> placements, HashSet<int> completed)
+    internal static (int Count, string[] Programs) Restore(IReadOnlyList<Source> sources, IReadOnlyList<ShortcutWindowPlacementDefinition> placements, HashSet<int> completed, Dictionary<int, IntPtr> pending, bool verifyOnly = false)
     {
-        List<Window> windows = FindWindows(sources);
-        HashSet<IntPtr> usedHandles = new HashSet<IntPtr>();
+        List<Window> windows = FindWindows(sources).Windows;
+        HashSet<IntPtr> usedHandles = pending.Values.ToHashSet();
         List<string> programs = new List<string>();
         int moved = 0;
         for (int index = 0; index < placements.Count; index++)
         {
             if (completed.Contains(index)) continue;
             ShortcutWindowPlacementDefinition saved = placements[index];
+            string[] requiredDisplays = saved.DisplayNames ?? Array.Empty<string>();
             Rectangle savedBounds = Rectangle.FromLTRB(saved.Left, saved.Top, saved.Right, saved.Bottom);
-            if (savedBounds.Width <= 0 || savedBounds.Height <= 0 || saved.DisplayNames.Length == 0 ||
-                saved.DisplayNames.Any(name => !Screen.AllScreens.Any(screen => string.Equals(screen.DeviceName, name, StringComparison.OrdinalIgnoreCase) && screen.Bounds.IntersectsWith(savedBounds))))
+            if (savedBounds.Width <= 0 || savedBounds.Height <= 0 || requiredDisplays.Length == 0 ||
+                requiredDisplays.Any(name => !Screen.AllScreens.Any(screen => string.Equals(screen.DeviceName, name, StringComparison.OrdinalIgnoreCase))))
             {
                 Logger.Warn("WindowPlacementService/Restore: Skipped placement {0} for {1}: required display is missing.", index, saved.ExecutablePath);
                 completed.Add(index);
                 continue;
             }
+
+            if (pending.TryGetValue(index, out IntPtr pendingHandle))
+            {
+                Window? pendingWindow = windows.FirstOrDefault(item => item.Handle == pendingHandle);
+                if (pendingWindow == null)
+                {
+                    pending.Remove(index);
+                    usedHandles.Remove(pendingHandle);
+                }
+                else
+                {
+                    if (MatchesSavedPlacement(pendingWindow.Placement, saved))
+                    {
+                        pending.Remove(index);
+                        completed.Add(index);
+                        moved++;
+                        programs.Add(System.IO.Path.GetFileNameWithoutExtension(saved.ExecutablePath));
+                        Logger.Info("WindowPlacementService/Restore: Verified window class {0} for {1} on {2}.", saved.WindowClass, saved.ExecutablePath, string.Join(",", requiredDisplays));
+                    }
+                    continue;
+                }
+            }
+
+            if (verifyOnly) continue;
 
             List<Window> matches = windows.Where(window => window.ProgramId == saved.ProgramId &&
                 string.Equals(window.ExecutablePath, saved.ExecutablePath, StringComparison.OrdinalIgnoreCase) &&
@@ -120,27 +191,37 @@ internal static class WindowPlacementService
             if (matches.Count != 1) continue;
 
             Window match = matches[0];
-            NativePlacement target = match.Placement;
-            target.Normal = new NativeRect(saved.Left, saved.Top, saved.Right, saved.Bottom);
-            target.ShowCommand = 1;
-            target.Flags = 4;
-            bool applied = SetWindowPlacement(match.Handle, ref target);
-            if (applied && saved.ShowCommand is 2 or 3)
-            {
-                target.ShowCommand = saved.ShowCommand;
-                applied = SetWindowPlacement(match.Handle, ref target);
-            }
-            if (applied)
+            if (MatchesSavedPlacement(match.Placement, saved))
             {
                 usedHandles.Add(match.Handle);
                 completed.Add(index);
-                moved++;
-                programs.Add(System.IO.Path.GetFileNameWithoutExtension(saved.ExecutablePath));
-                Logger.Info("WindowPlacementService/Restore: Placed window class {0} for {1} on {2}.", saved.WindowClass, saved.ExecutablePath, string.Join(",", saved.DisplayNames));
+                continue;
+            }
+            NativePlacement target = match.Placement;
+            target.Normal = new NativeRect(saved.Left, saved.Top, saved.Right, saved.Bottom);
+            if (saved.ShowCommand == 3 && saved.MaximizedLeft.HasValue && saved.MaximizedTop.HasValue)
+                target.Max = new NativePoint { X = saved.MaximizedLeft.Value, Y = saved.MaximizedTop.Value };
+            target.ShowCommand = saved.ShowCommand is 1 or 2 or 3 ? saved.ShowCommand : 1;
+            target.Flags = 4;
+            bool applied = SetWindowPlacement(match.Handle, ref target);
+            if (applied)
+            {
+                usedHandles.Add(match.Handle);
+                pending[index] = match.Handle;
             }
             else Logger.Warn("WindowPlacementService/Restore: SetWindowPlacement failed for {0}, Win32 error {1}.", saved.ExecutablePath, Marshal.GetLastWin32Error());
         }
         return (moved, programs.ToArray());
+    }
+
+    private static bool MatchesSavedPlacement(NativePlacement current, ShortcutWindowPlacementDefinition saved)
+    {
+        int expectedShowCommand = saved.ShowCommand is 2 or 3 ? saved.ShowCommand : 1;
+        return current.ShowCommand == expectedShowCommand &&
+            current.Normal.Left == saved.Left && current.Normal.Top == saved.Top &&
+            current.Normal.Right == saved.Right && current.Normal.Bottom == saved.Bottom &&
+            (expectedShowCommand != 3 || !saved.MaximizedLeft.HasValue || !saved.MaximizedTop.HasValue ||
+             (current.Max.X == saved.MaximizedLeft.Value && current.Max.Y == saved.MaximizedTop.Value));
     }
 
     [StructLayout(LayoutKind.Sequential)] internal struct NativeRect
@@ -168,6 +249,7 @@ internal static class WindowPlacementService
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr handle, StringBuilder text, int count);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr handle, StringBuilder text, int count);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool GetWindowPlacement(IntPtr handle, ref NativePlacement placement);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool GetWindowRect(IntPtr handle, out NativeRect rectangle);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool SetWindowPlacement(IntPtr handle, ref NativePlacement placement);
     [DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(IntPtr handle, int attribute, out int value, int size);
 }
