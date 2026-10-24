@@ -10,11 +10,11 @@ using System.Threading;
 using System.Xml;
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;
-using IWshRuntimeLibrary;
 using System.Windows.Forms;
 using static System.Windows.Forms.LinkLabel;
 using Windows.ApplicationModel.Core;
 using System.Web;
+using DisplayMagician.UserAgent;
 //using DisplayMagician.GameLibraries.SteamAppInfoParser;
 
 namespace DisplayMagician.AppLibraries
@@ -183,8 +183,8 @@ namespace DisplayMagician.AppLibraries
 
         public static void CreateShortcut(string executablePath, string arguments, string iconPath, string shortcutPath)
         {
-            var shell = new IWshRuntimeLibrary.WshShell();
-            var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcutPath);
+            dynamic shell = WindowsScriptShell.Create();
+            dynamic link = shell.CreateShortcut(shortcutPath);
             link.TargetPath = executablePath;
             link.WorkingDirectory = System.IO.Path.GetDirectoryName(executablePath) ?? string.Empty;
             link.Arguments = arguments;
@@ -194,9 +194,9 @@ namespace DisplayMagician.AppLibraries
 
         public static InstalledProgram GetLnkShortcutData(string lnkPath)
         {
-            var shell = new IWshRuntimeLibrary.WshShell();
-            var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(lnkPath);
-            string targetPath = link.TargetPath ?? string.Empty;
+            dynamic shell = WindowsScriptShell.Create();
+            dynamic link = shell.CreateShortcut(lnkPath);
+            string targetPath = link.TargetPath as string ?? string.Empty;
             string iconLocation = targetPath;
             if (!String.IsNullOrWhiteSpace(link.IconLocation))
             {
@@ -259,7 +259,7 @@ namespace DisplayMagician.AppLibraries
                 @"\windows\",
             };
 
-            var shell = new IWshRuntimeLibrary.WshShell();
+            dynamic shell = WindowsScriptShell.Create();
             var apps = new List<InstalledProgram>();
             var shortcuts = Directory.EnumerateFiles(path, "*.lnk", SearchOption.AllDirectories).Select(filePath => new FileInfo(filePath));
 
@@ -288,8 +288,8 @@ namespace DisplayMagician.AppLibraries
                 }
 
                 // Parse the link file to get access to the settings in it.
-                var link = (IWshRuntimeLibrary.IWshShortcut)shell.CreateShortcut(shortcut.FullName);
-                var target = link.TargetPath ?? string.Empty;
+                dynamic link = shell.CreateShortcut(shortcut.FullName);
+                string target = link.TargetPath as string ?? string.Empty;
 
                 // Skip the paths we don't want to process.
                 if (pathExceptions.FirstOrDefault(a => target.IndexOf(a, StringComparison.OrdinalIgnoreCase) >= 0) != null)

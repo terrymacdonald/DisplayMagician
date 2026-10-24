@@ -18,6 +18,7 @@ dotnet test .\DisplayMagician.UserAgent.Tests\DisplayMagician.UserAgent.Tests.cs
 ```
 
 Run an Agent build only in an interactive Windows session. It needs the installed native/vendor dependencies and the Control Service connection to exercise real operations.
+Windows shortcut creation and inspection use the registered `WScript.Shell` COM object at runtime, so `dotnet build` does not need to resolve a COM type library.
 
 Configuration and recovery data are user scoped. Maintain backward-compatible JSON and explicit migrations when changing persisted models. See the [architecture plan](../DISPLAYMAGICIAN_V4_CONTROL_SERVICE_PLAN.md) for the Agent's ownership boundary.
 
