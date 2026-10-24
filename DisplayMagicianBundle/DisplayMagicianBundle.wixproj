@@ -53,6 +53,12 @@
     <Error
         Condition="'$(AspNetCoreRuntimeFilename)' == ''"
         Text="The ASP.NET Core Runtime filename is missing. Run prepare_displaymagician.ps1 first." />
+    <Error
+        Condition="'$(DotNetDesktopRuntimeVersion)' != '' and $([MSBuild]::VersionLessThan('$(DotNetDesktopRuntimeVersion)', '10.0.13'))"
+        Text="The .NET Desktop Runtime must be at least 10.0.13. Run prepare_displaymagician.ps1 -RefreshRuntimes." />
+    <Error
+        Condition="'$(AspNetCoreRuntimeVersion)' != '' and $([MSBuild]::VersionLessThan('$(AspNetCoreRuntimeVersion)', '10.0.13'))"
+        Text="The ASP.NET Core Runtime must be at least 10.0.13. Run prepare_displaymagician.ps1 -RefreshRuntimes." />
   </Target>
   <!-- Added as workaround for FireGiant HeatWave bug #73 https://github.com/firegiant/HeatWaveSupport/issues/73 -->
   <Target Name="CollectSuggestedVisualStudioComponentIds" />

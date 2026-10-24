@@ -12,6 +12,8 @@ Build through the repository release workflow:
 
 Run `.\prepare_displaymagician.ps1` once to obtain the .NET runtime installers used by the bundle. Later runs reuse valid signed installers already in `Packages`; use `.\prepare_displaymagician.ps1 -RefreshRuntimes` when you want to download newer runtime versions.
 
+The bundle requires .NET Desktop and ASP.NET Core runtime 10.0.13 or later. Run `.\prepare_displaymagician.ps1 -RefreshRuntimes` if an existing `RuntimeConfig.props` names an older version.
+
 For a development build, build the MSI first and then the bundle:
 
 ```powershell

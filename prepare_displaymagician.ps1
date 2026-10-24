@@ -626,6 +626,7 @@ function Get-DotNetRuntimeInstaller {
             $cachedVersion = [regex]::Match($cachedRuntimeFile.Name, '10\.0\.\d+').Value
             $cachedSignature = Get-AuthenticodeSignature -FilePath $cachedRuntimeFile.FullName
             if (
+                [version]$cachedVersion -ge [version]'10.0.13' -and
                 $cachedRuntimeFile.Length -ge 5MB -and
                 $cachedRuntimeFile.VersionInfo.ProductVersion -match "^$([regex]::Escape($cachedVersion))([. ]|$)" -and
                 $cachedSignature.Status -eq 'Valid' -and
@@ -678,6 +679,10 @@ function Get-DotNetRuntimeInstaller {
         }
 
         $runtimeVersion = $Matches.version
+
+        if ([version]$runtimeVersion -lt [version]'10.0.13') {
+            throw "Downloaded $DisplayName runtime $runtimeVersion is older than the required security update 10.0.13."
+        }
         $runtimeFilename = "$FilenamePrefix-$runtimeVersion-win-x64.exe"
         $runtimeDest = Join-Path $bundlePackagesDir $runtimeFilename
 

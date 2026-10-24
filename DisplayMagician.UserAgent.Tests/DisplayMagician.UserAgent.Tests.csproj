@@ -7,7 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.12" />
+    <!-- Pin the WCF transitive dependency to the patched release during test restore. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13">
+      <NoWarn>NU1510</NoWarn>
+    </PackageReference>
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
