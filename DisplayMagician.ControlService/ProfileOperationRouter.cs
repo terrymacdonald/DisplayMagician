@@ -315,6 +315,11 @@ public sealed class ProfileOperationRouter
         }, false, cancellationToken);
     }
 
+    public Task<ControlResponse> ManageActiveWindowPlacementsAsync(string userSid, int sessionId, ControlEnvelope request, CancellationToken cancellationToken)
+    {
+        return SendToAgentAsync(userSid, sessionId, request, request.MessageType == ControlMessageType.ClearWindowPlacements, cancellationToken);
+    }
+
     private async Task<ControlResponse> SendToAgentAsync(string userSid, int sessionId, ControlEnvelope command, CancellationToken cancellationToken)
     {
         return await SendToAgentAsync(userSid, sessionId, command, true, cancellationToken).ConfigureAwait(false);

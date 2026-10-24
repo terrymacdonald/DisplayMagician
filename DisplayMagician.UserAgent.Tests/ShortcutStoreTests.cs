@@ -12,6 +12,73 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class ShortcutStoreTests
 {
     [Fact]
+    public void Constructor_MigratesWindowPlacementSchemaAndBacksUpShortcuts()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");
+        try
+        {
+            string directory = Path.Combine(root, "Shortcuts");
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(Path.Combine(directory, "Shortcuts.json"),
+                "{\"ShortcutFileVersion\":\"6\",\"Shortcuts\":[{\"UUID\":\"shortcut-one\",\"Name\":\"Original\",\"StartPrograms\":[{\"Executable\":\"C:\\\\Tools\\\\helper.exe\"}]}]}", Encoding.Unicode);
+
+            ShortcutStore store = new ShortcutStore(root);
+            using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
+            JsonElement shortcut = document.RootElement.GetProperty("Shortcuts")[0];
+            Assert.Equal("7", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal("Original", shortcut.GetProperty("Name").GetString());
+            Assert.True(Guid.TryParse(shortcut.GetProperty("StartPrograms")[0].GetProperty("Id").GetString(), out _));
+            Assert.Equal(20, shortcut.GetProperty("WindowPlacementTimeoutSeconds").GetInt32());
+            Assert.Empty(shortcut.GetProperty("WindowPlacements").EnumerateArray());
+            Assert.Single(Directory.GetFiles(directory, "Shortcuts.json.v6.*.bak"));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void ReplaceWindowPlacements_ReplacesSnapshotAndPreservesOtherShortcutData()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");
+        try
+        {
+            ShortcutStore store = new ShortcutStore(root);
+            RepositorySnapshot initial = store.GetSnapshot();
+            store.Commit(new RepositoryCommitRequest
+            {
+                Repository = RepositoryKind.Shortcuts,
+                ExpectedRevision = initial.Revision,
+                Json = "{\"ShortcutFileVersion\":\"7\",\"Shortcuts\":[{\"UUID\":\"shortcut-one\",\"Name\":\"Original\",\"WindowPlacements\":[{\"ProgramId\":\"old\"}],\"CustomChoice\":true}]}"
+            });
+            int replaced = store.ReplaceWindowPlacements("shortcut-one", new[]
+            {
+                new ShortcutWindowPlacementDefinition { ProgramId = "main", ExecutablePath = "C:\\Game.exe", WindowClass = "Game", Left = 10, Right = 200, ShowCommand = 3 }
+            });
+
+            Assert.Equal(1, replaced);
+            using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
+            JsonElement shortcut = document.RootElement.GetProperty("Shortcuts")[0];
+            Assert.True(shortcut.GetProperty("CustomChoice").GetBoolean());
+            Assert.Equal("Original", shortcut.GetProperty("Name").GetString());
+            Assert.Equal("main", shortcut.GetProperty("WindowPlacements")[0].GetProperty("ProgramId").GetString());
+            Assert.Equal(3, shortcut.GetProperty("WindowPlacements")[0].GetProperty("ShowCommand").GetInt32());
+
+            int cleared = store.ReplaceWindowPlacements("shortcut-one", Array.Empty<ShortcutWindowPlacementDefinition>());
+            Assert.Equal(1, cleared);
+            using JsonDocument clearedDocument = JsonDocument.Parse(store.GetSnapshot().Json);
+            JsonElement clearedShortcut = clearedDocument.RootElement.GetProperty("Shortcuts")[0];
+            Assert.Empty(clearedShortcut.GetProperty("WindowPlacements").EnumerateArray());
+            Assert.True(clearedShortcut.GetProperty("CustomChoice").GetBoolean());
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
     public void GetSavedShortcutBitmaps_ReturnsPersistedCompositeImage()
     {
         ShortcutStore store = new ShortcutStore(Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}"));

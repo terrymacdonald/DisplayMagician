@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -14,12 +15,14 @@ namespace DisplayMagician.UserAgent;
 public sealed class ShortcutStore
 {
     private readonly string _shortcutFilePath;
+    private readonly object _writeLock = new object();
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     public ShortcutStore(string userDataPath)
     {
         _shortcutFilePath = Path.Combine(userDataPath, "Shortcuts", "Shortcuts.json");
         MigrateLegacyApplicationObjects();
+        MigrateWindowPlacementSchema();
     }
 
     public RepositorySnapshot GetSnapshot()
@@ -105,6 +108,8 @@ public sealed class ShortcutStore
                 OverrideAudioMicrophoneVolume = GetBoolean(shortcut, "OverrideAudioMicrophoneVolume"),
                 OverrideAudioMicrophoneVolumeLevel = GetInt32(shortcut, "OverrideAudioMicrophoneVolumeLevel", 50),
                 StartPrograms = GetStartPrograms(shortcut),
+                WindowPlacements = GetWindowPlacements(shortcut),
+                WindowPlacementTimeoutSeconds = GetInt32(shortcut, "WindowPlacementTimeoutSeconds", 20),
                 AfterPrograms = GetAfterPrograms(shortcut),
                 StopPrograms = GetStopPrograms(shortcut)
             });
@@ -136,19 +141,86 @@ public sealed class ShortcutStore
 
     public RepositoryCommitResult Commit(RepositoryCommitRequest request)
     {
-        RepositorySnapshot snapshot = GetSnapshot();
-        if (request.ExpectedRevision != snapshot.Revision)
+        lock (_writeLock)
         {
-            return new RepositoryCommitResult { WasConflict = true, Snapshot = snapshot };
-        }
+            RepositorySnapshot snapshot = GetSnapshot();
+            if (request.ExpectedRevision != snapshot.Revision)
+            {
+                return new RepositoryCommitResult { WasConflict = true, Snapshot = snapshot };
+            }
 
-        using JsonDocument _ = JsonDocument.Parse(request.Json);
-        string directory = Path.GetDirectoryName(_shortcutFilePath)!;
-        Directory.CreateDirectory(directory);
-        string temporaryPath = Path.Combine(directory, $".Shortcuts.{Guid.NewGuid():N}.tmp");
-        File.WriteAllText(temporaryPath, request.Json, Encoding.Unicode);
-        if (File.Exists(_shortcutFilePath)) File.Replace(temporaryPath, _shortcutFilePath, null); else File.Move(temporaryPath, _shortcutFilePath);
-        return new RepositoryCommitResult { Snapshot = GetSnapshot() };
+            using JsonDocument _ = JsonDocument.Parse(request.Json);
+            string directory = Path.GetDirectoryName(_shortcutFilePath)!;
+            Directory.CreateDirectory(directory);
+            string temporaryPath = Path.Combine(directory, $".Shortcuts.{Guid.NewGuid():N}.tmp");
+            File.WriteAllText(temporaryPath, request.Json, Encoding.Unicode);
+            if (File.Exists(_shortcutFilePath)) File.Replace(temporaryPath, _shortcutFilePath, null); else File.Move(temporaryPath, _shortcutFilePath);
+            return new RepositoryCommitResult { Snapshot = GetSnapshot() };
+        }
+    }
+
+    public int ReplaceWindowPlacements(string shortcutId, IReadOnlyList<ShortcutWindowPlacementDefinition> placements)
+    {
+        lock (_writeLock)
+        {
+            RepositorySnapshot snapshot = GetSnapshot();
+            JsonObject? root = JsonNode.Parse(snapshot.Json) as JsonObject;
+            if (root?["Shortcuts"] is not JsonArray shortcuts)
+            {
+                return -1;
+            }
+
+            JsonObject? shortcut = shortcuts.OfType<JsonObject>().FirstOrDefault(item =>
+                string.Equals(item["UUID"]?.GetValue<string>(), shortcutId, StringComparison.OrdinalIgnoreCase));
+            if (shortcut == null)
+            {
+                return -1;
+            }
+
+            int previousCount = (shortcut["WindowPlacements"] as JsonArray)?.Count ?? 0;
+            shortcut["WindowPlacements"] = JsonSerializer.SerializeToNode(placements);
+            shortcut["WindowPlacementTimeoutSeconds"] ??= 20;
+            root["ShortcutFileVersion"] = "7";
+            RepositoryCommitResult result = Commit(new RepositoryCommitRequest
+            {
+                Repository = RepositoryKind.Shortcuts,
+                ExpectedRevision = snapshot.Revision,
+                Json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true })
+            });
+            if (result.WasConflict) throw new InvalidOperationException("The shortcut snapshot changed while updating window positions.");
+            return previousCount;
+        }
+    }
+
+    private void MigrateWindowPlacementSchema()
+    {
+        if (!File.Exists(_shortcutFilePath)) return;
+        try
+        {
+            JsonObject? root = JsonNode.Parse(GetSnapshot().Json) as JsonObject;
+            if (root?["Shortcuts"] is not JsonArray shortcuts || root["ShortcutFileVersion"]?.GetValue<string>() == "7") return;
+            foreach (JsonObject shortcut in shortcuts.OfType<JsonObject>())
+            {
+                shortcut["WindowPlacements"] ??= new JsonArray();
+                shortcut["WindowPlacementTimeoutSeconds"] ??= 20;
+                if (shortcut["StartPrograms"] is JsonArray programs)
+                {
+                    foreach (JsonObject program in programs.OfType<JsonObject>())
+                        program["Id"] ??= Guid.NewGuid().ToString("D");
+                }
+            }
+            root["ShortcutFileVersion"] = "7";
+            string backupPath = $"{_shortcutFilePath}.v6.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
+            File.Copy(_shortcutFilePath, backupPath, overwrite: false);
+            string temporaryPath = Path.Combine(Path.GetDirectoryName(_shortcutFilePath)!, $".Shortcuts.{Guid.NewGuid():N}.tmp");
+            File.WriteAllText(temporaryPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);
+            File.Replace(temporaryPath, _shortcutFilePath, null);
+            Logger.Info("ShortcutStore/MigrateWindowPlacementSchema: Upgraded {0} with backup {1}.", _shortcutFilePath, backupPath);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
+        {
+            Logger.Error(ex, "ShortcutStore/MigrateWindowPlacementSchema: Could not migrate {0}.", _shortcutFilePath);
+        }
     }
 
     private void MigrateLegacyApplicationObjects()
@@ -233,6 +305,7 @@ public sealed class ShortcutStore
         {
             programs.Add(new ShortcutStartProgramDefinition
             {
+                Id = GetString(program, "Id"),
                 Priority = GetInt32(program, "Priority"),
                 Disabled = GetBoolean(program, "Disabled"),
                 ProcessPriority = GetEnum(program, "ProcessPriority", ShortcutDefinitionProcessPriority.Normal),
@@ -248,6 +321,21 @@ public sealed class ShortcutStore
         }
 
         return programs;
+    }
+
+    private static IReadOnlyList<ShortcutWindowPlacementDefinition> GetWindowPlacements(JsonElement shortcut)
+    {
+        if (!shortcut.TryGetProperty("WindowPlacements", out JsonElement source) || source.ValueKind != JsonValueKind.Array)
+            return Array.Empty<ShortcutWindowPlacementDefinition>();
+        try
+        {
+            return JsonSerializer.Deserialize<ShortcutWindowPlacementDefinition[]>(source.GetRawText()) ?? Array.Empty<ShortcutWindowPlacementDefinition>();
+        }
+        catch (JsonException ex)
+        {
+            Logger.Warn(ex, "ShortcutStore/GetWindowPlacements: Could not parse placements for shortcut {0}.", GetString(shortcut, "UUID"));
+            return Array.Empty<ShortcutWindowPlacementDefinition>();
+        }
     }
 
     private static IReadOnlyList<ShortcutAfterProgramDefinition> GetAfterPrograms(JsonElement shortcut)

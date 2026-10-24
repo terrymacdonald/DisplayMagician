@@ -201,6 +201,7 @@ public sealed class ControlClientPipeServer
                                     ControlMessageType.ReportAnonymousMetricsUsage => ReportAnonymousMetricsUsage(request),
                                     ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
                                     ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                    ControlMessageType.GetActiveWindowPlacementSession or ControlMessageType.SaveWindowPlacements or ControlMessageType.ClearWindowPlacements => await _profileOperationRouter.ManageActiveWindowPlacementsAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
                                     ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
                                     ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
                                     ControlMessageType.RestartUserAgent => await _profileOperationRouter.RestartUserAgentAsync(identity.UserSid, identity.SessionId, request.RequestId, cancellationToken).ConfigureAwait(false),
@@ -298,7 +299,7 @@ public sealed class ControlClientPipeServer
 
     private static bool IsReplayableMutation(ControlMessageType messageType)
     {
-        return messageType is ControlMessageType.ApplyProfile or ControlMessageType.StartShortcut or ControlMessageType.CancelOperation or
+        return messageType is ControlMessageType.ApplyProfile or ControlMessageType.StartShortcut or ControlMessageType.SaveWindowPlacements or ControlMessageType.ClearWindowPlacements or ControlMessageType.CancelOperation or
             ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings or
             ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent or
             ControlMessageType.CommitRepositorySnapshot or ControlMessageType.SetMessageReadState or ControlMessageType.ResolveOperationDecision or ControlMessageType.UpdateAnonymousMetricsSettings or

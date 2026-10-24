@@ -4,6 +4,8 @@ This class library is the stable cross-process contract shared by the desktop ap
 
 It contains versioned control envelopes, protocol message types, request/response models, shared enums, client events, Gateway event replay records, retry policy, and the common support-log layout and correlation scope. It contains no UI, hardware access, files, or static application state.
 
+`GetActiveWindowPlacementSession` and `SaveWindowPlacements` let a same-user client capture the windows of an eligible active shortcut run. Save requests must carry that run's operation ID and shortcut ID; UserAgent rejects stale or ineligible runs. `ClearWindowPlacements` removes a shortcut's saved snapshot after the client confirms the action with the user.
+
 Successful saved-definition edits may include `SavedResourceChanges` with the repository kind, stable ID, and upsert/deleted action. Gateway replay records use the corresponding REST resource type, ID, action, and link for upserts.
 
 ## Compatibility rules

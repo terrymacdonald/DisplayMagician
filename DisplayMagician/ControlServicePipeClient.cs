@@ -85,6 +85,23 @@ internal sealed class ControlServicePipeClient
         throw new InvalidOperationException("The User Agent registration retry loop completed unexpectedly.");
     }
 
+    public Task<ControlResponse> GetActiveWindowPlacementSessionAsync(CancellationToken cancellationToken) =>
+        SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetActiveWindowPlacementSession }, cancellationToken);
+
+    public Task<ControlResponse> SaveWindowPlacementsAsync(Guid operationId, string shortcutId, CancellationToken cancellationToken) =>
+        SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.SaveWindowPlacements,
+            Payload = JsonSerializer.Serialize(new SaveWindowPlacementsRequest { OperationId = operationId, ShortcutId = shortcutId })
+        }, cancellationToken);
+
+    public Task<ControlResponse> ClearWindowPlacementsAsync(string shortcutId, CancellationToken cancellationToken) =>
+        SendAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.ClearWindowPlacements,
+            Payload = JsonSerializer.Serialize(new ClearWindowPlacementsRequest { ShortcutId = shortcutId })
+        }, cancellationToken);
+
     public async Task<OperationStatus> GetOperationStatusAsync(Guid operationId, CancellationToken cancellationToken)
     {
         if (operationId == Guid.Empty)

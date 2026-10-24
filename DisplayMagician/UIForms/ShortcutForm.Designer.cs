@@ -112,6 +112,8 @@ namespace DisplayMagician.UIForms
             lbl_game_library = new System.Windows.Forms.Label();
             rb_launcher = new System.Windows.Forms.RadioButton();
             tabp_after = new System.Windows.Forms.TabPage();
+            lbl_window_placement_timeout = new System.Windows.Forms.Label();
+            nud_window_placement_timeout = new System.Windows.Forms.NumericUpDown();
             groupBox3 = new System.Windows.Forms.GroupBox();
             cb_run_cmd_afterwards_run_as_administrator = new System.Windows.Forms.CheckBox();
             cb_run_cmd_afterwards_dont_start = new System.Windows.Forms.CheckBox();
@@ -1278,6 +1280,8 @@ namespace DisplayMagician.UIForms
             // tabp_after
             // 
             tabp_after.BackColor = System.Drawing.Color.Black;
+            tabp_after.Controls.Add(lbl_window_placement_timeout);
+            tabp_after.Controls.Add(nud_window_placement_timeout);
             tabp_after.Controls.Add(groupBox3);
             tabp_after.Controls.Add(groupBox1);
             tabp_after.Controls.Add(gb_display_after);
@@ -1290,6 +1294,18 @@ namespace DisplayMagician.UIForms
             tabp_after.Size = new System.Drawing.Size(1264, 750);
             tabp_after.TabIndex = 3;
             tabp_after.Text = "5. Choose what happens afterwards";
+            // lbl_window_placement_timeout
+            lbl_window_placement_timeout.AutoSize = true;
+            lbl_window_placement_timeout.Location = new System.Drawing.Point(318, 595);
+            lbl_window_placement_timeout.Name = "lbl_window_placement_timeout";
+            lbl_window_placement_timeout.Text = "Wait for saved windows when starting (seconds):";
+            // nud_window_placement_timeout
+            nud_window_placement_timeout.Location = new System.Drawing.Point(723, 593);
+            nud_window_placement_timeout.Maximum = new decimal(new int[] { 120, 0, 0, 0 });
+            nud_window_placement_timeout.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            nud_window_placement_timeout.Name = "nud_window_placement_timeout";
+            nud_window_placement_timeout.Size = new System.Drawing.Size(70, 26);
+            nud_window_placement_timeout.Value = new decimal(new int[] { 20, 0, 0, 0 });
             // 
             // groupBox3
             // 
@@ -1663,6 +1679,8 @@ namespace DisplayMagician.UIForms
         #endregion
         private System.Windows.Forms.Button btn_save;
         private System.Windows.Forms.Button btn_cancel;
+        private System.Windows.Forms.Label lbl_window_placement_timeout;
+        private System.Windows.Forms.NumericUpDown nud_window_placement_timeout;
         private System.Windows.Forms.OpenFileDialog dialog_open;
         private System.Windows.Forms.ImageList il_games;
         private System.Windows.Forms.TabControl tabc_shortcut;

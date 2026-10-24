@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagician.UIForms
 {
@@ -20,6 +21,7 @@ namespace DisplayMagician.UIForms
         private ShortcutAdaptor _shortcutAdaptor = new ShortcutAdaptor();
         private ShortcutItem _selectedShortcut = null;
         private ShortcutForm _shortcutForm = null;
+        private Guid _activeShortcutOperationId;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public ShortcutLibraryForm()
@@ -260,6 +262,7 @@ namespace DisplayMagician.UIForms
 
             if (e.Buttons == MouseButtons.Right)
             {
+                tsmi_clear_window_positions.Visible = _selectedShortcut.WindowPlacements.Count > 0;
                 cms_shortcuts.Show(ilv_saved_shortcuts,e.Location);
             }
         }
@@ -537,14 +540,33 @@ namespace DisplayMagician.UIForms
             btn_cancel.Visible = true;
             btn_cancel.Enabled = true;
             btn_cancel.BringToFront();
+            btn_save_window_positions.Visible = true;
+            btn_save_window_positions.Enabled = false;
+            btn_save_window_positions.BringToFront();
 
             ilv_saved_shortcuts.SuspendLayout();
             ilv_saved_shortcuts.Refresh();
 
-            Program.ERRORLEVEL result = Program.ERRORLEVEL.ERROR_EXCEPTION;
             try
             {
-                result = await Task.Run(() => Program.RunShortcut(_selectedShortcut.UUID));
+                ControlServicePipeClient client = new ControlServicePipeClient();
+                ControlResponse started = await client.StartShortcutWhenAgentAvailableAsync(_selectedShortcut.UUID, CancellationToken.None);
+                if (!started.IsSuccessful || started.OperationStatus == null)
+                {
+                    MessageBox.Show(this, started.Message, "Shortcut could not start", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    _activeShortcutOperationId = started.OperationStatus.OperationId;
+                    while (true)
+                    {
+                        OperationStatus status = await client.GetOperationStatusAsync(_activeShortcutOperationId, CancellationToken.None);
+                        ControlResponse active = await client.GetActiveWindowPlacementSessionAsync(CancellationToken.None);
+                        btn_save_window_positions.Enabled = active.WindowPlacementSession?.OperationId == _activeShortcutOperationId && active.WindowPlacementSession.CanSave;
+                        if (status.IsTerminal) break;
+                        await Task.Delay(500);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {
@@ -564,6 +586,9 @@ namespace DisplayMagician.UIForms
             // Hide the cancel button
             btn_cancel.Visible = false;
             btn_cancel.Enabled = false;
+            btn_save_window_positions.Visible = false;
+            btn_save_window_positions.Enabled = false;
+            _activeShortcutOperationId = Guid.Empty;
 
             if (Program.AppMainForm is Form)
             {
@@ -774,11 +799,53 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void btn_cancel_Click(object sender, EventArgs e)
+        private async void btn_cancel_Click(object sender, EventArgs e)
         {
             logger.Trace($"ShortcutLibraryForm/btn_cancel_Click: User clicked on the Cancel button after running a Shortcut.");
             // Inform the ShortcutRepository that it needs to cancel the running shortcut.
-            Program.CancelActiveOperation();
+            if (_activeShortcutOperationId != Guid.Empty)
+            {
+                try { await new ControlServicePipeClient().CancelOperationAsync(_activeShortcutOperationId, CancellationToken.None); }
+                catch (Exception ex) { logger.Warn(ex, "ShortcutLibraryForm/btn_cancel_Click: Could not cancel shortcut operation {0}.", _activeShortcutOperationId); }
+            }
+        }
+
+        private async void btn_save_window_positions_Click(object sender, EventArgs e)
+        {
+            await Program.SaveWindowPositionsAsync(_activeShortcutOperationId, this);
+        }
+
+        private async void tsmi_clear_window_positions_Click(object sender, EventArgs e)
+        {
+            if (_selectedShortcut == null || _selectedShortcut.WindowPlacements.Count == 0) return;
+            string shortcutId = _selectedShortcut.UUID;
+            string shortcutName = _selectedShortcut.Name;
+            if (MessageBox.Show(this, $"Clear all saved window positions for '{shortcutName}'? This cannot be undone.",
+                    "Clear Saved Window Positions", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+
+            try
+            {
+                ControlResponse response = await new ControlServicePipeClient().ClearWindowPlacementsAsync(shortcutId, CancellationToken.None);
+                if (!response.IsSuccessful)
+                {
+                    MessageBox.Show(this, response.Message ?? "Saved window positions could not be cleared.",
+                        "Clear Saved Window Positions", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                ShortcutRepository.LoadShortcuts();
+                _selectedShortcut = ShortcutRepository.GetShortcut(shortcutId);
+                RefreshShortcutLibraryUI();
+                UpdateShortcutStatusPanel();
+                MessageBox.Show(this, $"Saved window positions for '{shortcutName}' were cleared.",
+                    "Clear Saved Window Positions", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "ShortcutLibraryForm/tsmi_clear_window_positions_Click: Could not clear saved window positions for shortcut {0}.", shortcutId);
+                MessageBox.Show(this, "Saved window positions could not be cleared.",
+                    "Clear Saved Window Positions", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void sendToClipboardToolStripMenuItem_Click(object sender, EventArgs e)

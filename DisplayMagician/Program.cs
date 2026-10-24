@@ -1615,7 +1615,7 @@ namespace DisplayMagician {
                 _lastOperationStatusSequences.TryRemove(status.OperationId, out _);
             }
 
-            ShowOperationStatusToast(status);
+            _ = ShowOperationStatusToastAsync(status);
         }
 
         private static void HandleOperationDecisionEvent(OperationDecision decision)
@@ -1848,10 +1848,51 @@ namespace DisplayMagician {
             }
         }
 
-        private static void ShowOperationStatusToast(OperationStatus status)
+        public static async Task SaveWindowPositionsAsync(Guid? expectedOperationId = null, Form owner = null)
         {
             try
             {
+                ControlServicePipeClient client = new ControlServicePipeClient();
+                ControlResponse current = await client.GetActiveWindowPlacementSessionAsync(CancellationToken.None);
+                WindowPlacementSessionView session = current.WindowPlacementSession;
+                if (!current.IsSuccessful || session == null || !session.CanSave || (expectedOperationId.HasValue && expectedOperationId.Value != session.OperationId))
+                {
+                    ShowWindowPlacementToast("No eligible shortcut is running.");
+                    return;
+                }
+                Form dialogOwner = owner ?? AppMainForm;
+                if (session.ExistingPlacementCount > 0 && MessageBox.Show(dialogOwner,
+                    $"Replace the {session.ExistingPlacementCount} saved window positions for '{session.ShortcutName}' with a new snapshot?",
+                    "Save Window Positions", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+
+                ControlResponse result = await client.SaveWindowPlacementsAsync(session.OperationId, session.ShortcutId, CancellationToken.None);
+                if (result.IsSuccessful) ShortcutRepository.LoadShortcuts();
+                ShowWindowPlacementToast(result.IsSuccessful && result.SaveWindowPlacements != null
+                    ? $"Saved {result.SaveWindowPlacements.SavedWindowCount} window positions."
+                    : result.Message);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Program/SaveWindowPositionsAsync: Could not save window positions.");
+                ShowWindowPlacementToast("Window positions could not be saved.");
+            }
+        }
+
+        private static void ShowWindowPlacementToast(string message)
+        {
+            try { new ToastContentBuilder().AddText("Window positions").AddText(message).SetToastDuration(ToastDuration.Short).Show(); }
+            catch (Exception ex) { logger.Warn(ex, "Program/ShowWindowPlacementToast: Could not show window placement notification."); }
+        }
+
+        private static async Task ShowOperationStatusToastAsync(OperationStatus status)
+        {
+            try
+            {
+                if (status.Phase == OperationPhase.RestoringWindowPositions)
+                {
+                    ShowWindowPlacementToast(status.Message);
+                    return;
+                }
                 string operationName = status.OperationType == DisplayOperationType.StartShortcut ? "Game shortcut" : "Display operation";
                 string outcome = status.Phase switch
                 {
@@ -1871,6 +1912,14 @@ namespace DisplayMagician {
                     .AddText(headerText, hintMaxLines: 1)
                     .AddText(message)
                     .SetToastDuration(ToastDuration.Short);
+                if (status.OperationType == DisplayOperationType.StartShortcut && status.Phase == OperationPhase.WaitingForGameToClose)
+                {
+                    ControlResponse active = await new ControlServicePipeClient().GetActiveWindowPlacementSessionAsync(CancellationToken.None);
+                    if (active.WindowPlacementSession?.OperationId == status.OperationId && active.WindowPlacementSession.CanSave)
+                        toast.AddButton(new ToastButton().SetContent("Save Window Positions")
+                            .AddArgument("action", "saveWindowPositions")
+                            .AddArgument("operationId", status.OperationId.ToString("D")));
+                }
                 if (status.IsTerminal)
                 {
                     toast.AddAudio(new Uri("ms-winsoundevent:Notification.Default"), false, true);
@@ -2612,6 +2661,11 @@ namespace DisplayMagician {
                             break;
 
                         case "readMessagesLater":
+                            break;
+
+                        case "saveWindowPositions":
+                            if (Guid.TryParse(args["operationId"], out Guid windowOperationId) && Program.AppMainForm != null)
+                                Program.AppMainForm.BeginInvoke((System.Windows.Forms.MethodInvoker)(async () => await SaveWindowPositionsAsync(windowOperationId, Program.AppMainForm)));
                             break;
 
                         default:

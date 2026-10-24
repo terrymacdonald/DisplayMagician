@@ -41,7 +41,7 @@ namespace DisplayMagician
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
         private static bool _shortcutsLoaded = false;
         //private static bool _cancelWait = false;
-        private static string _shortcutFileVersion = "6";
+        private static string _shortcutFileVersion = "7";
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
@@ -502,6 +502,17 @@ namespace DisplayMagician
                     LastUpdated = DateTime.Now,
                     Shortcuts = _allShortcuts
                 };
+
+                foreach (ShortcutItem shortcut in _allShortcuts)
+                {
+                    for (int index = 0; index < shortcut.StartPrograms.Count; index++)
+                    {
+                        StartProgram program = shortcut.StartPrograms[index];
+                        if (!string.IsNullOrWhiteSpace(program.Id)) continue;
+                        program.Id = Guid.NewGuid().ToString("D");
+                        shortcut.StartPrograms[index] = program;
+                    }
+                }
 
                 var json = JsonConvert.SerializeObject(shortcutFile, Formatting.Indented, mySerializerSettings);
 

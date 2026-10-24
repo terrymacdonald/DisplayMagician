@@ -354,6 +354,50 @@ public sealed class ProfileCommandHandler
             };
         }
 
+        if (request.MessageType == ControlMessageType.GetActiveWindowPlacementSession)
+        {
+            WindowPlacementSessionView? session = _shortcutRunner.GetWindowPlacementSession();
+            return new ControlResponse { IsSuccessful = true, WindowPlacementSession = session };
+        }
+
+        if (request.MessageType == ControlMessageType.SaveWindowPlacements)
+        {
+            SaveWindowPlacementsRequest? capture = JsonSerializer.Deserialize<SaveWindowPlacementsRequest>(request.Payload);
+            if (capture == null || capture.OperationId == Guid.Empty || string.IsNullOrWhiteSpace(capture.ShortcutId))
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A live shortcut run is required." };
+            try
+            {
+                SaveWindowPlacementsResult? result = _shortcutRunner.SaveWindowPlacements(capture.OperationId, capture.ShortcutId);
+                return result == null
+                    ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.OperationNotFound, Message = "This shortcut run cannot save window positions." }
+                    : new ControlResponse { IsSuccessful = result.SavedWindowCount > 0, ErrorCode = result.SavedWindowCount > 0 ? ControlErrorCode.None : ControlErrorCode.ValidationFailed, Message = result.SavedWindowCount > 0 ? "Window positions saved." : "No eligible windows were found; the existing snapshot was kept.", SaveWindowPlacements = result };
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
+            {
+                _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Could not save window positions for shortcut {0}.", capture.ShortcutId);
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "Window positions could not be saved." };
+            }
+        }
+
+        if (request.MessageType == ControlMessageType.ClearWindowPlacements)
+        {
+            ClearWindowPlacementsRequest? clear = JsonSerializer.Deserialize<ClearWindowPlacementsRequest>(request.Payload);
+            if (clear == null || string.IsNullOrWhiteSpace(clear.ShortcutId))
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A shortcut ID is required." };
+            try
+            {
+                int previousCount = _shortcutStore.ReplaceWindowPlacements(clear.ShortcutId, Array.Empty<ShortcutWindowPlacementDefinition>());
+                return previousCount < 0
+                    ? new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ShortcutNotFound, Message = "The shortcut was not found." }
+                    : new ControlResponse { IsSuccessful = true, Message = $"Cleared {previousCount} saved window positions." };
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
+            {
+                _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Could not clear window positions for shortcut {0}.", clear.ShortcutId);
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "Saved window positions could not be cleared." };
+            }
+        }
+
         if (request.MessageType == ControlMessageType.StartShortcut)
         {
             StartShortcutRequest? startRequest = JsonSerializer.Deserialize<StartShortcutRequest>(request.Payload);

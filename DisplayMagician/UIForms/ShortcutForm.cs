@@ -531,6 +531,7 @@ namespace DisplayMagician.UIForms
                 HotkeyManager.Current.AddOrReplace(_shortcutToEdit.UUID, _shortcutToEdit.Hotkey, OnWindowHotkeyPressed);*/
 
             // Refresh validity after these changes
+            _shortcutToEdit.WindowPlacementTimeoutSeconds = Convert.ToInt32(nud_window_placement_timeout.Value);
             _shortcutToEdit.RefreshValidity();
 
             // We've saved, so mark it as so
@@ -888,6 +889,7 @@ namespace DisplayMagician.UIForms
             _isUnsaved = true;
             _loadedShortcut = false;
             _autoName = true;
+            nud_window_placement_timeout.Value = 20;
             _gameId = "0";
             _uuid = "";
 
@@ -993,6 +995,7 @@ namespace DisplayMagician.UIForms
             // CLEAR THE FORM
             // =============================================
             ClearForm();
+            nud_window_placement_timeout.Value = Math.Clamp(_shortcutToEdit.WindowPlacementTimeoutSeconds, 1, 120);
 
             // =============================================
             // SETTING COMMON VARIABLES

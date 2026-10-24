@@ -225,7 +225,10 @@ public enum ControlMessageType
     ListRemoteDecisions = 93,
     GetRemoteDecision = 94,
     AnswerRemoteDecision = 95,
-    ReadRemoteEvents = 96
+    ReadRemoteEvents = 96,
+    GetActiveWindowPlacementSession = 97,
+    SaveWindowPlacements = 98,
+    ClearWindowPlacements = 99
 }
 
 public enum ControlErrorCode
@@ -852,6 +855,33 @@ public sealed class StartShortcutRequest
     public Guid OperationId { get; set; }
 }
 
+/// <summary>Current shortcut run that can capture its launched windows.</summary>
+public sealed class WindowPlacementSessionView
+{
+    public Guid OperationId { get; set; }
+    public string ShortcutId { get; set; } = string.Empty;
+    public string ShortcutName { get; set; } = string.Empty;
+    public bool CanSave { get; set; }
+    public int ExistingPlacementCount { get; set; }
+}
+
+public sealed class SaveWindowPlacementsRequest
+{
+    public Guid OperationId { get; set; }
+    public string ShortcutId { get; set; } = string.Empty;
+}
+
+public sealed class ClearWindowPlacementsRequest
+{
+    public string ShortcutId { get; set; } = string.Empty;
+}
+
+public sealed class SaveWindowPlacementsResult
+{
+    public int SavedWindowCount { get; set; }
+    public string[] ProgramNames { get; set; } = Array.Empty<string>();
+}
+
 /// <summary>Requests cancellation of an active operation owned by the caller's User Agent.</summary>
 public sealed class CancelOperationRequest
 {
@@ -875,7 +905,8 @@ public enum OperationPhase
     Completed = 12,
     Cancelled = 13,
     Failed = 14,
-    AwaitingUserDecision = 15
+    AwaitingUserDecision = 15,
+    RestoringWindowPositions = 16
 }
 
 public enum OperationDecisionChoice
@@ -1278,6 +1309,8 @@ public sealed class ControlResponse
     public ApplyProfileResult? ApplyProfile { get; set; }
 
     public OperationStatus? OperationStatus { get; set; }
+    public WindowPlacementSessionView? WindowPlacementSession { get; set; }
+    public SaveWindowPlacementsResult? SaveWindowPlacements { get; set; }
 
     public OperationStatus[] OperationStatuses { get; set; } = Array.Empty<OperationStatus>();
 

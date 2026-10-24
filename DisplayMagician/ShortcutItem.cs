@@ -27,6 +27,7 @@ namespace DisplayMagician
 
     public struct StartProgram
     {
+        public string Id;
         public int Priority;
         public bool Disabled;
         public ProcessPriority ProcessPriority;
@@ -179,6 +180,8 @@ namespace DisplayMagician
         private ShortcutValidity _isValid;
         private List<ShortcutError> _shortcutErrors = new List<ShortcutError>();
         private List<StartProgram> _startPrograms = new List<StartProgram> ();
+        private List<ShortcutWindowPlacementDefinition> _windowPlacements = new List<ShortcutWindowPlacementDefinition>();
+        private int _windowPlacementTimeoutSeconds = 20;
         private List<AfterProgram> _afterPrograms = new List<AfterProgram>();
         private List<StopProgram> _stopPrograms = new List<StopProgram>();
         private Bitmap _shortcutBitmap, _originalBitmap;
@@ -717,6 +720,18 @@ namespace DisplayMagician
             }
         }
 
+        public List<ShortcutWindowPlacementDefinition> WindowPlacements
+        {
+            get => _windowPlacements;
+            set => _windowPlacements = value ?? new List<ShortcutWindowPlacementDefinition>();
+        }
+
+        public int WindowPlacementTimeoutSeconds
+        {
+            get => _windowPlacementTimeoutSeconds;
+            set => _windowPlacementTimeoutSeconds = Math.Clamp(value, 1, 120);
+        }
+
         [DefaultValue(default(List<AfterProgram>))]
         public List<AfterProgram> AfterPrograms
         {
@@ -905,6 +920,7 @@ namespace DisplayMagician
                 OverrideAudioMicrophoneVolumeLevel = OverrideAudioMicrophoneVolumeLevel,
                 StartPrograms = StartPrograms?.Select(program => new ShortcutStartProgramDefinition
                 {
+                    Id = program.Id,
                     Priority = program.Priority,
                     Disabled = program.Disabled,
                     ProcessPriority = (ShortcutDefinitionProcessPriority)(int)program.ProcessPriority,
@@ -917,6 +933,8 @@ namespace DisplayMagician
                     DoNotStartIfAlreadyRunning = program.DontStartIfAlreadyRunning,
                     RunAsAdministrator = program.RunAsAdministrator
                 }).ToArray() ?? Array.Empty<ShortcutStartProgramDefinition>(),
+                WindowPlacements = WindowPlacements?.ToArray() ?? Array.Empty<ShortcutWindowPlacementDefinition>(),
+                WindowPlacementTimeoutSeconds = WindowPlacementTimeoutSeconds,
                 AfterPrograms = AfterPrograms?.Select(program => new ShortcutAfterProgramDefinition
                 {
                     Priority = program.Priority,
@@ -1287,6 +1305,8 @@ namespace DisplayMagician
             shortcut.OverrideAudioSpeakerVolumeLevel = OverrideAudioSpeakerVolumeLevel;
             shortcut.OverrideAudioMicrophoneVolume = OverrideAudioMicrophoneVolume;
             shortcut.OverrideAudioMicrophoneVolumeLevel = OverrideAudioMicrophoneVolumeLevel;
+            shortcut.WindowPlacementTimeoutSeconds = WindowPlacementTimeoutSeconds;
+            shortcut.WindowPlacements = new List<ShortcutWindowPlacementDefinition>(WindowPlacements);
 
             // Duplicate the Images
 
@@ -1301,6 +1321,7 @@ namespace DisplayMagician
             foreach (StartProgram sp in StartPrograms)
             {
                 StartProgram copiedStartProgram = new StartProgram();
+                copiedStartProgram.Id = sp.Id;
                 copiedStartProgram.Arguments = sp.Arguments;
                 copiedStartProgram.CloseOnFinish = sp.CloseOnFinish;
                 copiedStartProgram.Disabled = sp.Disabled;

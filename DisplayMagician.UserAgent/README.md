@@ -4,6 +4,8 @@ This project is the per-user background executor that runs in the interactive Wi
 
 The Agent is the owner of interactive desktop work. It starts its command pipe and restores pending state before it reports itself ready to the Control Service. The service performs machine-wide coordination and routing, but must not take over these responsibilities.
 
+For shortcuts with a saved window snapshot, UserAgent tracks windows of the main game/executable and Start Programs launched in that run, then restores their normal bounds and normal/minimized/maximized state after launch. It skips uncertain matches, missing displays, and runs whose display-profile application failed. An active run can replace its entire snapshot through the shared service API; already-running Start Programs are excluded. Shortcut file version 7 adds stable Start Program IDs and window-placement fields. The Agent backs up and atomically migrates older shortcut files before use.
+
 Profile list responses include compact layout thumbnails. A client may request a labelled preview and multi-size desktop `.ico` for one selected profile or a preview for the current layout; the Agent renders these from its authoritative display and saved wallpaper configuration, falling back to the display colour when a saved wallpaper cannot be read. Compact thumbnails are used for list and game shortcut overlays. Shortcut-list icons prefer the user's saved composite image over an executable-derived fallback.
 
 Successful direct display and audio profile edits return the saved profile ID and change action to ControlService. This lets the service publish precise saved-resource events after the Agent commits the edit. Bulk repository edits are compared by saved ID in ControlService.

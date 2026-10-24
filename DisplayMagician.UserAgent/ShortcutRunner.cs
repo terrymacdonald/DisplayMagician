@@ -22,6 +22,8 @@ public sealed class ShortcutRunner
     private readonly UserProfileOperationService _profileOperationService;
     private readonly ShortcutRecoveryStore _recoveryStore;
     private readonly AudioVolumeOverrideService _audioVolumeOverrideService;
+    private readonly object _windowPlacementLock = new object();
+    private WindowPlacementRun? _activeWindowPlacementRun;
 
     public ShortcutRunner(ShortcutStore shortcutStore, AutomaticGameDetectionRegistry automaticGameDetectionRegistry, UserProfileOperationService profileOperationService, ShortcutRecoveryStore recoveryStore, AudioVolumeOverrideService? audioVolumeOverrideService = null)
     {
@@ -33,6 +35,41 @@ public sealed class ShortcutRunner
     }
 
     public bool IsRecoveryRequired => _recoveryStore.HasPendingRecovery();
+
+    public WindowPlacementSessionView? GetWindowPlacementSession()
+    {
+        lock (_windowPlacementLock)
+        {
+            WindowPlacementRun? run = _activeWindowPlacementRun;
+            return run == null ? null : new WindowPlacementSessionView
+            {
+                OperationId = run.OperationId,
+                ShortcutId = run.Shortcut.Id,
+                ShortcutName = run.Shortcut.Name,
+                CanSave = run.CanSave,
+                ExistingPlacementCount = _shortcutStore.TryGetShortcutDefinition(run.Shortcut.Id, out ShortcutDefinition? current)
+                    ? current?.WindowPlacements.Count ?? 0 : 0
+            };
+        }
+    }
+
+    public SaveWindowPlacementsResult? SaveWindowPlacements(Guid operationId, string shortcutId)
+    {
+        lock (_windowPlacementLock)
+        {
+            WindowPlacementRun? run = _activeWindowPlacementRun;
+            if (run == null || !run.CanSave || run.OperationId != operationId || !string.Equals(run.Shortcut.Id, shortcutId, StringComparison.OrdinalIgnoreCase))
+                return null;
+            ShortcutWindowPlacementDefinition[] placements = WindowPlacementService.Capture(run.GetSources());
+            if (placements.Length == 0) return new SaveWindowPlacementsResult();
+            if (_shortcutStore.ReplaceWindowPlacements(shortcutId, placements) < 0) return null;
+            return new SaveWindowPlacementsResult
+            {
+                SavedWindowCount = placements.Length,
+                ProgramNames = placements.Select(item => Path.GetFileNameWithoutExtension(item.ExecutablePath)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
+            };
+        }
+    }
 
     public Task<ShortcutRunResult> PrepareRunAsync(string shortcutId, CancellationToken cancellationToken, Guid? operationId = null)
     {
@@ -69,6 +106,7 @@ public sealed class ShortcutRunner
         }
 
         ShortcutDefinition shortcut = preparedRun.Shortcut;
+        WindowPlacementRun windowRun = new WindowPlacementRun(preparedRun.OperationId, shortcut);
         await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.Validating, "Validating shortcut.", cancellationToken).ConfigureAwait(false);
         if (!IsShortcutRunnable(shortcut))
         {
@@ -99,6 +137,7 @@ public sealed class ShortcutRunner
         List<StartedProgram> startedPrograms = new List<StartedProgram>();
         List<StoppedProgram> stoppedProgramsToRestart = new List<StoppedProgram>();
         AudioVolumeOverrideState? audioVolumeOverrideState = null;
+        lock (_windowPlacementLock) _activeWindowPlacementRun = windowRun;
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -108,6 +147,7 @@ public sealed class ShortcutRunner
                 ApplyDisplayProfileOperationResult displayResult = await _profileOperationService.ApplyDisplayProfileAsync(shortcut.ProfileId, cancellationToken).ConfigureAwait(false);
                 if (!displayResult.IsSuccessful)
                 {
+                    windowRun.DisplayProfileFailed = true;
                     if (displayResult.WasCancelled || !await ShouldContinueAfterFailureAsync(requestDecisionAsync, preparedRun.OperationId, "Display profile could not be applied", "Continue starting the shortcut without applying its display profile?", cancellationToken).ConfigureAwait(false))
                     {
                         return new ShortcutRunResult(preparedRun.OperationId, displayResult.WasCancelled ? ShortcutRunOutcome.Cancelled : ShortcutRunOutcome.Failed, shortcut);
@@ -149,7 +189,7 @@ public sealed class ShortcutRunner
             }
 
             await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingPrograms, "Starting shortcut programs.", cancellationToken).ConfigureAwait(false);
-            if (!await RunPreGameProgramsAsync(shortcut, startedPrograms, stoppedProgramsToRestart, requestDecisionAsync, preparedRun.OperationId, cancellationToken).ConfigureAwait(false))
+            if (!await RunPreGameProgramsAsync(shortcut, startedPrograms, stoppedProgramsToRestart, windowRun, requestDecisionAsync, preparedRun.OperationId, cancellationToken).ConfigureAwait(false))
             {
                 return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
             }
@@ -158,9 +198,7 @@ public sealed class ShortcutRunner
                 (shortcut.Category == ShortcutDefinitionCategory.Application && shortcut.ApplicationLibrary != 2)) &&
                 !string.IsNullOrWhiteSpace(shortcut.ExecutablePath))
             {
-                ProcessTreeMonitor? monitor = shortcut.MonitorExecutablePath
-                    ? ProcessTreeMonitor.BeginWatching(string.IsNullOrWhiteSpace(shortcut.DifferentExecutablePathToMonitor) ? shortcut.ExecutablePath : shortcut.DifferentExecutablePathToMonitor, shortcut.StartTimeoutSeconds)
-                    : null;
+                ProcessTreeMonitor? monitor = ProcessTreeMonitor.BeginWatching(string.IsNullOrWhiteSpace(shortcut.DifferentExecutablePathToMonitor) ? shortcut.ExecutablePath : shortcut.DifferentExecutablePathToMonitor, shortcut.StartTimeoutSeconds, continueTrackingDescendants: true);
                 try
                 {
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting executable.", cancellationToken).ConfigureAwait(false);
@@ -170,8 +208,11 @@ public sealed class ShortcutRunner
                         return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                     }
                     monitor?.RegisterLaunchedProcesses(processes);
+                    if (monitor != null) windowRun.Monitors.Add(("main", monitor));
+                    windowRun.CanSave = !windowRun.DisplayProfileFailed;
+                    await RestoreWindowPlacementsAsync(windowRun, publishStatusAsync, cancellationToken).ConfigureAwait(false);
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToClose, "Waiting for executable to close.", cancellationToken).ConfigureAwait(false);
-                    while (monitor != null && monitor.IsRunning)
+                    while (shortcut.MonitorExecutablePath && monitor != null && monitor.IsRunning)
                     {
                         await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                     }
@@ -223,6 +264,18 @@ public sealed class ShortcutRunner
                     return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                 }
 
+                string gameWindowExecutable = shortcut.MonitorDifferentGameExecutable
+                    ? shortcut.DifferentGameExecutablePathToMonitor : game.ExePath;
+                if (shouldStartGame && !string.IsNullOrWhiteSpace(gameWindowExecutable))
+                {
+                    ProcessTreeMonitor? gameWindowMonitor = ProcessTreeMonitor.BeginWatching(gameWindowExecutable, shortcut.StartTimeoutSeconds, continueTrackingDescendants: true);
+                    if (gameWindowMonitor != null)
+                    {
+                        windowRun.Monitors.Add(("main", gameWindowMonitor));
+                        windowRun.OwnedHelperMonitors.Add(gameWindowMonitor);
+                    }
+                }
+
                 if (shouldStartGame)
                 {
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting game.", cancellationToken).ConfigureAwait(false);
@@ -239,6 +292,10 @@ public sealed class ShortcutRunner
                     }
                 }
 
+                if (shouldStartGame) windowRun.Game = game;
+                windowRun.CanSave = !windowRun.DisplayProfileFailed;
+                await RestoreWindowPlacementsAsync(windowRun, publishStatusAsync, cancellationToken).ConfigureAwait(false);
+
                 await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToClose, "Waiting for game to close.", cancellationToken).ConfigureAwait(false);
                 while (IsGameRunning(shortcut, game))
                 {
@@ -254,6 +311,11 @@ public sealed class ShortcutRunner
         }
         finally
         {
+            lock (_windowPlacementLock)
+            {
+                if (ReferenceEquals(_activeWindowPlacementRun, windowRun)) _activeWindowPlacementRun = null;
+            }
+            foreach (ProcessTreeMonitor helperMonitor in windowRun.OwnedHelperMonitors) helperMonitor.Dispose();
             RunPostGameProgramCleanup(startedPrograms, stoppedProgramsToRestart);
             bool recoveryRestored = true;
             if (recoveryRecord?.RequiresDisplayRestore == true)
@@ -333,7 +395,7 @@ public sealed class ShortcutRunner
             (!program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments));
     }
 
-    private static async Task<bool> RunPreGameProgramsAsync(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<StoppedProgram> stoppedProgramsToRestart, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, Guid operationId, CancellationToken cancellationToken)
+    private static async Task<bool> RunPreGameProgramsAsync(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<StoppedProgram> stoppedProgramsToRestart, WindowPlacementRun windowRun, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, Guid operationId, CancellationToken cancellationToken)
     {
         IReadOnlyList<PreGameProgramAction> actions = BuildPreGameProgramActions(shortcut);
 
@@ -349,7 +411,7 @@ public sealed class ShortcutRunner
                     failure = $"Could not stop '{action.StopProgram.ExecutablePath}'.";
                 }
             }
-            else if (action.StartProgram == null || !StartProgram(action.StartProgram, executionOrder, startedPrograms))
+            else if (action.StartProgram == null || !StartProgram(action.StartProgram, executionOrder, startedPrograms, windowRun))
             {
                 failure = $"Could not start '{action.StartProgram?.ExecutablePath ?? action.StartProgram?.ApplicationId ?? "the configured program"}'.";
             }
@@ -407,7 +469,7 @@ public sealed class ShortcutRunner
         }
     }
 
-    private static bool StartProgram(ShortcutStartProgramDefinition program, int sequence, List<StartedProgram> startedPrograms)
+    private static bool StartProgram(ShortcutStartProgramDefinition program, int sequence, List<StartedProgram> startedPrograms, WindowPlacementRun windowRun)
     {
         if (!string.IsNullOrWhiteSpace(program.ApplicationId))
         {
@@ -453,13 +515,18 @@ public sealed class ShortcutRunner
             ProcessUtils.DisposeProcesses(existingProcesses);
         }
 
-        ProcessTreeMonitor? monitor = ProcessTreeMonitor.BeginWatching(program.ExecutablePath, 10);
+        ProcessTreeMonitor? monitor = ProcessTreeMonitor.BeginWatching(program.ExecutablePath, 10, continueTrackingDescendants: true);
         List<Process> startedProcesses = ProcessUtils.StartProcess(program.ExecutablePath, program.Arguments, (ProcessPriority)(int)program.ProcessPriority, 10, program.RunAsAdministrator);
         monitor?.RegisterLaunchedProcesses(startedProcesses);
         if (startedProcesses.Count == 0)
         {
             monitor?.Dispose();
             return false;
+        }
+        if (monitor != null)
+        {
+            windowRun.Monitors.Add((program.Id, monitor));
+            if (!program.CloseOnFinish) windowRun.OwnedHelperMonitors.Add(monitor);
         }
 
         if (program.CloseOnFinish)
@@ -469,7 +536,6 @@ public sealed class ShortcutRunner
         else
         {
             ProcessUtils.DisposeProcesses(startedProcesses);
-            monitor?.Dispose();
         }
 
         return true;
@@ -626,6 +692,83 @@ public sealed class ShortcutRunner
         return shortcut.MonitorDifferentGameExecutable && !string.IsNullOrWhiteSpace(shortcut.DifferentGameExecutablePathToMonitor)
             ? ProcessTreeMonitor.IsExecutableRunning(shortcut.DifferentGameExecutablePathToMonitor)
             : game.IsRunning;
+    }
+
+    private static async Task RestoreWindowPlacementsAsync(WindowPlacementRun run, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, CancellationToken cancellationToken)
+    {
+        if (run.DisplayProfileFailed || run.Shortcut.WindowPlacements.Count == 0) return;
+        HashSet<int> completed = new HashSet<int>();
+        List<string> programNames = new List<string>();
+        int moved = 0;
+        DateTime deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(run.Shortcut.WindowPlacementTimeoutSeconds, 1, 120));
+        while (DateTime.UtcNow < deadlineUtc && completed.Count < run.Shortcut.WindowPlacements.Count)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            (int count, string[] programs) = WindowPlacementService.Restore(run.GetSources(), run.Shortcut.WindowPlacements, completed);
+            moved += count;
+            programNames.AddRange(programs);
+            if (completed.Count < run.Shortcut.WindowPlacements.Count) await Task.Delay(500, cancellationToken).ConfigureAwait(false);
+        }
+        string[] names = programNames.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        string message = $"Moved {moved} window{(moved == 1 ? string.Empty : "s")}";
+        if (names.Length > 0) message += $": {string.Join(", ", names)}";
+        if (completed.Count < run.Shortcut.WindowPlacements.Count)
+        {
+            _logger.Warn("ShortcutRunner/RestoreWindowPlacementsAsync: Placed {0} of {1} saved windows for shortcut {2}.", moved, run.Shortcut.WindowPlacements.Count, run.Shortcut.Id);
+            for (int index = 0; index < run.Shortcut.WindowPlacements.Count; index++)
+                if (!completed.Contains(index)) _logger.Warn("ShortcutRunner/RestoreWindowPlacementsAsync: Timed out matching window class {0} for {1} in shortcut {2}.", run.Shortcut.WindowPlacements[index].WindowClass, run.Shortcut.WindowPlacements[index].ExecutablePath, run.Shortcut.Id);
+        }
+        await PublishStatusAsync(publishStatusAsync, run.OperationId, OperationPhase.RestoringWindowPositions, message, cancellationToken).ConfigureAwait(false);
+    }
+
+    private sealed class WindowPlacementRun
+    {
+        public WindowPlacementRun(Guid operationId, ShortcutDefinition shortcut) { OperationId = operationId; Shortcut = shortcut; }
+        public Guid OperationId { get; }
+        public ShortcutDefinition Shortcut { get; }
+        public bool DisplayProfileFailed { get; set; }
+        public bool CanSave { get; set; }
+        public Game? Game { get; set; }
+        public List<(string ProgramId, ProcessTreeMonitor Monitor)> Monitors { get; } = new List<(string, ProcessTreeMonitor)>();
+        public List<ProcessTreeMonitor> OwnedHelperMonitors { get; } = new List<ProcessTreeMonitor>();
+
+        public List<WindowPlacementService.Source> GetSources()
+        {
+            List<WindowPlacementService.Source> sources = new List<WindowPlacementService.Source>();
+            foreach ((string programId, ProcessTreeMonitor monitor) in Monitors)
+            {
+                foreach (Process process in monitor.GetTrackedProcesses())
+                {
+                    try
+                    {
+                        string path = process.MainModule?.FileName ?? string.Empty;
+                        if (!string.IsNullOrWhiteSpace(path)) sources.Add(new WindowPlacementService.Source(programId, path, new HashSet<int> { process.Id }));
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                    {
+                        _logger.Debug(ex, "ShortcutRunner/GetSources: Could not inspect tracked process for shortcut {0}.", Shortcut.Id);
+                    }
+                    finally { process.Dispose(); }
+                }
+            }
+            if (Game != null)
+            {
+                foreach (Process process in Game.GetTrackedProcessTree())
+                {
+                    try
+                    {
+                        string path = process.MainModule?.FileName ?? string.Empty;
+                        if (!string.IsNullOrWhiteSpace(path)) sources.Add(new WindowPlacementService.Source("main", path, new HashSet<int> { process.Id }));
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                    {
+                        _logger.Debug(ex, "ShortcutRunner/GetSources: Could not inspect game process for shortcut {0}.", Shortcut.Id);
+                    }
+                    finally { process.Dispose(); }
+                }
+            }
+            return sources;
+        }
     }
 
     private static Task PublishStatusAsync(Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid operationId, OperationPhase phase, string message, CancellationToken cancellationToken)

@@ -49,12 +49,15 @@ public sealed class ShortcutDefinition
     public int OverrideAudioMicrophoneVolumeLevel { get; init; } = 50;
 
     public IReadOnlyList<ShortcutStartProgramDefinition> StartPrograms { get; init; } = Array.Empty<ShortcutStartProgramDefinition>();
+    public IReadOnlyList<ShortcutWindowPlacementDefinition> WindowPlacements { get; init; } = Array.Empty<ShortcutWindowPlacementDefinition>();
+    public int WindowPlacementTimeoutSeconds { get; init; } = 20;
     public IReadOnlyList<ShortcutAfterProgramDefinition> AfterPrograms { get; init; } = Array.Empty<ShortcutAfterProgramDefinition>();
     public IReadOnlyList<ShortcutStopProgramDefinition> StopPrograms { get; init; } = Array.Empty<ShortcutStopProgramDefinition>();
 }
 
 public sealed class ShortcutStartProgramDefinition
 {
+    public string Id { get; init; } = string.Empty;
     public int Priority { get; init; }
     public bool Disabled { get; init; }
     public ShortcutDefinitionProcessPriority ProcessPriority { get; init; } = ShortcutDefinitionProcessPriority.Normal;
@@ -66,6 +69,21 @@ public sealed class ShortcutStartProgramDefinition
     public bool CloseOnFinish { get; init; }
     public bool DoNotStartIfAlreadyRunning { get; init; }
     public bool RunAsAdministrator { get; init; }
+}
+
+public sealed class ShortcutWindowPlacementDefinition
+{
+    public string ProgramId { get; init; } = string.Empty;
+    public string ExecutablePath { get; init; } = string.Empty;
+    public string WindowClass { get; init; } = string.Empty;
+    public string WindowTitle { get; init; } = string.Empty;
+    public int OccurrenceIndex { get; init; }
+    public int Left { get; init; }
+    public int Top { get; init; }
+    public int Right { get; init; }
+    public int Bottom { get; init; }
+    public int ShowCommand { get; init; }
+    public string[] DisplayNames { get; init; } = Array.Empty<string>();
 }
 
 public sealed class ShortcutAfterProgramDefinition

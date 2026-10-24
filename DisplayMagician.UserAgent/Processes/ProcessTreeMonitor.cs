@@ -22,6 +22,7 @@ namespace DisplayMagician.Processes
         private readonly HashSet<int> _existingExpectedProcessIds = new HashSet<int>();
         private readonly HashSet<int> _trackedProcessIds = new HashSet<int>();
         private readonly DateTime _deadlineUtc;
+        private readonly bool _continueTrackingDescendants;
         private Timer? _snapshotTimer;
         private int _snapshotInProgress;
         private int _completedSnapshotCount;
@@ -30,8 +31,9 @@ namespace DisplayMagician.Processes
         private bool _discoveryComplete;
         private bool _disposed;
 
-        private ProcessTreeMonitor(string expectedExecutablePath, int startTimeout)
+        private ProcessTreeMonitor(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants)
         {
+            _continueTrackingDescendants = continueTrackingDescendants;
             _expectedExecutablePath = Path.GetFullPath(expectedExecutablePath);
             _expectedExecutableName = Path.GetFileName(expectedExecutablePath);
             _deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(startTimeout, 1, 30));
@@ -186,11 +188,14 @@ namespace DisplayMagician.Processes
         }
 
         public static ProcessTreeMonitor? BeginWatching(string expectedExecutablePath, int startTimeout)
+            => BeginWatching(expectedExecutablePath, startTimeout, continueTrackingDescendants: false);
+
+        internal static ProcessTreeMonitor? BeginWatching(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants)
         {
             if (string.IsNullOrWhiteSpace(expectedExecutablePath) || !File.Exists(expectedExecutablePath))
                 return null;
 
-            ProcessTreeMonitor monitor = new ProcessTreeMonitor(expectedExecutablePath, startTimeout);
+            ProcessTreeMonitor monitor = new ProcessTreeMonitor(expectedExecutablePath, startTimeout, continueTrackingDescendants);
             monitor.Start();
             return monitor;
         }
@@ -271,7 +276,7 @@ namespace DisplayMagician.Processes
 
             try
             {
-                if (DateTime.UtcNow > _deadlineUtc)
+                if (DateTime.UtcNow > _deadlineUtc && !_continueTrackingDescendants)
                 {
                     CompleteDiscovery();
                     return;
@@ -280,6 +285,7 @@ namespace DisplayMagician.Processes
                 List<ProcessSnapshot> runningProcesses = CaptureProcessSnapshot();
                 foreach (ProcessSnapshot process in runningProcesses)
                 {
+                    if (DateTime.UtcNow > _deadlineUtc) break;
                     if (!string.Equals(process.ExecutableName, _expectedExecutableName, StringComparison.OrdinalIgnoreCase))
                         continue;
 

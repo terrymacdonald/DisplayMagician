@@ -16,6 +16,8 @@ using System.Linq;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Threading;
+using DisplayMagician.Contracts;
 
 namespace DisplayMagician.UIForms
 {
@@ -24,6 +26,7 @@ namespace DisplayMagician.UIForms
 
         private bool _allowVisible = false;     // Default to not showing form
         private bool _allowClose;       // ContextMenu's Exit command used
+        private ToolStripMenuItem _saveWindowPositionsMenuItem;
         private List<string> hotkeyDisplayProfiles = new List<string>() { };
         private List<string> hotkeyShortcuts = new List<string>() { };
 
@@ -76,6 +79,7 @@ namespace DisplayMagician.UIForms
             // Update the system tray menus
             notifyIcon.Visible = true;
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
+            mainContextMenuStrip.Opening += (_, _) => RefreshNotifyIconMenus();
             RefreshNotifyIconMenus();
 
             if (Program.AppProgramSettings.MinimiseOnStart)
@@ -476,6 +480,29 @@ namespace DisplayMagician.UIForms
 
         public void RefreshNotifyIconMenus()
         {
+            if (_saveWindowPositionsMenuItem != null)
+            {
+                mainContextMenuStrip.Items.Remove(_saveWindowPositionsMenuItem);
+                _saveWindowPositionsMenuItem.Dispose();
+                _saveWindowPositionsMenuItem = null;
+            }
+            try
+            {
+                using CancellationTokenSource lookupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                ControlResponse response = new ControlServicePipeClient().GetActiveWindowPlacementSessionAsync(lookupTimeout.Token).GetAwaiter().GetResult();
+                WindowPlacementSessionView session = response.WindowPlacementSession;
+                if (response.IsSuccessful && session?.CanSave == true)
+                {
+                    _saveWindowPositionsMenuItem = new ToolStripMenuItem("Save Window Positions");
+                    _saveWindowPositionsMenuItem.Click += async (_, _) => await Program.SaveWindowPositionsAsync(session.OperationId, this);
+                    mainContextMenuStrip.Items.Insert(0, _saveWindowPositionsMenuItem);
+                }
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException || ex is OperationCanceledException)
+            {
+                // The tray menu may open before the Control Service is ready; no active action is shown then.
+                logger.Debug(ex, "MainForm/RefreshNotifyIconMenus: Active shortcut session is unavailable.");
+            }
             DesktopProfileViewCache.Refresh();
             // Clear all the profiles
             profileToolStripMenuItem.DropDownItems.Clear();

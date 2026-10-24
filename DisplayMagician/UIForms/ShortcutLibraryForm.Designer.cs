@@ -48,11 +48,13 @@ namespace DisplayMagician.UIForms
             sendToClipboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tsmi_copy = new System.Windows.Forms.ToolStripMenuItem();
             tsmi_delete = new System.Windows.Forms.ToolStripMenuItem();
+            tsmi_clear_window_positions = new System.Windows.Forms.ToolStripMenuItem();
             lbl_mask = new System.Windows.Forms.Label();
             btn_help = new System.Windows.Forms.Button();
             btn_donate = new System.Windows.Forms.Button();
             btn_copy = new System.Windows.Forms.Button();
             btn_cancel = new System.Windows.Forms.Button();
+            btn_save_window_positions = new System.Windows.Forms.Button();
             pnl_shortcut_status = new System.Windows.Forms.Panel();
             lbl_shortcut_status_message = new System.Windows.Forms.Label();
             lbl_shortcut_status_title = new System.Windows.Forms.Label();
@@ -226,9 +228,9 @@ namespace DisplayMagician.UIForms
             // 
             // cms_shortcuts
             // 
-            cms_shortcuts.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmi_edit, tsmi_run, tsmi_save_to_desktop, sendToClipboardToolStripMenuItem, tsmi_copy, tsmi_delete });
+            cms_shortcuts.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmi_edit, tsmi_run, tsmi_save_to_desktop, sendToClipboardToolStripMenuItem, tsmi_copy, tsmi_delete, tsmi_clear_window_positions });
             cms_shortcuts.Name = "cms_shortcuts";
-            cms_shortcuts.Size = new System.Drawing.Size(216, 136);
+            cms_shortcuts.Size = new System.Drawing.Size(216, 158);
             // 
             // tsmi_edit
             // 
@@ -273,6 +275,11 @@ namespace DisplayMagician.UIForms
             tsmi_delete.Size = new System.Drawing.Size(215, 22);
             tsmi_delete.Text = "Delete Shortcut...";
             tsmi_delete.Click += tsmi_delete_Click;
+            // tsmi_clear_window_positions
+            tsmi_clear_window_positions.Name = "tsmi_clear_window_positions";
+            tsmi_clear_window_positions.Size = new System.Drawing.Size(215, 22);
+            tsmi_clear_window_positions.Text = "Clear Saved Window Positions...";
+            tsmi_clear_window_positions.Click += tsmi_clear_window_positions_Click;
             // 
             // lbl_mask
             // 
@@ -362,7 +369,21 @@ namespace DisplayMagician.UIForms
             btn_cancel.UseVisualStyleBackColor = false;
             btn_cancel.Visible = false;
             btn_cancel.Click += btn_cancel_Click;
-            // 
+            // btn_save_window_positions
+            btn_save_window_positions.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btn_save_window_positions.BackColor = System.Drawing.Color.Black;
+            btn_save_window_positions.Enabled = false;
+            btn_save_window_positions.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_save_window_positions.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            btn_save_window_positions.ForeColor = System.Drawing.Color.White;
+            btn_save_window_positions.Location = new System.Drawing.Point(593, 513);
+            btn_save_window_positions.Name = "btn_save_window_positions";
+            btn_save_window_positions.Size = new System.Drawing.Size(245, 42);
+            btn_save_window_positions.TabIndex = 11;
+            btn_save_window_positions.Text = "Save Window Positions";
+            btn_save_window_positions.UseVisualStyleBackColor = false;
+            btn_save_window_positions.Visible = false;
+            btn_save_window_positions.Click += btn_save_window_positions_Click;
             // pnl_shortcut_status
             // 
             pnl_shortcut_status.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
@@ -403,6 +424,7 @@ namespace DisplayMagician.UIForms
             BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             ClientSize = new System.Drawing.Size(1020, 931);
             Controls.Add(btn_cancel);
+            Controls.Add(btn_save_window_positions);
             Controls.Add(pnl_shortcut_status);
             Controls.Add(btn_copy);
             Controls.Add(btn_donate);
@@ -447,6 +469,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ToolStripMenuItem tsmi_edit;
         private System.Windows.Forms.ToolStripMenuItem tsmi_run;
         private System.Windows.Forms.ToolStripMenuItem tsmi_delete;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_clear_window_positions;
         private System.Windows.Forms.ToolStripMenuItem tsmi_save_to_desktop;
         private System.Windows.Forms.Label lbl_mask;
         private System.Windows.Forms.Panel pnl_shortcut_status;
@@ -457,6 +480,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Button btn_copy;
         private System.Windows.Forms.ToolStripMenuItem tsmi_copy;
         private System.Windows.Forms.Button btn_cancel;
+        private System.Windows.Forms.Button btn_save_window_positions;
         private System.Windows.Forms.ToolStripMenuItem sendToClipboardToolStripMenuItem;
     }
 }
