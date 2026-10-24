@@ -32,6 +32,10 @@ public sealed class WindowPlacementServiceTests
                 ShortcutWindowPlacementDefinition saved = Assert.Single(normal.Placements, item => item.WindowTitle == title);
                 Assert.Equal(1, saved.ShowCommand);
                 Assert.NotEmpty(saved.DisplayNames);
+                WindowPlacementService.Source owningSource = new WindowPlacementService.Source("main", process.MainModule.FileName, new HashSet<int> { process.Id }, true);
+                WindowPlacementService.Source overlappingSource = new WindowPlacementService.Source("helper", process.MainModule.FileName, new HashSet<int> { process.Id });
+                WindowPlacementService.CaptureResult overlap = WindowPlacementService.Capture(new[] { owningSource, overlappingSource });
+                Assert.Equal("main", Assert.Single(overlap.Placements, item => item.WindowTitle == title).ProgramId);
 
                 form.WindowState = FormWindowState.Minimized;
                 Application.DoEvents();
@@ -51,7 +55,7 @@ public sealed class WindowPlacementServiceTests
                 form.Left += 100;
                 Application.DoEvents();
                 HashSet<int> completed = new HashSet<int>();
-                Dictionary<int, IntPtr> pending = new Dictionary<int, IntPtr>();
+                Dictionary<int, WindowPlacementService.PendingPlacement> pending = new Dictionary<int, WindowPlacementService.PendingPlacement>();
                 WindowPlacementService.Restore(new[] { source }, new[] { saved }, completed, pending);
                 Application.DoEvents();
                 WindowPlacementService.Restore(new[] { source }, new[] { saved }, completed, pending);
@@ -70,6 +74,13 @@ public sealed class WindowPlacementServiceTests
                 Application.DoEvents();
                 WindowPlacementService.Restore(new[] { source }, new[] { min }, completed, pending);
                 Assert.Contains(0, completed);
+
+                completed.Clear();
+                pending.Clear();
+                pending[0] = new WindowPlacementService.PendingPlacement(form.Handle, DateTime.UtcNow.AddSeconds(-2), 3, true);
+                WindowPlacementService.Restore(new[] { source }, new[] { saved }, completed, pending);
+                Assert.Contains(0, completed);
+                Assert.Empty(pending);
 
                 form.WindowState = FormWindowState.Normal;
                 form.Text = string.Empty;

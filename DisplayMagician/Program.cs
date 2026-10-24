@@ -1615,6 +1615,10 @@ namespace DisplayMagician {
                 _lastOperationStatusSequences.TryRemove(status.OperationId, out _);
             }
 
+            if (status.OperationType == DisplayOperationType.StartShortcut &&
+                (status.Phase == OperationPhase.WaitingForGameToClose || status.IsTerminal))
+                AppMainForm?.RefreshNotifyIconMenus(status.IsTerminal ? status.OperationId : null);
+
             _ = ShowOperationStatusToastAsync(status);
         }
 

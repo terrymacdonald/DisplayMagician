@@ -10,6 +10,31 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class ProcessTreeMonitorTests
 {
     [Fact]
+    public void BeginWatchingNewestExisting_SelectsLatestMatchingProcess()
+    {
+        string executable = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
+        using Process first = Process.Start(new ProcessStartInfo(executable, "/d /c ping -n 15 127.0.0.1 >nul") { UseShellExecute = false, CreateNoWindow = true })!;
+        try
+        {
+            System.Threading.Thread.Sleep(150);
+            using Process second = Process.Start(new ProcessStartInfo(executable, "/d /c ping -n 15 127.0.0.1 >nul") { UseShellExecute = false, CreateNoWindow = true })!;
+            try
+            {
+                using ProcessTreeMonitor monitor = ProcessTreeMonitor.BeginWatchingNewestExisting(executable, 2)!;
+                Assert.NotNull(monitor);
+                Assert.True(monitor.IsInDirectLaunchTree(second.Id));
+                Assert.False(monitor.IsInDirectLaunchTree(first.Id));
+                second.Kill(entireProcessTree: true);
+                second.WaitForExit();
+                Assert.True(System.Threading.SpinWait.SpinUntil(() => !monitor.IsRunning, TimeSpan.FromSeconds(3)));
+                Assert.False(first.HasExited);
+            }
+            finally { if (!second.HasExited) second.Kill(entireProcessTree: true); }
+        }
+        finally { if (!first.HasExited) first.Kill(entireProcessTree: true); }
+    }
+
+    [Fact]
     public void GetTrackedProcesses_RejectsAReusedProcessId()
     {
         using Process process = Process.GetCurrentProcess();

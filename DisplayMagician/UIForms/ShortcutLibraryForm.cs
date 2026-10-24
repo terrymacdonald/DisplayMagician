@@ -106,6 +106,11 @@ namespace DisplayMagician.UIForms
 
             if (ShortcutRepository.ShortcutCount == 0)
             {
+                ilv_saved_shortcuts.Items.Clear();
+                _selectedShortcut = null;
+                btn_run.Visible = false;
+                cms_shortcuts.Items[1].Enabled = false;
+                RemoveWarningIfShortcuts();
                 UpdateShortcutStatusPanel();
                 return;
             }

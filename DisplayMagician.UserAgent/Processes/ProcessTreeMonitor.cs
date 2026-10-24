@@ -21,6 +21,7 @@ namespace DisplayMagician.Processes
         private readonly string _expectedExecutableName;
         private readonly Dictionary<int, DateTime> _existingExpectedProcessIds = new Dictionary<int, DateTime>();
         private readonly HashSet<int> _trackedProcessIds = new HashSet<int>();
+        private readonly HashSet<int> _directLaunchTreeProcessIds = new HashSet<int>();
         private readonly Dictionary<int, DateTime> _trackedProcessStartTimes = new Dictionary<int, DateTime>();
         private readonly DateTime _deadlineUtc;
         private readonly bool _continueTrackingDescendants;
@@ -32,9 +33,16 @@ namespace DisplayMagician.Processes
         private bool _discoveryComplete;
         private bool _disposed;
         private bool _usingLongInterval;
+        private bool _trackOnlySelectedTree;
         private volatile bool _hadTrackingError;
 
         public bool HadTrackingError => _hadTrackingError;
+
+        public bool IsInDirectLaunchTree(int processId)
+        {
+            lock (_syncRoot)
+                return _directLaunchTreeProcessIds.Contains(processId);
+        }
 
         private ProcessTreeMonitor(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants)
         {
@@ -172,6 +180,7 @@ namespace DisplayMagician.Processes
                         DateTime startedUtc = process.StartTime.ToUniversalTime();
                         if (_existingExpectedProcessIds.TryGetValue(process.Id, out DateTime existingStartedUtc) && existingStartedUtc == startedUtc)
                             continue;
+                        _directLaunchTreeProcessIds.Add(process.Id);
                         if (_trackedProcessIds.Add(process.Id))
                         {
                             _trackedProcessStartTimes[process.Id] = startedUtc;
@@ -212,6 +221,46 @@ namespace DisplayMagician.Processes
             ProcessTreeMonitor monitor = new ProcessTreeMonitor(expectedExecutablePath, startTimeout, continueTrackingDescendants);
             monitor.Start();
             return monitor;
+        }
+
+        internal static ProcessTreeMonitor? BeginWatchingNewestExisting(string expectedExecutablePath, int startTimeout)
+        {
+            if (string.IsNullOrWhiteSpace(expectedExecutablePath) || !File.Exists(expectedExecutablePath))
+                return null;
+
+            ProcessTreeMonitor? monitor = null;
+            try
+            {
+                monitor = new ProcessTreeMonitor(expectedExecutablePath, startTimeout, continueTrackingDescendants: true);
+                monitor._trackOnlySelectedTree = true;
+                foreach (KeyValuePair<int, DateTime> candidate in monitor._existingExpectedProcessIds.OrderByDescending(item => item.Value))
+                {
+                    try
+                    {
+                        using Process process = Process.GetProcessById(candidate.Key);
+                        if (process.HasExited || process.StartTime.ToUniversalTime() != candidate.Value || !monitor.PathsMatch(process))
+                            continue;
+                        monitor._trackedProcessIds.Add(candidate.Key);
+                        monitor._trackedProcessStartTimes[candidate.Key] = candidate.Value;
+                        monitor._directLaunchTreeProcessIds.Add(candidate.Key);
+                        monitor._hasObservedExpectedProcess = true;
+                        monitor.CaptureProcessTree(null);
+                        monitor.Start();
+                        logger.Info("ProcessTreeMonitor/BeginWatchingNewestExisting: Tracking newest running PID {0} for {1}.", candidate.Key, expectedExecutablePath);
+                        return monitor;
+                    }
+                    catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                    {
+                        logger.Debug(ex, "ProcessTreeMonitor/BeginWatchingNewestExisting: Could not inspect candidate PID {0} for {1}.", candidate.Key, expectedExecutablePath);
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+            {
+                logger.Warn(ex, "ProcessTreeMonitor/BeginWatchingNewestExisting: Could not select a running process for {0}.", expectedExecutablePath);
+            }
+            monitor?.Dispose();
+            return null;
         }
 
         public static bool IsExecutableRunning(string executablePath)
@@ -305,7 +354,7 @@ namespace DisplayMagician.Processes
                 RemoveExitedOrReusedProcesses(runningProcesses);
                 foreach (ProcessSnapshot process in runningProcesses)
                 {
-                    if (DateTime.UtcNow > _deadlineUtc) break;
+                    if (_trackOnlySelectedTree || DateTime.UtcNow > _deadlineUtc) break;
                     if (!string.Equals(process.ExecutableName, _expectedExecutableName, StringComparison.OrdinalIgnoreCase))
                         continue;
 
@@ -370,16 +419,22 @@ namespace DisplayMagician.Processes
                 {
                     foreach (ProcessSnapshot process in runningProcesses)
                     {
-                        if (!_trackedProcessIds.Contains(process.ParentProcessId) || _trackedProcessIds.Contains(process.ProcessId))
+                        if (!_trackedProcessIds.Contains(process.ParentProcessId))
                             continue;
                         try
                         {
                             using Process child = Process.GetProcessById(process.ProcessId);
                             if (child.HasExited) continue;
-                            _trackedProcessIds.Add(process.ProcessId);
-                            _trackedProcessStartTimes[process.ProcessId] = child.StartTime.ToUniversalTime();
-                            changed = true;
-                            logger.Trace($"ProcessTreeMonitor/ExpandTrackedDescendants: Tracking descendant PID {process.ProcessId} of PID {process.ParentProcessId} for {_expectedExecutablePath}.");
+                            DateTime startedUtc = child.StartTime.ToUniversalTime();
+                            if (!_trackedProcessStartTimes.TryGetValue(process.ProcessId, out DateTime trackedStartedUtc) || trackedStartedUtc != startedUtc)
+                            {
+                                _trackedProcessIds.Add(process.ProcessId);
+                                _trackedProcessStartTimes[process.ProcessId] = startedUtc;
+                                changed = true;
+                                logger.Trace($"ProcessTreeMonitor/ExpandTrackedDescendants: Tracking descendant PID {process.ProcessId} of PID {process.ParentProcessId} for {_expectedExecutablePath}.");
+                            }
+                            if (_directLaunchTreeProcessIds.Contains(process.ParentProcessId) && _directLaunchTreeProcessIds.Add(process.ProcessId))
+                                changed = true;
                         }
                         catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
                         {
@@ -415,6 +470,7 @@ namespace DisplayMagician.Processes
                     {
                         _trackedProcessIds.Remove(tracked.Key);
                         _trackedProcessStartTimes.Remove(tracked.Key);
+                        _directLaunchTreeProcessIds.Remove(tracked.Key);
                     }
                 }
             }

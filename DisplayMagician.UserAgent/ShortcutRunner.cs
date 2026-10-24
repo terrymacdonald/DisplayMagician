@@ -111,6 +111,7 @@ public sealed class ShortcutRunner
 
         ShortcutDefinition shortcut = preparedRun.Shortcut;
         WindowPlacementRun windowRun = new WindowPlacementRun(preparedRun.OperationId, shortcut);
+        ProcessTreeMonitor? detectedGameMonitor = null;
         await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.Validating, "Validating shortcut.", cancellationToken).ConfigureAwait(false);
         if (!IsShortcutRunnable(shortcut))
         {
@@ -145,6 +146,23 @@ public sealed class ShortcutRunner
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (!shouldStartGame && shortcut.Category == ShortcutDefinitionCategory.Game)
+            {
+                // Attach before Start Programs run so a helper using the same executable
+                // cannot be mistaken for the game that triggered automatic detection.
+                if (!GameLibrary.GamesLoaded)
+                    await Task.Run(GameLibrary.LoadGamesInBackground, cancellationToken).ConfigureAwait(false);
+                Game? detectedGame = GameLibrary.GetAnyGameById(shortcut.GameAppId);
+                string detectedExecutable = shortcut.MonitorDifferentGameExecutable
+                    ? shortcut.DifferentGameExecutablePathToMonitor : detectedGame?.ExePath ?? string.Empty;
+                detectedGameMonitor = ProcessTreeMonitor.BeginWatchingNewestExisting(detectedExecutable, shortcut.StartTimeoutSeconds);
+                if (detectedGameMonitor != null)
+                {
+                    windowRun.Monitors.Add(("main", detectedGameMonitor));
+                    windowRun.OwnedHelperMonitors.Add(detectedGameMonitor);
+                }
+                windowRun.RequireMainSource = true;
+            }
             if (shouldApplyDisplayProfile)
             {
                 await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingDisplayProfile, "Applying display profile.", cancellationToken).ConfigureAwait(false);
@@ -299,11 +317,11 @@ public sealed class ShortcutRunner
                 }
 
                 if (shouldStartGame) windowRun.Game = game;
-                windowRun.CanSave = !windowRun.DisplayProfileFailed;
+                windowRun.CanSave = !windowRun.DisplayProfileFailed && (shouldStartGame || windowRun.Monitors.Any(item => item.ProgramId == "main"));
                 await RestoreWindowPlacementsAsync(windowRun, publishStatusAsync, cancellationToken).ConfigureAwait(false);
 
                 await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToClose, "Waiting for game to close.", cancellationToken).ConfigureAwait(false);
-                while (IsGameRunning(shortcut, game))
+                while (shouldStartGame ? IsGameRunning(shortcut, game) : (detectedGameMonitor?.IsRunning ?? IsGameRunning(shortcut, game)))
                 {
                     await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                 }
@@ -704,7 +722,7 @@ public sealed class ShortcutRunner
     {
         if (run.DisplayProfileFailed || run.Shortcut.WindowPlacements.Count == 0) return;
         HashSet<int> completed = new HashSet<int>();
-        Dictionary<int, IntPtr> pending = new Dictionary<int, IntPtr>();
+        Dictionary<int, WindowPlacementService.PendingPlacement> pending = new Dictionary<int, WindowPlacementService.PendingPlacement>();
         List<string> programNames = new List<string>();
         int moved = 0;
         DateTime deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(run.Shortcut.WindowPlacementTimeoutSeconds, 1, 120));
@@ -760,7 +778,7 @@ public sealed class ShortcutRunner
                     try
                     {
                         string path = process.MainModule?.FileName ?? string.Empty;
-                        if (!string.IsNullOrWhiteSpace(path)) sources.Add(new WindowPlacementService.Source(programId, path, new HashSet<int> { process.Id }));
+                        if (!string.IsNullOrWhiteSpace(path)) sources.Add(new WindowPlacementService.Source(programId, path, new HashSet<int> { process.Id }, monitor.IsInDirectLaunchTree(process.Id)));
                         else isComplete = false;
                     }
                     catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)

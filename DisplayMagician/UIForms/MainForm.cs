@@ -27,6 +27,8 @@ namespace DisplayMagician.UIForms
         private bool _allowVisible = false;     // Default to not showing form
         private bool _allowClose;       // ContextMenu's Exit command used
         private ToolStripMenuItem _saveWindowPositionsMenuItem;
+        private volatile WindowPlacementSessionView _cachedWindowPlacementSession;
+        private int _notifyMenuRefreshInProgress;
         private List<string> hotkeyDisplayProfiles = new List<string>() { };
         private List<string> hotkeyShortcuts = new List<string>() { };
 
@@ -80,6 +82,7 @@ namespace DisplayMagician.UIForms
             notifyIcon.Visible = true;
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
             mainContextMenuStrip.Opening += (_, _) => RefreshNotifyIconMenus();
+            HandleCreated += (_, _) => RefreshNotifyIconMenus();
             RefreshNotifyIconMenus();
 
             if (Program.AppProgramSettings.MinimiseOnStart)
@@ -478,7 +481,45 @@ namespace DisplayMagician.UIForms
         }
 
 
-        public void RefreshNotifyIconMenus()
+        public void RefreshNotifyIconMenus(Guid? completedShortcutOperationId = null)
+        {
+            if (IsDisposed) return;
+            if (completedShortcutOperationId.HasValue && _cachedWindowPlacementSession?.OperationId == completedShortcutOperationId.Value)
+                _cachedWindowPlacementSession = null;
+            RebuildNotifyIconMenus();
+            if (Interlocked.Exchange(ref _notifyMenuRefreshInProgress, 1) != 0) return;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using CancellationTokenSource lookupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    ControlResponse response = await new ControlServicePipeClient().GetActiveWindowPlacementSessionAsync(lookupTimeout.Token).ConfigureAwait(false);
+                    DesktopProfileViewCache.Refresh();
+                    _cachedWindowPlacementSession = response.IsSuccessful && response.WindowPlacementSession?.CanSave == true
+                        ? response.WindowPlacementSession : null;
+                    if (IsHandleCreated && !IsDisposed)
+                    {
+                        BeginInvoke((System.Windows.Forms.MethodInvoker)(() =>
+                        {
+                            if (!mainContextMenuStrip.Visible) RebuildNotifyIconMenus();
+                        }));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _cachedWindowPlacementSession = null;
+                    logger.Debug(ex, "MainForm/RefreshNotifyIconMenus: Active shortcut session is unavailable.");
+                    if (IsHandleCreated && !IsDisposed)
+                    {
+                        try { BeginInvoke((System.Windows.Forms.MethodInvoker)(() => { if (!mainContextMenuStrip.Visible) RebuildNotifyIconMenus(); })); }
+                        catch (InvalidOperationException) { /* The form closed while the refresh was finishing. */ }
+                    }
+                }
+                finally { Interlocked.Exchange(ref _notifyMenuRefreshInProgress, 0); }
+            });
+        }
+
+        private void RebuildNotifyIconMenus()
         {
             if (_saveWindowPositionsMenuItem != null)
             {
@@ -486,24 +527,13 @@ namespace DisplayMagician.UIForms
                 _saveWindowPositionsMenuItem.Dispose();
                 _saveWindowPositionsMenuItem = null;
             }
-            try
+            WindowPlacementSessionView session = _cachedWindowPlacementSession;
+            if (session?.CanSave == true)
             {
-                using CancellationTokenSource lookupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                ControlResponse response = new ControlServicePipeClient().GetActiveWindowPlacementSessionAsync(lookupTimeout.Token).GetAwaiter().GetResult();
-                WindowPlacementSessionView session = response.WindowPlacementSession;
-                if (response.IsSuccessful && session?.CanSave == true)
-                {
-                    _saveWindowPositionsMenuItem = new ToolStripMenuItem("Save Window Positions");
-                    _saveWindowPositionsMenuItem.Click += async (_, _) => await Program.SaveWindowPositionsAsync(session.OperationId, this);
-                    mainContextMenuStrip.Items.Insert(0, _saveWindowPositionsMenuItem);
-                }
+                _saveWindowPositionsMenuItem = new ToolStripMenuItem("Save Window Positions");
+                _saveWindowPositionsMenuItem.Click += async (_, _) => await Program.SaveWindowPositionsAsync(session.OperationId, this);
+                mainContextMenuStrip.Items.Insert(0, _saveWindowPositionsMenuItem);
             }
-            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException || ex is OperationCanceledException)
-            {
-                // The tray menu may open before the Control Service is ready; no active action is shown then.
-                logger.Debug(ex, "MainForm/RefreshNotifyIconMenus: Active shortcut session is unavailable.");
-            }
-            DesktopProfileViewCache.Refresh();
             // Clear all the profiles
             profileToolStripMenuItem.DropDownItems.Clear();
             // Prepare the heading shortcuts

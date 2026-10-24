@@ -18,10 +18,11 @@ internal static class WindowPlacementService
     private const int CloakedAttribute = 14;
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    internal sealed record Source(string ProgramId, string ExecutablePath, HashSet<int> ProcessIds);
+    internal sealed record Source(string ProgramId, string ExecutablePath, HashSet<int> ProcessIds, bool OwnsDirectLaunchTree = false);
     internal sealed record Window(IntPtr Handle, string ProgramId, string ExecutablePath, string ClassName, string Title, NativePlacement Placement);
     internal sealed record WindowScan(List<Window> Windows, bool IsComplete);
     internal sealed record CaptureResult(ShortcutWindowPlacementDefinition[] Placements, bool IsComplete);
+    internal sealed record PendingPlacement(IntPtr Handle, DateTime LastAttemptUtc, int AttemptCount, bool WasAccepted);
 
     internal static WindowScan FindWindows(IReadOnlyList<Source> sources)
     {
@@ -35,7 +36,10 @@ internal static class WindowPlacementService
                 return true;
 
             GetWindowThreadProcessId(handle, out uint processId);
-            Source? source = sources.FirstOrDefault(item => item.ProcessIds.Contains((int)processId));
+            // Later launches may also appear in an earlier same-executable monitor. Prefer
+            // the launch tree that owns this PID, then the later source if ownership is unknown.
+            Source? source = sources.LastOrDefault(item => item.OwnsDirectLaunchTree && item.ProcessIds.Contains((int)processId))
+                ?? sources.LastOrDefault(item => item.ProcessIds.Contains((int)processId));
             if (source == null) return true;
             if (string.Equals(System.IO.Path.GetFileName(source.ExecutablePath), "DisplayMagician.exe", StringComparison.OrdinalIgnoreCase)) return true;
 
@@ -133,46 +137,54 @@ internal static class WindowPlacementService
         return new CaptureResult(placements.ToArray(), scan.IsComplete);
     }
 
-    internal static (int Count, string[] Programs) Restore(IReadOnlyList<Source> sources, IReadOnlyList<ShortcutWindowPlacementDefinition> placements, HashSet<int> completed, Dictionary<int, IntPtr> pending, bool verifyOnly = false)
+    internal static (int Count, string[] Programs) Restore(IReadOnlyList<Source> sources, IReadOnlyList<ShortcutWindowPlacementDefinition> placements, HashSet<int> completed, Dictionary<int, PendingPlacement> pending, bool verifyOnly = false)
     {
         List<Window> windows = FindWindows(sources).Windows;
-        HashSet<IntPtr> usedHandles = pending.Values.ToHashSet();
+        HashSet<IntPtr> usedHandles = pending.Values.Select(item => item.Handle).ToHashSet();
         List<string> programs = new List<string>();
         int moved = 0;
         for (int index = 0; index < placements.Count; index++)
         {
             if (completed.Contains(index)) continue;
             ShortcutWindowPlacementDefinition saved = placements[index];
+            int previousAttempts = 0;
             string[] requiredDisplays = saved.DisplayNames ?? Array.Empty<string>();
             Rectangle savedBounds = Rectangle.FromLTRB(saved.Left, saved.Top, saved.Right, saved.Bottom);
             if (savedBounds.Width <= 0 || savedBounds.Height <= 0 || requiredDisplays.Length == 0 ||
                 requiredDisplays.Any(name => !Screen.AllScreens.Any(screen => string.Equals(screen.DeviceName, name, StringComparison.OrdinalIgnoreCase))))
             {
                 Logger.Warn("WindowPlacementService/Restore: Skipped placement {0} for {1}: required display is missing.", index, saved.ExecutablePath);
+                pending.Remove(index);
                 completed.Add(index);
                 continue;
             }
 
-            if (pending.TryGetValue(index, out IntPtr pendingHandle))
+            if (pending.TryGetValue(index, out PendingPlacement? pendingPlacement))
             {
-                Window? pendingWindow = windows.FirstOrDefault(item => item.Handle == pendingHandle);
-                if (pendingWindow == null)
+                Window? pendingWindow = windows.FirstOrDefault(item => item.Handle == pendingPlacement.Handle);
+                if (pendingWindow != null && MatchesSavedPlacement(pendingWindow.Placement, saved))
                 {
                     pending.Remove(index);
-                    usedHandles.Remove(pendingHandle);
-                }
-                else
-                {
-                    if (MatchesSavedPlacement(pendingWindow.Placement, saved))
+                    completed.Add(index);
+                    if (pendingPlacement.WasAccepted)
                     {
-                        pending.Remove(index);
-                        completed.Add(index);
                         moved++;
                         programs.Add(System.IO.Path.GetFileNameWithoutExtension(saved.ExecutablePath));
                         Logger.Info("WindowPlacementService/Restore: Verified window class {0} for {1} on {2}.", saved.WindowClass, saved.ExecutablePath, string.Join(",", requiredDisplays));
                     }
                     continue;
                 }
+                if (verifyOnly || DateTime.UtcNow - pendingPlacement.LastAttemptUtc < TimeSpan.FromSeconds(1)) continue;
+                if (pendingPlacement.AttemptCount >= 3)
+                {
+                    pending.Remove(index);
+                    completed.Add(index);
+                    Logger.Warn("WindowPlacementService/Restore: Stopped placing window class {0} for {1} after {2} failed attempts.", saved.WindowClass, saved.ExecutablePath, pendingPlacement.AttemptCount);
+                    continue;
+                }
+                previousAttempts = pendingPlacement.AttemptCount;
+                pending.Remove(index);
+                usedHandles.Remove(pendingPlacement.Handle);
             }
 
             if (verifyOnly) continue;
@@ -204,12 +216,9 @@ internal static class WindowPlacementService
             target.ShowCommand = saved.ShowCommand is 1 or 2 or 3 ? saved.ShowCommand : 1;
             target.Flags = 4;
             bool applied = SetWindowPlacement(match.Handle, ref target);
-            if (applied)
-            {
-                usedHandles.Add(match.Handle);
-                pending[index] = match.Handle;
-            }
-            else Logger.Warn("WindowPlacementService/Restore: SetWindowPlacement failed for {0}, Win32 error {1}.", saved.ExecutablePath, Marshal.GetLastWin32Error());
+            usedHandles.Add(match.Handle);
+            pending[index] = new PendingPlacement(match.Handle, DateTime.UtcNow, previousAttempts + 1, applied);
+            if (!applied) Logger.Warn("WindowPlacementService/Restore: SetWindowPlacement failed for {0}, Win32 error {1}.", saved.ExecutablePath, Marshal.GetLastWin32Error());
         }
         return (moved, programs.ToArray());
     }
