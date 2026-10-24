@@ -357,6 +357,7 @@ Massive thanks to the people who were generous enough to donate towards the Disp
 
 There ais so much variation in display and audio hardware out there that it is nearly impossible to design a program that is bug-free. I need amazing people like those shown below to log a Github issue when they find a bug that needs fixing. So a massive round of applause to the people listed below who spent a long time troubleshooting a problem so that we could squash the bug!
 
+* Shamous123 (Spent a few weeks helping troubleshoot AMD Eyefinity support and some AMD bugs)
 * Domenic (Spent about a month actively troubleshooting difficult display-profile problems.)
 * Ceramed (Helped troubleshoot SuperDisplay and SpaceDesk display support.)
 * JSchoonbrood (Great help testing multiple display adapter bugs and SuperDisplay Android Tablet support)
