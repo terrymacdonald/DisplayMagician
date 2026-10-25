@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
   <!-- Include the standard NuGet restore targets for solution-level restore. -->
