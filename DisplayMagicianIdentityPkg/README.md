@@ -15,6 +15,6 @@ dotnet build .\DisplayMagician\DisplayMagician.csproj
 dotnet build .\DisplayMagicianIdentityPkg\DisplayMagicianIdentityPkg.csproj
 ```
 
-It requires the Windows 10 SDK tools (`makeappx.exe`, `makepri.exe`, and optionally `signtool.exe`). The project defines its own Build, Clean, Rebuild, and Restore targets; it does not need the `Microsoft.Build.NoTargets` package. The output MSIX is placed in `DisplayMagicianPackage\Packages\` for the MSI build.
+It requires the Windows 10 SDK tools (`makeappx.exe`, `makepri.exe`, and optionally `signtool.exe`). The project defines its own Build, Clean, and Rebuild targets and imports the standard MSBuild targets so solution-level NuGet restore recognises it. It does not need the `Microsoft.Build.NoTargets` package. The output MSIX is placed in `DisplayMagicianPackage\Packages\` for the MSI build.
 
 Use the repository release build script for a signed release rather than manually editing `AppxManifest.xml` version data.

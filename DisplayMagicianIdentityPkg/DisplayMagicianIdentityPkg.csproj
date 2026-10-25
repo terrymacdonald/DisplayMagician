@@ -5,7 +5,9 @@
     <TargetFramework>net10.0-windows</TargetFramework>
   </PropertyGroup>
 
-  <Target Name="Restore" />
+  <!-- Include the standard NuGet restore targets for solution-level restore. -->
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+
   <Target Name="Build" />
   <Target Name="Clean" />
   <Target Name="Rebuild" DependsOnTargets="Clean;Build" />

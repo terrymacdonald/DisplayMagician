@@ -5,7 +5,8 @@
 .DESCRIPTION
     Finds every *.Tests.csproj below the repository root, builds each project
     with Visual Studio MSBuild (required by projects with COM references), then
-    runs it through dotnet test without rebuilding it.
+    runs it through dotnet test without rebuilding it. Restores ControlService's
+    any-runtime reference pack before each build.
 
 .PARAMETER Configuration
     Debug or Release (default: Debug).
@@ -44,6 +45,7 @@ function Find-MSBuild {
 
 $root = $PSScriptRoot
 $msbuild = Find-MSBuild
+$controlServiceProject = Join-Path $root 'DisplayMagician.ControlService\DisplayMagician.ControlService.csproj'
 $testProjects = @(Get-ChildItem -Path $root -Recurse -Filter '*.Tests.csproj' -File | Sort-Object FullName)
 if ($testProjects.Count -eq 0) {
     throw 'No DisplayMagician test projects were found.'
@@ -53,6 +55,18 @@ Write-Host "Using MSBuild: $msbuild" -ForegroundColor DarkGray
 foreach ($testProject in $testProjects) {
     $relativePath = $testProject.FullName.Substring($root.Length).TrimStart('\')
     Write-Host "" 
+    Write-Host "==> Restore $relativePath" -ForegroundColor Cyan
+    & $msbuild $testProject.FullName -t:Restore -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    Write-Host "==> Restore ControlService any-runtime reference pack" -ForegroundColor Cyan
+    & $msbuild $controlServiceProject -t:Restore -p:RuntimeIdentifier=any -nologo -v:minimal
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
     Write-Host "==> Build $relativePath ($Configuration|$Platform)" -ForegroundColor Cyan
     & $msbuild $testProject.FullName -t:Build -p:Configuration=$Configuration -p:Platform=$Platform -nologo -v:minimal
     if ($LASTEXITCODE -ne 0) {
