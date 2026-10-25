@@ -6,8 +6,8 @@ namespace DisplayMagician.UserAgent;
 
 /// <summary>
 /// Maintains the set of automatic game detections owned by the User Agent.
-/// Process watching is added by ShortcutRunner; this class protects its lifecycle
-/// and prevents two shortcuts reacting to the same game monitor target.
+/// The detection worker observes process identities and ShortcutRunner follows the
+/// selected process tree; this class prevents conflicting shortcut registrations.
 /// </summary>
 public sealed class AutomaticGameDetectionRegistry
 {

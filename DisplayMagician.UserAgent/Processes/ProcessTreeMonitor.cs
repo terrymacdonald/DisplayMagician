@@ -11,6 +11,7 @@ namespace DisplayMagician.Processes
 {
     public sealed class ProcessTreeMonitor : IDisposable
     {
+        internal sealed record ProcessScan(IReadOnlyList<ProcessIdentity> Identities, bool IsComplete);
         private const uint SnapshotProcesses = 0x00000002;
         private const uint ProcessQueryLimitedInformation = 0x00001000;
         private const int MaximumPathLength = 32768;
@@ -223,44 +224,70 @@ namespace DisplayMagician.Processes
             return monitor;
         }
 
-        internal static ProcessTreeMonitor? BeginWatchingNewestExisting(string expectedExecutablePath, int startTimeout)
+        internal static ProcessScan FindRunningProcesses(string executablePath)
         {
-            if (string.IsNullOrWhiteSpace(expectedExecutablePath) || !File.Exists(expectedExecutablePath))
+            List<ProcessIdentity> identities = new List<ProcessIdentity>();
+            if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath) ||
+                !string.Equals(Path.GetExtension(executablePath), ".exe", StringComparison.OrdinalIgnoreCase))
+                return new ProcessScan(identities, false);
+
+            string expectedPath = Path.GetFullPath(executablePath);
+            bool complete = true;
+            foreach (Process process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(expectedPath)))
+            {
+                try
+                {
+                    string? actualPath = GetProcessImagePath(process.Id);
+                    if (string.IsNullOrWhiteSpace(actualPath))
+                    {
+                        complete = false;
+                        continue;
+                    }
+                    if (!process.HasExited &&
+                        string.Equals(Path.GetFullPath(actualPath), expectedPath, StringComparison.OrdinalIgnoreCase))
+                        identities.Add(new ProcessIdentity(process.Id, process.StartTime.ToUniversalTime()));
+                }
+                catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                {
+                    if (ex is System.ComponentModel.Win32Exception) complete = false;
+                    logger.Trace(ex, "ProcessTreeMonitor/FindRunningProcesses: Could not inspect a process for {0}.", executablePath);
+                }
+                finally { process.Dispose(); }
+            }
+            return new ProcessScan(identities, complete);
+        }
+
+        internal static ProcessTreeMonitor? BeginWatchingExisting(string expectedExecutablePath, ProcessIdentity identity, int startTimeout)
+        {
+            if (identity.ProcessId <= 0 || string.IsNullOrWhiteSpace(expectedExecutablePath) || !File.Exists(expectedExecutablePath))
                 return null;
 
             ProcessTreeMonitor? monitor = null;
             try
             {
                 monitor = new ProcessTreeMonitor(expectedExecutablePath, startTimeout, continueTrackingDescendants: true);
-                monitor._trackOnlySelectedTree = true;
-                foreach (KeyValuePair<int, DateTime> candidate in monitor._existingExpectedProcessIds.OrderByDescending(item => item.Value))
+                using Process process = Process.GetProcessById(identity.ProcessId);
+                if (process.HasExited || process.StartTime.ToUniversalTime() != identity.StartTimeUtc || !monitor.PathsMatch(process))
                 {
-                    try
-                    {
-                        using Process process = Process.GetProcessById(candidate.Key);
-                        if (process.HasExited || process.StartTime.ToUniversalTime() != candidate.Value || !monitor.PathsMatch(process))
-                            continue;
-                        monitor._trackedProcessIds.Add(candidate.Key);
-                        monitor._trackedProcessStartTimes[candidate.Key] = candidate.Value;
-                        monitor._directLaunchTreeProcessIds.Add(candidate.Key);
-                        monitor._hasObservedExpectedProcess = true;
-                        monitor.CaptureProcessTree(null);
-                        monitor.Start();
-                        logger.Info("ProcessTreeMonitor/BeginWatchingNewestExisting: Tracking newest running PID {0} for {1}.", candidate.Key, expectedExecutablePath);
-                        return monitor;
-                    }
-                    catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
-                    {
-                        logger.Debug(ex, "ProcessTreeMonitor/BeginWatchingNewestExisting: Could not inspect candidate PID {0} for {1}.", candidate.Key, expectedExecutablePath);
-                    }
+                    monitor.Dispose();
+                    return null;
                 }
+
+                monitor._trackOnlySelectedTree = true;
+                monitor._trackedProcessIds.Add(identity.ProcessId);
+                monitor._trackedProcessStartTimes[identity.ProcessId] = identity.StartTimeUtc;
+                monitor._directLaunchTreeProcessIds.Add(identity.ProcessId);
+                monitor._hasObservedExpectedProcess = true;
+                monitor.CaptureProcessTree(null);
+                monitor.Start();
+                return monitor;
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
             {
-                logger.Warn(ex, "ProcessTreeMonitor/BeginWatchingNewestExisting: Could not select a running process for {0}.", expectedExecutablePath);
+                monitor?.Dispose();
+                logger.Warn(ex, "ProcessTreeMonitor/BeginWatchingExisting: Could not attach to PID {0} for {1}.", identity.ProcessId, expectedExecutablePath);
+                return null;
             }
-            monitor?.Dispose();
-            return null;
         }
 
         public static bool IsExecutableRunning(string executablePath)

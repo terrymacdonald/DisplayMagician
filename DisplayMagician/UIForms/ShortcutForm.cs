@@ -734,6 +734,11 @@ namespace DisplayMagician.UIForms
                     errors.Add("This shortcut uses a game that is no longer installed on this computer. Please choose a different game from the list of games shown in the list, or reinstall the game this shortcut uses.");
                 }
 
+                GameView selectedGame = _availableGames.FirstOrDefault(game => string.Equals(game.Id, _gameId, StringComparison.OrdinalIgnoreCase));
+                if (_shortcutToEdit?.GameLaunchMode == GameLaunchMode.DetectGameRunning && !cb_wait_alternative_game.Checked &&
+                    (selectedGame == null || !string.Equals(Path.GetExtension(selectedGame.ExecutablePath), ".exe", StringComparison.OrdinalIgnoreCase) || !File.Exists(selectedGame.ExecutablePath)))
+                    errors.Add("Automatic game detection requires the actual game .exe. Select it with 'Monitor different executable'.");
+
                 if (cb_wait_alternative_game.Checked)
                 {
                     if (String.IsNullOrWhiteSpace(txt_alternative_game.Text))
@@ -747,10 +752,10 @@ namespace DisplayMagician.UIForms
                         logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable the user wants to monitor doesn't exist. Please check the file '{txt_alternative_game.Text}' is still there, and that the file has the correct permissions.");
                         errors.Add("The different game executable you have chosen to monitor does not exist! Please reselect the different game executable using the Choose button, verify the path entered is correct, or check that you have permissions to view it.");
                     }
-                    else if (!DesktopShellUtilities.IsExecutableFileType(txt_alternative_game.Text))
+                    else if (!string.Equals(Path.GetExtension(txt_alternative_game.Text), ".exe", StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.Error($"ShortcutForm/AllowedToSave: The alternative game executable '{txt_alternative_game.Text}' is not a valid executable file type.");
-                        errors.Add("The different game executable you have chosen to monitor is not a valid executable file type. Please select a valid executable (.exe, .com, .bat, .cmd, .ps1, .lnk, .url, .msi) using the Choose button.");
+                        logger.Error("ShortcutForm/AllowedToSave: The alternative game monitor target {0} is not a process executable.", txt_alternative_game.Text);
+                        errors.Add("Select the actual running game .exe for 'Monitor different executable'. Scripts, links, and installers cannot identify the game process.");
                     }
 
                 }
@@ -2774,21 +2779,21 @@ namespace DisplayMagician.UIForms
             }
 
             dialog_open.InitialDirectory = gamePath;
-            dialog_open.DefaultExt = "*.exe";
-            dialog_open.Filter = "Executable files (*.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url) | *.exe;*.com;*.msi;*.bat;*.cmd;*.ps1;*.lnk;*.url | All files(*.*) | *.*";
+            dialog_open.DefaultExt = "exe";
+            dialog_open.Filter = "Game process (*.exe)|*.exe|All files (*.*)|*.*";
             if (dialog_open.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
-                if (File.Exists(dialog_open.FileName) && DesktopShellUtilities.IsExecutableFileType(dialog_open.FileName))
+                if (File.Exists(dialog_open.FileName) && string.Equals(Path.GetExtension(dialog_open.FileName), ".exe", StringComparison.OrdinalIgnoreCase))
                 {
                     txt_alternative_game.Text = dialog_open.FileName;
                     dialog_open.FileName = string.Empty;
                 }
                 else
                 {
-                    MessageBox.Show(
-                        "Selected file is not a valid file.",
+                    MessageBox.Show(this,
+                        "Select the .exe file of the running game process.",
                         "Executable",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Exclamation);

@@ -19,6 +19,7 @@ using DisplayMagician.UserAgent.Messaging;
 using DisplayMagician.UserAgent.Runtime;
 using DisplayMagician.UserAgent.Runtime.Windows;
 using DisplayMagician.GameLibraries;
+using DisplayMagician.Processes;
 using SharedApplyProfileResult = DisplayMagician.UserAgent.Runtime.ApplyProfileResult;
 using NLog;
 
@@ -78,7 +79,7 @@ public sealed class ProfileCommandHandler
         return restored;
     }
 
-    public async Task<bool> RunDetectedShortcutAsync(string shortcutId, CancellationToken cancellationToken)
+    public async Task<bool> RunDetectedShortcutAsync(string shortcutId, ProcessIdentity detectedProcess, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(shortcutId))
         {
@@ -127,7 +128,7 @@ public sealed class ProfileCommandHandler
                 return false;
             }
 
-            await RunShortcutOperationAsync(operationId, shortcutId, operationCancellationSource, isAutomaticallyDetected: true).ConfigureAwait(false);
+            await RunShortcutOperationAsync(operationId, shortcutId, operationCancellationSource, isAutomaticallyDetected: true, detectedProcess: detectedProcess).ConfigureAwait(false);
             await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
             return true;
         }
@@ -861,13 +862,13 @@ public sealed class ProfileCommandHandler
         }
     }
 
-    private async Task RunShortcutOperationAsync(Guid operationId, string shortcutId, CancellationTokenSource operationCancellationSource, bool isAutomaticallyDetected)
+    private async Task RunShortcutOperationAsync(Guid operationId, string shortcutId, CancellationTokenSource operationCancellationSource, bool isAutomaticallyDetected, ProcessIdentity? detectedProcess = null)
     {
         using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
         try
         {
             ShortcutRunResult result = isAutomaticallyDetected
-                ? await _shortcutRunner.ApplyDetectedGameShortcutAsync(shortcutId, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId, RequestShortcutDecisionAsync).ConfigureAwait(false)
+                ? await _shortcutRunner.ApplyDetectedGameShortcutAsync(shortcutId, detectedProcess!.Value, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId, RequestShortcutDecisionAsync).ConfigureAwait(false)
                 : await _shortcutRunner.ApplyShortcutProfilesAsync(shortcutId, 0, operationCancellationSource.Token, PublishShortcutStatusAsync, operationId, RequestShortcutDecisionAsync).ConfigureAwait(false);
             bool wasSuccessful = result.Outcome == ShortcutRunOutcome.Completed;
             OperationPhase terminalPhase = result.Outcome == ShortcutRunOutcome.Cancelled ? OperationPhase.Cancelled : wasSuccessful ? OperationPhase.Completed : OperationPhase.Failed;

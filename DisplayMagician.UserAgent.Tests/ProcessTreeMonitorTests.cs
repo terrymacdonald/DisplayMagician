@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Linq;
 using DisplayMagician.Processes;
 using Xunit;
 
@@ -10,7 +11,7 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class ProcessTreeMonitorTests
 {
     [Fact]
-    public void BeginWatchingNewestExisting_SelectsLatestMatchingProcess()
+    public void FindRunningProcesses_AndAttachSelectedIdentity_KeepCopiesSeparate()
     {
         string executable = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
         using Process first = Process.Start(new ProcessStartInfo(executable, "/d /c ping -n 15 127.0.0.1 >nul") { UseShellExecute = false, CreateNoWindow = true })!;
@@ -20,10 +21,21 @@ public sealed class ProcessTreeMonitorTests
             using Process second = Process.Start(new ProcessStartInfo(executable, "/d /c ping -n 15 127.0.0.1 >nul") { UseShellExecute = false, CreateNoWindow = true })!;
             try
             {
-                using ProcessTreeMonitor monitor = ProcessTreeMonitor.BeginWatchingNewestExisting(executable, 2)!;
+                ProcessTreeMonitor.ProcessScan scan = ProcessTreeMonitor.FindRunningProcesses(executable);
+                Assert.True(scan.IsComplete);
+                Assert.Equal(second.Id, scan.Identities.OrderByDescending(identity => identity.StartTimeUtc).First().ProcessId);
+                using ProcessTreeMonitor exactMonitor = ProcessTreeMonitor.BeginWatchingExisting(executable,
+                    new ProcessIdentity(first.Id, first.StartTime.ToUniversalTime()), 2)!;
+                Assert.NotNull(exactMonitor);
+                Assert.True(exactMonitor.IsInDirectLaunchTree(first.Id));
+                Assert.False(exactMonitor.IsInDirectLaunchTree(second.Id));
+                using ProcessTreeMonitor monitor = ProcessTreeMonitor.BeginWatchingExisting(executable,
+                    new ProcessIdentity(second.Id, second.StartTime.ToUniversalTime()), 2)!;
                 Assert.NotNull(monitor);
                 Assert.True(monitor.IsInDirectLaunchTree(second.Id));
                 Assert.False(monitor.IsInDirectLaunchTree(first.Id));
+                Assert.Null(ProcessTreeMonitor.BeginWatchingExisting(executable,
+                    new ProcessIdentity(first.Id, DateTime.MinValue), 2));
                 second.Kill(entireProcessTree: true);
                 second.WaitForExit();
                 Assert.True(System.Threading.SpinWait.SpinUntil(() => !monitor.IsRunning, TimeSpan.FromSeconds(3)));

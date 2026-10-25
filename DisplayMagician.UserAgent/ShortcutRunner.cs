@@ -96,12 +96,12 @@ public sealed class ShortcutRunner
         return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: true, isManualRun: true, cancellationToken, publishStatusAsync, operationId, requestDecisionAsync).ConfigureAwait(false);
     }
 
-    public async Task<ShortcutRunResult> ApplyDetectedGameShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null, Guid? operationId = null, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync = null)
+    public async Task<ShortcutRunResult> ApplyDetectedGameShortcutAsync(string shortcutId, ProcessIdentity detectedProcess, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null, Guid? operationId = null, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync = null)
     {
-        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: false, isManualRun: false, cancellationToken, publishStatusAsync, operationId, requestDecisionAsync).ConfigureAwait(false);
+        return await RunShortcutAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame: false, isManualRun: false, cancellationToken, publishStatusAsync, operationId, requestDecisionAsync, detectedProcess).ConfigureAwait(false);
     }
 
-    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid? operationId = null, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync = null)
+    private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid? operationId = null, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync = null, ProcessIdentity? detectedProcess = null)
     {
         ShortcutRunResult preparedRun = await PrepareRunAsync(shortcutId, cancellationToken, operationId).ConfigureAwait(false);
         if (preparedRun.Outcome != ShortcutRunOutcome.Prepared || preparedRun.Shortcut == null)
@@ -155,12 +155,15 @@ public sealed class ShortcutRunner
                 Game? detectedGame = GameLibrary.GetAnyGameById(shortcut.GameAppId);
                 string detectedExecutable = shortcut.MonitorDifferentGameExecutable
                     ? shortcut.DifferentGameExecutablePathToMonitor : detectedGame?.ExePath ?? string.Empty;
-                detectedGameMonitor = ProcessTreeMonitor.BeginWatchingNewestExisting(detectedExecutable, shortcut.StartTimeoutSeconds);
-                if (detectedGameMonitor != null)
+                if (detectedProcess.HasValue)
+                    detectedGameMonitor = ProcessTreeMonitor.BeginWatchingExisting(detectedExecutable, detectedProcess.Value, shortcut.StartTimeoutSeconds);
+                if (detectedGameMonitor == null)
                 {
-                    windowRun.Monitors.Add(("main", detectedGameMonitor));
-                    windowRun.OwnedHelperMonitors.Add(detectedGameMonitor);
+                    _logger.Warn("ShortcutRunner/RunShortcutAsync: Detected game PID {0} is no longer available for shortcut {1}.", detectedProcess?.ProcessId, shortcut.Id);
+                    return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                 }
+                windowRun.Monitors.Add(("main", detectedGameMonitor));
+                windowRun.OwnedHelperMonitors.Add(detectedGameMonitor);
                 windowRun.RequireMainSource = true;
             }
             if (shouldApplyDisplayProfile)

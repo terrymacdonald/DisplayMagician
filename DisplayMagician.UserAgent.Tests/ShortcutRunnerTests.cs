@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
+using DisplayMagician.Processes;
 using DisplayMagician.UserAgent;
 using Xunit;
 
@@ -185,7 +186,7 @@ public sealed class ShortcutRunnerTests
             Guid operationId = Guid.NewGuid();
             List<OperationStatusUpdate> statuses = new List<OperationStatusUpdate>();
 
-            ShortcutRunResult result = await runner.ApplyDetectedGameShortcutAsync("detected-shortcut", 0, CancellationToken.None, (status, _) =>
+            ShortcutRunResult result = await runner.ApplyDetectedGameShortcutAsync("detected-shortcut", new ProcessIdentity(1, DateTime.UtcNow), 0, CancellationToken.None, (status, _) =>
             {
                 statuses.Add(status);
                 return Task.CompletedTask;

@@ -1637,14 +1637,17 @@ namespace DisplayMagician
             }
 
             if (Category.Equals(ShortcutCategory.Game) && MonitorDifferentGameExe &&
-                (String.IsNullOrWhiteSpace(DifferentGameExeToMonitor) || !System.IO.File.Exists(DifferentGameExeToMonitor)))
+                (String.IsNullOrWhiteSpace(DifferentGameExeToMonitor) || !System.IO.File.Exists(DifferentGameExeToMonitor) ||
+                 !string.Equals(Path.GetExtension(DifferentGameExeToMonitor), ".exe", StringComparison.OrdinalIgnoreCase)))
             {
                 ShortcutError error = new ShortcutError();
-                error.Name = "AlternativeGameExecutableToMonitorNotExist";
+                error.Name = "AlternativeGameExecutableToMonitorInvalid";
                 error.Validity = ShortcutValidity.Warning;
                 error.Message = String.IsNullOrWhiteSpace(DifferentGameExeToMonitor)
                     ? "An alternative game executable to monitor has not been selected."
-                    : $"The alternative game executable to monitor '{Path.GetFileName(DifferentGameExeToMonitor)}' does not exist.";
+                    : !System.IO.File.Exists(DifferentGameExeToMonitor)
+                        ? $"The alternative game executable to monitor '{Path.GetFileName(DifferentGameExeToMonitor)}' does not exist."
+                        : "Select the actual running game .exe for 'Monitor different executable'.";
                 _shortcutErrors.Add(error);
                 if (worstError != ShortcutValidity.Error)
                     worstError = ShortcutValidity.Warning;

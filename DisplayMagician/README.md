@@ -6,6 +6,8 @@ The desktop application is a client of `DisplayMagician.ControlService`; it must
 
 While an eligible shortcut runs, Save Window Positions is available beside Cancel in the Shortcut Library, in its running notification, and in the system tray menu. The tray menu uses cached session state and refreshes it asynchronously so opening the menu does not wait for a service response. Saving replaces the shortcut's previous complete window snapshot after confirmation. A confirmed Clear Saved Window Positions action in the Shortcut Library context menu removes an existing snapshot. The desktop shows one short restoration summary with the count and program names; per-window details go to Agent logs. The Windows desktop background context menu remains unchanged.
 
+The game shortcut editor accepts an actual `.exe` for Monitor different executable. Automatic game detection requires this path when the game library cannot provide a usable executable path. Previously saved scripts or links remain in the shortcut data and show a validation warning until changed.
+
 The pairing and server-settings forms show the local/routed-network workflow for the first REST release. Their Remote Network controls remain in the Designer and code but are hidden until user-enabled Internet access is supported.
 Server Settings can also allow paired devices on Windows Public networks after administrator approval and a confirmation. This changes the Gateway firewall rule for Public networks; it does not configure router port forwarding.
 Server Settings also has an administrator-confirmed TLS key replacement action for identity recovery. The Gateway restarts and all paired devices must pair again after its TLS pin changes.
