@@ -1266,6 +1266,13 @@ namespace DisplayMagician
             RefreshValidity();
         }
 
+        public ShortcutItem CreateEditingCopy()
+        {
+            JsonSerializerSettings settings = new JsonSerializerSettings { ObjectCreationHandling = ObjectCreationHandling.Replace };
+            return JsonConvert.DeserializeObject<ShortcutItem>(JsonConvert.SerializeObject(this, settings), settings)
+                ?? throw new InvalidDataException("The shortcut could not be copied for editing.");
+        }
+
         public bool CopyTo (ShortcutItem shortcut, bool overwriteUUID = true)
         {
             if (!(shortcut is ShortcutItem))
@@ -1370,8 +1377,7 @@ namespace DisplayMagician
             shortcut.ProfileUUID = ProfileUUID;
             shortcut.AudioProfileUUID = AudioProfileUUID;
 
-            // Save the shortcut incon to the icon cache
-            shortcut.SaveShortcutIconToCache();
+            // The repository writes the icon only after the copied shortcut is committed.
             shortcut.RefreshValidity();
 
             return true;

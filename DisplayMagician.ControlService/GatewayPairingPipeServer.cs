@@ -225,6 +225,7 @@ public sealed class GatewayPairingPipeServer
 
     private ControlResponse BeginIdempotency(ControlEnvelope request)
     {
+        if (!_idempotencyStore.IsAvailable) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "Remote mutations are unavailable because Gateway replay protection could not be loaded." };
         GatewayHttpIdempotencyRequest? input = JsonSerializer.Deserialize<GatewayHttpIdempotencyRequest>(request.Payload);
         if (input == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An idempotency request is required." };
         return new ControlResponse { IsSuccessful = true, GatewayIdempotency = _idempotencyStore.Begin(input.ScopeHash, input.Key, input.RequestHash, input.GatewayInstanceId, DateTime.UtcNow) };
@@ -232,6 +233,7 @@ public sealed class GatewayPairingPipeServer
 
     private ControlResponse CompleteIdempotency(ControlEnvelope request)
     {
+        if (!_idempotencyStore.IsAvailable) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "Gateway replay protection is unavailable; the mutation outcome could not be retained." };
         GatewayHttpIdempotencyRequest? input = JsonSerializer.Deserialize<GatewayHttpIdempotencyRequest>(request.Payload);
         if (input == null) return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "An idempotency result is required." };
         _idempotencyStore.Complete(input.ScopeHash, input.Key, input.RequestHash, input.StatusCode, input.ContentType, input.Location, input.RetryAfter, input.ResponseJson);

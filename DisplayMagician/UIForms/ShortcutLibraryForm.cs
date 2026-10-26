@@ -333,12 +333,9 @@ namespace DisplayMagician.UIForms
             _shortcutForm.ShowDialog(this);
             if (_shortcutForm.DialogResult == DialogResult.OK)
             {
-                ShortcutRepository.AddShortcut(_shortcutForm.Shortcut);
                 _selectedShortcut = _shortcutForm.Shortcut;
                 //ShortcutRepository.IsValidRefresh();
                 RefreshShortcutLibraryUI();
-                // As this is an edit, we need to manually force saving the shortcut library
-                ShortcutRepository.SaveShortcuts();
                 // We update the Game Shortcut context menu is always updated and correct.
                 if (Program.AppProgramSettings.InstallDesktopContextMenu)
                 {
@@ -423,17 +420,9 @@ namespace DisplayMagician.UIForms
                 _shortcutForm.ShowDialog(this);
                 if (_shortcutForm.DialogResult == DialogResult.OK)
                 {
-                    // The editor updates the repository object; do not report the edit as
-                    // saved until the User Agent has accepted the repository commit.
-                    if (ShortcutRepository.SaveShortcuts())
-                    {
-                        if (Program.AppProgramSettings.InstallDesktopContextMenu)
-                            DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
-                    }
-                    else
-                    {
-                        MessageBox.Show(this, "The shortcut changes could not be saved. Please reopen the shortcut and try again.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    _selectedShortcut = _shortcutForm.Shortcut;
+                    if (Program.AppProgramSettings.InstallDesktopContextMenu)
+                        DisplayMagician.ContextMenu.UpdateShortcutContextMenu();
 
                     RefreshShortcutLibraryUI();
                 }
@@ -469,15 +458,20 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            if (MessageBox.Show($"Are you sure you want to delete the '{_selectedShortcut.Name}' Shortcut? This cannot be undone.", $"Delete '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+            if (MessageBox.Show(this, $"Are you sure you want to delete the '{_selectedShortcut.Name}' Shortcut? This cannot be undone.", $"Delete '{_selectedShortcut.Name}' Shortcut?", MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
                 return;
 
+            if (!ShortcutRepository.RemoveShortcut(_selectedShortcut))
+            {
+                MessageBox.Show(this, ShortcutRepository.LastSaveErrorMessage, "Shortcut Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                RefreshShortcutLibraryUI();
+                return;
+            }
             // remove the profile from the imagelistview
             int currentIlvIndex = ilv_saved_shortcuts.SelectedItems[0].Index;
             ilv_saved_shortcuts.Items.RemoveAt(currentIlvIndex);
 
             // Remove the shortcut. This will also remove the shortcut hotkey if there is one
-            ShortcutRepository.RemoveShortcut(_selectedShortcut);
             _selectedShortcut = null;
 
             ShortcutRepository.IsValidRefresh();
@@ -804,7 +798,12 @@ namespace DisplayMagician.UIForms
             {
                 ShortcutItem copiedShortcut;
                 // Copy the shortcut
-                ShortcutRepository.CopyShortcut(_selectedShortcut, out copiedShortcut);
+                if (!ShortcutRepository.CopyShortcut(_selectedShortcut, out copiedShortcut))
+                {
+                    MessageBox.Show(this, ShortcutRepository.LastSaveErrorMessage, "Shortcut Copy Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    RefreshShortcutLibraryUI();
+                    return;
+                }
                 // Select the new copied shortcut
                 _selectedShortcut = copiedShortcut;
                 // Invalidate the list of shortcuts so it gets redrawn again with the copy included!

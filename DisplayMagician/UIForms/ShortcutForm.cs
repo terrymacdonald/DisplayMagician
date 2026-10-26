@@ -131,7 +131,8 @@ namespace DisplayMagician.UIForms
         public ShortcutItem Shortcut
         {
             get => _shortcutToEdit;
-            set => _shortcutToEdit = value;
+            // Edit a draft so Cancel and failed commits cannot change the live cache.
+            set => _shortcutToEdit = value?.CreateEditingCopy();
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -533,6 +534,15 @@ namespace DisplayMagician.UIForms
             // Refresh validity after these changes
             _shortcutToEdit.WindowPlacementTimeoutSeconds = Convert.ToInt32(nud_window_placement_timeout.Value);
             _shortcutToEdit.RefreshValidity();
+
+            bool saved = _editingExistingShortcut
+                ? ShortcutRepository.UpdateShortcut(_shortcutToEdit)
+                : ShortcutRepository.AddShortcut(_shortcutToEdit);
+            if (!saved)
+            {
+                MessageBox.Show(this, ShortcutRepository.LastSaveErrorMessage, "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return; // Keep the draft and controls available for correction or retry.
+            }
 
             // We've saved, so mark it as so
             _isUnsaved = false;
@@ -1846,10 +1856,9 @@ namespace DisplayMagician.UIForms
                     ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                 });
 
-                // Connecting replaces the repository objects. Keep the editor attached to
-                // the current object so its changes are included in the next commit.
+                // Load a draft of the latest authoritative shortcut when opening the editor.
                 if (_editingExistingShortcut && _shortcutToEdit != null)
-                    _shortcutToEdit = ShortcutRepository.GetShortcut(_shortcutToEdit.UUID);
+                    Shortcut = ShortcutRepository.GetShortcut(_shortcutToEdit.UUID);
             }
             catch (Exception ex)
             {

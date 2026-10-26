@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Reflection;
 using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
 using DisplayMagician.Processes;
@@ -13,6 +15,41 @@ namespace DisplayMagician.UserAgent.Tests;
 
 public sealed class ShortcutRunnerTests
 {
+    [Fact]
+    public void StopProgram_StopsOnlyTheConfiguredPathWhenExecutablesShareAName()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianProcessTests", Guid.NewGuid().ToString("N"));
+        string firstDirectory = Path.Combine(root, "first");
+        string secondDirectory = Path.Combine(root, "second");
+        Directory.CreateDirectory(firstDirectory);
+        Directory.CreateDirectory(secondDirectory);
+        string firstPath = Path.Combine(firstDirectory, "dm-path-test.exe");
+        string secondPath = Path.Combine(secondDirectory, "dm-path-test.exe");
+        string ping = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "ping.exe");
+        File.Copy(ping, firstPath);
+        File.Copy(ping, secondPath);
+        using Process first = Process.Start(new ProcessStartInfo(firstPath, "-n 30 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true })!;
+        using Process second = Process.Start(new ProcessStartInfo(secondPath, "-n 30 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true })!;
+        try
+        {
+            MethodInfo stop = typeof(ShortcutRunner).GetMethod("StopProgram", BindingFlags.NonPublic | BindingFlags.Static)!;
+            object cleanup = Activator.CreateInstance(stop.GetParameters()[2].ParameterType)!;
+            bool result = (bool)stop.Invoke(null, new object[] { new ShortcutStopProgramDefinition { ExecutablePath = firstPath }, 0, cleanup })!;
+
+            Assert.True(result);
+            Assert.True(first.HasExited);
+            Assert.False(second.HasExited);
+            Assert.False(ProcessTreeMonitor.IsExecutableRunning(firstPath));
+            Assert.True(ProcessTreeMonitor.IsExecutableRunning(secondPath));
+        }
+        finally
+        {
+            if (!first.HasExited) { first.Kill(); first.WaitForExit(5000); }
+            if (!second.HasExited) { second.Kill(); second.WaitForExit(5000); }
+            Directory.Delete(root, true);
+        }
+    }
+
     [Fact]
     public async Task PrepareRunAsync_ReturnsTheAgentOwnedShortcutDefinition()
     {

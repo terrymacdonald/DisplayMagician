@@ -11,19 +11,43 @@ namespace DisplayMagician.ControlService;
 /// <summary>Machine-owned 24-hour replay ledger for accepted Gateway HTTP mutations.</summary>
 public sealed class GatewayHttpIdempotencyStore
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private static readonly TimeSpan Retention = TimeSpan.FromHours(24);
     private static readonly TimeSpan PendingWindow = TimeSpan.FromMinutes(2);
     private readonly object _syncRoot = new object();
     private readonly string _storagePath;
     private readonly List<Record> _records;
+    public bool IsAvailable { get; }
 
     public GatewayHttpIdempotencyStore(StoragePaths storagePaths)
     {
         _storagePath = Path.Combine(storagePaths.MachinePath, "GatewayHttpIdempotency.json");
-        _records = File.Exists(_storagePath)
-            ? JsonSerializer.Deserialize<List<Record>>(File.ReadAllText(_storagePath)) ?? new List<Record>()
-            : new List<Record>();
-        foreach (Record record in _records.Where(record => !record.Completed)) record.RecoveredAfterRestart = true;
+        _records = new List<Record>();
+        try
+        {
+            // A backup may predate an executed command. Never substitute it or an empty
+            // ledger for unreadable existing state, as that could execute a retry twice.
+            if (File.Exists(_storagePath))
+            {
+                List<Record>? records = JsonSerializer.Deserialize<List<Record>>(File.ReadAllText(_storagePath));
+                if (records == null || records.Any(record => record == null ||
+                    string.IsNullOrWhiteSpace(record.ScopeHash) || !IsCanonicalUuidV4(record.Key) ||
+                    string.IsNullOrWhiteSpace(record.RequestHash) || record.OperationId == Guid.Empty ||
+                    record.GatewayInstanceId == Guid.Empty || record.AcceptedUtc == default))
+                    throw new JsonException("The Gateway replay ledger contains invalid records.");
+                _records.AddRange(records);
+            }
+            else if (File.Exists($"{_storagePath}.bak") || Directory.Exists(_storagePath))
+            {
+                throw new IOException("The Gateway replay ledger is missing or inaccessible while existing state may remain.");
+            }
+            foreach (Record record in _records.Where(record => !record.Completed)) record.RecoveredAfterRestart = true;
+            IsAvailable = true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            Logger.Error(ex, "GatewayHttpIdempotencyStore/GatewayHttpIdempotencyStore: Replay protection at {0} is unavailable; remote mutations are blocked and existing files are preserved.", _storagePath);
+        }
     }
 
     public GatewayHttpIdempotencyResult Begin(string scopeHash, string key, string requestHash, Guid gatewayInstanceId, DateTime utcNow)
@@ -35,6 +59,7 @@ public sealed class GatewayHttpIdempotencyStore
 
         lock (_syncRoot)
         {
+            if (!IsAvailable) throw new InvalidOperationException("Gateway replay protection is unavailable. Existing replay data must be repaired before remote mutations can resume.");
             PruneUnsafe(utcNow);
             Record? existing = _records.FirstOrDefault(record => record.ScopeHash == scopeHash && record.Key == key);
             if (existing != null)
@@ -66,6 +91,7 @@ public sealed class GatewayHttpIdempotencyStore
     {
         lock (_syncRoot)
         {
+            if (!IsAvailable) throw new InvalidOperationException("Gateway replay protection is unavailable.");
             Record? record = _records.FirstOrDefault(candidate => candidate.ScopeHash == scopeHash && candidate.Key == key && candidate.RequestHash == requestHash);
             if (record == null || statusCode is < 200 or > 599 || Encoding.UTF8.GetByteCount(responseJson) > 1024 * 1024)
             {

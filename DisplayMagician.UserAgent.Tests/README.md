@@ -9,3 +9,5 @@ dotnet test .\DisplayMagician.UserAgent.Tests\DisplayMagician.UserAgent.Tests.cs
 ```
 
 Tests must not require a real display topology, audio device, game installation, or installed service. Add tests alongside changes to User Agent-owned behaviour.
+
+Regression cases cover full-path process stopping with executable name collisions, newest-root selection, launcher handover beyond the discovery timeout, independent recovery snapshots and legacy recovery records, and desktop shortcut commit failures/draft isolation. Process tests launch only disposable test executables and clean up their own process trees.

@@ -46,6 +46,9 @@ namespace DisplayMagician
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
         private static long _userAgentRepositoryRevision;
+        private static string _lastSavedJson = string.Empty;
+        public static string LastSaveErrorMessage { get; private set; } = string.Empty;
+        public static bool LastSaveWasConflict { get; private set; }
         #endregion
 
         #region Class Constructors
@@ -109,6 +112,7 @@ namespace DisplayMagician
 
             LoadShortcutsFromJson(snapshot.Json);
             _userAgentRepositoryRevision = snapshot.Revision;
+            _lastSavedJson = snapshot.Json;
             _shortcutsLoaded = true;
             logger.Debug("ShortcutRepository/ConnectToUserAgent: Loaded the shortcut cache from the User Agent.");
         }
@@ -127,7 +131,8 @@ namespace DisplayMagician
             if (ContainsShortcut(shortcut))
             {
                 // Save the shortcuts JSON as it's different
-                SaveShortcuts();
+                if (!SaveShortcuts()) return false;
+                SaveCommittedShortcutIcon(shortcut);
                 IsValidRefresh();
 
                 return true;
@@ -137,6 +142,24 @@ namespace DisplayMagician
 
         }
 
+        public static bool UpdateShortcut(ShortcutItem shortcut)
+        {
+            int index = _allShortcuts.FindIndex(item => item.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase));
+            if (index < 0)
+            {
+                LastSaveErrorMessage = "This shortcut was deleted elsewhere. Close the editor and refresh the library.";
+                return false;
+            }
+            // Positions are captured through their own action, never edited in this form.
+            // Preserve a newer capture/clear when the user retries an editor conflict.
+            shortcut.WindowPlacements = new List<DisplayMagician.ConfigurationDefinitions.ShortcutWindowPlacementDefinition>(_allShortcuts[index].WindowPlacements);
+            _allShortcuts[index] = shortcut;
+            if (!SaveShortcuts()) return false;
+            SaveCommittedShortcutIcon(shortcut);
+            IsValidRefresh();
+            return true;
+        }
+
         public static bool RemoveShortcut(ShortcutItem shortcut)
         {
             logger.Trace($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcut.Name} if it exists in our shortcut repository");
@@ -144,27 +167,22 @@ namespace DisplayMagician
             if (!(shortcut is ShortcutItem))
                 return false;
 
-            // Remove the Shortcut Icons from the Cache
-            List<ShortcutItem> shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase));
-            foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
-            {
-                try
-                {
-                    logger.Info($"ShortcutRepository/RemoveShortcut: Removing shortcut {shortcutToRemove.Name}");
-                    File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"ShortcutRepository/RemoveShortcut: Exception removing shortcut {shortcutToRemove.Name}");
-                }
-            }
-
             // Remove the shortcut from the list.
             int numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcut.UUID, StringComparison.OrdinalIgnoreCase));
 
             if (numRemoved == 1)
             {
-                SaveShortcuts();
+                if (!SaveShortcuts()) return false;
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(shortcut.SavedShortcutIconCacheFilename))
+                        File.Delete(shortcut.SavedShortcutIconCacheFilename);
+                    Program.AppDirectInputManager?.RemoveHotkeysByUUID(shortcut.UUID);
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "ShortcutRepository/RemoveShortcut: Shortcut {0} was deleted but its local icon or hotkey could not be cleaned up.", shortcut.UUID);
+                }
                 IsValidRefresh();
 
                 logger.Trace($"ShortcutRepository/RemoveShortcut: Our shortcut repository does contain a shortcut we were looking for");
@@ -183,64 +201,15 @@ namespace DisplayMagician
 
         public static bool RemoveShortcut(string shortcutNameOrUuid)
         {
-
-            logger.Trace($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutNameOrUuid} if it exists in our shortcut repository");
-
-            if (String.IsNullOrWhiteSpace(shortcutNameOrUuid))
-            {
-                logger.Error($"ShortcutRepository/RemoveShortcut2: Shortcut to look for was empty or only whitespace");
-                return false;
-            }
-            List<ShortcutItem> shortcutsToRemove;
-            int numRemoved;
-
-            Match match = Regex.Match(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
-            if (match.Success)
-            {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
-                numRemoved = _allShortcuts.RemoveAll(item => item.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
-            }
-            else
-            {
-                shortcutsToRemove = _allShortcuts.FindAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
-                numRemoved = _allShortcuts.RemoveAll(item => item.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
-            }
-            // Remove the Shortcut Icons from the Cache
-            foreach (ShortcutItem shortcutToRemove in shortcutsToRemove)
-            {
-                try
-                {
-                    logger.Info($"ShortcutRepository/RemoveShortcut2: Removing shortcut {shortcutToRemove.Name}");
-                    File.Delete(shortcutToRemove.SavedShortcutIconCacheFilename);
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"ShortcutRepository/RemoveShortcut2: Exception removing shortcut {shortcutToRemove.Name}");
-                }
-
-                // Remove any hotkeys related to this shortcut if they exist
-                Program.AppDirectInputManager.RemoveHotkeysByUUID(shortcutToRemove.UUID.ToString());
-
-            }
-
-            if (numRemoved == 1)
-            {
-                SaveShortcuts();
-                IsValidRefresh();
-
-                logger.Trace($"ShortcutRepository/RemoveShortcut2: Our shortcut repository does contain a shortcut with Name or UUID {shortcutNameOrUuid}");
-                return true;
-            }
-            else if (numRemoved == 0)
-            {
-                logger.Trace($"ShortcutRepository/RemoveShortcut2: Our shortcut repository doesn't contain a shortcut with Name or UUID {shortcutNameOrUuid}");
-                return false;
-            }
-            else
-                throw new ShortcutRepositoryException();
-
+            if (String.IsNullOrWhiteSpace(shortcutNameOrUuid)) return false;
+            bool isId = Regex.IsMatch(shortcutNameOrUuid, uuidV4Regex, RegexOptions.IgnoreCase);
+            List<ShortcutItem> matches = _allShortcuts.FindAll(item => isId
+                ? item.UUID.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase)
+                : item.Name.Equals(shortcutNameOrUuid, StringComparison.OrdinalIgnoreCase));
+            if (matches.Count == 0) return false;
+            if (matches.Count != 1) throw new ShortcutRepositoryException();
+            return RemoveShortcut(matches[0]);
         }
-
 
         public static bool ContainsShortcut(ShortcutItem shortcut)
         {
@@ -404,7 +373,7 @@ namespace DisplayMagician
                 }
             }
 
-            SaveShortcuts();
+            if (!SaveShortcuts()) return false;
             IsValidRefresh();
             return true;
         }
@@ -432,7 +401,8 @@ namespace DisplayMagician
                     // Select the copied shortcut
 
                     // Save the shortcuts JSON as it's different
-                    SaveShortcuts();
+                    if (!SaveShortcuts()) return false;
+                    SaveCommittedShortcutIcon(copiedShortcut);
                     IsValidRefresh();
                     return true;
                 }
@@ -443,6 +413,15 @@ namespace DisplayMagician
             {
                 // Copy failed
                 return false;
+            }
+        }
+
+        private static void SaveCommittedShortcutIcon(ShortcutItem shortcut)
+        {
+            try { shortcut.SaveShortcutIconToCache(); }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutRepository/SaveCommittedShortcutIcon: Shortcut {0} was saved but its local icon could not be cached.", shortcut.UUID);
             }
         }
 
@@ -463,6 +442,7 @@ namespace DisplayMagician
 
             LoadShortcutsFromJson(snapshot.Json);
             _userAgentRepositoryRevision = snapshot.Revision;
+            _lastSavedJson = snapshot.Json;
             _shortcutsLoaded = true;
             logger.Debug("ShortcutRepository/LoadShortcuts: Loaded the desktop shortcut cache from the User Agent.");
             return true;
@@ -470,13 +450,17 @@ namespace DisplayMagician
 
         public static bool SaveShortcuts()
         {
+            LastSaveWasConflict = false;
+            LastSaveErrorMessage = "The shortcut changes could not be saved. Check the Control Service connection and try again.";
             if (_userAgentRepositoryConnection == null)
             {
                 logger.Error("ShortcutRepository/SaveShortcuts: The desktop shortcut cache is not connected to the User Agent.");
+                LoadShortcutsFromJson(_lastSavedJson);
                 return false;
             }
 
             List<string> jsonErrors = new List<string>();
+            bool saved = false;
 
             try
             {
@@ -505,6 +489,8 @@ namespace DisplayMagician
 
                 foreach (ShortcutItem shortcut in _allShortcuts)
                 {
+                    if (string.IsNullOrWhiteSpace(shortcut.SavedShortcutIconCacheFilename))
+                        shortcut.SavedShortcutIconCacheFilename = Path.Combine(Program.AppIconPath, "ShortcutCache", $"{shortcut.UUID}.ico");
                     for (int index = 0; index < shortcut.StartPrograms.Count; index++)
                     {
                         StartProgram program = shortcut.StartPrograms[index];
@@ -542,6 +528,9 @@ namespace DisplayMagician
                     _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
                     if (commitResult.WasConflict)
                     {
+                        _lastSavedJson = commitResult.Snapshot.Json;
+                        LastSaveWasConflict = true;
+                        LastSaveErrorMessage = "The shortcuts changed elsewhere. Your change was not saved. The library has refreshed; please try again.";
                         LoadShortcutsFromJson(commitResult.Snapshot.Json);
                         _shortcutsLoaded = true;
                         logger.Warn("ShortcutRepository/SaveShortcuts: The shortcut cache was stale. Reloaded the User Agent version instead of overwriting it.");
@@ -549,6 +538,9 @@ namespace DisplayMagician
                     }
 
                     logger.Debug("ShortcutRepository/SaveShortcuts: Committed the shortcut cache through the User Agent.");
+                    _lastSavedJson = commitResult.Snapshot.Json;
+                    LastSaveErrorMessage = string.Empty;
+                    saved = true;
                     return true;
                 }
 
@@ -556,6 +548,12 @@ namespace DisplayMagician
             catch (Exception ex)
             {
                 logger.Error(ex, "ShortcutRepository/SaveShortcuts: Unable to commit the shortcut cache through the User Agent.");
+            }
+            finally
+            {
+                // Keep menus and other clients of this cache on the last authoritative
+                // snapshot. The editor retains its separate draft after a failed save.
+                if (!saved) LoadShortcutsFromJson(_lastSavedJson);
             }
 
             // If we have any JSON.net errors, then we need to record them in the logs

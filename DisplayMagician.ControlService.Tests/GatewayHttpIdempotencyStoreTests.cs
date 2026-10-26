@@ -8,6 +8,55 @@ namespace DisplayMagician.ControlService.Tests;
 
 public sealed class GatewayHttpIdempotencyStoreTests
 {
+    [Theory]
+    [InlineData("not-json")]
+    [InlineData("null")]
+    [InlineData("[null]")]
+    [InlineData("[{}]")]
+    public void InvalidLedgerPreservesFilesAndBlocksMutationsWithoutFailingConstruction(string json)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            StoragePaths paths = new StoragePaths(root);
+            Directory.CreateDirectory(paths.MachinePath);
+            string path = Path.Combine(paths.MachinePath, "GatewayHttpIdempotency.json");
+            File.WriteAllText(path, json);
+            File.WriteAllText(path + ".bak", "[]");
+            GatewayHttpIdempotencyStore store = new GatewayHttpIdempotencyStore(paths);
+
+            Assert.False(store.IsAvailable);
+            Assert.Throws<InvalidOperationException>(() => store.Begin("device", Guid.NewGuid().ToString("D"), "request", Guid.NewGuid(), DateTime.UtcNow));
+            Assert.Throws<InvalidOperationException>(() => store.Complete("device", "key", "request", 200, "application/json", "", "", "{}"));
+            Assert.Equal(json, File.ReadAllText(path));
+            Assert.Equal("[]", File.ReadAllText(path + ".bak"));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void MissingPrimaryWithBackupOrInaccessibleLedgerCannotStartAnEmptyReplayHistory(bool backupOnly)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            StoragePaths paths = new StoragePaths(root);
+            Directory.CreateDirectory(paths.MachinePath);
+            string path = Path.Combine(paths.MachinePath, "GatewayHttpIdempotency.json");
+            if (backupOnly) File.WriteAllText(path + ".bak", "[]");
+            else Directory.CreateDirectory(path);
+
+            GatewayHttpIdempotencyStore store = new GatewayHttpIdempotencyStore(paths);
+
+            Assert.False(store.IsAvailable);
+            Assert.Throws<InvalidOperationException>(() => store.Begin("device", Guid.NewGuid().ToString("D"), "request", Guid.NewGuid(), DateTime.UtcNow));
+            Assert.False(File.Exists(path));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
     [Fact]
     public void AcceptedMutationReplaysAcrossRestartAndConflictsOnChangedRequest()
     {

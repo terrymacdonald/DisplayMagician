@@ -882,7 +882,7 @@ public sealed class ProfileCommandHandler
                 OperationId = operationId,
                 OperationType = DisplayOperationType.StartShortcut,
                 Phase = terminalPhase,
-                Message = result.Outcome.ToString(),
+                Message = string.IsNullOrWhiteSpace(result.Message) ? result.Outcome.ToString() : result.Message,
                 IsTerminal = true,
                 IsSuccessful = wasSuccessful,
                 ErrorCode = errorCode

@@ -9,6 +9,7 @@ namespace DisplayMagician.UserAgent;
 /// <summary>Persists the state required to restore a temporary shortcut after an Agent interruption.</summary>
 public sealed class ShortcutRecoveryStore
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly string _recoveryFilePath;
 
     public ShortcutRecoveryStore(string userDataPath)
@@ -31,10 +32,20 @@ public sealed class ShortcutRecoveryStore
         try
         {
             string json = File.ReadAllText(_recoveryFilePath, Encoding.UTF8);
-            return JsonSerializer.Deserialize<ShortcutRecoveryRecord>(json);
+            ShortcutRecoveryRecord? record = JsonSerializer.Deserialize<ShortcutRecoveryRecord>(json);
+            if (record == null || record.SchemaVersion is < 1 or > 2 ||
+                (record.SchemaVersion == 2 &&
+                 ((record.RequiresDisplayRestore && string.IsNullOrWhiteSpace(record.DisplayProfileSnapshotJson)) ||
+                  (record.RequiresAudioRestore && string.IsNullOrWhiteSpace(record.AudioProfileSnapshotJson)))))
+            {
+                Logger.Error("ShortcutRecoveryStore/GetPending: Recovery state at {0} has an unsupported schema or missing original configuration; the file is preserved.", _recoveryFilePath);
+                return null;
+            }
+            return record;
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
         {
+            Logger.Error(ex, "ShortcutRecoveryStore/GetPending: Could not read recovery state at {0}; the file is preserved.", _recoveryFilePath);
             return null;
         }
     }
@@ -90,10 +101,14 @@ public sealed class ShortcutRecoveryStore
 
 public sealed class ShortcutRecoveryRecord
 {
+    // Missing version/snapshots identify legacy records; those retain ID-based recovery.
+    public int SchemaVersion { get; set; } = 1;
     public Guid OperationId { get; set; }
     public string ShortcutId { get; set; } = string.Empty;
     public string DisplayProfileId { get; set; } = string.Empty;
     public string AudioProfileId { get; set; } = string.Empty;
+    public string DisplayProfileSnapshotJson { get; set; } = string.Empty;
+    public string AudioProfileSnapshotJson { get; set; } = string.Empty;
     public bool RequiresDisplayRestore { get; set; }
     public bool RequiresAudioRestore { get; set; }
     public bool RequiresAudioVolumeRestore { get; set; }
