@@ -448,7 +448,7 @@ namespace DisplayMagicianShared.Windows
 
         public bool Equals(DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO other)
         {
-            if (!Header.Equals(other.Header))
+            if (Header.Type != other.Header.Type || Header.Size != other.Header.Size)
             {
                 SharedLogger.logger.Trace($"DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO/Equals: Header values don't equal each other. SavedAdapter={Header.AdapterId.Value}, CurrentAdapter={other.Header.AdapterId.Value}, SavedId={Header.Id}, CurrentId={other.Header.Id}, SavedType={Header.Type}, CurrentType={other.Header.Type}, SavedSize={Header.Size}, CurrentSize={other.Header.Size}");
                 return false;
@@ -473,7 +473,7 @@ namespace DisplayMagicianShared.Windows
 
         public override int GetHashCode()
         {
-            return (Header, Value, ColorEncoding, BitsPerColorChannel).GetHashCode();
+            return (Header.Type, Header.Size, Value, ColorEncoding, BitsPerColorChannel).GetHashCode();
         }
 
         public static bool operator ==(DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO lhs, DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO rhs) => lhs.Equals(rhs);
@@ -560,12 +560,30 @@ namespace DisplayMagicianShared.Windows
 
         public override bool Equals(object obj) => obj is DISPLAYCONFIG_RATIONAL other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_RATIONAL other)
-            => Numerator == other.Numerator &&
-                Denominator == other.Denominator;
+            => ForComparison().Equals(other.ForComparison());
 
         public override int GetHashCode()
         {
-            return (Numerator, Denominator).GetHashCode();
+            return ForComparison().GetHashCode();
+        }
+
+        private (uint Numerator, uint Denominator) ForComparison()
+        {
+            // Preserve zero-denominator values exactly.
+            if (Denominator == 0)
+                return (Numerator, Denominator);
+
+            // Find the greatest common divisor.
+            uint a = Numerator;
+            uint b = Denominator;
+            while (b != 0)
+            {
+                uint remainder = a % b;
+                a = b;
+                b = remainder;
+            }
+
+            return (Numerator / a, Denominator / a);
         }
         public static bool operator ==(DISPLAYCONFIG_RATIONAL lhs, DISPLAYCONFIG_RATIONAL rhs) => lhs.Equals(rhs);
 
@@ -742,7 +760,7 @@ namespace DisplayMagicianShared.Windows
                 RefreshRate.Equals(other.RefreshRate) &&
                 ScanLineOrdering.Equals(other.ScanLineOrdering) &&
                 TargetAvailable == other.TargetAvailable &&
-                StatusFlags.Equals(StatusFlags);
+                StatusFlags.Equals(other.StatusFlags);
 
         public override int GetHashCode()
         {
