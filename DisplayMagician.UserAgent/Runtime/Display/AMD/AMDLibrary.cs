@@ -1,7 +1,7 @@
-using ADLXWrapper;
-using DisplayMagician.UserAgent.Runtime;
-using DisplayMagician.UserAgent.Runtime.NVIDIA;
-using DisplayMagician.UserAgent.Runtime.Windows;
+﻿using ADLXWrapper;
+using DisplayMagicianShared;
+using DisplayMagicianShared.NVIDIA;
+using DisplayMagicianShared.Windows;
 using EDIDParser;
 using IGCLWrapper;
 using Microsoft.VisualBasic;
@@ -26,7 +26,7 @@ using WinRT;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace DisplayMagician.UserAgent.Runtime.AMD
+namespace DisplayMagicianShared.AMD
 {
 
     [StructLayout(LayoutKind.Sequential)]
@@ -53,7 +53,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             BezelModePercent= 0;
         }
 
-        public override bool Equals(object? obj) => obj is AMD_SLSMAP_CONFIG other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_SLSMAP_CONFIG other && this.Equals(other);
 
         public bool Equals(AMD_SLSMAP_CONFIG other)
         {
@@ -120,7 +120,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             SLSEnabledDisplayTargets = new List<ADL_MODE>();
         }
 
-        public override bool Equals(object? obj) => obj is AMD_SLS_CONFIG other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_SLS_CONFIG other && this.Equals(other);
 
         public bool Equals(AMD_SLS_CONFIG other)
         => IsSlsEnabled == other.IsSlsEnabled &&
@@ -154,7 +154,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             Type = ADLX_DESKTOP_TYPE.DESKTOP_SINGLE;
         }
 
-        public override bool Equals(object? obj) => obj is AMD_DESKTOP other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_DESKTOP other && this.Equals(other);
         public bool Equals(AMD_DESKTOP other)
         {
             if (NumberOfDisplays != other.NumberOfDisplays)
@@ -209,8 +209,8 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public static bool operator !=(AMD_DESKTOP lhs, AMD_DESKTOP rhs) => !(lhs == rhs);
     }
 
-    /* [StructLayout(LayoutKind.Sequential)]
-     public struct EYEFINITY_GRID_NODE : IEquatable<EYEFINITY_GRID_NODE>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct EYEFINITY_GRID_NODE : IEquatable<EYEFINITY_GRID_NODE>
      {
          public long Row;
          public long Column;
@@ -219,14 +219,14 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
          public int DisplayHeight;
          public int DisplayTopLeftX;
          public int DisplayTopLeftY;
-         public long DisplayUniqueId;
+         public ulong DisplayUniqueId;
 
          public EYEFINITY_GRID_NODE()
          {
              DisplayOrientation = ADLX_ORIENTATION.ORIENTATION_LANDSCAPE;
          }
 
-         public override bool Equals(object? obj) => obj is EYEFINITY_GRID_NODE other && this.Equals(other);
+         public override bool Equals(object obj) => obj is EYEFINITY_GRID_NODE other && this.Equals(other);
          public bool Equals(EYEFINITY_GRID_NODE other)
          {
              if (Row != other.Row)
@@ -279,7 +279,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
          public static bool operator ==(EYEFINITY_GRID_NODE lhs, EYEFINITY_GRID_NODE rhs) => lhs.Equals(rhs);
 
          public static bool operator !=(EYEFINITY_GRID_NODE lhs, EYEFINITY_GRID_NODE rhs) => !(lhs == rhs);
-     }*/
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct AMD_EYEFINITY_DESKTOP : IEquatable<AMD_EYEFINITY_DESKTOP>
@@ -291,15 +291,15 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public int SizeHeight;
         public int TopLeftX;
         public int TopLeftY;
-        //public EYEFINITY_GRID_NODE[][] Grid;
+        public List<EYEFINITY_GRID_NODE> Grid;
 
         public AMD_EYEFINITY_DESKTOP()
         {
             Orientation = ADLX_ORIENTATION.ORIENTATION_LANDSCAPE;
-            //Grid = Array.Empty<EYEFINITY_GRID_NODE[]>();
+            Grid = new List<EYEFINITY_GRID_NODE>();
         }
 
-        public override bool Equals(object? obj) => obj is AMD_EYEFINITY_DESKTOP other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_EYEFINITY_DESKTOP other && this.Equals(other);
         public bool Equals(AMD_EYEFINITY_DESKTOP other)
         {
             if (Rows != other.Rows)
@@ -337,17 +337,17 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 SharedLogger.logger.Trace($"AMD_EYEFINITY_DESKTOP/Equals: The TopLeftY values don't equal each other");
                 return false;
             }
-            /*if (Grid.SequenceEqual(other.Grid))
+            if (!Grid.SequenceEqual(other.Grid))
             {
                 SharedLogger.logger.Trace($"AMD_EYEFINITY_DESKTOP/Equals: The Grid values don't equal each other");
                 return false;
-            }*/
+            }
             return true;
         }
 
         public override int GetHashCode()
         {
-            return (Rows, Columns, Orientation, SizeWidth, SizeHeight, TopLeftX, TopLeftY).GetHashCode();
+            return (Rows, Columns, Orientation, SizeWidth, SizeHeight, TopLeftX, TopLeftY, Grid).GetHashCode();
         }
         public static bool operator ==(AMD_EYEFINITY_DESKTOP lhs, AMD_EYEFINITY_DESKTOP rhs) => lhs.Equals(rhs);
 
@@ -430,7 +430,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }
 
-        public override bool Equals(object? obj) => obj is AMD_3DLUT_INFO other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_3DLUT_INFO other && this.Equals(other);
         public bool Equals(AMD_3DLUT_INFO other)
         {
             if (IsSupportedSCE != other.IsSupportedSCE)
@@ -493,7 +493,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public int Min { get; set; }
         public int Max { get; set; }
         public int Step { get; set; }
-        public override bool Equals(object? obj) => obj is IntRange other && this.Equals(other);
+        public override bool Equals(object obj) => obj is IntRange other && this.Equals(other);
         public bool Equals(IntRange other)
         {
             if (Min != other.Min)
@@ -589,7 +589,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }   
 
-        public override bool Equals(object? obj) => obj is AMD_CONNECTIVITY_EXPERIENCE_INFO other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_CONNECTIVITY_EXPERIENCE_INFO other && this.Equals(other);
         public bool Equals(AMD_CONNECTIVITY_EXPERIENCE_INFO other)
         {
             if (IsHdmiQualityDetectionSupported != other.IsHdmiQualityDetectionSupported)
@@ -682,7 +682,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             return new GamutColorSpaceDto(new PointDto(RedX, RedY), new PointDto(GreenX, GreenY), new PointDto(BlueX, BlueY));
         }
 
-        public override bool Equals(object? obj) => obj is AMD_GAMUT_COLOR_SPACE other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_GAMUT_COLOR_SPACE other && this.Equals(other);
         public bool Equals(AMD_GAMUT_COLOR_SPACE other)
         {
             if (RedX != other.RedX)
@@ -830,7 +830,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }
 
-        public override bool Equals(object? obj) => obj is AMD_GAMUT_INFO other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_GAMUT_INFO other && this.Equals(other);
         public bool Equals(AMD_GAMUT_INFO other)
         {
             if (IsWhitePointSupported != other.IsWhitePointSupported)
@@ -964,7 +964,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             return new RegammaCoeffDto(coefficientA0, coefficientA1, coefficientA2, coefficientA3, gamma);
         }
 
-        public override bool Equals(object? obj) => obj is AMD_REGAMMA_COEFFICIENT other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_REGAMMA_COEFFICIENT other && this.Equals(other);
         public bool Equals(AMD_REGAMMA_COEFFICIENT other)
         {
             if (coefficientA0 != other.coefficientA0)
@@ -1021,7 +1021,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             return new GammaRampDto(Gamma);
         }
 
-        public override bool Equals(object? obj) => obj is AMD_GAMMA_RAMP other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_GAMMA_RAMP other && this.Equals(other);
         public bool Equals(AMD_GAMMA_RAMP other)
         {
             if (Gamma.Count != other.Gamma.Count)
@@ -1127,7 +1127,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             );
         }
 
-        public override bool Equals(object? obj) => obj is AMD_GAMMA_INFO other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_GAMMA_INFO other && this.Equals(other);
         public bool Equals(AMD_GAMMA_INFO other)
         {
             if (IsSupported != other.IsSupported)
@@ -1272,7 +1272,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 temperature: Temperature
             );
         }   
-        public override bool Equals(object? obj) => obj is AMD_CUSTOM_COLOR_INFO other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_CUSTOM_COLOR_INFO other && this.Equals(other);
         public bool Equals(AMD_CUSTOM_COLOR_INFO other)
         {
             if (IsSupported != other.IsSupported)
@@ -1400,7 +1400,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             VariBrightMode = VariBrightMode.Unknown;
         }
 
-        public override bool Equals(object? obj) => obj is AMD_DISPLAY_WITH_SETTINGS other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_DISPLAY_WITH_SETTINGS other && this.Equals(other);
         public bool Equals(AMD_DISPLAY_WITH_SETTINGS other)
         {
             if (ConnectorType != other.ConnectorType)
@@ -1595,7 +1595,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             Type = ADLX_DISPLAY_TYPE.DISPLAY_TYPE_UNKOWN;
         }
 
-        public override bool Equals(object? obj) => obj is AMD_DISPLAY other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_DISPLAY other && this.Equals(other);
         public bool Equals(AMD_DISPLAY other)
         {
             if (ConnectorType != other.ConnectorType)
@@ -1695,7 +1695,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             ManualPowerTuning = new ManualPowerTuningDto();
         }
 
-        public override bool Equals(object? obj) => obj is AMD_GPU_WITH_SETTINGS other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_GPU_WITH_SETTINGS other && this.Equals(other);
 
         public bool Equals(AMD_GPU_WITH_SETTINGS other)
         {
@@ -1779,7 +1779,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             GPUs = new Dictionary<string, AMD_GPU_WITH_SETTINGS>();
         }
 
-        public override bool Equals(object? obj) => obj is AMD_DISPLAY_CONFIG other && this.Equals(other);
+        public override bool Equals(object obj) => obj is AMD_DISPLAY_CONFIG other && this.Equals(other);
         public bool Equals(AMD_DISPLAY_CONFIG other)
         {
             if (IsInUse != other.IsInUse)
@@ -1854,7 +1854,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         // Static members are 'eagerly initialized', that is, 
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
-        private static AMDLibrary? _instance = new AMDLibrary();
+        private static AMDLibrary _instance = new AMDLibrary();
 
         private bool _initialised = false;
         private bool _initialisedADL2 = false;
@@ -1866,12 +1866,12 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         // Instantiate a SafeHandle instance.
         private SafeHandle _safeHandle = new SafeFileHandle(IntPtr.Zero, true);
         private IntPtr _adlContextHandle = IntPtr.Zero;
-        private ADLXApiHelper? _adlxHelper;
+        private ADLXApiHelper _adlxHelper;
         //private ADLXHelper _adlxHelper;
-        private ADLXSystemServicesHelper? _adlxSystem;
+        private ADLXSystemServicesHelper _adlxSystem;
         //private int _adlxHighestSupportedSystemVersion = 0; // Only the base SystemServices is supported in all versions of ADLX
         private AMD_DISPLAY_CONFIG? _activeDisplayConfig;
-        public List<string> _allConnectedDisplayIdentifiers = new List<string>();
+        public List<string> _allConnectedDisplayIdentifiers;
         //public IntPtr hADLXBindingModule = IntPtr.Zero;
         public IntPtr hADLXModule = IntPtr.Zero;
         public const string AMD_ADLX_BINDING_DLL = "ADLXWrapper.dll";
@@ -1902,19 +1902,6 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 return true;
 
             SharedLogger.logger.Error($"AMDLibrary/IsValidADLReturnedArray: ADL returned an invalid buffer/count combination for '{arrayName}' (buffer: {buffer}, count: {count}).");
-            return false;
-        }
-
-        private static bool TryReadADLStructure<T>(IntPtr buffer, string bufferName, out T value) where T : struct
-        {
-            if (Marshal.PtrToStructure<T>(buffer) is T structure)
-            {
-                value = structure;
-                return true;
-            }
-
-            SharedLogger.logger.Error($"AMDLibrary/TryReadADLStructure: ADL returned a null {typeof(T).Name} structure for '{bufferName}'.");
-            value = default;
             return false;
         }
 
@@ -2054,7 +2041,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                     {
                         SharedLogger.logger.Error(ex, $"AMDLibrary/AMDLibrary: Exception getting the ADLX System Services");
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Disposing the ADLXHelper to avoid memory leaks");
-                        _adlxHelper?.Dispose();
+                        _adlxHelper.Dispose();
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Setting ADLXHelper to null");
                         _adlxHelper = null;
                         _initialised = false;
@@ -2070,7 +2057,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                     {
                         _activeDisplayConfig = CreateDefaultConfig();
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: The active AMD Display Configuration is null. Disposing the ADLXHelper to avoid memory leaks");
-                        _adlxHelper?.Dispose();
+                        _adlxHelper.Dispose();
                         SharedLogger.logger.Trace($"AMDLibrary/AMDLibrary: Setting ADLXHelper to null");
                         _adlxHelper = null;
                         _initialised = false;
@@ -2295,7 +2282,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             // Creat empty config struct so we know there are no nulls in there to break the json serializer
             AMD_DISPLAY_CONFIG myDisplayConfig = CreateDefaultConfig();
 
-            if (_initialised && _adlxSystem != null)
+            if (_initialised)
             {
                 // Get the desktop services
                 // This is how we get and iterate through the various desktops. 
@@ -2385,98 +2372,43 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Store the desktop type
                         newDesktop.Type = desktop.Type;
 
-                        // TODO: Process Eyefinity and Cloned desktops
-/*
                         // The the desktop is an eyefinity desktop then set the eyefinity enabled flag
                         // and also process the EyefinityDesktop layout
                         if (newDesktop.Type == ADLX_DESKTOP_TYPE.DESKTOP_EYEFINITY)
                         {
-                            isEyefinityEnabled = true;
+                            myDisplayConfig.IsEyefinity = true;
                             SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Eyefinity desktop detected");
-                            // Get the eyefinity desktop
-
-                            // 1. Allocate a void** via SWIG
-                            SWIGTYPE_p_p_void ppVoid = ADLX.new_voidP_Ptr();
-
-                            SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Getting a pointer to the Eyefinity desktop object");
-                            // 2. Call QueryInterface with the IID for IADLXEyefinityDesktop to get the interface
-                            status = desktop.QueryInterface(
-                                IADLXEyefinityDesktop.IID(),
-                                ppVoid
-                            );
-
-                            if (status != ADLX_RESULT.ADLX_OK)
-                            {
-                                SharedLogger.logger.Trace($"AMDLibrary/GetAMDDesktopConfig: Error getting the ADLX display list. systemServices.GetDisplays() returned error code {status}");
-                                return CreateDefaultConfig(); ;
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Converting pointer to the Eyefinity desktop object to an IntPtr");
-
-                                // Extract the raw IntPtr from the void** for the IADLXEyefinityDesktop
-                                IntPtr rawPtr = ADLX.voidP_Ptr_value(ppVoid);
-
-                                // Wrap it in the managed proxy
-                                //    (Constructor args may vary based on SWIG config)
-                                IADLXEyefinityDesktop eyefinityDesktop = new IADLXEyefinityDesktop(rawPtr, true);
-
-                                // Use the EyefinityDesktop object to get the Eyefinity layout
-                                SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Getting the rows and columns of the diaplay grid for the Eyefinity desktop");
-                                SWIGTYPE_p_unsigned_int pRow = ADLX.new_adlx_uintP();
-                                ADLX.adlx_uintP_assign(pRow, 0);
-                                SWIGTYPE_p_unsigned_int pCol = ADLX.new_adlx_uintP();
-                                ADLX.adlx_uintP_assign(pCol, 0);
-                                eyefinityDesktop.GridSize(pRow, pCol);
-                                myDisplayConfig.EyefinityDesktop.Rows = ADLX.adlx_uintP_value(pRow);
-                                myDisplayConfig.EyefinityDesktop.Columns = ADLX.adlx_uintP_value(pCol);
-
-                                *//*for (uint row=1; row<gridRows; row++)
+                            var topology = desktop.GetEyefinityTopology();
+                            myDisplayConfig.EyefinityDesktop.Rows = topology.Rows;
+                            myDisplayConfig.EyefinityDesktop.Columns = topology.Columns;
+                            myDisplayConfig.EyefinityDesktop.Orientation = topology.Orientation;
+                            myDisplayConfig.EyefinityDesktop.TopLeftX = topology.TopLeftX;
+                            myDisplayConfig.EyefinityDesktop.TopLeftY = topology.TopLeftY;
+                            myDisplayConfig.EyefinityDesktop.SizeWidth = topology.Width;
+                            myDisplayConfig.EyefinityDesktop.SizeHeight = topology.Height;
+                            myDisplayConfig.EyefinityDesktop.Grid = topology.Grid
+                                .Select(cell => new EYEFINITY_GRID_NODE
                                 {
-                                    for (uint col = 1; col < gridCols; col++)
-                                    {
-                                        // Get the eyefinity desktop orientation
-                                        SWIGTYPE_p_ADLX_ORIENTATION pEyefinityDisplayOrientation = ADLX.new_orientationP();
-                                        eyefinityDesktop.DisplayOrientation(row, col, pEyefinityDisplayOrientation);
-                                        ADLX_ORIENTATION eyefinityOrientation = ADLX.orientationP_value(pEyefinityDisplayOrientation);
-
-                                        // Get the display size
-                                        SWIGTYPE_p_int pEyefinityDisplayWidth= ADLX.new_intP();
-                                        SWIGTYPE_p_int pEyefinityDisplayHeight = ADLX.new_intP();
-                                        eyefinityDesktop.DisplaySize(row,col, pEyefinityDisplayWidth, pEyefinityDisplayHeight);
-                                        int eyefinityDisplayWidth = ADLX.intP_value(pEyefinityDisplayWidth);
-                                        int eyefinityDisplayHeight = ADLX.intP_value(pEyefinityDisplayHeight);
-
-                                        // Get the display location
-                                        ADLX_Point pLocation = ADLX.new_pointP();
-                                        eyefinityDesktop.DisplayTopLeft(row, col, pLocation);
-                                        ADLX_Point location = ADLX.pointP_value(pLocation);
-
-                                    }
-                                }*//*
-
-                                // Copy over the desktop level sizes so that we can match things easier in the future
-                                myDisplayConfig.EyefinityDesktop.Orientation = newDesktop.Orientation;
-                                myDisplayConfig.EyefinityDesktop.TopLeftX = newDesktop.TopLeftX;
-                                myDisplayConfig.EyefinityDesktop.TopLeftY = newDesktop.TopLeftY;
-                                myDisplayConfig.EyefinityDesktop.SizeWidth = newDesktop.SizeWidth;
-                                myDisplayConfig.EyefinityDesktop.SizeHeight = newDesktop.SizeHeight;
-
-                                // 7. Release when done
-                                eyefinityDesktop.Release();
-                                ADLX.delete_voidP_Ptr(ppVoid);
-                            }
+                                    Row = cell.Row,
+                                    Column = cell.Column,
+                                    DisplayOrientation = cell.Orientation,
+                                    DisplayWidth = cell.Width,
+                                    DisplayHeight = cell.Height,
+                                    DisplayTopLeftX = cell.TopLeftX,
+                                    DisplayTopLeftY = cell.TopLeftY,
+                                    DisplayUniqueId = cell.DisplayUniqueId
+                                })
+                                .ToList();
                         }
                         else if (newDesktop.Type == ADLX_DESKTOP_TYPE.DESKTOP_DUPLCATE)
                         {
-                            isCloned = true;
+                            myDisplayConfig.IsCloned = true;
                             SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Cloned desktop detected");
                         }
                         else
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: Single desktop detected");
                         }
-*/
                         // Release desktop interface
                         desktop.Dispose();
 
@@ -2717,10 +2649,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                     // build a structure in the array slot
                                     adapterArray[i] = new ADL_ADAPTER_INFOX2();
                                     // fill the array slot structure with the data from the buffer
-                                    if (!TryReadADLStructure(currentAdaptersInfoBuffer, nameof(adapterInfoBuffer), out ADL_ADAPTER_INFOX2 adapterInfo))
-                                        return myDisplayConfig;
-
-                                    adapterArray[i] = adapterInfo;
+                                    adapterArray[i] = (ADL_ADAPTER_INFOX2)Marshal.PtrToStructure(currentAdaptersInfoBuffer, typeof(ADL_ADAPTER_INFOX2));
                                     // destroy the bit of memory we no longer need
                                     //Marshal.DestroyStructure(currentAdaptersInfoBuffer, typeof(ADL_ADAPTER_INFOX2));
                                     // advance the buffer forwards to the next object
@@ -2812,10 +2741,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                             // build a structure in the array slot
                                             displayTargetArray[i] = new ADL_DISPLAY_TARGET();
                                             // fill the array slot structure with the data from the buffer
-                                            if (!TryReadADLStructure(currentDisplayTargetBuffer, nameof(displayTargetBuffer), out ADL_DISPLAY_TARGET displayTarget))
-                                                return myDisplayConfig;
-
-                                            displayTargetArray[i] = displayTarget;
+                                            displayTargetArray[i] = (ADL_DISPLAY_TARGET)Marshal.PtrToStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
                                             // destroy the bit of memory we no longer need
                                             Marshal.DestroyStructure(currentDisplayTargetBuffer, typeof(ADL_DISPLAY_TARGET));
                                             // advance the buffer forwards to the next object
@@ -2928,10 +2854,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     slsTargetArray[i] = new ADL_SLS_TARGET();
                                                     // fill the array slot structure with the data from the buffer
-                                                    if (!TryReadADLStructure(currentSLSTargetBuffer, nameof(slsTargetBuffer), out ADL_SLS_TARGET slsTarget))
-                                                        return myDisplayConfig;
-
-                                                    slsTargetArray[i] = slsTarget;
+                                                    slsTargetArray[i] = (ADL_SLS_TARGET)Marshal.PtrToStructure(currentSLSTargetBuffer, typeof(ADL_SLS_TARGET));
                                                     // advance the buffer forwards to the next object
                                                     currentSLSTargetBuffer = IntPtr.Add(currentSLSTargetBuffer, Marshal.SizeOf<ADL_SLS_TARGET>());
                                                 }
@@ -2956,10 +2879,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     nativeModeArray[i] = new ADL_SLS_MODE();
                                                     // fill the array slot structure with the data from the buffer
-                                                    if (!TryReadADLStructure(currentNativeModeBuffer, nameof(nativeModeBuffer), out ADL_SLS_MODE nativeMode))
-                                                        return myDisplayConfig;
-
-                                                    nativeModeArray[i] = nativeMode;
+                                                    nativeModeArray[i] = (ADL_SLS_MODE)Marshal.PtrToStructure(currentNativeModeBuffer, typeof(ADL_SLS_MODE));
                                                     // advance the buffer forwards to the next object
                                                     currentNativeModeBuffer = IntPtr.Add(currentNativeModeBuffer, Marshal.SizeOf<ADL_SLS_MODE>());
                                                 }
@@ -2984,10 +2904,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     nativeModeOffsetArray[i] = new ADL_SLS_OFFSET();
                                                     // fill the array slot structure with the data from the buffer
-                                                    if (!TryReadADLStructure(currentNativeModeOffsetsBuffer, nameof(nativeModeOffsetsBuffer), out ADL_SLS_OFFSET nativeModeOffset))
-                                                        return myDisplayConfig;
-
-                                                    nativeModeOffsetArray[i] = nativeModeOffset;
+                                                    nativeModeOffsetArray[i] = (ADL_SLS_OFFSET)Marshal.PtrToStructure(currentNativeModeOffsetsBuffer, typeof(ADL_SLS_OFFSET));
                                                     // advance the buffer forwards to the next object
                                                     currentNativeModeOffsetsBuffer = IntPtr.Add(currentNativeModeOffsetsBuffer, Marshal.SizeOf<ADL_SLS_OFFSET>());
                                                 }
@@ -3012,10 +2929,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     bezelModeArray[i] = new ADL_BEZEL_TRANSIENT_MODE();
                                                     // fill the array slot structure with the data from the buffer
-                                                    if (!TryReadADLStructure(currentBezelModeBuffer, nameof(bezelModeBuffer), out ADL_BEZEL_TRANSIENT_MODE bezelMode))
-                                                        return myDisplayConfig;
-
-                                                    bezelModeArray[i] = bezelMode;
+                                                    bezelModeArray[i] = (ADL_BEZEL_TRANSIENT_MODE)Marshal.PtrToStructure(currentBezelModeBuffer, typeof(ADL_BEZEL_TRANSIENT_MODE));
                                                     // advance the buffer forwards to the next object
                                                     currentBezelModeBuffer = IntPtr.Add(currentBezelModeBuffer, Marshal.SizeOf<ADL_BEZEL_TRANSIENT_MODE>());
                                                 }
@@ -3040,10 +2954,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     transientModeArray[i] = new ADL_BEZEL_TRANSIENT_MODE();
                                                     // fill the array slot structure with the data from the buffer
-                                                    if (!TryReadADLStructure(currentTransientModeBuffer, nameof(transientModeBuffer), out ADL_BEZEL_TRANSIENT_MODE transientMode))
-                                                        return myDisplayConfig;
-
-                                                    transientModeArray[i] = transientMode;
+                                                    transientModeArray[i] = (ADL_BEZEL_TRANSIENT_MODE)Marshal.PtrToStructure(currentTransientModeBuffer, typeof(ADL_BEZEL_TRANSIENT_MODE));
                                                     // advance the buffer forwards to the next object
                                                     currentTransientModeBuffer = IntPtr.Add(currentTransientModeBuffer, Marshal.SizeOf<ADL_BEZEL_TRANSIENT_MODE>());
                                                 }
@@ -3067,10 +2978,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                     // build a structure in the array slot
                                                     slsOffsetArray[i] = new ADL_SLS_OFFSET();
                                                     // fill the array slot structure with the data from the buffer
-                                                    if (!TryReadADLStructure(currentSLSOffsetBuffer, nameof(slsOffsetBuffer), out ADL_SLS_OFFSET slsOffset))
-                                                        return myDisplayConfig;
-
-                                                    slsOffsetArray[i] = slsOffset;
+                                                    slsOffsetArray[i] = (ADL_SLS_OFFSET)Marshal.PtrToStructure(currentSLSOffsetBuffer, typeof(ADL_SLS_OFFSET));
                                                     // advance the buffer forwards to the next object
                                                     currentSLSOffsetBuffer = IntPtr.Add(currentSLSOffsetBuffer, Marshal.SizeOf<ADL_SLS_OFFSET>());
                                                 }
@@ -3139,10 +3047,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                         // build a structure in the array slot
                                                         displayModeArray[i] = new ADL_MODE();
                                                         // fill the array slot structure with the data from the buffer
-                                                        if (!TryReadADLStructure(currentDisplayModeBuffer, nameof(displayModeBuffer), out ADL_MODE displayMode))
-                                                            return myDisplayConfig;
-
-                                                        displayModeArray[i] = displayMode;
+                                                        displayModeArray[i] = (ADL_MODE)Marshal.PtrToStructure(currentDisplayModeBuffer, typeof(ADL_MODE));
                                                         // advance the buffer forwards to the next object
                                                         currentDisplayModeBuffer = IntPtr.Add(currentDisplayModeBuffer, Marshal.SizeOf<ADL_MODE>());
                                                     }
@@ -3380,7 +3285,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
         public string PrintActiveConfig()
         {
-            if (!_initialised || _adlxSystem == null)
+            if (!_initialised)
             {
                 SharedLogger.logger.Error($"AMDLibrary/PrintActiveConfig: ERROR - Tried to run PrintActiveConfig but the AMD ADLX library isn't initialised!");
                 throw new AMDLibraryException($"Tried to run PrintActiveConfig but the AMD ADLX library isn't initialised!");
@@ -3633,7 +3538,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         public bool SetActiveConfig(AMD_DISPLAY_CONFIG displayConfig, bool useADLEyefinity, int delayInMs)
         {
 
-            if (_initialised && _adlxSystem != null)
+            if (_initialised)
             {
                 // This is how we control the various desktops. 
                 // - A single desktop is associated with one display.
@@ -3770,21 +3675,30 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                     return false;
                                 }
 
-                                // Check if it matches what we want
-                                SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: Successfully created the ADLX Eyefinity Desktop");
-                                if (displayConfig.EyefinityDesktop.Equals(ActiveDisplayConfig.EyefinityDesktop))
+                                // Allow the display change to settle before reading it back.
+                                if (delayInMs > 0)
+                                    Thread.Sleep(delayInMs);
+
+                                AMD_DISPLAY_CONFIG resultingConfig = GetActiveConfig();
+                                if (!resultingConfig.IsEyefinity)
                                 {
-                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: This new Eyefinity layout matches the desired configuraton");
+                                    SharedLogger.logger.Error("AMDLibrary/SetActiveConfig: ADLX returned from Eyefinity creation, but the refreshed AMD configuration contains no Eyefinity desktop.");
+                                    return false;
+                                }
+
+                                if (displayConfig.EyefinityDesktop.Equals(resultingConfig.EyefinityDesktop))
+                                {
+                                    SharedLogger.logger.Trace("AMDLibrary/SetActiveConfig: The refreshed Eyefinity layout matches the saved profile.");
                                 }
                                 else
                                 {
-                                    SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfig: This new Eyefinity layout is different from the one we originally saved with this desktop profile. If you have changed your Eyefinity Layout then you need to update this desktop profile!.");
+                                    SharedLogger.logger.Warn("AMDLibrary/SetActiveConfig: Eyefinity is active, but its current layout differs from the saved profile. The Windows display configuration has not yet been applied.");
                                 }
                                 
                             }
                             catch (Exception ex)
                             {
-                                SharedLogger.logger.Error(ex, "AMDLibrary/SetActiveConfig: Exception occurred while trying to create the Eyefinity Desktop using ADLX");
+                                SharedLogger.logger.Error(ex, "AMDLibrary/SetActiveConfig: Exception occurred while trying to create or read back the Eyefinity Desktop using ADLX");
                                 return false;
                             }
                         }
@@ -3901,8 +3815,8 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
         public bool SetActiveConfigOverride(AMD_DISPLAY_CONFIG displayConfig, int delayInMs)
         {
-            if (_initialised && _adlxSystem != null)
-            {                
+            if (_initialised)
+            {
                 // Get the current list of all displays available on the system
                 var displaysList = _adlxSystem.EnumerateDisplays().ToList();
                 if (displaysList.Count == 0)
@@ -4573,7 +4487,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             List<string> displayIdentifiers = new List<string>();
             failure = false;
 
-            if (_initialised && _adlxSystem != null)
+            if (_initialised)
             {
                 // Get the desktop services
                 // This is how we get and iterate through the various desktops. 
@@ -4706,7 +4620,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             List<string> displayIdentifiers = new List<string>();
             failure = false;
 
-            if (_initialised && _adlxSystem != null)
+            if (_initialised)
             {
                 try
                 {
