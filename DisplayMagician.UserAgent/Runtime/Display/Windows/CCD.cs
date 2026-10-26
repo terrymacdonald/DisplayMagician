@@ -343,7 +343,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public UInt32 Current;
         public UInt32 Recommended;
 
-        public override bool Equals(object obj) => obj is DPIScalingInfo other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DPIScalingInfo other && this.Equals(other);
         public bool Equals(DPIScalingInfo other)
         =>  Minimum.Equals(other.Minimum) &&
             Maximum.Equals(other.Maximum) &&
@@ -411,7 +411,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public LUID AdapterId;
         public uint Id;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_DEVICE_INFO_HEADER other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_DEVICE_INFO_HEADER other && this.Equals(other);
 
         public bool Equals(DISPLAYCONFIG_DEVICE_INFO_HEADER other)
             => Type == other.Type &&
@@ -444,7 +444,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public bool WideColorEnforced => (Value & 0x4) == 0x4;
         public bool AdvancedColorForceDisabled => (Value & 0x8) == 0x8;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO other && this.Equals(other);
 
         public bool Equals(DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO other)
         {
@@ -487,7 +487,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public int X;
         public int Y;
 
-        public override bool Equals(object obj) => obj is POINTL other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is POINTL other && this.Equals(other);
         public bool Equals(POINTL other)
             => X == other.X &&
                Y == other.Y;
@@ -510,7 +510,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
         public ulong Value => ((ulong)HighPart << 32) | LowPart;
 
-        public override bool Equals(object obj) => obj is LUID other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is LUID other && this.Equals(other);
         public bool Equals(LUID other)
             => LowPart == other.LowPart &&
                 HighPart == other.HighPart;
@@ -535,7 +535,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public DISPLAYCONFIG_PIXELFORMAT PixelFormat;
         public POINTL Position;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_SOURCE_MODE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_SOURCE_MODE other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_SOURCE_MODE other)
             => Width == other.Width &&
                 Height == other.Height &&
@@ -558,7 +558,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public uint Numerator;
         public uint Denominator;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_RATIONAL other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_RATIONAL other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_RATIONAL other)
             => ForComparison().Equals(other.ForComparison());
 
@@ -598,7 +598,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public uint Cx;
         public uint Cy;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_2DREGION other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_2DREGION other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_2DREGION other)
             => Cx == other.Cx &&
                Cy == other.Cy;
@@ -620,7 +620,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public RECTL DesktopImageRegion;
         public RECTL DesktopImageClip;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_DESKTOP_IMAGE_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_DESKTOP_IMAGE_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_DESKTOP_IMAGE_INFO other)
             => PathSourceSize.Equals(other.PathSourceSize) &&
                DesktopImageRegion.Equals(other.DesktopImageRegion) &&
@@ -647,7 +647,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public D3D_VIDEO_SIGNAL_STANDARD VideoStandard;
         public DISPLAYCONFIG_SCANLINE_ORDERING ScanLineOrdering;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_VIDEO_SIGNAL_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_VIDEO_SIGNAL_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_VIDEO_SIGNAL_INFO other)
             => PixelRate == other.PixelRate &&
                 HSyncFreq.Equals(other.HSyncFreq) &&
@@ -672,7 +672,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
     {
         public DISPLAYCONFIG_VIDEO_SIGNAL_INFO TargetVideoSignalInfo;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_TARGET_MODE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_TARGET_MODE other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_TARGET_MODE other)
             => TargetVideoSignalInfo.Equals(other.TargetVideoSignalInfo);
 
@@ -702,7 +702,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [FieldOffset(16)]
         public DISPLAYCONFIG_SOURCE_FLAGS StatusFlags;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_PATH_SOURCE_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_PATH_SOURCE_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_PATH_SOURCE_INFO other)
             => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after a reboot.
                //Id == other.Id &&  // Removed the ID from the list as the Display ID it maps to will change after a switch from surround to non-surround profile
@@ -748,7 +748,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_PATH = 0x00000008,
         DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_SYSTEM = 0x00000010,
         DISPLAYCONFIG_TARGET_IS_HMD = 0x00000020,*/
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_PATH_TARGET_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_PATH_TARGET_INFO other && this.Equals(other);
 
         public bool Equals(DISPLAYCONFIG_PATH_TARGET_INFO other)
             => // AdapterId.Equals(other.AdapterId) && // Removed the AdapterId from the Equals, as it changes after reboot.
@@ -779,7 +779,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public DISPLAYCONFIG_PATH_TARGET_INFO TargetInfo;
         public DISPLAYCONFIG_PATH_FLAGS Flags;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_PATH_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_PATH_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_PATH_INFO other)
             => SourceInfo.Equals(other.SourceInfo) &&
                TargetInfo.Equals(other.TargetInfo) &&
@@ -817,7 +817,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [FieldOffset(16)]
         public DISPLAYCONFIG_DESKTOP_IMAGE_INFO DesktopImageInfo;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_MODE_INFO other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_MODE_INFO other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_MODE_INFO other)
         {
             if (InfoType != other.InfoType)
@@ -886,7 +886,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public string ViewGdiDeviceName;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_SOURCE_DEVICE_NAME other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_SOURCE_DEVICE_NAME other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_SOURCE_DEVICE_NAME other)
             => Header.Equals(other.Header) &&
                ViewGdiDeviceName == other.ViewGdiDeviceName;
@@ -906,7 +906,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
     {
         public uint Value;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS other)
             => Value == other.Value;
 
@@ -938,7 +938,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         public string MonitorDevicePath;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_TARGET_DEVICE_NAME other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_TARGET_DEVICE_NAME other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_TARGET_DEVICE_NAME other)
             => Header.Equals(other.Header) &&
                Flags.Equals(other.Flags) &&
@@ -968,7 +968,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public uint Height;
         public DISPLAYCONFIG_TARGET_MODE TargetMode;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_TARGET_PREFERRED_MODE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_TARGET_PREFERRED_MODE other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_TARGET_PREFERRED_MODE other)
             => Header.Equals(other.Header) &&
                Width == other.Width &&
@@ -992,7 +992,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         public string AdapterDevicePath;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_ADAPTER_NAME other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_ADAPTER_NAME other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_ADAPTER_NAME other)
         {
             if (!Header.Equals(other.Header))
@@ -1042,7 +1042,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             get => (Value & 0x1) == 0x1;
         }
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION other)
             => Header.Equals(other.Header) &&
                Value == other.Value;
@@ -1069,7 +1069,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             get => (Value & 0x1) == 0x1;
         }
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_SET_TARGET_PERSISTENCE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_SET_TARGET_PERSISTENCE other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_SET_TARGET_PERSISTENCE other)
             => Header.Equals(other.Header) &&
                Value == other.Value;
@@ -1092,7 +1092,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         //[MarshalAs(UnmanagedType.U4)]
         public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY BaseOutputTechnology;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_TARGET_BASE_TYPE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_TARGET_BASE_TYPE other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_TARGET_BASE_TYPE other)
             => Header.Equals(other.Header) &&
                BaseOutputTechnology == other.BaseOutputTechnology;
@@ -1130,7 +1130,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             }
         }
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE other)
             => Header.Equals(other.Header) &&
                Value == other.Value;
@@ -1157,7 +1157,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         // where it actually returns a uint! So had to engineer in a bug :(
         public uint SDRWhiteLevel;
 
-        public override bool Equals(object obj) => obj is DISPLAYCONFIG_SDR_WHITE_LEVEL other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is DISPLAYCONFIG_SDR_WHITE_LEVEL other && this.Equals(other);
         public bool Equals(DISPLAYCONFIG_SDR_WHITE_LEVEL other)
         {
             if (!Header.Equals(other.Header))
@@ -1205,7 +1205,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             return new RECTL(x, y, x + width, y + height);
         }
 
-        public override bool Equals(object obj) => obj is RECTL other && this.Equals(other);
+        public override bool Equals(object? obj) => obj is RECTL other && this.Equals(other);
         public bool Equals(RECTL other)
             => Left == other.Left &&
                Top == other.Top &&
