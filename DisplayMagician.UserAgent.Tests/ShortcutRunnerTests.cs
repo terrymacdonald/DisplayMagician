@@ -16,6 +16,27 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class ShortcutRunnerTests
 {
     [Fact]
+    public async Task TrackingFailureProducesAFailedResultInsteadOfNormalCompletion()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-TrackingFailure-{Guid.NewGuid():N}");
+        try
+        {
+            ShortcutStore store = new ShortcutStore(root);
+            store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = 0, Json = "{\"Shortcuts\":[{\"UUID\":\"tracking-failure\",\"Category\":2}]}" });
+            ShortcutRunner runner = new ShortcutRunner(store, new AutomaticGameDetectionRegistry(), new UserProfileOperationService(), new ShortcutRecoveryStore(root));
+            ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("tracking-failure", 0, CancellationToken.None, (status, _) =>
+            {
+                if (status.Phase == OperationPhase.StartingPrograms) throw new ProcessTrackingException("Tracking could not be verified after three failed scans.");
+                return Task.CompletedTask;
+            });
+            Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
+            Assert.Contains("three failed scans", result.Message);
+            Assert.False(runner.IsRecoveryRequired);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
     public void StopProgram_StopsOnlyTheConfiguredPathWhenExecutablesShareAName()
     {
         string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianProcessTests", Guid.NewGuid().ToString("N"));

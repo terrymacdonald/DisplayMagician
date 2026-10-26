@@ -71,7 +71,7 @@ namespace DisplayMagician
         public int ExecutableTimeout;
         public string ExecutableArguments;
         public bool ExecutableArgumentsRequired;
-        public bool ProcessNameToMonitorUsesExecutable;
+        public bool MonitorLaunchedExecutable;
         public ProcessPriority ProcessPriority;
     }
 
@@ -81,7 +81,7 @@ namespace DisplayMagician
         public string DifferentExecutableToMonitor;
         public bool RunAsAdministrator;
         public int ExecutableTimeout;
-        public bool ProcessNameToMonitorUsesExecutable;
+        public bool MonitorLaunchedExecutable;
         public ProcessPriority ProcessPriority;
     }
 
@@ -157,7 +157,7 @@ namespace DisplayMagician
         private string _executableArguments = "";
         private bool _executableArgumentsRequired = false;
         private bool _runExeAsAdministrator = false;
-        private bool _processNameToMonitorUsesExecutable = true;
+        private bool _monitorLaunchedExecutable = true;
         private ProcessPriority _processPriority = ProcessPriority.Normal;
         private string _gameAppId = "";
         private string _gameName = "";
@@ -494,16 +494,16 @@ namespace DisplayMagician
         }
 
         [DefaultValue(true)]
-        public bool ProcessNameToMonitorUsesExecutable
+        public bool MonitorLaunchedExecutable
         {
             get
             {
-                return _processNameToMonitorUsesExecutable;
+                return _monitorLaunchedExecutable;
             }
 
             set
             {
-                _processNameToMonitorUsesExecutable = value;
+                _monitorLaunchedExecutable = value;
             }
         }
 
@@ -900,7 +900,7 @@ namespace DisplayMagician
                 ExecutableArguments = ExecutableArguments,
                 ExecutableArgumentsRequired = ExecutableArgumentsRequired,
                 RunExecutableAsAdministrator = RunExeAsAdministrator,
-                MonitorExecutablePath = ProcessNameToMonitorUsesExecutable,
+                MonitorLaunchedExecutable = MonitorLaunchedExecutable,
                 DifferentExecutablePathToMonitor = DifferentExecutableToMonitor,
                 ApplicationId = ApplicationId,
                 ApplicationName = ApplicationName,
@@ -1020,7 +1020,7 @@ namespace DisplayMagician
             _executableArgumentsRequired = false;
             _executableArguments = "";
             _runExeAsAdministrator = false;
-            _processNameToMonitorUsesExecutable = false;
+            _monitorLaunchedExecutable = false;
             _differentExecutableToMonitor = "";
 
             _applicationId = "";
@@ -1106,7 +1106,7 @@ namespace DisplayMagician
             _executableArgumentsRequired = false;
             _executableArguments = "";
             _runExeAsAdministrator = false;
-            _processNameToMonitorUsesExecutable = false;
+            _monitorLaunchedExecutable = false;
             _differentExecutableToMonitor = "";
 
             _applicationId = "";
@@ -1149,7 +1149,7 @@ namespace DisplayMagician
             _startTimeout = executable.ExecutableTimeout;
             _executableArguments = executable.ExecutableArguments;
             _executableArgumentsRequired = executable.ExecutableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = executable.ProcessNameToMonitorUsesExecutable;
+            _monitorLaunchedExecutable = executable.MonitorLaunchedExecutable;
             _processPriority = executable.ProcessPriority;
             _audioProfileUUID = string.IsNullOrWhiteSpace(audioProfileId) ? SkipAudioProfilesChangeUUID : audioProfileId;
             _displayPermanence = displayPermanence;
@@ -1226,7 +1226,7 @@ namespace DisplayMagician
             _startTimeout = app.ExecutableTimeout;
             _executableArguments = app.AppToUse.Arguments;
             _executableArgumentsRequired = app.AppToUse.ExecutableArgumentsRequired;
-            _processNameToMonitorUsesExecutable = app.ProcessNameToMonitorUsesExecutable;
+            _monitorLaunchedExecutable = app.MonitorLaunchedExecutable;
             _processPriority = app.ProcessPriority;
             _audioProfileUUID = string.IsNullOrWhiteSpace(audioProfileId) ? SkipAudioProfilesChangeUUID : audioProfileId;
             _displayPermanence = displayPermanence;
@@ -1292,7 +1292,7 @@ namespace DisplayMagician
             shortcut.ExecutableArguments = ExecutableArguments;
             shortcut.ExecutableArgumentsRequired = ExecutableArgumentsRequired;
             shortcut.RunExeAsAdministrator = RunExeAsAdministrator;
-            shortcut.ProcessNameToMonitorUsesExecutable = ProcessNameToMonitorUsesExecutable;
+            shortcut.MonitorLaunchedExecutable = MonitorLaunchedExecutable;
             shortcut.ApplicationId = ApplicationId;
             shortcut.ApplicationName = ApplicationName;
             shortcut.ApplicationLibrary = ApplicationLibrary;
@@ -1628,7 +1628,7 @@ namespace DisplayMagician
                 }
             }
 
-            if ((Category.Equals(ShortcutCategory.Executable) || Category.Equals(ShortcutCategory.Application)) && !ProcessNameToMonitorUsesExecutable &&
+            if ((Category.Equals(ShortcutCategory.Executable) || Category.Equals(ShortcutCategory.Application)) && !MonitorLaunchedExecutable &&
                 (String.IsNullOrWhiteSpace(DifferentExecutableToMonitor) || !System.IO.File.Exists(DifferentExecutableToMonitor)))
             {
                 ShortcutError error = new ShortcutError();

@@ -89,7 +89,7 @@ public sealed class ShortcutStore
                 ExecutableArguments = GetString(shortcut, "ExecutableArguments"),
                 ExecutableArgumentsRequired = GetBoolean(shortcut, "ExecutableArgumentsRequired"),
                 RunExecutableAsAdministrator = GetBoolean(shortcut, "RunExeAsAdministrator"),
-                MonitorExecutablePath = GetBoolean(shortcut, "ProcessNameToMonitorUsesExecutable", true),
+                MonitorLaunchedExecutable = GetBoolean(shortcut, "MonitorLaunchedExecutable", true),
                 DifferentExecutablePathToMonitor = GetString(shortcut, "DifferentExecutableToMonitor"),
                 ApplicationId = GetString(shortcut, "ApplicationId"),
                 ApplicationName = GetString(shortcut, "ApplicationName"),
@@ -200,9 +200,17 @@ public sealed class ShortcutStore
             JsonObject? root = JsonNode.Parse(GetSnapshot().Json) as JsonObject;
             if (root?["Shortcuts"] is not JsonArray shortcuts) return;
             string? storedVersion = root["ShortcutFileVersion"]?.GetValue<string>();
-            if (int.TryParse(storedVersion, out int versionNumber) && versionNumber >= 8) return;
+            bool knownVersion = int.TryParse(storedVersion, out int versionNumber);
+            if (knownVersion && versionNumber > 8) return;
+            bool hasLegacyMonitorName = shortcuts.OfType<JsonObject>().Any(shortcut =>
+                shortcut.ContainsKey("ProcessNameToMonitorUsesExecutable") || shortcut.ContainsKey("MonitorExecutablePath"));
+            if (knownVersion && versionNumber == 8 && !hasLegacyMonitorName) return;
             foreach (JsonObject shortcut in shortcuts.OfType<JsonObject>())
             {
+                shortcut["MonitorLaunchedExecutable"] ??= shortcut["ProcessNameToMonitorUsesExecutable"]?.DeepClone()
+                    ?? shortcut["MonitorExecutablePath"]?.DeepClone() ?? JsonValue.Create(true);
+                shortcut.Remove("ProcessNameToMonitorUsesExecutable");
+                shortcut.Remove("MonitorExecutablePath");
                 shortcut["WindowPlacements"] ??= new JsonArray();
                 shortcut["WindowPlacementTimeoutSeconds"] ??= 20;
                 if (shortcut["StartPrograms"] is JsonArray programs)
@@ -224,6 +232,9 @@ public sealed class ShortcutStore
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
         {
             Logger.Error(ex, "ShortcutStore/MigrateWindowPlacementSchema: Could not migrate {0}.", _shortcutFilePath);
+            // Loading the old false-valued flag as a missing new flag would silently
+            // select the wrong executable. Do not expose an unmigrated snapshot.
+            throw new InvalidDataException("The shortcut configuration could not be migrated safely. Existing settings were preserved.", ex);
         }
     }
 

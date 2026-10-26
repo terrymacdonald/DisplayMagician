@@ -231,29 +231,41 @@ public sealed class ShortcutRunner
                 !string.IsNullOrWhiteSpace(shortcut.ExecutablePath))
             {
                 windowRun.RequireMainSource = true;
-                ProcessTreeMonitor? monitor = ProcessTreeMonitor.BeginWatching(string.IsNullOrWhiteSpace(shortcut.DifferentExecutablePathToMonitor) ? shortcut.ExecutablePath : shortcut.DifferentExecutablePathToMonitor, shortcut.StartTimeoutSeconds, continueTrackingDescendants: true);
+                ProcessTreeMonitor? monitor = ProcessTreeMonitor.BeginWatching(GetExecutableMonitorPath(shortcut), shortcut.StartTimeoutSeconds, continueTrackingDescendants: true);
+                if (monitor == null) return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
+                List<Process> processes = new List<Process>();
                 try
                 {
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting executable.", cancellationToken).ConfigureAwait(false);
-                    List<System.Diagnostics.Process> processes = ProcessUtils.StartProcess(shortcut.ExecutablePath, shortcut.ExecutableArguments, (ProcessPriority)(int)shortcut.ProcessPriority, shortcut.StartTimeoutSeconds, shortcut.RunExecutableAsAdministrator);
+                    processes = ProcessUtils.StartProcess(shortcut.ExecutablePath, shortcut.ExecutableArguments, (ProcessPriority)(int)shortcut.ProcessPriority, shortcut.StartTimeoutSeconds, shortcut.RunExecutableAsAdministrator);
                     if (processes.Count == 0)
                     {
                         return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                     }
-                    monitor?.RegisterLaunchedProcesses(processes);
-                    if (monitor != null) windowRun.Monitors.Add(("main", monitor));
+                    monitor.RegisterLaunchedProcesses(processes, requireExpectedExecutable: !shortcut.MonitorLaunchedExecutable);
+                    windowRun.Monitors.Add(("main", monitor));
+                    if (!shortcut.MonitorLaunchedExecutable)
+                    {
+                        await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToStart, "Waiting for the alternative executable to start.", cancellationToken).ConfigureAwait(false);
+                        DateTime deadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(shortcut.StartTimeoutSeconds, 1, 60));
+                        while (!monitor.SelectNewestExpectedProcessTree() && DateTime.UtcNow < deadlineUtc)
+                            await Task.Delay(250, cancellationToken).ConfigureAwait(false);
+                        if (!monitor.SelectNewestExpectedProcessTree())
+                            return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut)
+                            { Message = "The alternative executable was not detected before the startup timeout." };
+                    }
                     windowRun.CanSave = !windowRun.DisplayProfileFailed;
                     await RestoreWindowPlacementsAsync(windowRun, publishStatusAsync, cancellationToken).ConfigureAwait(false);
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToClose, "Waiting for executable to close.", cancellationToken).ConfigureAwait(false);
-                    while (shortcut.MonitorExecutablePath && monitor != null && monitor.IsRunning)
+                    while (monitor.IsRunning)
                     {
                         await Task.Delay(500, cancellationToken).ConfigureAwait(false);
                     }
-                    ProcessUtils.DisposeProcesses(processes);
                 }
                 finally
                 {
-                    monitor?.Dispose();
+                    monitor.Dispose();
+                    ProcessUtils.DisposeProcesses(processes);
                 }
             }
 
@@ -344,6 +356,11 @@ public sealed class ShortcutRunner
 
             return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Completed, shortcut);
         }
+        catch (ProcessTrackingException ex)
+        {
+            _logger.Warn(ex, "ShortcutRunner/RunShortcutAsync: Process tracking failed for shortcut {0}; restoring temporary state.", shortcut.Id);
+            return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut) { Message = ex.Message };
+        }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Cancelled, shortcut);
@@ -384,13 +401,16 @@ public sealed class ShortcutRunner
         }
     }
 
+    internal static string GetExecutableMonitorPath(ShortcutDefinition shortcut) => shortcut.MonitorLaunchedExecutable
+        ? shortcut.ExecutablePath : shortcut.DifferentExecutablePathToMonitor;
+
     private static bool IsShortcutRunnable(ShortcutDefinition shortcut)
     {
            if ((shortcut.Category == ShortcutDefinitionCategory.Executable ||
                (shortcut.Category == ShortcutDefinitionCategory.Application && shortcut.ApplicationLibrary != 2)) &&
             (string.IsNullOrWhiteSpace(shortcut.ExecutablePath) || !File.Exists(shortcut.ExecutablePath) ||
              (shortcut.ExecutableArgumentsRequired && string.IsNullOrWhiteSpace(shortcut.ExecutableArguments)) ||
-             (shortcut.MonitorExecutablePath && !string.IsNullOrWhiteSpace(shortcut.DifferentExecutablePathToMonitor) && !File.Exists(shortcut.DifferentExecutablePathToMonitor))))
+             string.IsNullOrWhiteSpace(GetExecutableMonitorPath(shortcut)) || !File.Exists(GetExecutableMonitorPath(shortcut))))
         {
             return false;
         }
@@ -640,9 +660,10 @@ public sealed class ShortcutRunner
             {
                 try
                 {
-                    List<Process> processesToStop = action.StartedProgram.Monitor?.GetTrackedProcesses() ?? new List<Process>();
+                    List<Process> processesToStop = action.StartedProgram.Monitor?.GetTrackedProcesses(refresh: true) ?? new List<Process>();
                     foreach (Process process in action.StartedProgram.Processes)
                     {
+                        if (action.StartedProgram.Monitor != null && !action.StartedProgram.Monitor.IsInDirectLaunchTree(process.Id)) continue;
                         if (!ProcessUtils.ProcessExited(process) && processesToStop.All(trackedProcess => trackedProcess.Id != process.Id))
                         {
                             processesToStop.Add(process);

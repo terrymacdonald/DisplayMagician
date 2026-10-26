@@ -482,6 +482,10 @@ namespace DisplayMagician
                     shortcut["AudioProfileUUID"] = NoChangeProfileUuid;
                     shortcut["OverrideAudioSpeakerVolume"] = false;
                     shortcut["OverrideAudioMicrophoneVolume"] = false;
+                    shortcut["MonitorLaunchedExecutable"] ??= shortcut["ProcessNameToMonitorUsesExecutable"]?.DeepClone()
+                        ?? shortcut["MonitorExecutablePath"]?.DeepClone() ?? new JValue(true);
+                    shortcut.Property("ProcessNameToMonitorUsesExecutable")?.Remove();
+                    shortcut.Property("MonitorExecutablePath")?.Remove();
                     shortcut.Property("Hotkey")?.Remove();
                     RemoveProperties(shortcut, LegacyShortcutAudioFieldNames);
                 }

@@ -10,6 +10,23 @@ Automatic game detection compares the PID and start time of processes matching t
 
 Manual game launches also exclude existing process identities and select the newest observed matching root. The selected tree owns both window placement and shortcut completion, including descendants that survive a launcher. Descendants are discovered before exited parent identities are retired, with creation-time checks to exclude reused PIDs. Start/After Programs check full executable paths, and Stop Programs verify full paths and process identities before stopping anything.
 
+Shortcut JSON uses `MonitorLaunchedExecutable` as its canonical monitoring flag. The existing version 8 migration normalizes the older `ProcessNameToMonitorUsesExecutable` and `MonitorExecutablePath` names, including development files already marked version 8, without increasing the schema version. Existing canonical values take precedence, unrelated fields are retained, and the original file is backed up before replacement.
+
+Process-tree callers retain distinct selection rules:
+
+| Caller | Root selection and lifetime |
+| --- | --- |
+| Automatically detected game | The exact PID/start-time identity detected before helper programs run, plus descendants. |
+| Manually launched game | Discover new matching identities, then select the newest observed root and its descendants. A library client such as Steam is not accepted as the game. |
+| Executable / unpackaged application, launched executable selected | Register the actual launch handles and follow only their owned trees. Retained alternative-path text is ignored. |
+| Executable / unpackaged application, alternative executable selected | Keep discovery open until a new matching alternative executable appears, including when started by a broker outside the launcher's tree; then select its newest root. |
+| Start Program / direct StartAndCapture caller | Register its launch handles and restrict tracking and cleanup to those owned trees. Another helper or user launch of the same executable is excluded. |
+| Legacy game-library status monitor | Retain startup discovery behavior; after an explicit tracking failure, status remains conservatively unknown/running rather than claiming the game exited. |
+
+Native snapshots use a collection-time boundary to reject identities born after the snapshot began. When a parent's PID has been reused, child creation times distinguish surviving children of the original parent from children of its replacement. Ambiguous snapshot entries defer parent retirement until a fresh scan can verify the handover.
+
+Failed, empty, incomplete, or unverifiable snapshots do not count as completed discovery. Retry attempts are separated by at least 250 ms and stop after three consecutive failures, with an explicit error log. Active shortcut lifecycle checks report tracking failure through the shared operation status and restore temporary settings, rather than reporting normal process completion. A successful retry clears transient snapshot uncertainty so window capture can resume. Cleanup refreshes the owned tree before selecting processes to stop.
+
 Shortcut recovery record version 2 embeds the original display (including wallpaper) and audio configurations before temporary changes. Restoration uses these snapshots independently of the saved profile collections. Version 1 records continue to recover by their existing profile IDs without being rewritten: the original configuration cannot be reconstructed after a change has already occurred. Missing or unsupported recovery data remains in place and requires recovery rather than silently discarding it. Snapshot serialization excludes rendered icons and cache files.
 
 Profile list responses include compact layout thumbnails. A client may request a labelled preview and multi-size desktop `.ico` for one selected profile or a preview for the current layout; the Agent renders these from its authoritative display and saved wallpaper configuration, falling back to the display colour when a saved wallpaper cannot be read. Compact thumbnails are used for list and game shortcut overlays. Shortcut-list icons prefer the user's saved composite image over an executable-derived fallback.

@@ -41,7 +41,7 @@ public sealed class ProcessTreeMonitorTests
             var identities = (Dictionary<int, DateTime>)typeof(ProcessTreeMonitor).GetField("_trackedProcessStartTimes", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(monitor)!;
             lock (typeof(ProcessTreeMonitor).GetField("_syncRoot", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(monitor)!)
                 identities[newest.Id] = DateTime.MinValue;
-            typeof(ProcessTreeMonitor).GetMethod("TryTrackExpectedProcess", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(monitor, new object[] { newest.Id });
+            typeof(ProcessTreeMonitor).GetMethod("TryTrackExpectedProcess", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(monitor, new object[] { newest.Id, DateTime.UtcNow });
 
             Assert.True(monitor.SelectNewestExpectedProcessTree());
             Assert.True(monitor.IsInDirectLaunchTree(newest.Id));
@@ -75,10 +75,10 @@ public sealed class ProcessTreeMonitorTests
             timer.Change(Timeout.Infinite, Timeout.Infinite);
             Assert.True(parent.WaitForExit(10000));
 
-            Assert.True(monitor.IsRunning);
-            var tracked = monitor.GetTrackedProcesses();
+            var tracked = monitor.GetTrackedProcesses(refresh: true);
             try { Assert.Contains(tracked, process => process.Id != parent.Id && process.MainModule?.FileName == executable); }
             finally { ProcessUtils.DisposeProcesses(tracked); }
+            Assert.True(monitor.IsRunning);
         }
         finally { StopTestProcesses(executable); Directory.Delete(root, true); }
     }

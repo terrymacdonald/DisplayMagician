@@ -381,17 +381,17 @@ namespace DisplayMagician.UIForms
                     ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value),
                     ProcessPriority = (ProcessPriority)cbx_exe_priority.SelectedValue,
                     DifferentExecutableToMonitor = txt_alternative_executable.Text,
-                    ProcessNameToMonitorUsesExecutable = rb_wait_executable.Checked,
+                    MonitorLaunchedExecutable = rb_wait_executable.Checked,
                 };
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
                 {
-                    _executableToUse.ProcessNameToMonitorUsesExecutable = false;
+                    _executableToUse.MonitorLaunchedExecutable = false;
                     _executableToUse.DifferentExecutableToMonitor = txt_alternative_executable.Text;
                 }
                 else
                 {
-                    _executableToUse.ProcessNameToMonitorUsesExecutable = true;
+                    _executableToUse.MonitorLaunchedExecutable = true;
                 }
 
 
@@ -445,18 +445,18 @@ namespace DisplayMagician.UIForms
                     ExecutableTimeout = Convert.ToInt32(nud_timeout_executable.Value),
                     ProcessPriority = (ProcessPriority)cbx_exe_priority.SelectedValue,
                     DifferentExecutableToMonitor = txt_alternative_executable.Text,
-                    ProcessNameToMonitorUsesExecutable = rb_wait_executable.Checked,
+                    MonitorLaunchedExecutable = rb_wait_executable.Checked,
                 };
 
 
                 if (rb_wait_alternative_executable.Checked && !String.IsNullOrWhiteSpace(txt_alternative_executable.Text))
                 {
-                    _appToUse.ProcessNameToMonitorUsesExecutable = false;
+                    _appToUse.MonitorLaunchedExecutable = false;
                     _appToUse.DifferentExecutableToMonitor = txt_alternative_executable.Text;
                 }
                 else
                 {
-                    _appToUse.ProcessNameToMonitorUsesExecutable = true;
+                    _appToUse.MonitorLaunchedExecutable = true;
                 }
 
 
@@ -1335,7 +1335,7 @@ namespace DisplayMagician.UIForms
                     {
                         cb_args_executable.Checked = false;
                     }
-                    if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
+                    if (_shortcutToEdit.MonitorLaunchedExecutable)
                     {
                         rb_wait_executable.Checked = true;
                     }
@@ -1458,7 +1458,7 @@ namespace DisplayMagician.UIForms
                     {
                         cb_args_executable.Checked = false;
                     }
-                    if (_shortcutToEdit.ProcessNameToMonitorUsesExecutable)
+                    if (_shortcutToEdit.MonitorLaunchedExecutable)
                     {
                         rb_wait_executable.Checked = true;
                     }

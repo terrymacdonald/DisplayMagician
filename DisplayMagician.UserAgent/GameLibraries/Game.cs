@@ -97,7 +97,23 @@ namespace DisplayMagician.GameLibraries
 
         protected bool IsProcessTreeMonitorActive => _processTreeMonitor != null;
 
-        protected bool IsProcessTreeRunning => _processTreeMonitor != null && _processTreeMonitor.IsRunning;
+        protected bool IsProcessTreeRunning
+        {
+            get
+            {
+                if (_processTreeMonitor == null) return false;
+                // Library display/status APIs have no "unknown" state. A failed scan is
+                // not evidence of exit. ShortcutRunner uses its own monitor and reports
+                // the explicit failure through the operation contracts instead.
+                if (_processTreeMonitor.IsTrackingFailed) return true;
+                try { return _processTreeMonitor.IsRunning; }
+                catch (ProcessTrackingException ex)
+                {
+                    logger.Warn(ex, "Game/IsProcessTreeRunning: Process state is unknown for game {0} after a tracking failure.", Id);
+                    return true;
+                }
+            }
+        }
 
         public bool HasObservedProcessTreeRoot => _processTreeMonitor != null && _processTreeMonitor.HasObservedExpectedProcess;
 

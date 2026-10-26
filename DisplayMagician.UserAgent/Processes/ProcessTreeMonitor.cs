@@ -12,6 +12,10 @@ namespace DisplayMagician.Processes
     public sealed class ProcessTreeMonitor : IDisposable
     {
         internal sealed record ProcessScan(IReadOnlyList<ProcessIdentity> Identities, bool IsComplete);
+        internal sealed record ProcessSnapshot(int ProcessId, int ParentProcessId, string ExecutableName);
+        internal sealed record ProcessSnapshotScan(List<ProcessSnapshot> Processes, DateTime CapturedUtc, bool IsComplete);
+        private const int MaximumSnapshotFailures = 3;
+        private static readonly TimeSpan SnapshotRetryInterval = TimeSpan.FromMilliseconds(250);
         private const uint SnapshotProcesses = 0x00000002;
         private const uint ProcessQueryLimitedInformation = 0x00001000;
         private const int MaximumPathLength = 32768;
@@ -28,18 +32,25 @@ namespace DisplayMagician.Processes
         private readonly DateTime _deadlineUtc;
         private readonly DateTime _watchStartedUtc;
         private readonly bool _continueTrackingDescendants;
+        private readonly Func<ProcessSnapshotScan> _captureSnapshot;
         private Timer? _snapshotTimer;
         private int _snapshotInProgress;
         private int _completedSnapshotCount;
         private int _minimumSnapshotCountForDirectLaunch;
         private bool _hasObservedExpectedProcess;
         private bool _discoveryComplete;
-        private bool _disposed;
+        private volatile bool _disposed;
         private bool _usingLongInterval;
         private bool _trackOnlySelectedTree;
         private volatile bool _hadTrackingError;
+        private int _consecutiveSnapshotFailures;
+        private DateTime _nextSnapshotAttemptUtc;
+        private bool _lastSnapshotSucceeded;
+        private bool _trackingFailed;
 
-        public bool HadTrackingError => _hadTrackingError;
+        public bool IsTrackingFailed { get { lock (_syncRoot) return _trackingFailed; } }
+
+        public bool HadTrackingError { get { lock (_syncRoot) return _hadTrackingError || _consecutiveSnapshotFailures > 0 || _trackingFailed; } }
 
         public bool IsInDirectLaunchTree(int processId)
         {
@@ -47,8 +58,9 @@ namespace DisplayMagician.Processes
                 return _directLaunchTreeProcessIds.Contains(processId);
         }
 
-        private ProcessTreeMonitor(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants)
+        internal ProcessTreeMonitor(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants, Func<ProcessSnapshotScan>? captureSnapshot = null)
         {
+            _captureSnapshot = captureSnapshot ?? CaptureProcessSnapshot;
             _continueTrackingDescendants = continueTrackingDescendants;
             _expectedExecutablePath = Path.GetFullPath(expectedExecutablePath);
             _expectedExecutableName = Path.GetFileName(expectedExecutablePath);
@@ -96,6 +108,7 @@ namespace DisplayMagician.Processes
             get
             {
                 if (_continueTrackingDescendants) CaptureProcessTree(null);
+                ThrowIfTrackingFailed();
                 KeyValuePair<int, DateTime>[] processIds;
                 bool waitingForDirectLaunchSnapshot;
                 lock (_syncRoot)
@@ -134,45 +147,57 @@ namespace DisplayMagician.Processes
                     // A parent can spawn a child and exit between the scan and the checks
                     // above. Take one final scan before declaring the selected tree closed.
                     CaptureProcessTree(null);
+                    ThrowIfTrackingFailed();
                     lock (_syncRoot)
-                        return waitingForDirectLaunchSnapshot || Volatile.Read(ref _snapshotInProgress) != 0 ||
+                        return !_lastSnapshotSucceeded || waitingForDirectLaunchSnapshot || Volatile.Read(ref _snapshotInProgress) != 0 ||
                             _trackedProcessStartTimes.Any(item => !processIds.Contains(item));
                 }
-                return waitingForDirectLaunchSnapshot;
+                lock (_syncRoot) return (_consecutiveSnapshotFailures > 0 && !_discoveryComplete) || waitingForDirectLaunchSnapshot;
             }
         }
 
         internal bool SelectNewestExpectedProcessTree()
         {
             CaptureProcessTree(null);
+            ThrowIfTrackingFailed();
             lock (_syncRoot)
             {
                 if (_trackOnlySelectedTree) return true;
                 if (_observedExpectedProcesses.Count == 0) return false;
                 ProcessIdentity selected = _observedExpectedProcesses.OrderByDescending(item => item.StartTimeUtc).First();
-                _trackOnlySelectedTree = true;
-                _directLaunchTreeProcessIds.Clear();
-                foreach (KeyValuePair<int, DateTime> tracked in _trackedProcessStartTimes.ToArray())
-                {
-                    ProcessIdentity identity = new ProcessIdentity(tracked.Key, tracked.Value);
-                    HashSet<ProcessIdentity> visited = new HashSet<ProcessIdentity>();
-                    while (identity != selected && visited.Add(identity) && _trackedParents.TryGetValue(identity, out ProcessIdentity parent))
-                        identity = parent;
-                    if (identity == selected) _directLaunchTreeProcessIds.Add(tracked.Key);
-                    else
-                    {
-                        _trackedProcessStartTimes.Remove(tracked.Key);
-                    }
-                }
-                _observedExpectedProcesses.Clear();
-                _trackedParents.Clear();
+                SelectProcessTrees(new HashSet<ProcessIdentity> { selected });
                 logger.Info("ProcessTreeMonitor/SelectNewestExpectedProcessTree: Selected PID {0}, started {1:O}, for {2}.", selected.ProcessId, selected.StartTimeUtc, _expectedExecutablePath);
                 return true;
             }
         }
 
-        public List<Process> GetTrackedProcesses()
+        private void SelectProcessTrees(HashSet<ProcessIdentity> roots)
         {
+            lock (_syncRoot)
+            {
+                _trackOnlySelectedTree = true;
+                _hasObservedExpectedProcess = roots.Count > 0;
+                _directLaunchTreeProcessIds.Clear();
+                foreach (KeyValuePair<int, DateTime> tracked in _trackedProcessStartTimes.ToArray())
+                {
+                    ProcessIdentity identity = new ProcessIdentity(tracked.Key, tracked.Value);
+                    HashSet<ProcessIdentity> visited = new HashSet<ProcessIdentity>();
+                    while (!roots.Contains(identity) && visited.Add(identity) && _trackedParents.TryGetValue(identity, out ProcessIdentity parent))
+                        identity = parent;
+                    if (roots.Contains(identity)) _directLaunchTreeProcessIds.Add(tracked.Key);
+                    else _trackedProcessStartTimes.Remove(tracked.Key);
+                }
+                _observedExpectedProcesses.Clear();
+                _trackedParents.Clear();
+            }
+        }
+
+        public List<Process> GetTrackedProcesses()
+            => GetTrackedProcesses(refresh: false);
+
+        internal List<Process> GetTrackedProcesses(bool refresh)
+        {
+            if (refresh) CaptureProcessTree(null);
             List<Process> processes = new List<Process>();
             KeyValuePair<int, DateTime>[] processIds;
             lock (_syncRoot)
@@ -214,6 +239,11 @@ namespace DisplayMagician.Processes
                 return;
 
             bool registeredLaunchedProcess = false;
+            HashSet<ProcessIdentity> launchRoots = new HashSet<ProcessIdentity>();
+            lock (_syncRoot)
+                foreach (int processId in _directLaunchTreeProcessIds)
+                    if (_trackedProcessStartTimes.TryGetValue(processId, out DateTime startedUtc))
+                        launchRoots.Add(new ProcessIdentity(processId, startedUtc));
             foreach (Process? process in launchedProcesses)
             {
                 try
@@ -233,12 +263,14 @@ namespace DisplayMagician.Processes
 
                     lock (_syncRoot)
                     {
+                        if (_disposed) return;
                         DateTime startedUtc = process.StartTime.ToUniversalTime();
-                        if (requireExpectedExecutable && startedUtc < _watchStartedUtc) continue;
+                        if (startedUtc < _watchStartedUtc) continue;
                         if (_existingExpectedProcessIds.TryGetValue(process.Id, out DateTime existingStartedUtc) && existingStartedUtc == startedUtc)
                             continue;
                         if (requireExpectedExecutable) _observedExpectedProcesses.Add(new ProcessIdentity(process.Id, startedUtc));
                         _directLaunchTreeProcessIds.Add(process.Id);
+                        launchRoots.Add(new ProcessIdentity(process.Id, startedUtc));
                         if (!_trackedProcessStartTimes.TryGetValue(process.Id, out DateTime trackedStart) || trackedStart != startedUtc)
                         {
                             _trackedProcessStartTimes[process.Id] = startedUtc;
@@ -260,6 +292,9 @@ namespace DisplayMagician.Processes
                 }
             }
 
+            // Direct launches have authoritative roots. Discovery remains open for game
+            // library/alternative-executable callers until they explicitly select a root.
+            if (!requireExpectedExecutable) SelectProcessTrees(launchRoots);
             if (registeredLaunchedProcess)
             {
                 // Capture any child that was started before the launcher returned control.
@@ -392,9 +427,11 @@ namespace DisplayMagician.Processes
                 while (DateTime.UtcNow < monitor._deadlineUtc &&
                     (captureDescendantsForStartupWindow || !monitor.HasObservedExpectedProcess))
                 {
+                    monitor.ThrowIfTrackingFailed();
                     Thread.Sleep(50);
                 }
 
+                monitor.ThrowIfTrackingFailed();
                 List<Process> trackedProcesses = monitor.GetTrackedProcesses();
                 if (trackedProcesses.Count == 0)
                     return startedProcesses;
@@ -411,7 +448,12 @@ namespace DisplayMagician.Processes
 
         private void Start()
         {
-            _snapshotTimer = new Timer(CaptureProcessTree, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(250));
+            lock (_syncRoot)
+            {
+                if (_disposed || _discoveryComplete) return;
+                _snapshotTimer = new Timer(CaptureProcessTree, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                _snapshotTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(250));
+            }
             logger.Debug($"ProcessTreeMonitor/Start: Capturing native process snapshots for {_expectedExecutablePath} until {_deadlineUtc:O}.");
         }
 
@@ -422,14 +464,21 @@ namespace DisplayMagician.Processes
 
             try
             {
-                if (DateTime.UtcNow > _deadlineUtc && !_continueTrackingDescendants)
+                lock (_syncRoot)
+                    if (_consecutiveSnapshotFailures > 0 && DateTime.UtcNow < _nextSnapshotAttemptUtc) return;
+                if (DateTime.UtcNow > _deadlineUtc && !_continueTrackingDescendants && _lastSnapshotSucceeded)
                 {
                     CompleteDiscovery();
                     return;
                 }
 
-                List<ProcessSnapshot> runningProcesses = CaptureProcessSnapshot();
-                if (runningProcesses.Count == 0) return; // A failed system snapshot must not retire the tracked tree.
+                ProcessSnapshotScan scan = _captureSnapshot();
+                if (!scan.IsComplete || scan.Processes.Count == 0)
+                {
+                    RecordSnapshotFailure(null);
+                    return;
+                }
+                List<ProcessSnapshot> runningProcesses = scan.Processes;
                 if (_continueTrackingDescendants && DateTime.UtcNow > _deadlineUtc && !_usingLongInterval)
                 {
                     _usingLongInterval = true;
@@ -441,29 +490,41 @@ namespace DisplayMagician.Processes
                     if (!string.Equals(process.ExecutableName, _expectedExecutableName, StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    TryTrackExpectedProcess(process.ProcessId);
+                    TryTrackExpectedProcess(process.ProcessId, scan.CapturedUtc);
                 }
 
+                HashSet<int> deferredParents = new HashSet<int>();
                 if (HasObservedExpectedProcess)
-                    ExpandTrackedDescendants(runningProcesses);
+                    ExpandTrackedDescendants(runningProcesses, scan.CapturedUtc, deferredParents);
                 // Discover children using the previous identities before retiring a parent
                 // that exited after launching them, including after the startup deadline.
-                RemoveExitedOrReusedProcesses(runningProcesses);
+                RemoveExitedOrReusedProcesses(runningProcesses, scan.CapturedUtc, deferredParents);
+                if (deferredParents.Count > 0)
+                {
+                    // Native enumeration completed, but a reused/new child identity could
+                    // not be bound to that snapshot. Retry before confirming tree closure.
+                    RecordSnapshotFailure(null);
+                    return;
+                }
+                lock (_syncRoot)
+                {
+                    if (_disposed) return;
+                    _completedSnapshotCount++;
+                    _consecutiveSnapshotFailures = 0;
+                    _lastSnapshotSucceeded = true;
+                }
             }
             catch (Exception ex)
             {
-                _hadTrackingError = true;
-                logger.Warn(ex, $"ProcessTreeMonitor/CaptureProcessTree: Could not capture the process tree for {_expectedExecutablePath}.");
+                RecordSnapshotFailure(ex);
             }
             finally
             {
-                lock (_syncRoot)
-                    _completedSnapshotCount++;
                 Volatile.Write(ref _snapshotInProgress, 0);
             }
         }
 
-        private void TryTrackExpectedProcess(int processId)
+        private void TryTrackExpectedProcess(int processId, DateTime capturedUtc)
         {
             try
             {
@@ -474,8 +535,8 @@ namespace DisplayMagician.Processes
                     DateTime startedUtc = process.StartTime.ToUniversalTime();
                     lock (_syncRoot)
                     {
-                        if (_trackOnlySelectedTree) return;
-                        if (startedUtc < _watchStartedUtc) return;
+                        if (_disposed || _trackOnlySelectedTree) return;
+                        if (startedUtc < _watchStartedUtc || startedUtc > capturedUtc) return;
                         if (_existingExpectedProcessIds.TryGetValue(processId, out DateTime existingStartedUtc) && existingStartedUtc == startedUtc)
                             return;
                         _observedExpectedProcesses.Add(new ProcessIdentity(processId, startedUtc));
@@ -499,7 +560,7 @@ namespace DisplayMagician.Processes
             }
         }
 
-        private void ExpandTrackedDescendants(List<ProcessSnapshot> runningProcesses)
+        private void ExpandTrackedDescendants(List<ProcessSnapshot> runningProcesses, DateTime capturedUtc, HashSet<int> deferredParents)
         {
             bool changed;
             do
@@ -507,6 +568,7 @@ namespace DisplayMagician.Processes
                 changed = false;
                 lock (_syncRoot)
                 {
+                    if (_disposed) return;
                     foreach (ProcessSnapshot process in runningProcesses)
                     {
                         if (!_trackedProcessStartTimes.TryGetValue(process.ParentProcessId, out DateTime parentStartedUtc))
@@ -516,11 +578,22 @@ namespace DisplayMagician.Processes
                             using Process child = Process.GetProcessById(process.ProcessId);
                             if (child.HasExited) continue;
                             DateTime startedUtc = child.StartTime.ToUniversalTime();
+                            // A fresh lookup of a reused child PID is not the process that
+                            // appeared in this snapshot. Leave it for a later scan.
                             if (startedUtc < parentStartedUtc) continue;
+                            if (startedUtc > capturedUtc)
+                            {
+                                deferredParents.Add(process.ParentProcessId);
+                                continue;
+                            }
                             try
                             {
                                 using Process parent = Process.GetProcessById(process.ParentProcessId);
-                                if (parent.StartTime.ToUniversalTime() != parentStartedUtc) continue;
+                                DateTime currentParentStartedUtc = parent.StartTime.ToUniversalTime();
+                                // An older child may outlive a parent whose PID is now reused.
+                                // A child born after the replacement parent belongs to that
+                                // replacement, not to our original tracked identity.
+                                if (currentParentStartedUtc != parentStartedUtc && startedUtc >= currentParentStartedUtc) continue;
                             }
                             catch (ArgumentException) { /* The original parent exited; its child remains valid. */ }
                             if (!_trackOnlySelectedTree)
@@ -545,13 +618,15 @@ namespace DisplayMagician.Processes
             while (changed);
         }
 
-        private void RemoveExitedOrReusedProcesses(List<ProcessSnapshot> runningProcesses)
+        private void RemoveExitedOrReusedProcesses(List<ProcessSnapshot> runningProcesses, DateTime capturedUtc, HashSet<int> deferredParents)
         {
             HashSet<int> runningIds = runningProcesses.Select(item => item.ProcessId).ToHashSet();
             lock (_syncRoot)
             {
+                if (_disposed) return;
                 foreach (KeyValuePair<int, DateTime> tracked in _trackedProcessStartTimes.ToArray())
                 {
+                    if (tracked.Value > capturedUtc || deferredParents.Contains(tracked.Key)) continue;
                     if (!runningIds.Contains(tracked.Key) && DateTime.UtcNow <= _deadlineUtc) continue;
                     bool sameProcess = false;
                     bool reused = false;
@@ -578,15 +653,17 @@ namespace DisplayMagician.Processes
             }
         }
 
-        private List<ProcessSnapshot> CaptureProcessSnapshot()
+        private ProcessSnapshotScan CaptureProcessSnapshot()
         {
             List<ProcessSnapshot> processes = new List<ProcessSnapshot>();
+            // Bound lookups to identities that existed before snapshot creation. A child
+            // created during collection is conservatively deferred to the next scan.
+            DateTime capturedUtc = DateTime.UtcNow;
             IntPtr snapshot = CreateToolhelp32Snapshot(SnapshotProcesses, 0);
             if (snapshot == InvalidHandle)
             {
-                _hadTrackingError = true;
                 logger.Warn($"ProcessTreeMonitor/CaptureProcessSnapshot: CreateToolhelp32Snapshot failed with Win32 error {Marshal.GetLastWin32Error()}.");
-                return processes;
+                return new ProcessSnapshotScan(processes, capturedUtc, false);
             }
 
             try
@@ -598,9 +675,8 @@ namespace DisplayMagician.Processes
 
                 if (!Process32First(snapshot, ref entry))
                 {
-                    _hadTrackingError = true;
                     logger.Warn("ProcessTreeMonitor/CaptureProcessSnapshot: Process32First failed with Win32 error {0}.", Marshal.GetLastWin32Error());
-                    return processes;
+                    return new ProcessSnapshotScan(processes, capturedUtc, false);
                 }
 
                 do
@@ -609,13 +685,19 @@ namespace DisplayMagician.Processes
                     entry.Size = (uint)Marshal.SizeOf<ProcessEntry32>();
                 }
                 while (Process32Next(snapshot, ref entry));
+                int enumerationError = Marshal.GetLastWin32Error();
+                if (enumerationError != 18) // ERROR_NO_MORE_FILES is the only successful end of enumeration.
+                {
+                    logger.Warn("ProcessTreeMonitor/CaptureProcessSnapshot: Process32Next failed with Win32 error {0}; the partial snapshot will be retried.", enumerationError);
+                    return new ProcessSnapshotScan(processes, capturedUtc, false);
+                }
             }
             finally
             {
                 CloseHandle(snapshot);
             }
 
-            return processes;
+            return new ProcessSnapshotScan(processes, capturedUtc, true);
         }
 
         private bool PathsMatch(Process process)
@@ -646,18 +728,47 @@ namespace DisplayMagician.Processes
             }
         }
 
-        private void CompleteDiscovery()
+        private void RecordSnapshotFailure(Exception? exception)
         {
+            int failures;
             lock (_syncRoot)
             {
-                if (_discoveryComplete || _disposed)
+                if (_disposed || _discoveryComplete) return;
+                _lastSnapshotSucceeded = false;
+                failures = ++_consecutiveSnapshotFailures;
+                _nextSnapshotAttemptUtc = DateTime.UtcNow.Add(SnapshotRetryInterval);
+                _trackingFailed = failures >= MaximumSnapshotFailures;
+            }
+            logger.Warn(exception, "ProcessTreeMonitor/RecordSnapshotFailure: Snapshot attempt {0} of {1} failed for {2}.", failures, MaximumSnapshotFailures, _expectedExecutablePath);
+            if (failures >= MaximumSnapshotFailures) CompleteDiscovery();
+        }
+
+        private void ThrowIfTrackingFailed()
+        {
+            lock (_syncRoot)
+                if (_trackingFailed) throw new ProcessTrackingException($"Process tracking failed for '{_expectedExecutablePath}' after {MaximumSnapshotFailures} consecutive failed scans.");
+        }
+
+        private void CompleteDiscovery()
+        {
+            Timer? timer;
+            bool failed;
+            lock (_syncRoot)
+            {
+                if (_discoveryComplete)
                     return;
                 _discoveryComplete = true;
+                failed = _trackingFailed;
+                timer = _snapshotTimer;
+                _snapshotTimer = null;
             }
 
-            _snapshotTimer?.Dispose();
-            _snapshotTimer = null;
-            if (!HasObservedExpectedProcess)
+            timer?.Dispose();
+            if (failed)
+            {
+                logger.Error("ProcessTreeMonitor/CompleteDiscovery: Stopped tracking {0} after {1} consecutive snapshot failures; process completion has not been confirmed.", _expectedExecutablePath, MaximumSnapshotFailures);
+            }
+            else if (!HasObservedExpectedProcess)
             {
                 logger.Warn($"ProcessTreeMonitor/CompleteDiscovery: Native startup discovery ended without observing {_expectedExecutablePath}. The snapshot timer has stopped; the shortcut may need a different executable selected for monitoring.");
             }
@@ -669,14 +780,13 @@ namespace DisplayMagician.Processes
 
         public void Dispose()
         {
-            if (_disposed)
-                return;
-
+            lock (_syncRoot)
+            {
+                if (_disposed) return;
+                _disposed = true;
+            }
             CompleteDiscovery();
-            _disposed = true;
         }
-
-        private sealed record ProcessSnapshot(int ProcessId, int ParentProcessId, string ExecutableName);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct ProcessEntry32
@@ -711,5 +821,10 @@ namespace DisplayMagician.Processes
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr handle);
+    }
+
+    public sealed class ProcessTrackingException : InvalidOperationException
+    {
+        public ProcessTrackingException(string message) : base(message) { }
     }
 }

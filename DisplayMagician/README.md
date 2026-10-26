@@ -8,6 +8,10 @@ While an eligible shortcut runs, Save Window Positions is available beside Cance
 
 The game shortcut editor accepts an actual `.exe` for Monitor different executable. Game launches and automatic game detection require this path when the game library cannot provide a usable executable path. Previously saved scripts or links remain in the shortcut data and show a validation warning until changed.
 
+Executable and unpackaged application shortcuts wait for whichever executable the user selected for monitoring. Selecting the launched executable ignores retained alternative-path text. Selecting an alternative waits for a new matching process, including broker launches, and then follows that selected process tree. Existing matching processes do not keep the shortcut running after its selected instance closes.
+
+The desktop shortcut model and saved JSON use `MonitorLaunchedExecutable`. The existing legacy configuration migration converts the older flag name, and UserAgent's existing version 8 shortcut migration completes normalization without a new schema version.
+
 Shortcut editors work on a separate draft and close successfully only after the service accepts the save. A failed save keeps the editor open with its proposed changes and restores the library cache to its authoritative snapshot. Revision conflicts refresh the library and tell the user to retry. Creation, copying, and deletion propagate commit failures, and local icon/hotkey cleanup occurs only after a successful commit. Retrying an edit preserves window snapshots captured or cleared through their separate actions.
 
 The pairing and server-settings forms show the local/routed-network workflow for the first REST release. Their Remote Network controls remain in the Designer and code but are hidden until user-enabled Internet access is supported.

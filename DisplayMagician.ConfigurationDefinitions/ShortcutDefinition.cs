@@ -26,7 +26,8 @@ public sealed class ShortcutDefinition
     public string ExecutableArguments { get; init; } = string.Empty;
     public bool ExecutableArgumentsRequired { get; init; }
     public bool RunExecutableAsAdministrator { get; init; }
-    public bool MonitorExecutablePath { get; init; } = true;
+    // This flag selects the executable; it never disables lifetime monitoring.
+    public bool MonitorLaunchedExecutable { get; init; } = true;
     public string DifferentExecutablePathToMonitor { get; init; } = string.Empty;
 
     public string ApplicationId { get; init; } = string.Empty;

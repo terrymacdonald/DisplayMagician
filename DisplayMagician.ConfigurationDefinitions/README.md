@@ -6,6 +6,8 @@ It deliberately has no dependency on WinForms, named pipes, hardware, files, pro
 
 Shortcut window placements are optional portable definitions. They store stable Start Program IDs, executable/window matching information, normal bounds, optional maximized position, show state, and required display names; runtime PIDs and handles stay in UserAgent memory. Version 8 keeps version 7 snapshots without maximized coordinates for best-effort restoration until recaptured.
 
+`MonitorLaunchedExecutable` is the property and JSON field used throughout the shortcut model. True selects the launched executable; false selects `DifferentExecutablePathToMonitor`. Both choices require lifetime monitoring. The existing version 8 shortcut migration renames `ProcessNameToMonitorUsesExecutable` and the earlier development name `MonitorExecutablePath`, preserving their values and backing up the source file. The schema version remains 8; no alias fields are written.
+
 ## Build
 
 ```powershell
