@@ -42,8 +42,8 @@ public sealed class ProfileCommandHandler
     private readonly IInteractiveSessionStateProvider _interactiveSessionStateProvider;
     private readonly ControlServiceClient _controlServiceClient;
     private readonly OperationStatusOutbox _operationStatusOutbox;
-    private readonly object _shortcutOperationsLock = new object();
-    private readonly Dictionary<Guid, CancellationTokenSource> _shortcutOperations = new Dictionary<Guid, CancellationTokenSource>();
+    private readonly object _operationsLock = new object();
+    private readonly Dictionary<Guid, (CancellationTokenSource Source, DisplayOperationType Type)> _operations = new Dictionary<Guid, (CancellationTokenSource, DisplayOperationType)>();
     private bool _stopRequested;
 
     public bool StopRequested => _stopRequested;
@@ -51,23 +51,29 @@ public sealed class ProfileCommandHandler
     public ShortcutRunner ShortcutRunner => _shortcutRunner;
 
     public ProfileCommandHandler(AgentRegistration registration, ControlServiceClient controlServiceClient, IInteractiveSessionStateProvider? interactiveSessionStateProvider = null)
+        : this(registration, controlServiceClient, interactiveSessionStateProvider,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", (registration ?? throw new ArgumentNullException(nameof(registration))).UserSid), new UserProfileOperationService())
+    {
+    }
+
+    internal ProfileCommandHandler(AgentRegistration registration, ControlServiceClient controlServiceClient, IInteractiveSessionStateProvider? interactiveSessionStateProvider, string userDataPath, UserProfileOperationService profileOperationService)
     {
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
         _controlServiceClient = controlServiceClient ?? throw new ArgumentNullException(nameof(controlServiceClient));
         _interactiveSessionStateProvider = interactiveSessionStateProvider ?? new WtsInteractiveSessionStateProvider();
-        _userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", _registration.UserSid);
+        _userDataPath = userDataPath;
         _operationStatusOutbox = new OperationStatusOutbox(_userDataPath);
         ProfileRepository.ConfigureStoragePath(_userDataPath);
         AudioProfileRepository.ConfigureStoragePath(_userDataPath);
         _shortcutStore = new ShortcutStore(_userDataPath);
         _automaticGameDetectionRegistry = new AutomaticGameDetectionRegistry();
         _automaticGameDetectionRegistry.ReplaceAutomaticDetections(_shortcutStore.GetShortcutDefinitions());
-        _userProfileOperationService = new UserProfileOperationService();
+        _userProfileOperationService = profileOperationService;
         _shortcutRecoveryStore = new ShortcutRecoveryStore(_userDataPath);
         _shortcutRunner = new ShortcutRunner(_shortcutStore, _automaticGameDetectionRegistry, _userProfileOperationService, _shortcutRecoveryStore);
-        _userMessageStore = new UserMessageStore(_userDataPath);
         _userSupportBundleGenerator = new UserSupportBundleGenerator(_userDataPath, _registration);
         _messageSyncService = new MessageSyncService(_httpClient, _logger, "https://sync.displaymagician.com/sync/client-sync.json", Path.Combine(_userDataPath, "Messages"));
+        _userMessageStore = new UserMessageStore(_userDataPath, _messageSyncService);
         _messageSyncService.EnsureStorage();
         _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
     }
@@ -76,6 +82,7 @@ public sealed class ProfileCommandHandler
     {
         bool restored = await _shortcutRunner.RestorePendingRecoveryAsync(0, cancellationToken).ConfigureAwait(false);
         _registration.IsRecoveryRequired = !restored;
+        _operationStatusOutbox.CompleteInterruptedOperations(!restored);
         return restored;
     }
 
@@ -88,16 +95,10 @@ public sealed class ProfileCommandHandler
 
         Guid operationId = Guid.NewGuid();
         CancellationTokenSource operationCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        lock (_shortcutOperationsLock)
+        if (!TryBeginOperation(operationId, operationCancellationSource))
         {
-            if (_shortcutOperations.Count > 0 || _registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
-            {
-                operationCancellationSource.Dispose();
-                return false;
-            }
-
-            _shortcutOperations.Add(operationId, operationCancellationSource);
-            _registration.OperationState = AgentOperationState.Running;
+            operationCancellationSource.Dispose();
+            return false;
         }
 
         await PublishShortcutStatusAsync(new OperationStatusUpdate
@@ -114,7 +115,7 @@ public sealed class ProfileCommandHandler
             if (!leaseResponse.IsSuccessful)
             {
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, leaseResponse.Message, leaseResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
-                CompleteShortcutOperation(operationId, operationCancellationSource);
+                CompleteOperation(operationId, operationCancellationSource);
                 await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
                 return false;
             }
@@ -123,7 +124,7 @@ public sealed class ProfileCommandHandler
             if (!stateResponse.IsSuccessful)
             {
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, stateResponse.Message, stateResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
-                CompleteShortcutOperation(operationId, operationCancellationSource);
+                CompleteOperation(operationId, operationCancellationSource);
                 await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
                 return false;
             }
@@ -134,7 +135,7 @@ public sealed class ProfileCommandHandler
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            CompleteShortcutOperation(operationId, operationCancellationSource);
+            CompleteOperation(operationId, operationCancellationSource);
             await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
             return false;
         }
@@ -142,7 +143,7 @@ public sealed class ProfileCommandHandler
         {
             _logger.Warn(ex, "ProfileCommandHandler/RunDetectedShortcutAsync: Could not start automatically detected shortcut {0}.", shortcutId);
             await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, "The automatic shortcut could not start because the Control Service is unavailable.", ControlErrorCode.AgentUnavailable), CancellationToken.None).ConfigureAwait(false);
-            CompleteShortcutOperation(operationId, operationCancellationSource);
+            CompleteOperation(operationId, operationCancellationSource);
             return false;
         }
     }
@@ -171,12 +172,14 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.StopAgentIfIdle)
         {
-            if (_registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
+            lock (_operationsLock)
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent has active work and cannot stop." };
+                if (_operations.Count > 0 || _registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
+                {
+                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent has active work and cannot stop." };
+                }
+                _stopRequested = true;
             }
-
-            _stopRequested = true;
             return new ControlResponse { IsSuccessful = true, Message = "The idle User Agent is stopping." };
         }
 
@@ -423,16 +426,10 @@ public sealed class ProfileCommandHandler
             Guid operationId = startRequest.OperationId == Guid.Empty ? Guid.NewGuid() : startRequest.OperationId;
             using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
             CancellationTokenSource operationCancellationSource = new CancellationTokenSource();
-            lock (_shortcutOperationsLock)
+            if (!TryBeginOperation(operationId, operationCancellationSource))
             {
-                if (_shortcutOperations.Count > 0 || _registration.OperationState != AgentOperationState.Idle)
-                {
-                    operationCancellationSource.Dispose();
-                    return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent already has a shortcut operation in progress." };
-                }
-
-                _shortcutOperations.Add(operationId, operationCancellationSource);
-                _registration.OperationState = AgentOperationState.Running;
+                operationCancellationSource.Dispose();
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent already has active work, requires recovery, or is stopping." };
             }
 
             await PublishShortcutStatusAsync(new OperationStatusUpdate
@@ -449,7 +446,7 @@ public sealed class ProfileCommandHandler
                 if (!stateResponse.IsSuccessful)
                 {
                     await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, stateResponse.Message, stateResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
-                    CompleteShortcutOperation(operationId, operationCancellationSource);
+                    CompleteOperation(operationId, operationCancellationSource);
                     return new ControlResponse { IsSuccessful = false, ErrorCode = stateResponse.ErrorCode, Message = stateResponse.Message };
                 }
             }
@@ -457,7 +454,7 @@ public sealed class ProfileCommandHandler
             {
                 _logger.Warn(ex, "ProfileCommandHandler/HandleAsync: Could not report the manual shortcut operation {0} as running.", operationId);
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, "The shortcut could not start because the Control Service is unavailable.", ControlErrorCode.AgentUnavailable), CancellationToken.None).ConfigureAwait(false);
-                CompleteShortcutOperation(operationId, operationCancellationSource);
+                CompleteOperation(operationId, operationCancellationSource);
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The Control Service is unavailable." };
             }
 
@@ -479,14 +476,14 @@ public sealed class ProfileCommandHandler
             }
 
             using IDisposable operationScope = SupportLogScope.BeginOperation(cancelRequest.OperationId);
-            lock (_shortcutOperationsLock)
+            lock (_operationsLock)
             {
-                if (!_shortcutOperations.TryGetValue(cancelRequest.OperationId, out CancellationTokenSource? operationCancellationSource))
+                if (!_operations.TryGetValue(cancelRequest.OperationId, out var operation) || operation.Type != DisplayOperationType.StartShortcut)
                 {
                     return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested operation is not active in this User Agent." };
                 }
 
-                operationCancellationSource.Cancel();
+                operation.Source.Cancel();
             }
 
             return new ControlResponse { IsSuccessful = true, Message = "Shortcut cancellation requested.", OperationStatus = new OperationStatus { OperationId = cancelRequest.OperationId, OperationType = DisplayOperationType.StartShortcut, Phase = OperationPhase.Requested } };
@@ -603,12 +600,21 @@ public sealed class ProfileCommandHandler
             }
 
             Guid operationId = audioApplyRequest.OperationId == Guid.Empty ? Guid.NewGuid() : audioApplyRequest.OperationId;
+            CancellationTokenSource operationCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            if (!TryBeginOperation(operationId, operationCancellationSource, DisplayOperationType.ApplyAudioProfile))
+            {
+                operationCancellationSource.Dispose();
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent already has active work, requires recovery, or is stopping." };
+            }
             int deviceWaitMilliseconds = audioApplyRequest.DeviceWaitMilliseconds > 0 ? audioApplyRequest.DeviceWaitMilliseconds : ControlProtocol.DefaultAudioDeviceWaitMilliseconds;
             await PublishShortcutStatusAsync(new OperationStatusUpdate { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = OperationPhase.Requested, Message = "Audio profile operation requested." }, CancellationToken.None).ConfigureAwait(false);
             _ = Task.Run(async () =>
             {
+                using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
                 try
                 {
+                    ControlResponse runningResponse = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Running, cancellationToken).ConfigureAwait(false);
+                    if (!runningResponse.IsSuccessful) throw new InvalidOperationException(runningResponse.Message);
                     ApplyAudioProfileOperationResult result = _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, deviceWaitMilliseconds);
                     await PublishShortcutStatusAsync(new OperationStatusUpdate { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed, Message = result.IsSuccessful ? "Audio profile applied." : "Audio profile could not be applied.", IsTerminal = true, IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed }, CancellationToken.None).ConfigureAwait(false);
                 }
@@ -616,6 +622,11 @@ public sealed class ProfileCommandHandler
                 {
                     _logger.Error(ex, "ProfileCommandHandler/HandleAsync: Audio profile operation {0} failed unexpectedly.", operationId);
                     await PublishShortcutStatusAsync(new OperationStatusUpdate { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = OperationPhase.Failed, Message = "Audio profile operation failed unexpectedly.", IsTerminal = true, ErrorCode = ControlErrorCode.ExecutionFailed }, CancellationToken.None).ConfigureAwait(false);
+                }
+                finally
+                {
+                    CompleteOperation(operationId, operationCancellationSource);
+                    await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
                 }
             });
             return new ControlResponse { IsSuccessful = true, Message = "Audio profile operation accepted.", OperationStatus = new OperationStatus { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = OperationPhase.Requested } };
@@ -675,7 +686,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
             }
 
-            if (!AudioProfileRepository.CanAccessAudioSettings || !profile.CreateProfileFromCurrentAudioSettings() || !AudioProfileRepository.SaveAudioProfiles())
+            if (!AudioProfileRepository.CanAccessAudioSettings || !AudioProfileRepository.CopyCurrentLayoutToProfile(profile))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current audio settings could not update the audio profile." };
             }
@@ -764,11 +775,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
             }
 
-            profile.WallpaperConfiguration.WallpaperMode = settingsRequest.Settings.ApplyWallpaper ? Wallpaper.Mode.Apply : Wallpaper.Mode.DoNothing;
-            profile.ApplyProfileCount = settingsRequest.Settings.ApplyProfileCount;
-            profile.ApplyProfileDelay = settingsRequest.Settings.ApplyProfileDelay;
-            profile.ForceExplorerRestart = settingsRequest.Settings.ForceExplorerRestart;
-            return ProfileRepository.SaveProfiles()
+            return ProfileRepository.UpdateProfileSettings(profile, settingsRequest.Settings)
                 ? SuccessfulResourceChange("Display profile settings updated.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile settings could not be saved." };
         }
@@ -795,7 +802,12 @@ public sealed class ProfileCommandHandler
         }
 
         Guid profileOperationId = applyRequest.OperationId;
-        _registration.OperationState = AgentOperationState.Running;
+        CancellationTokenSource profileCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        if (!TryBeginOperation(profileOperationId, profileCancellationSource, DisplayOperationType.ApplyDisplayProfile))
+        {
+            profileCancellationSource.Dispose();
+            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The User Agent already has active work, requires recovery, or is stopping." };
+        }
         await PublishShortcutStatusAsync(new OperationStatusUpdate
         {
             OperationId = profileOperationId,
@@ -804,7 +816,7 @@ public sealed class ProfileCommandHandler
             Message = "Display profile operation requested."
         }, CancellationToken.None).ConfigureAwait(false);
 
-        _ = RunDisplayProfileOperationAsync(profileOperationId, applyRequest.ProfileId, cancellationToken);
+        _ = RunDisplayProfileOperationAsync(profileOperationId, applyRequest.ProfileId, profileCancellationSource);
         return new ControlResponse
         {
             IsSuccessful = true,
@@ -818,7 +830,7 @@ public sealed class ProfileCommandHandler
         };
     }
 
-    private async Task RunDisplayProfileOperationAsync(Guid profileOperationId, string profileId, CancellationToken cancellationToken)
+    private async Task RunDisplayProfileOperationAsync(Guid profileOperationId, string profileId, CancellationTokenSource operationCancellationSource)
     {
         using IDisposable operationScope = SupportLogScope.BeginOperation(profileOperationId);
         try
@@ -830,7 +842,7 @@ public sealed class ProfileCommandHandler
                 Phase = OperationPhase.ApplyingDisplayProfile,
                 Message = "Applying display profile."
             }, CancellationToken.None).ConfigureAwait(false);
-            ApplyDisplayProfileOperationResult result = await _userProfileOperationService.ApplyDisplayProfileAsync(profileId, cancellationToken).ConfigureAwait(false);
+            ApplyDisplayProfileOperationResult result = await _userProfileOperationService.ApplyDisplayProfileAsync(profileId, operationCancellationSource.Token).ConfigureAwait(false);
             await PublishShortcutStatusAsync(new OperationStatusUpdate
             {
                 OperationId = profileOperationId,
@@ -842,7 +854,7 @@ public sealed class ProfileCommandHandler
                 ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed
             }, CancellationToken.None).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
+        catch (Exception ex)
         {
             await PublishShortcutStatusAsync(new OperationStatusUpdate
             {
@@ -857,7 +869,7 @@ public sealed class ProfileCommandHandler
         }
         finally
         {
-            _registration.OperationState = AgentOperationState.Idle;
+            CompleteOperation(profileOperationId, operationCancellationSource);
             await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
         }
     }
@@ -885,7 +897,7 @@ public sealed class ProfileCommandHandler
                 Message = string.IsNullOrWhiteSpace(result.Message) ? result.Outcome.ToString() : result.Message,
                 IsTerminal = true,
                 IsSuccessful = wasSuccessful,
-                ErrorCode = errorCode
+                ErrorCode = result.RequiresRecovery ? ControlErrorCode.RecoveryRequired : errorCode
             }, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -896,14 +908,16 @@ public sealed class ProfileCommandHandler
                 OperationId = operationId,
                 OperationType = DisplayOperationType.StartShortcut,
                 Phase = OperationPhase.Failed,
-                Message = "Shortcut operation failed unexpectedly.",
+                Message = _shortcutRunner.IsRecoveryRequired
+                    ? "Shortcut operation failed. Original settings still require recovery."
+                    : "Shortcut operation failed unexpectedly.",
                 IsTerminal = true,
-                ErrorCode = ControlErrorCode.ExecutionFailed
+                ErrorCode = _shortcutRunner.IsRecoveryRequired ? ControlErrorCode.RecoveryRequired : ControlErrorCode.ExecutionFailed
             }, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
-            CompleteShortcutOperation(operationId, operationCancellationSource);
+            CompleteOperation(operationId, operationCancellationSource);
             await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
         }
     }
@@ -921,13 +935,27 @@ public sealed class ProfileCommandHandler
         };
     }
 
-    private void CompleteShortcutOperation(Guid operationId, CancellationTokenSource operationCancellationSource)
+    private bool TryBeginOperation(Guid operationId, CancellationTokenSource operationCancellationSource, DisplayOperationType operationType = DisplayOperationType.StartShortcut)
     {
-        lock (_shortcutOperationsLock)
+        lock (_operationsLock)
         {
-            _shortcutOperations.Remove(operationId);
-            _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
-            _registration.OperationState = AgentOperationState.Idle;
+            if (_stopRequested || _operations.Count > 0 || _registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
+                return false;
+            _operations.Add(operationId, (operationCancellationSource, operationType));
+            _registration.OperationState = AgentOperationState.Running;
+            return true;
+        }
+    }
+
+    private void CompleteOperation(Guid operationId, CancellationTokenSource operationCancellationSource)
+    {
+        lock (_operationsLock)
+        {
+            if (_operations.Remove(operationId))
+            {
+                _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
+                _registration.OperationState = _operations.Count == 0 ? AgentOperationState.Idle : AgentOperationState.Running;
+            }
         }
 
         operationCancellationSource.Dispose();
@@ -937,7 +965,7 @@ public sealed class ProfileCommandHandler
     {
         try
         {
-            ControlResponse response = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Idle, CancellationToken.None).ConfigureAwait(false);
+            ControlResponse response = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, _registration.OperationState, CancellationToken.None).ConfigureAwait(false);
             if (!response.IsSuccessful)
             {
                 _logger.Warn("ProfileCommandHandler/ReportIdleAfterShortcutAsync: Could not report the User Agent as idle after a shortcut: {0}", response.Message);

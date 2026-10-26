@@ -2,6 +2,8 @@
 
 This xUnit test project verifies User Agent behaviour and the shared contracts it exercises. Coverage includes Agent command pipes and identity, shortcut execution and recovery, process monitoring, game detection, repository connections, serialization, support bundles, logging layout, retry policy, and build-version consistency.
 
+Agent reliability regressions cover stale cached profile identities, failed restoration results, recovery-file preservation, profile write rollback, audio operation admission and idle-stop protection, interrupted-operation reconciliation, and read/unread edits during message downloads. Failure and concurrency tests use temporary storage, controlled HTTP responses, and substituted execution services without changing actual display or audio settings.
+
 ## Run
 
 ```powershell

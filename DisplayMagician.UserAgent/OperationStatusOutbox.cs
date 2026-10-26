@@ -18,12 +18,14 @@ public sealed class OperationStatusOutbox
     private readonly object _syncRoot = new object();
     private readonly string _path;
     private readonly List<OperationStatusUpdate> _pending = new List<OperationStatusUpdate>();
+    private readonly HashSet<Guid> _interrupted = new HashSet<Guid>();
     private readonly Dictionary<Guid, OperationStatusUpdate> _active = new Dictionary<Guid, OperationStatusUpdate>();
 
     public OperationStatusOutbox(string userDataPath)
     {
         _path = Path.Combine(userDataPath ?? throw new ArgumentNullException(nameof(userDataPath)), "Settings", "OperationStatusOutbox.json");
         Load();
+        _interrupted.UnionWith(_active.Keys);
     }
 
     public void Enqueue(OperationStatusUpdate update)
@@ -41,6 +43,29 @@ public sealed class OperationStatusOutbox
 
     public OperationStatusUpdate[] GetPending() { lock (_syncRoot) return _pending.Select(Copy).ToArray(); }
     public OperationStatusUpdate[] GetActive() { lock (_syncRoot) return _active.Values.Select(Copy).ToArray(); }
+
+    // Only operations loaded by this new Agent process are interrupted. A service
+    // reconnect uses the same outbox instance and must preserve live operations.
+    public void CompleteInterruptedOperations(bool recoveryRequired)
+    {
+        lock (_syncRoot)
+        {
+            foreach (Guid operationId in _interrupted)
+            {
+                if (!_active.TryGetValue(operationId, out OperationStatusUpdate? previous)) continue;
+                Enqueue(new OperationStatusUpdate
+                {
+                    OperationId = operationId, OperationType = previous.OperationType,
+                    Phase = OperationPhase.Failed, IsTerminal = true, IsSuccessful = false,
+                    ErrorCode = recoveryRequired ? ControlErrorCode.RecoveryRequired : ControlErrorCode.ExecutionFailed,
+                    Message = recoveryRequired
+                        ? "The User Agent restarted during this operation. Original settings still require recovery."
+                        : "The operation was interrupted by a User Agent restart. Startup recovery has completed."
+                });
+            }
+            _interrupted.Clear();
+        }
+    }
 
     public void Acknowledge(Guid updateId)
     {

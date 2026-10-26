@@ -33,6 +33,12 @@ Profile list responses include compact layout thumbnails. A client may request a
 
 Successful direct display and audio profile edits return the saved profile ID and change action to ControlService. This lets the service publish precise saved-resource events after the Agent commits the edit. Bulk repository edits are compared by saved ID in ControlService.
 
+Shortcut startup refreshes current display/audio state before deciding whether a profile is already active. A shortcut is successful only after its required restoration succeeds; incomplete restoration retains its recovery file and reports `RecoveryRequired`. Display/audio profile edits propagate write failures and roll back their in-memory changes. Icon deletion occurs after the profile collection is saved.
+
+Direct audio, display, and shortcut execution share Agent admission checks. Active work prevents an idle stop and overlapping execution; once stopping is accepted, new operations are rejected. On a new Agent process, startup recovery resolves previously persisted active operations as interrupted failures. A Control Service reconnect preserves operations still executing in the same Agent process.
+
+MessageSyncService owns message-index writes. Sync downloads are serialized, while final metadata commits merge the latest read/unread states under the same lock used for read-state edits. Downloads do not block a user from marking messages read or unread. Existing persisted schemas and transport contracts are unchanged.
+
 ## Development
 
 ```powershell

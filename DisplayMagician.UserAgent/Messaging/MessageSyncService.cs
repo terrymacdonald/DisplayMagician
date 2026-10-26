@@ -33,6 +33,7 @@ namespace DisplayMagician.Messaging
         private readonly string _messagesFolderPath;
         private readonly string _storePath;
         private readonly object _storeLock = new object();
+        private readonly SemaphoreSlim _syncGate = new SemaphoreSlim(1, 1);
 
     public MessageSyncService(HttpClient httpClient, NLog.Logger logger, string manifestUrl, string messagesFolderPath)
     {
@@ -103,35 +104,52 @@ namespace DisplayMagician.Messaging
                 return false;
             }
 
-            MessageStoreDocument store = LoadStore();
-            bool changed = false;
-            foreach (LocalMessage message in store.Messages)
+            lock (_storeLock)
             {
-                if (!idSet.Contains(message.Id))
+                MessageStoreDocument store = LoadStore();
+                bool changed = false;
+                foreach (LocalMessage message in store.Messages)
                 {
-                    continue;
+                    if (!idSet.Contains(message.Id))
+                    {
+                        continue;
+                    }
+
+                    if (message.IsRead != isRead)
+                    {
+                        message.IsRead = isRead;
+                        changed = true;
+                    }
                 }
 
-                if (message.IsRead != isRead)
+                if (changed)
                 {
-                    message.IsRead = isRead;
-                    changed = true;
+                    SaveStore(store);
                 }
-            }
 
-            if (changed)
-            {
-                SaveStore(store);
+                return changed;
             }
-
-            return changed;
         }
 
         public async Task<MessageSyncResult> SyncMessagesAsync(string appVersion, CancellationToken cancellationToken, MessageManifestDocument? suppliedManifest = null, Uri? suppliedManifestUri = null, bool authoritativeSnapshot = false)
         {
-            MessageStoreDocument store = LoadStore();
-            store.LastAttemptCheckUtc = DateTime.UtcNow;
-            SaveStore(store);
+            await _syncGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return await SyncMessagesCoreAsync(appVersion, cancellationToken, suppliedManifest, suppliedManifestUri, authoritativeSnapshot).ConfigureAwait(false);
+            }
+            finally { _syncGate.Release(); }
+        }
+
+        private async Task<MessageSyncResult> SyncMessagesCoreAsync(string appVersion, CancellationToken cancellationToken, MessageManifestDocument? suppliedManifest, Uri? suppliedManifestUri, bool authoritativeSnapshot)
+        {
+            MessageStoreDocument store;
+            lock (_storeLock)
+            {
+                store = LoadStore();
+                store.LastAttemptCheckUtc = DateTime.UtcNow;
+                SaveStore(store);
+            }
 
             _logger.Trace($"MessageSyncService/SyncMessagesAsync: Starting sync (manifestUrl={_manifestUrl}, appVersion={appVersion}, existingMessages={store.Messages.Count}).");
 
@@ -421,7 +439,17 @@ namespace DisplayMagician.Messaging
 
             PruneToMaxMessages(store);
             store.LastSuccessfulCheckUtc = DateTime.UtcNow;
-            SaveStore(store);
+            lock (_storeLock)
+            {
+                // Downloads may take time. Preserve read/unread edits made during that
+                // interval, while committing the authoritative metadata as one update.
+                Dictionary<string, bool> readStates = LoadStore().Messages
+                    .GroupBy(message => message.Id, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(group => group.Key, group => group.Last().IsRead, StringComparer.OrdinalIgnoreCase);
+                foreach (LocalMessage message in store.Messages)
+                    if (readStates.TryGetValue(message.Id, out bool isRead)) message.IsRead = isRead;
+                SaveStore(store);
+            }
 
             _logger.Info($"MessageSyncService/SyncMessagesAsync: Sync finished (newMessages={newMessages}, totalMessages={store.Messages.Count}, unread={store.Messages.Count(m => !m.IsRead)}).");
 

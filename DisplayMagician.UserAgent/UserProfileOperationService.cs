@@ -10,7 +10,7 @@ using SharedApplyProfileResult = DisplayMagician.UserAgent.Runtime.ApplyProfileR
 namespace DisplayMagician.UserAgent;
 
 /// <summary>Runs the User Agent's existing display and audio profile operations for commands and shortcuts.</summary>
-public sealed class UserProfileOperationService
+public class UserProfileOperationService
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     internal static readonly Newtonsoft.Json.JsonSerializerSettings RecoveryJsonSettings = new Newtonsoft.Json.JsonSerializerSettings
@@ -20,8 +20,12 @@ public sealed class UserProfileOperationService
 
     public UserProfileOperationState CaptureCurrentProfileState() => CaptureCurrentProfileState(false, false);
 
-    internal UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot)
+    internal virtual UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot)
     {
+        // External Windows settings changes do not invalidate the repository caches.
+        // Refresh before deciding whether a shortcut can skip applying its profiles.
+        ProfileRepository.UpdateActiveProfile();
+        AudioProfileRepository.UpdateActiveAudioProfile();
         string displayId = ProfileRepository.CurrentProfile?.UUID ?? string.Empty;
         string audioId = AudioProfileRepository.CurrentAudioProfile?.UUID ?? string.Empty;
         string displayJson = string.Empty;
@@ -58,7 +62,7 @@ public sealed class UserProfileOperationService
     public Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string profileId, CancellationToken cancellationToken)
         => ApplyDisplayProfileAsync(profileId, cancellationToken, null);
 
-    internal async Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string profileId, CancellationToken cancellationToken, string? snapshotJson)
+    internal virtual async Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string profileId, CancellationToken cancellationToken, string? snapshotJson)
     {
         ProfileItem? profile;
         try
@@ -84,7 +88,7 @@ public sealed class UserProfileOperationService
     public ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds)
         => ApplyAudioProfile(profileId, deviceWaitMilliseconds, null);
 
-    internal ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, string? snapshotJson)
+    internal virtual ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, string? snapshotJson)
     {
         AudioProfileItem? profile;
         try

@@ -103,11 +103,28 @@ public sealed class ShortcutRunner
 
     private async Task<ShortcutRunResult> RunShortcutAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid? operationId = null, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync = null, ProcessIdentity? detectedProcess = null)
     {
+        // Await the whole lifecycle, including restoration, before reporting success.
+        ShortcutRunResult result = await RunShortcutCoreAsync(shortcutId, audioDeviceWaitMilliseconds, shouldStartGame, isManualRun,
+            cancellationToken, publishStatusAsync, operationId, requestDecisionAsync, detectedProcess).ConfigureAwait(false);
+        if (!result.RequiresRecovery && _recoveryStore.HasPendingRecovery() && result.Shortcut != null)
+        {
+            return result with { Outcome = ShortcutRunOutcome.Failed, RequiresRecovery = true,
+                Message = "The shortcut finished, but its original settings could not be fully restored. Recovery is required." };
+        }
+        return result;
+    }
+
+    private async Task<ShortcutRunResult> RunShortcutCoreAsync(string shortcutId, int audioDeviceWaitMilliseconds, bool shouldStartGame, bool isManualRun, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid? operationId, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, ProcessIdentity? detectedProcess)
+    {
         ShortcutRunResult preparedRun = await PrepareRunAsync(shortcutId, cancellationToken, operationId).ConfigureAwait(false);
         if (preparedRun.Outcome != ShortcutRunOutcome.Prepared || preparedRun.Shortcut == null)
         {
             return preparedRun;
         }
+
+        if (_recoveryStore.HasPendingRecovery())
+            return preparedRun with { Outcome = ShortcutRunOutcome.Failed, RequiresRecovery = true,
+                Message = "Original settings still require recovery before another shortcut can run." };
 
         ShortcutDefinition shortcut = preparedRun.Shortcut;
         WindowPlacementRun windowRun = new WindowPlacementRun(preparedRun.OperationId, shortcut);
@@ -852,6 +869,7 @@ internal sealed record PreGameProgramAction(int Priority, int Sequence, Shortcut
 public sealed record ShortcutRunResult(Guid OperationId, ShortcutRunOutcome Outcome, ShortcutDefinition? Shortcut = null)
 {
     public string Message { get; init; } = string.Empty;
+    public bool RequiresRecovery { get; init; }
 }
 
 public enum ShortcutRunOutcome

@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using DisplayMagician.Contracts;
 using NLog;
-using Newtonsoft.Json;
-using MessageStoreDocument = DisplayMagician.Messaging.MessageStoreDocument;
 using StoredMessage = DisplayMagician.Messaging.LocalMessage;
 
 namespace DisplayMagician.UserAgent.Messaging;
@@ -14,31 +12,26 @@ internal sealed class UserMessageStore
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly string _messagesDirectory;
-    private readonly string _indexPath;
-    private readonly object _syncRoot = new();
+    private readonly DisplayMagician.Messaging.MessageSyncService _messageSyncService;
 
-    public UserMessageStore(string userDataPath)
+    public UserMessageStore(string userDataPath, DisplayMagician.Messaging.MessageSyncService messageSyncService)
     {
         _messagesDirectory = Path.Combine(userDataPath ?? throw new ArgumentNullException(nameof(userDataPath)), "Messages");
-        _indexPath = Path.Combine(_messagesDirectory, "MessagesIndex.json");
+        _messageSyncService = messageSyncService ?? throw new ArgumentNullException(nameof(messageSyncService));
     }
 
     public MessageListResult GetMessages()
     {
-        lock (_syncRoot)
+        MessageView[] messages = _messageSyncService.GetMessages()
+            .OrderByDescending(message => message.ReceivedUtc)
+            .ThenByDescending(message => message.PublishedUtc ?? DateTime.MinValue)
+            .Select(CreateView)
+            .ToArray();
+        return new MessageListResult
         {
-            MessageStoreDocument store = LoadStore();
-            MessageView[] messages = store.Messages
-                .OrderByDescending(message => message.ReceivedUtc)
-                .ThenByDescending(message => message.PublishedUtc ?? DateTime.MinValue)
-                .Select(CreateView)
-                .ToArray();
-            return new MessageListResult
-            {
-                Messages = messages,
-                UnreadCount = messages.Count(message => !message.IsRead)
-            };
-        }
+            Messages = messages,
+            UnreadCount = messages.Count(message => !message.IsRead)
+        };
     }
 
     public bool SetReadState(IEnumerable<string>? messageIds, bool isRead)
@@ -49,28 +42,7 @@ internal sealed class UserMessageStore
             return false;
         }
 
-        lock (_syncRoot)
-        {
-            MessageStoreDocument store = LoadStore();
-            bool changed = false;
-            foreach (StoredMessage message in store.Messages.Where(message => ids.Contains(message.Id)))
-            {
-                if (message.IsRead == isRead)
-                {
-                    continue;
-                }
-
-                message.IsRead = isRead;
-                changed = true;
-            }
-
-            if (changed)
-            {
-                SaveStore(store);
-            }
-
-            return changed;
-        }
+        return _messageSyncService.SetReadState(ids, isRead);
     }
 
     private MessageView CreateView(StoredMessage message)
@@ -109,47 +81,6 @@ internal sealed class UserMessageStore
         {
             Logger.Warn(ex, "UserMessageStore/ReadContent: Could not read message content (messageId={0}, path={1}).", message.Id, contentPath);
             return string.Empty;
-        }
-    }
-
-    private MessageStoreDocument LoadStore()
-    {
-        if (!File.Exists(_indexPath))
-        {
-            return new MessageStoreDocument();
-        }
-
-        try
-        {
-            string json = File.ReadAllText(_indexPath);
-            return JsonConvert.DeserializeObject<MessageStoreDocument>(json) ?? new MessageStoreDocument();
-        }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
-        {
-            Logger.Warn(ex, "UserMessageStore/LoadStore: Could not read message store (path={0}).", _indexPath);
-            return new MessageStoreDocument();
-        }
-    }
-
-    private void SaveStore(MessageStoreDocument store)
-    {
-        try
-        {
-            Directory.CreateDirectory(_messagesDirectory);
-            string temporaryPath = Path.Combine(_messagesDirectory, $".MessagesIndex.{Guid.NewGuid():N}.tmp");
-            File.WriteAllText(temporaryPath, JsonConvert.SerializeObject(store, Formatting.Indented));
-            if (File.Exists(_indexPath))
-            {
-                File.Replace(temporaryPath, _indexPath, null);
-            }
-            else
-            {
-                File.Move(temporaryPath, _indexPath);
-            }
-        }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-        {
-            Logger.Warn(ex, "UserMessageStore/SaveStore: Could not persist message store (path={0}).", _indexPath);
         }
     }
 

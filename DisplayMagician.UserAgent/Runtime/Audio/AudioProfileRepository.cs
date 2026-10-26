@@ -264,10 +264,15 @@ namespace DisplayMagician.UserAgent.Runtime
             if (!ContainsAudioProfile(audioProfileItem))
             {
                 // Add the AudioProfile to the list of AudioProfiles
+                List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
                 _allAudioProfiles.Add(audioProfileItem);
 
                 // Save the AudioProfiles JSON as it's different
-                SaveAudioProfiles();
+                if (!SaveAudioProfiles())
+                {
+                    _allAudioProfiles = previousProfiles;
+                    return false;
+                }
             }
 
             // Refresh the audioProfiles to see whats valid
@@ -292,11 +297,16 @@ namespace DisplayMagician.UserAgent.Runtime
             SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile: Removing audioProfile {audioProfileItem.Name} if it exists in our audioProfile repository");
 
             // Remove the AudioProfile from the list.
+            List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
             int numRemoved = _allAudioProfiles.RemoveAll(item => item.UUID.Equals(audioProfileItem.UUID));
 
             if (numRemoved == 1)
             {
-                SaveAudioProfiles();
+                if (!SaveAudioProfiles())
+                {
+                    _allAudioProfiles = previousProfiles;
+                    return false;
+                }
                 UpdateActiveAudioProfile();
                 return true;
             }
@@ -316,11 +326,16 @@ namespace DisplayMagician.UserAgent.Runtime
             SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile2: Removing audioProfile {audioProfileName} if it exists in our audioProfile repository");
 
             // Remove the AudioProfile from the list.
+            List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
             int numRemoved = _allAudioProfiles.RemoveAll(item => item.Name.Equals(audioProfileName));
 
             if (numRemoved == 1)
             {
-                SaveAudioProfiles();
+                if (!SaveAudioProfiles())
+                {
+                    _allAudioProfiles = previousProfiles;
+                    return false;
+                }
                 UpdateActiveAudioProfile();
                 return true;
             }
@@ -341,11 +356,16 @@ namespace DisplayMagician.UserAgent.Runtime
             string audioProfileIdStr = audioProfileId.ToString();
 
             // Remove the AudioProfile from the list.
+            List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
             int numRemoved = _allAudioProfiles.RemoveAll(item => item.UUID.Equals(audioProfileIdStr));
 
             if (numRemoved == 1)
             {
-                SaveAudioProfiles();
+                if (!SaveAudioProfiles())
+                {
+                    _allAudioProfiles = previousProfiles;
+                    return false;
+                }
                 UpdateActiveAudioProfile();
                 return true;
             }
@@ -534,7 +554,11 @@ namespace DisplayMagician.UserAgent.Runtime
             if (ContainsAudioProfile(audioProfile))
             {
                 // Save the AudioProfiles JSON as it's different now
-                SaveAudioProfiles();
+                if (!SaveAudioProfiles())
+                {
+                    audioProfile.Name = oldAudioProfileName;
+                    return false;
+                }
                 SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: The audioProfile was successfully renamed from {oldAudioProfileName} to {renamedName}");
                 return true;
             }
@@ -543,6 +567,15 @@ namespace DisplayMagician.UserAgent.Runtime
                 SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: The audioProfile was not renamed from {oldAudioProfileName} to {renamedName}");
                 return false;
             }
+        }
+
+        public static bool CopyCurrentLayoutToProfile(AudioProfileItem profile)
+        {
+            AudioProfileItem previous = new AudioProfileItem();
+            profile.CopyTo(previous);
+            if (profile.CreateProfileFromCurrentAudioSettings() && SaveAudioProfiles()) return true;
+            previous.CopyTo(profile);
+            return false;
         }
 
         public static void UpdateActiveAudioProfile()

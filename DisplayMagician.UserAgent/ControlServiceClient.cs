@@ -8,7 +8,7 @@ using DisplayMagician.Contracts;
 
 namespace DisplayMagician.UserAgent;
 
-public sealed class ControlServiceClient
+public class ControlServiceClient
 {
     private readonly SemaphoreSlim _requestLock = new SemaphoreSlim(1, 1);
     private NamedPipeClientStream? _pipe;
@@ -123,7 +123,7 @@ public sealed class ControlServiceClient
         }, cancellationToken);
     }
 
-    public Task<ControlResponse> ReportAgentOperationStateAsync(AgentRegistration registration, AgentOperationState operationState, CancellationToken cancellationToken)
+    public virtual Task<ControlResponse> ReportAgentOperationStateAsync(AgentRegistration registration, AgentOperationState operationState, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);
         return SendPersistentAsync(new ControlEnvelope
