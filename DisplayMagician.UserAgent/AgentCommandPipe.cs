@@ -34,6 +34,7 @@ public sealed class AgentCommandServer
     private readonly string _pipeName;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedCommandClients, MaximumConnectedCommandClients);
     private readonly Dictionary<Guid, (ControlMessageType MessageType, string Payload, ControlResponse Response, DateTime CompletedUtc)> _successfulResponses = new Dictionary<Guid, (ControlMessageType, string, ControlResponse, DateTime)>();
+    private readonly Dictionary<Guid, (ControlMessageType MessageType, string Payload, TaskCompletionSource<ControlResponse> Completion)> _pendingResponses = new Dictionary<Guid, (ControlMessageType, string, TaskCompletionSource<ControlResponse>)>();
 
     public AgentCommandServer(string pipeName)
     {
@@ -96,33 +97,7 @@ public sealed class AgentCommandServer
                 }
 
                 using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
-                ControlResponse response;
-                lock (_successfulResponses)
-                {
-                    RemoveExpiredResponses();
-                    if (_successfulResponses.TryGetValue(request.RequestId, out var replay))
-                    {
-                        response = replay.MessageType == request.MessageType && string.Equals(replay.Payload, request.Payload, StringComparison.Ordinal)
-                            ? replay.Response
-                            : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A request ID cannot be reused for a different User Agent command." };
-                    }
-                    else
-                    {
-                        response = null!;
-                    }
-                }
-                if (response == null)
-                {
-                    response = await ExecuteCommandAsync(request, commandHandler, cancellationToken).ConfigureAwait(false);
-                    if (response.IsSuccessful)
-                    {
-                        lock (_successfulResponses)
-                        {
-                            RemoveExpiredResponses();
-                            _successfulResponses[request.RequestId] = (request.MessageType, request.Payload, response, DateTime.UtcNow);
-                        }
-                    }
-                }
+                ControlResponse response = await ExecuteCachedCommandAsync(request, commandHandler, cancellationToken).ConfigureAwait(false);
 
                 await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope
                 {
@@ -182,6 +157,11 @@ public sealed class AgentCommandServer
                 return new ControlResponse { IsSuccessful = false, ErrorCode = negotiationError, Message = negotiationMessage };
             }
 
+            if (request.Hello!.ClientKind != ControlClientKind.ControlService || request.Payload == null || request.RequestId == Guid.Empty)
+            {
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A Control Service request with a payload and request ID is required." };
+            }
+
             ControlResponse response = await commandHandler(request, cancellationToken).ConfigureAwait(false);
             response.ProtocolWelcome = welcome;
             return response;
@@ -191,6 +171,70 @@ public sealed class AgentCommandServer
             Logger.Warn(ex, "AgentCommandServer/ExecuteCommandAsync: The Control Service sent an invalid JSON request payload.");
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Control Service request payload was invalid." };
         }
+    }
+
+    internal Task<ControlResponse> ExecuteCachedCommandAsync(ControlEnvelope request, Func<ControlEnvelope, CancellationToken, Task<ControlResponse>> commandHandler, CancellationToken cancellationToken)
+    {
+        // Negotiate every arrival, including replays, before consulting the execution cache.
+        return ExecuteCommandAsync(request, async (command, token) =>
+        {
+            TaskCompletionSource<ControlResponse> completion;
+            bool ownsExecution;
+            lock (_successfulResponses)
+            {
+                RemoveExpiredResponses();
+                if (_successfulResponses.TryGetValue(command.RequestId, out var replay))
+                {
+                    return replay.MessageType == command.MessageType && string.Equals(replay.Payload, command.Payload, StringComparison.Ordinal)
+                        ? replay.Response
+                        : new ControlResponse { ErrorCode = ControlErrorCode.InvalidRequest, Message = "A request ID cannot be reused for a different User Agent command." };
+                }
+                if (_pendingResponses.TryGetValue(command.RequestId, out var pending))
+                {
+                    if (pending.MessageType != command.MessageType || !string.Equals(pending.Payload, command.Payload, StringComparison.Ordinal))
+                        return new ControlResponse { ErrorCode = ControlErrorCode.InvalidRequest, Message = "A request ID cannot be reused for a different User Agent command." };
+                    completion = pending.Completion;
+                    ownsExecution = false;
+                }
+                else
+                {
+                    completion = new TaskCompletionSource<ControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    _pendingResponses.Add(command.RequestId, (command.MessageType, command.Payload, completion));
+                    ownsExecution = true;
+                }
+            }
+
+            if (!ownsExecution)
+                return await completion.Task.WaitAsync(token).ConfigureAwait(false);
+
+            try
+            {
+                // Keep existing failure/retry semantics, and share validation failures with current waiters too.
+                ControlResponse response = await ExecuteCommandAsync(command, commandHandler, token).ConfigureAwait(false);
+                lock (_successfulResponses)
+                {
+                    if (response.IsSuccessful)
+                        _successfulResponses[command.RequestId] = (command.MessageType, command.Payload, response, DateTime.UtcNow);
+                    _pendingResponses.Remove(command.RequestId);
+                    completion.TrySetResult(response);
+                }
+                return response;
+            }
+            catch (Exception ex)
+            {
+                lock (_successfulResponses)
+                {
+                    _pendingResponses.Remove(command.RequestId);
+                    if (ex is OperationCanceledException)
+                        completion.TrySetCanceled(token);
+                    else
+                        completion.TrySetException(ex);
+                }
+                // Observe faults even when no duplicate arrived to await the shared task.
+                _ = completion.Task.Exception;
+                throw;
+            }
+        }, cancellationToken);
     }
 
     private NamedPipeServerStream CreatePipe()

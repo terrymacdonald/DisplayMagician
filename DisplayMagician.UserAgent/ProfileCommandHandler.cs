@@ -287,7 +287,7 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.SetMessageReadState)
         {
             SetMessageReadStateRequest? setReadStateRequest = JsonSerializer.Deserialize<SetMessageReadStateRequest>(request.Payload);
-            if (setReadStateRequest == null || setReadStateRequest.MessageIds.Length == 0)
+            if (setReadStateRequest?.MessageIds == null || setReadStateRequest.MessageIds.Length == 0 || setReadStateRequest.MessageIds.Any(string.IsNullOrWhiteSpace))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "At least one message ID is required." };
             }
@@ -312,7 +312,8 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.ApplyClientSyncMessages)
         {
             ClientSyncMessageManifest? manifest = JsonSerializer.Deserialize<ClientSyncMessageManifest>(request.Payload);
-            if (manifest == null || manifest.SchemaVersion != 1)
+            if (manifest == null || manifest.SchemaVersion != 1 || manifest.Messages == null ||
+                manifest.Messages.Any(message => message == null || message.Media == null || message.Media.Any(media => media == null)))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Control Service message snapshot was invalid." };
             }
@@ -500,7 +501,7 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.GetRepositorySnapshot)
         {
             RepositorySnapshotRequest? snapshotRequest = JsonSerializer.Deserialize<RepositorySnapshotRequest>(request.Payload);
-            if (snapshotRequest == null || snapshotRequest.Repository == RepositoryKind.Unknown)
+            if (snapshotRequest == null || snapshotRequest.Repository == RepositoryKind.Unknown || !Enum.IsDefined(snapshotRequest.Repository))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested repository snapshot is not available from the User Agent yet." };
             }
@@ -521,7 +522,7 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.CommitRepositorySnapshot)
         {
             RepositoryCommitRequest? commitRequest = JsonSerializer.Deserialize<RepositoryCommitRequest>(request.Payload);
-            if (commitRequest == null || commitRequest.Repository == RepositoryKind.Unknown)
+            if (commitRequest == null || commitRequest.Repository == RepositoryKind.Unknown || !Enum.IsDefined(commitRequest.Repository) || string.IsNullOrWhiteSpace(commitRequest.Json))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested repository commit is not available from the User Agent yet." };
             }
@@ -643,7 +644,7 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.CreateAudioProfileFromCurrent)
         {
             CreateProfileRequest? createRequest = JsonSerializer.Deserialize<CreateProfileRequest>(request.Payload);
-            if (createRequest == null || !AudioProfileRepository.CanAccessAudioSettings || !AudioProfileRepository.IsValidFilename(createRequest.Name) || AudioProfileRepository.AllAudioProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
+            if (createRequest == null || string.IsNullOrWhiteSpace(createRequest.Name) || !AudioProfileRepository.CanAccessAudioSettings || !AudioProfileRepository.IsValidFilename(createRequest.Name) || AudioProfileRepository.AllAudioProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The audio profile name is invalid, already exists, or audio settings cannot be read." };
             }
@@ -666,7 +667,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
             }
 
-            return AudioProfileRepository.RenameAudioProfile(profile, renameRequest!.Name)
+            return !string.IsNullOrWhiteSpace(renameRequest!.Name) && AudioProfileRepository.RenameAudioProfile(profile, renameRequest.Name)
                 ? SuccessfulResourceChange("Audio profile renamed.", RepositoryKind.AudioProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The audio profile could not be renamed." };
         }
@@ -705,7 +706,7 @@ public sealed class ProfileCommandHandler
         if (request.MessageType == ControlMessageType.CreateProfileFromCurrent)
         {
             CreateProfileRequest? createRequest = JsonSerializer.Deserialize<CreateProfileRequest>(request.Payload);
-            if (createRequest == null || !ProfileRepository.IsValidFilename(createRequest.Name) || ProfileRepository.AllProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
+            if (createRequest == null || string.IsNullOrWhiteSpace(createRequest.Name) || !ProfileRepository.IsValidFilename(createRequest.Name) || ProfileRepository.AllProfiles.Any(profile => string.Equals(profile.Name, createRequest.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The display profile name is invalid or already in use." };
             }
@@ -733,7 +734,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
             }
 
-            if (!ProfileRepository.RenameProfile(profile, renameRequest!.Name))
+            if (string.IsNullOrWhiteSpace(renameRequest!.Name) || !ProfileRepository.RenameProfile(profile, renameRequest.Name))
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The display profile could not be renamed." };
             }

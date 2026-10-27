@@ -65,10 +65,25 @@ Verification: the service build passes with warnings treated as errors; all 219 
 
 Next batch: Agent-side nullable/nested request validation, command-cache in-flight duplicate handling, then repository/migration concurrency and WinForms event/disposal paths. Continue the deeper vendor/native and installed Sandbox passes afterwards. The entire-codebase review remains ongoing.
 
+## Batch 3: Agent command concurrency and input validation
+
+- Fixed the gap between successful-response lookup and execution: matching in-flight requests now await one owner rather than executing twice. Request-ID reuse with a changed type/payload is rejected while pending and after success. Different IDs are not serialized, allowing cancellation commands to execute while another command is waiting.
+- Every arrival, including cache hits, validates the protocol version, Hello/capabilities, ControlService client kind, nonempty request ID and non-null payload before dispatch/replay. Operating-system pipe permissions are unchanged.
+- Cancelling a duplicate waiter does not cancel its owner. Owner cancellation or an exception completes existing waiters and removes the in-flight entry. The existing successful-only, 24-hour in-memory cache and failure retry semantics are unchanged; the service's durable ledger remains responsible for blocking uncertain mutations across restarts.
+- Message read-state requests reject null/empty ID lists and blank entries. Client-sync manifests reject null message/media lists and null nested entries before conversion or storage changes.
+- Undefined repository values no longer fall through to AudioProfiles. Null/blank commit content is rejected before repository access. Full repository document validation and concurrent commit handling remain part of the next storage pass.
+- Display/audio profile creation and renaming reject null/blank names before filename validation, capture, or mutation.
+
+Regression tests use deterministic task barriers, the production command dispatch method, fake operation services and temporary user storage. They cover duplicate success/conflicts, independent cancellation commands, cancelled waiters/owners, exception/failure cleanup, invalid negotiation on cache hits, malformed nested inputs, unchanged audio/message data, and retained profile names. No installed services, hardware operations or pipe permissions were changed.
+
+Verification: the affected project build passes with warnings treated as errors. The final test_displaymagician.ps1 run passed all four projects: ControlService 219, Gateway 48, UserAgent/desktop 186 and Console 4; 457 passed with zero failures/skips and no build warnings/errors. This batch adds 33 regression cases. Logging audit: zero issues. The first full run passed the first three suites but hit NU1301/SSPI errors restoring Console inside the restricted network; rerunning with normal network access succeeded without changing package sources or verification.
+
+Next batch: repository document validation, revision/commit concurrency and migration failure paths; then the remaining WinForms event/disposal paths and vendor/native/installed Sandbox checks. The entire-codebase review remains ongoing.
+
 ## Decisions and next work
 
 The user approved the coordinated SessionLauncher handshake on 27 October 2026. Both launch and stop now carry a ControlService hello requiring protocol-negotiation/session-launcher. The authenticated broker negotiates before dispatch and returns the shared welcome/error metadata; the caller validates successful replies, endpoint kind, frame version/type and request identity. The version-1 envelope/pipe remain unchanged, but both components must be deployed together because unnegotiated successes are rejected. Twenty-four additional regression cases exercise real framing and isolated same-user test pipes with substituted process callbacks. No installed process launch/stop or pipe authentication rules were changed. Full follow-up verification passed: 178 service/broker tests, 47 Gateway tests, 152 Agent/UI tests and 4 Console tests (381 total), with zero failures/skips and no build warnings/errors. This adds 24 protocol regression cases to the preceding 357-test milestone. The affected build also passed with warnings treated as errors; the logging audit reported zero issues.
 
-The deeper service routing/replay pass is recorded in Batch 2 above. Continue with Agent validation/cache/repository concurrency, then the remaining forms and vendor/native integration. Record each subsequent check and test result here rather than resetting the review.
+The deeper service routing/replay pass is recorded in Batch 2 above. Agent validation and in-flight command handling are recorded in Batch 3. Continue with repository validation/concurrency and migrations, then the remaining forms and vendor/native integration. Record each subsequent check and test result here rather than resetting the review.
 
 Item 7 from the preceding window review (completed window-handle reservation) remains deferred as agreed.

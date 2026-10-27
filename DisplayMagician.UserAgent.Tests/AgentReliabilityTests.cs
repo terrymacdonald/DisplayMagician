@@ -68,6 +68,35 @@ public sealed class AgentReliabilityTests : IDisposable
         Assert.Equal(original, File.ReadAllText(path));
     }
 
+    [Theory]
+    [InlineData(ControlMessageType.CreateProfileFromCurrent, null)]
+    [InlineData(ControlMessageType.CreateProfileFromCurrent, " ")]
+    [InlineData(ControlMessageType.CreateAudioProfileFromCurrent, null)]
+    [InlineData(ControlMessageType.CreateAudioProfileFromCurrent, " ")]
+    [InlineData(ControlMessageType.RenameProfile, null)]
+    [InlineData(ControlMessageType.RenameProfile, " ")]
+    [InlineData(ControlMessageType.RenameAudioProfile, null)]
+    [InlineData(ControlMessageType.RenameAudioProfile, " ")]
+    public async Task InvalidProfileNamesAreRejectedBeforeCaptureOrRename(ControlMessageType type, string? name)
+    {
+        using FakeProfileOperations profiles = new FakeProfileOperations();
+        ProfileCommandHandler handler = new ProfileCommandHandler(new AgentRegistration { UserSid = "test", SessionId = 1 }, new FakeServiceClient(), null, _root, profiles);
+        AgentProfile display = new AgentProfile { Name = "Original display" };
+        AgentAudioProfile audio = new AgentAudioProfile { Name = "Original audio" };
+        AgentProfileRepository.AllProfiles.Add(display);
+        AgentAudioRepository.AllAudioProfiles.Add(audio);
+        string id = type == ControlMessageType.RenameAudioProfile ? audio.UUID : display.UUID;
+        ControlResponse response = await handler.HandleAsync(new ControlEnvelope
+        {
+            MessageType = type,
+            Payload = JsonSerializer.Serialize(new { ProfileId = id, Name = name })
+        }, CancellationToken.None);
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.ValidationFailed, response.ErrorCode);
+        Assert.Equal("Original display", display.Name);
+        Assert.Equal("Original audio", audio.Name);
+    }
+
     public AgentReliabilityTests()
     {
         foreach (Type type in new[] { typeof(AgentProfileRepository), typeof(AgentAudioRepository), typeof(AgentProfile), typeof(AgentAudioProfile) })
@@ -79,6 +108,37 @@ public sealed class AgentReliabilityTests : IDisposable
         typeof(AgentAudioRepository).GetField("_userAgentRepositoryConnection", BindingFlags.Static | BindingFlags.NonPublic)!.SetValue(null, null);
         AgentProfileRepository.ProfilesLoaded = true;
         AgentAudioRepository.AudioProfilesLoaded = true;
+    }
+
+    [Theory]
+    [InlineData(ControlMessageType.SetMessageReadState, "null")]
+    [InlineData(ControlMessageType.SetMessageReadState, "{\"MessageIds\":null}")]
+    [InlineData(ControlMessageType.SetMessageReadState, "{\"MessageIds\":[]}")]
+    [InlineData(ControlMessageType.SetMessageReadState, "{\"MessageIds\":[null]}")]
+    [InlineData(ControlMessageType.SetMessageReadState, "{\"MessageIds\":[\" \" ]}")]
+    [InlineData(ControlMessageType.ApplyClientSyncMessages, "{\"SchemaVersion\":1,\"Messages\":null}")]
+    [InlineData(ControlMessageType.ApplyClientSyncMessages, "{\"SchemaVersion\":1,\"Messages\":[null]}")]
+    [InlineData(ControlMessageType.ApplyClientSyncMessages, "{\"SchemaVersion\":1,\"Messages\":[{\"Media\":null}]}")]
+    [InlineData(ControlMessageType.ApplyClientSyncMessages, "{\"SchemaVersion\":1,\"Messages\":[{\"Media\":[null]}]}")]
+    [InlineData(ControlMessageType.GetRepositorySnapshot, "{\"Repository\":999}")]
+    [InlineData(ControlMessageType.GetRepositorySnapshot, "{\"Repository\":-1}")]
+    [InlineData(ControlMessageType.CommitRepositorySnapshot, "{\"Repository\":999,\"Json\":\"{}\"}")]
+    [InlineData(ControlMessageType.CommitRepositorySnapshot, "{\"Repository\":1,\"Json\":null}")]
+    [InlineData(ControlMessageType.CommitRepositorySnapshot, "{\"Repository\":1,\"Json\":\" \"}")]
+    public async Task InvalidNestedRequestsAreRejectedWithoutChangingStoredData(ControlMessageType type, string payload)
+    {
+        using FakeProfileOperations profiles = new FakeProfileOperations();
+        ProfileCommandHandler handler = new ProfileCommandHandler(new AgentRegistration { UserSid = "test", SessionId = 1 }, new FakeServiceClient(), null, _root, profiles);
+        string audioPath = Path.Combine(_root, "AudioProfiles", "AudioProfiles.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(audioPath)!);
+        File.WriteAllText(audioPath, "existing-audio-data");
+        string indexPath = Path.Combine(_root, "Messages", "MessagesIndex.json");
+        string originalIndex = File.Exists(indexPath) ? File.ReadAllText(indexPath) : "";
+        ControlResponse result = await handler.HandleAsync(new ControlEnvelope { MessageType = type, Payload = payload }, CancellationToken.None);
+        Assert.False(result.IsSuccessful);
+        Assert.Equal(ControlErrorCode.InvalidRequest, result.ErrorCode);
+        Assert.Equal("existing-audio-data", File.ReadAllText(audioPath));
+        Assert.Equal(originalIndex, File.Exists(indexPath) ? File.ReadAllText(indexPath) : "");
     }
 
     [Theory]
