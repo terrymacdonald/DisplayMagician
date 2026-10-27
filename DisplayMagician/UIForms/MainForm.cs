@@ -28,12 +28,20 @@ namespace DisplayMagician.UIForms
         private bool _allowClose;       // ContextMenu's Exit command used
         private ToolStripMenuItem _saveWindowPositionsMenuItem;
         private volatile WindowPlacementSessionView _cachedWindowPlacementSession;
-        private int _notifyMenuRefreshInProgress;
+        private bool _notifyMenuRefreshInProgress;
+        private int _notifyMenuRefreshVersion;
+        private Guid? _completedWindowPlacementOperationId;
+        private readonly ControlServicePipeClient _controlServiceClient;
+        private readonly Func<CancellationToken, Task<bool>> _refreshTrayProfiles;
+        private readonly CancellationTokenSource _trayLifetimeSource = new CancellationTokenSource();
+        private readonly CancellationToken _trayLifetimeToken;
+        private bool _trayLifetimeDisposed;
+        private readonly int _uiThreadId = Environment.CurrentManagedThreadId;
         private List<string> hotkeyDisplayProfiles = new List<string>() { };
         private List<string> hotkeyShortcuts = new List<string>() { };
 
-        private DisplayProfileForm DisplayProfileWindow = new DisplayProfileForm();
-        private ShortcutLibraryForm ShortcutLibraryWindow = new ShortcutLibraryForm();
+        private DisplayProfileForm DisplayProfileWindow;
+        private ShortcutLibraryForm ShortcutLibraryWindow;
         private MessagesForm MessagesWindow;
         //private Button _btnMessages;
         private bool _screenHasChanged = false; // Used to stop the screen changing when the user is changing profiles
@@ -68,9 +76,30 @@ namespace DisplayMagician.UIForms
         }
 
 
-        public MainForm(Form formToOpen = null)
+        public MainForm(Form formToOpen = null) : this(formToOpen, new ControlServicePipeClient(), null, true) { }
+
+        internal MainForm(ControlServicePipeClient client, Func<CancellationToken, Task<bool>> refreshProfiles)
+            : this(null, client, refreshProfiles, false) { }
+
+        private MainForm(Form formToOpen, ControlServicePipeClient client, Func<CancellationToken, Task<bool>> refreshProfiles, bool initializeApplication)
         {
+            _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
+            _refreshTrayProfiles = refreshProfiles ?? (token => DesktopProfileViewCache.RefreshAsync(_controlServiceClient, token));
+            _trayLifetimeToken = _trayLifetimeSource.Token;
             InitializeComponent();
+            mainContextMenuStrip.Opening += (_, _) => RefreshNotifyIconMenus();
+            mainContextMenuStrip.Closed += (_, _) => { if (!IsDisposed && !_trayLifetimeToken.IsCancellationRequested) RebuildNotifyIconMenus(); };
+            HandleCreated += (_, _) => RefreshNotifyIconMenus();
+            Disposed += (_, _) =>
+            {
+                if (_trayLifetimeDisposed) return;
+                _trayLifetimeDisposed = true;
+                _trayLifetimeSource.Cancel();
+                _trayLifetimeSource.Dispose();
+                DisplayProfileWindow?.Dispose();
+                ShortcutLibraryWindow?.Dispose();
+            };
+            if (!initializeApplication) return;
             notifyIcon.Icon = Icon;
             btn_setup_display_profiles.Parent = splitContainer1.Panel1;
             btn_setup_game_shortcuts.Parent = splitContainer1.Panel2;
@@ -81,8 +110,6 @@ namespace DisplayMagician.UIForms
             // Update the system tray menus
             notifyIcon.Visible = true;
             notifyIcon.ContextMenuStrip = mainContextMenuStrip;
-            mainContextMenuStrip.Opening += (_, _) => RefreshNotifyIconMenus();
-            HandleCreated += (_, _) => RefreshNotifyIconMenus();
             RefreshNotifyIconMenus();
 
             if (Program.AppProgramSettings.MinimiseOnStart)
@@ -285,6 +312,7 @@ namespace DisplayMagician.UIForms
                 return;
             }
             base.OnFormClosing(e);
+            if (!e.Cancel && !_trayLifetimeDisposed) _trayLifetimeSource.Cancel();
         }
 
         private void btn_exit_Click(object sender, EventArgs e)
@@ -341,7 +369,8 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            DisplayProfileWindow = new DisplayProfileForm();
+            using DisplayProfileForm profileWindow = new DisplayProfileForm();
+            DisplayProfileWindow = profileWindow;
             DisplayProfileWindow.StartPosition = FormStartPosition.CenterParent;
             DisplayProfileWindow.ShowDialog(this);
 
@@ -381,7 +410,8 @@ namespace DisplayMagician.UIForms
                 }
             }
 
-            ShortcutLibraryWindow = new ShortcutLibraryForm();
+            using ShortcutLibraryForm libraryWindow = new ShortcutLibraryForm();
+            ShortcutLibraryWindow = libraryWindow;
             ShortcutLibraryWindow.StartPosition = FormStartPosition.CenterParent;
             ShortcutLibraryWindow.ShowDialog(this);
 
@@ -483,42 +513,65 @@ namespace DisplayMagician.UIForms
 
         public void RefreshNotifyIconMenus(Guid? completedShortcutOperationId = null)
         {
-            if (IsDisposed) return;
-            if (completedShortcutOperationId.HasValue && _cachedWindowPlacementSession?.OperationId == completedShortcutOperationId.Value)
-                _cachedWindowPlacementSession = null;
-            RebuildNotifyIconMenus();
-            if (Interlocked.Exchange(ref _notifyMenuRefreshInProgress, 1) != 0) return;
-            _ = Task.Run(async () =>
+            if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
+            if (Environment.CurrentManagedThreadId != _uiThreadId)
             {
-                try
-                {
-                    using CancellationTokenSource lookupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                    ControlResponse response = await new ControlServicePipeClient().GetActiveWindowPlacementSessionAsync(lookupTimeout.Token).ConfigureAwait(false);
-                    DesktopProfileViewCache.Refresh();
-                    _cachedWindowPlacementSession = response.IsSuccessful && response.WindowPlacementSession?.CanSave == true
-                        ? response.WindowPlacementSession : null;
-                    if (IsHandleCreated && !IsDisposed)
-                    {
-                        BeginInvoke((System.Windows.Forms.MethodInvoker)(() =>
-                        {
-                            if (!mainContextMenuStrip.Visible) RebuildNotifyIconMenus();
-                        }));
-                    }
-                }
-                catch (Exception ex)
+                if (!IsHandleCreated) return; // HandleCreated requests a refresh on the owning UI thread.
+                try { BeginInvoke((System.Windows.Forms.MethodInvoker)(() => RefreshNotifyIconMenus(completedShortcutOperationId))); }
+                catch (InvalidOperationException) { /* The window closed before refresh could be queued. */ }
+                return;
+            }
+            ++_notifyMenuRefreshVersion;
+            if (completedShortcutOperationId.HasValue)
+            {
+                _completedWindowPlacementOperationId = completedShortcutOperationId;
+                if (_cachedWindowPlacementSession?.OperationId == completedShortcutOperationId.Value)
                 {
                     _cachedWindowPlacementSession = null;
-                    logger.Debug(ex, "MainForm/RefreshNotifyIconMenus: Active shortcut session is unavailable.");
-                    if (IsHandleCreated && !IsDisposed)
-                    {
-                        try { BeginInvoke((System.Windows.Forms.MethodInvoker)(() => { if (!mainContextMenuStrip.Visible) RebuildNotifyIconMenus(); })); }
-                        catch (InvalidOperationException) { /* The form closed while the refresh was finishing. */ }
-                    }
+                    if (_saveWindowPositionsMenuItem != null) _saveWindowPositionsMenuItem.Enabled = false;
                 }
-                finally { Interlocked.Exchange(ref _notifyMenuRefreshInProgress, 0); }
-            });
+            }
+            if (!mainContextMenuStrip.Visible) RebuildNotifyIconMenus();
+            _ = RefreshNotifyIconMenusAsync();
         }
 
+        private async Task RefreshNotifyIconMenusAsync()
+        {
+            if (_notifyMenuRefreshInProgress || IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
+            _notifyMenuRefreshInProgress = true;
+            try
+            {
+                int refreshVersion;
+                do
+                {
+                    refreshVersion = _notifyMenuRefreshVersion;
+                    try
+                    {
+                        using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(_trayLifetimeToken);
+                        timeout.CancelAfter(TimeSpan.FromSeconds(2));
+                        ControlResponse response = await _controlServiceClient.GetActiveWindowPlacementSessionAsync(timeout.Token);
+                        if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
+                        if (refreshVersion != _notifyMenuRefreshVersion) continue;
+                        await _refreshTrayProfiles(_trayLifetimeToken);
+                        if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
+                        if (refreshVersion != _notifyMenuRefreshVersion) continue;
+                        WindowPlacementSessionView session = response.WindowPlacementSession;
+                        _cachedWindowPlacementSession = response.IsSuccessful && session?.CanSave == true && session.OperationId != _completedWindowPlacementOperationId
+                            ? session : null;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
+                        if (refreshVersion != _notifyMenuRefreshVersion) continue;
+                        _cachedWindowPlacementSession = null;
+                        logger.Debug(ex, "MainForm/RefreshNotifyIconMenusAsync: Active shortcut session is unavailable.");
+                    }
+                    if (!mainContextMenuStrip.Visible) RebuildNotifyIconMenus();
+                }
+                while (refreshVersion != _notifyMenuRefreshVersion);
+            }
+            finally { _notifyMenuRefreshInProgress = false; }
+        }
         private void RebuildNotifyIconMenus()
         {
             if (_saveWindowPositionsMenuItem != null)

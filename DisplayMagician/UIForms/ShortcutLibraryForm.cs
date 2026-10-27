@@ -22,11 +22,36 @@ namespace DisplayMagician.UIForms
         private ShortcutItem _selectedShortcut = null;
         private ShortcutForm _shortcutForm = null;
         private Guid _activeShortcutOperationId;
+        private readonly ControlServicePipeClient _controlServiceClient;
+        private readonly Action<string, string, MessageBoxIcon> _showMessage;
+        private readonly Func<Guid?, Form, Task> _saveWindowPositions;
+        private readonly Func<string, string, bool> _confirmClear;
+        private readonly CancellationTokenSource _lifetimeSource = new CancellationTokenSource();
+        private readonly CancellationToken _lifetimeToken;
+        private bool _lifetimeDisposed;
+        private bool _runInProgress;
+        private bool _cancelInProgress;
+        private bool _placementActionInProgress;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public ShortcutLibraryForm()
+        public ShortcutLibraryForm() : this(new ControlServicePipeClient()) { }
+
+        internal ShortcutLibraryForm(ControlServicePipeClient client, Action<string, string, MessageBoxIcon> showMessage = null, Func<Guid?, Form, Task> saveWindowPositions = null, Func<string, string, bool> confirmClear = null)
         {
+            _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
+            _showMessage = showMessage ?? ((message, title, icon) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, icon));
+            _saveWindowPositions = saveWindowPositions ?? Program.SaveWindowPositionsAsync;
+            _confirmClear = confirmClear ?? ((message, title) => MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes);
+            _lifetimeToken = _lifetimeSource.Token;
             InitializeComponent();
+            Disposed += (_, _) =>
+            {
+                if (_lifetimeDisposed) return;
+                _lifetimeDisposed = true;
+                _lifetimeSource.Cancel();
+                _lifetimeSource.Dispose();
+                _shortcutForm?.Dispose();
+            };
             this.DoubleBuffered = true;
             ilv_saved_shortcuts.MultiSelect = false;
             ilv_saved_shortcuts.ThumbnailSize = new Size(100,100);
@@ -36,6 +61,8 @@ namespace DisplayMagician.UIForms
             // Center the form on the primary screen
             //Utils.CenterOnPrimaryScreen(this);
         }
+
+        private bool CanUpdateView => !IsDisposed && !Disposing && !_lifetimeToken.IsCancellationRequested;
 
         protected override void OnLoad(EventArgs e)
         {
@@ -47,6 +74,7 @@ namespace DisplayMagician.UIForms
         {
             Utils.SaveFormState(this);
             base.OnFormClosing(e);
+            if (!e.Cancel && !_lifetimeDisposed) _lifetimeSource.Cancel();
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -314,11 +342,10 @@ namespace DisplayMagician.UIForms
             this.Cursor = Cursors.WaitCursor;
             ShortcutItem si = new ShortcutItem();
 
-            if (_shortcutForm == null)
-            {
-                _shortcutForm = new ShortcutForm();
-                ShowShortcutLoadingWindow();
-            }
+            _shortcutForm?.Dispose();
+            using ShortcutForm editor = new ShortcutForm();
+            _shortcutForm = editor;
+            ShowShortcutLoadingWindow();
             _shortcutForm.Owner = this;
 
             //ShortcutRepository.IsValidRefresh()
@@ -356,6 +383,7 @@ namespace DisplayMagician.UIForms
         private void ShowShortcutLoadingWindow()
         {
             Program.AppShortcutLoadingSplashScreen = new ShortcutLoadingForm();
+            ShortcutLoadingForm splash = Program.AppShortcutLoadingSplashScreen;
             Program.AppShortcutLoadingSplashScreen.Title = "Scanning Game and App Data...";
             Program.AppShortcutLoadingSplashScreen.Description = "Getting the Shortcut information ready for you to edit. Scanning your computer for all Games and Apps so you can choose them from a list.";
             int resultX = this.DesktopLocation.X + ((this.Width - Program.AppShortcutLoadingSplashScreen.Width) / 2);
@@ -364,7 +392,7 @@ namespace DisplayMagician.UIForms
             //_loadingScreen.CenterParent(ownerRect);
             //_loadingScreen.StartPosition = FormStartPosition.Manual;
             var splashThread = new Thread(new ThreadStart(
-                () => Application.Run(Program.AppShortcutLoadingSplashScreen)));
+                () => Application.Run(splash)));
             splashThread.SetApartmentState(ApartmentState.STA);
             splashThread.Start();
         }
@@ -408,10 +436,9 @@ namespace DisplayMagician.UIForms
                 this.Cursor = Cursors.WaitCursor;
                 ShowShortcutLoadingWindow();
 
-                if (_shortcutForm == null)
-                {
-                    _shortcutForm = new ShortcutForm();
-                }
+                _shortcutForm?.Dispose();
+                using ShortcutForm editor = new ShortcutForm();
+                _shortcutForm = editor;
                 _shortcutForm.Owner = this;
 
                 _shortcutForm.Shortcut = _selectedShortcut;
@@ -493,6 +520,7 @@ namespace DisplayMagician.UIForms
 
         private async void btn_run_Click(object sender, EventArgs e)
         {
+            if (_runInProgress || !CanUpdateView) return;
             logger.Trace($"ShortcutLibraryForm/btn_run_Click: User clicked on the Run button.");
             if (_selectedShortcut == null)
             {
@@ -528,90 +556,87 @@ namespace DisplayMagician.UIForms
                 return;
             }
 
-            // Figure out the string we're going to use as the MaskedForm message
-            string message = "";
-            if (_selectedShortcut.Category.Equals(ShortcutCategory.Game))
-                message = $"Running the {_selectedShortcut.GameName} game and waiting until you close it.";
-            else if (_selectedShortcut.Category.Equals(ShortcutCategory.Executable))
-                message = $"Running the {_selectedShortcut.ExecutableNameAndPath} executable and waiting until you close it.";
-            else if(_selectedShortcut.Category.Equals(ShortcutCategory.Application))
-                message = $"Running the {_selectedShortcut.ApplicationName} application and waiting until you close it.";
+            await RunShortcutAsync(_selectedShortcut);
+        }
 
-            // Create a Mask Control that will cover the ShortcutLibrary Window to lock
-            lbl_mask.Text = message;
-            lbl_mask.Location = new Point(0, 0);
-            lbl_mask.Size = this.Size;
+        private async Task RunShortcutAsync(ShortcutItem shortcut)
+        {
+            if (!CanUpdateView || _runInProgress || shortcut == null) return;
+            _runInProgress = true;
+            string shortcutId = shortcut.UUID;
+            string shortcutName = shortcut.Name;
+            lbl_mask.Text = $"Running {shortcutName} and waiting until it closes.";
+            lbl_mask.Location = Point.Empty;
+            lbl_mask.Size = Size;
             lbl_mask.BackColor = Color.FromArgb(100, Color.Black);
             lbl_mask.BringToFront();
             lbl_mask.Visible = true;
-
-            // Show the cancel button
+            btn_run.Enabled = false;
             btn_cancel.Visible = true;
-            btn_cancel.Enabled = true;
+            btn_cancel.Enabled = false;
             btn_cancel.BringToFront();
             btn_save_window_positions.Visible = true;
             btn_save_window_positions.Enabled = false;
             btn_save_window_positions.BringToFront();
-
             ilv_saved_shortcuts.SuspendLayout();
-            ilv_saved_shortcuts.Refresh();
-
             try
             {
-                ControlServicePipeClient client = new ControlServicePipeClient();
-                ControlResponse started = await client.StartShortcutWhenAgentAvailableAsync(_selectedShortcut.UUID, CancellationToken.None);
+                ControlResponse started = await _controlServiceClient.StartShortcutWhenAgentAvailableAsync(shortcutId, _lifetimeToken);
+                if (!CanUpdateView) return;
                 if (!started.IsSuccessful || started.OperationStatus == null)
                 {
-                    MessageBox.Show(this, started.Message, "Shortcut could not start", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    _showMessage(started.Message, "Shortcut could not start", MessageBoxIcon.Error);
+                    return;
                 }
-                else
+                Guid operationId = started.OperationStatus.OperationId;
+                _activeShortcutOperationId = operationId;
+                btn_cancel.Enabled = !started.OperationStatus.IsTerminal;
+                bool lookupFailureLogged = false;
+                while (!started.OperationStatus.IsTerminal)
                 {
-                    _activeShortcutOperationId = started.OperationStatus.OperationId;
-                    while (true)
+                    OperationStatus status = await _controlServiceClient.GetOperationStatusAsync(operationId, _lifetimeToken);
+                    if (!CanUpdateView || status.IsTerminal) break;
+                    try
                     {
-                        OperationStatus status = await client.GetOperationStatusAsync(_activeShortcutOperationId, CancellationToken.None);
-                        ControlResponse active = await client.GetActiveWindowPlacementSessionAsync(CancellationToken.None);
-                        btn_save_window_positions.Enabled = active.WindowPlacementSession?.OperationId == _activeShortcutOperationId && active.WindowPlacementSession.CanSave;
-                        if (status.IsTerminal) break;
-                        await Task.Delay(500);
+                        ControlResponse active = await _controlServiceClient.GetActiveWindowPlacementSessionAsync(_lifetimeToken);
+                        if (!CanUpdateView) return;
+                        btn_save_window_positions.Enabled = !_placementActionInProgress && active.IsSuccessful && active.WindowPlacementSession?.OperationId == operationId && active.WindowPlacementSession.CanSave;
+                        lookupFailureLogged = false;
                     }
+                    catch (Exception ex) when (!(ex is OperationCanceledException))
+                    {
+                        if (!CanUpdateView) return;
+                        btn_save_window_positions.Enabled = false;
+                        if (!lookupFailureLogged) logger.Warn(ex, "ShortcutLibraryForm/RunShortcutAsync: Window-placement status is unavailable for operation {0}; shortcut monitoring continues.", operationId);
+                        lookupFailureLogged = true;
+                    }
+                    await Task.Delay(500, _lifetimeToken);
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested) { /* Closing the library stops polling, not the accepted shortcut. */ }
+            catch (Exception ex)
             {
-                logger.Trace($"ShortcutLibraryForm/btn_run_Click: Cancellation token provided while running shortcut {_selectedShortcut.Name}. User asked to cancel.");
+                logger.Error(ex, "ShortcutLibraryForm/RunShortcutAsync: Could not run or monitor shortcut {0} ({1}).", shortcutName, shortcutId);
+                if (CanUpdateView) _showMessage("DisplayMagician could not run or monitor the shortcut through the Control Service.", "Shortcut", MessageBoxIcon.Error);
             }
-            catch(Exception ex)
+            finally
             {
-                logger.Error(ex, $"ShortcutLibraryForm/btn_run_Click: An exception occurred while trying to run the shortcut {_selectedShortcut.Name}.");
+                _activeShortcutOperationId = Guid.Empty;
+                _runInProgress = false;
+                if (CanUpdateView)
+                {
+                    ilv_saved_shortcuts.ResumeLayout();
+                    lbl_mask.Visible = false;
+                    lbl_mask.SendToBack();
+                    btn_run.Enabled = true;
+                    btn_cancel.Visible = false;
+                    btn_cancel.Enabled = false;
+                    btn_save_window_positions.Visible = false;
+                    btn_save_window_positions.Enabled = false;
+                    Program.AppMainForm?.RefreshNotifyIconMenus();
+                }
             }
-
-            ilv_saved_shortcuts.ResumeLayout();
-
-            // Remove the Masked Control to allow the user to start using DisplayMagician again.
-            lbl_mask.Visible = false;
-            lbl_mask.SendToBack();
-
-            // Hide the cancel button
-            btn_cancel.Visible = false;
-            btn_cancel.Enabled = false;
-            btn_save_window_positions.Visible = false;
-            btn_save_window_positions.Enabled = false;
-            _activeShortcutOperationId = Guid.Empty;
-
-            if (Program.AppMainForm is Form)
-            {
-                // Also refresh the right-click menu (if we have a main form loaded)
-                Program.AppMainForm.RefreshNotifyIconMenus();
-
-            }
-            // Bring the window back to the front
-            //Utils.ActivateCenteredOnPrimaryScreen(this);
-            this.Activate();
-
-
         }
-
         private void ilv_saved_shortcuts_ItemHover(object sender, ItemHoverEventArgs e)
         {
             if (e.Item != null)
@@ -815,55 +840,79 @@ namespace DisplayMagician.UIForms
 
         private async void btn_cancel_Click(object sender, EventArgs e)
         {
-            logger.Trace($"ShortcutLibraryForm/btn_cancel_Click: User clicked on the Cancel button after running a Shortcut.");
-            // Inform the ShortcutRepository that it needs to cancel the running shortcut.
-            if (_activeShortcutOperationId != Guid.Empty)
+            Guid operationId = _activeShortcutOperationId;
+            if (!CanUpdateView || _cancelInProgress || operationId == Guid.Empty) return;
+            _cancelInProgress = true;
+            btn_cancel.Enabled = false;
+            try
             {
-                try { await new ControlServicePipeClient().CancelOperationAsync(_activeShortcutOperationId, CancellationToken.None); }
-                catch (Exception ex) { logger.Warn(ex, "ShortcutLibraryForm/btn_cancel_Click: Could not cancel shortcut operation {0}.", _activeShortcutOperationId); }
+                ControlResponse response = await _controlServiceClient.CancelOperationAsync(operationId, _lifetimeToken);
+                if (CanUpdateView && !response.IsSuccessful) _showMessage(response.Message, "Cancel Shortcut", MessageBoxIcon.Error);
+            }
+            catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested) { /* The library closed while waiting. */ }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutLibraryForm/btn_cancel_Click: Could not cancel shortcut operation {0}.", operationId);
+                if (CanUpdateView) _showMessage("The shortcut cancellation request could not be confirmed.", "Cancel Shortcut", MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _cancelInProgress = false;
+                if (CanUpdateView && operationId == _activeShortcutOperationId) btn_cancel.Enabled = true;
             }
         }
 
         private async void btn_save_window_positions_Click(object sender, EventArgs e)
         {
-            string selectedId = _selectedShortcut?.UUID;
-            await Program.SaveWindowPositionsAsync(_activeShortcutOperationId, this);
-            if (!string.IsNullOrWhiteSpace(selectedId))
-                _selectedShortcut = ShortcutRepository.GetShortcut(selectedId);
-            RefreshShortcutLibraryUI();
-        }
-
-        private async void tsmi_clear_window_positions_Click(object sender, EventArgs e)
-        {
-            if (_selectedShortcut == null || _selectedShortcut.WindowPlacements.Count == 0) return;
-            string shortcutId = _selectedShortcut.UUID;
-            string shortcutName = _selectedShortcut.Name;
-            if (MessageBox.Show(this, $"Clear all saved window positions for '{shortcutName}'? This cannot be undone.",
-                    "Clear Saved Window Positions", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
-
+            if (_placementActionInProgress || !CanUpdateView || _activeShortcutOperationId == Guid.Empty) return;
+            _placementActionInProgress = true;
+            btn_save_window_positions.Enabled = false;
             try
             {
-                ControlResponse response = await new ControlServicePipeClient().ClearWindowPlacementsAsync(shortcutId, CancellationToken.None);
+                await _saveWindowPositions(_activeShortcutOperationId, this);
+                if (!CanUpdateView) return;
+                string selectedId = _selectedShortcut?.UUID;
+                if (!string.IsNullOrWhiteSpace(selectedId)) _selectedShortcut = ShortcutRepository.GetShortcut(selectedId);
+                RefreshShortcutLibraryUI();
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutLibraryForm/btn_save_window_positions_Click: Could not save window positions.");
+                if (CanUpdateView) _showMessage("Window positions could not be saved.", "Save Window Positions", MessageBoxIcon.Error);
+            }
+            finally { _placementActionInProgress = false; }
+        }
+        private async void tsmi_clear_window_positions_Click(object sender, EventArgs e)
+        {
+            if (!CanUpdateView || _placementActionInProgress || _selectedShortcut == null || _selectedShortcut.WindowPlacements.Count == 0) return;
+            string shortcutId = _selectedShortcut.UUID;
+            string shortcutName = _selectedShortcut.Name;
+            if (!_confirmClear($"Clear all saved window positions for '{shortcutName}'? This cannot be undone.", "Clear Saved Window Positions")) return;
+            _placementActionInProgress = true;
+            try
+            {
+                ControlResponse response = await _controlServiceClient.ClearWindowPlacementsAsync(shortcutId, _lifetimeToken);
+                if (!CanUpdateView) return;
                 if (!response.IsSuccessful)
                 {
-                    MessageBox.Show(this, response.Message ?? "Saved window positions could not be cleared.",
-                        "Clear Saved Window Positions", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    _showMessage(response.Message ?? "Saved window positions could not be cleared.", "Clear Saved Window Positions", MessageBoxIcon.Error);
                     return;
                 }
 
+                string selectedId = _selectedShortcut?.UUID;
                 ShortcutRepository.LoadShortcuts();
-                _selectedShortcut = ShortcutRepository.GetShortcut(shortcutId);
+                _selectedShortcut = string.IsNullOrWhiteSpace(selectedId) ? null : ShortcutRepository.GetShortcut(selectedId);
                 RefreshShortcutLibraryUI();
                 UpdateShortcutStatusPanel();
-                MessageBox.Show(this, $"Saved window positions for '{shortcutName}' were cleared.",
-                    "Clear Saved Window Positions", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _showMessage($"Saved window positions for '{shortcutName}' were cleared.", "Clear Saved Window Positions", MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 logger.Error(ex, "ShortcutLibraryForm/tsmi_clear_window_positions_Click: Could not clear saved window positions for shortcut {0}.", shortcutId);
-                MessageBox.Show(this, "Saved window positions could not be cleared.",
-                    "Clear Saved Window Positions", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!CanUpdateView) return;
+                _showMessage("Saved window positions could not be cleared.", "Clear Saved Window Positions", MessageBoxIcon.Error);
             }
+            finally { _placementActionInProgress = false; }
         }
 
         private void sendToClipboardToolStripMenuItem_Click(object sender, EventArgs e)

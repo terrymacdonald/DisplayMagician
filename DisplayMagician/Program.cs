@@ -1858,6 +1858,7 @@ namespace DisplayMagician {
             {
                 ControlServicePipeClient client = new ControlServicePipeClient();
                 ControlResponse current = await client.GetActiveWindowPlacementSessionAsync(CancellationToken.None);
+                if (owner != null && (owner.IsDisposed || owner.Disposing)) return;
                 WindowPlacementSessionView session = current.WindowPlacementSession;
                 if (!current.IsSuccessful || session == null || !session.CanSave || (expectedOperationId.HasValue && expectedOperationId.Value != session.OperationId))
                 {
@@ -1865,6 +1866,7 @@ namespace DisplayMagician {
                     return;
                 }
                 Form dialogOwner = owner ?? AppMainForm;
+                if (dialogOwner != null && (dialogOwner.IsDisposed || dialogOwner.Disposing)) return;
                 if (session.ExistingPlacementCount > 0 && MessageBox.Show(dialogOwner,
                     $"Replace the {session.ExistingPlacementCount} saved window positions for '{session.ShortcutName}' with a new snapshot?",
                     "Save Window Positions", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;

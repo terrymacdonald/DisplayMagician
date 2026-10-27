@@ -40,6 +40,10 @@ Display/audio profile forms ignore superseded refresh replies, cancel pending wa
 
 Pairing QR/list refreshes and server-status/settings reads also ignore stale or post-close results. Changing the pairing endpoint clears the previous QR immediately. Pairing decisions, revocation, settings saves and recovery actions reject overlapping submissions. Gateway settings must load before saving; Refresh retries a failed initial load without reloading an existing draft. Emergency recovery remains available if settings cannot load. An already-submitted settings save/restart retains its existing completion behaviour after closure, with UI updates suppressed. Restart/UAC failures distinguish saved settings from a failed or cancelled restart. Service authorization, pairing grants and administrator confirmations remain unchanged.
 
+Shortcut editor metadata refreshes preserve unsaved drafts and reject obsolete preview/audio replies. Saving refreshes the chosen Audio Profile first; a deleted profile stays unselected until another is chosen or the user explicitly selects “Don't change audio settings”. Failed validation/commits keep save-on-close open. Each library edit uses a fresh disposed editor, and loading-window close requests work before handle creation. Library closure stops local polling rather than cancelling accepted shortcuts; placement-status failures do not stop shortcut monitoring. Snapshot and cancellation actions reject duplicate clicks.
+
+Tray refreshes marshal to the UI thread, coalesce follow-up requests and reject superseded/completed-operation replies. Menu rebuilds defer while open, and asynchronous profile-view refreshes retain the newest result. Modal profile/library windows are disposed after use; minimize-to-tray keeps refreshes available.
+
 ## Related components
 
 - `DisplayMagician.ControlService` routes desktop requests and owns machine-wide coordination.

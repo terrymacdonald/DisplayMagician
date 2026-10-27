@@ -68,10 +68,41 @@ namespace DisplayMagician.UIForms
         private readonly System.Windows.Forms.Timer _exePathDebounceTimer = new System.Windows.Forms.Timer { Interval = 600 };
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private readonly ControlServicePipeClient _controlServiceClient;
+        private readonly Action<string, string, MessageBoxIcon> _showMessage;
+        private readonly Func<string, string, DialogResult> _askToSave;
+        private readonly CancellationTokenSource _lifetimeSource = new CancellationTokenSource();
+        private readonly CancellationToken _lifetimeToken;
+        private bool _lifetimeDisposed;
+        private bool _configurationLoaded;
+        private bool _serviceActionInProgress;
+        private int _audioRefreshVersion;
+        private int _previewRefreshVersion;
+        private ShortcutLoadingForm _loadingSplashScreen;
+        private readonly Action _saveBeforeClose;
 
-        public ShortcutForm()
+        public ShortcutForm() : this(new ControlServicePipeClient()) { }
+
+        internal ShortcutForm(ControlServicePipeClient client, Action<string, string, MessageBoxIcon> showMessage = null, Func<string, string, DialogResult> askToSave = null, Action saveBeforeClose = null)
         {
+            _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
+            _saveBeforeClose = saveBeforeClose;
+            _showMessage = showMessage ?? ((message, title, icon) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, icon));
+            _askToSave = askToSave ?? ((message, title) => MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation));
+            _lifetimeToken = _lifetimeSource.Token;
             InitializeComponent();
+            btn_save.Enabled = false;
+            Disposed += (_, _) =>
+            {
+                if (_lifetimeDisposed) return;
+                _lifetimeDisposed = true;
+                _lifetimeSource.Cancel();
+                _lifetimeSource.Dispose();
+                _exePathDebounceTimer.Stop();
+                _exePathDebounceTimer.Dispose();
+                dv_profile.Image?.Dispose();
+                CloseTheSplashScreen();
+            };
 
             // Fire icon scan only once the user has stopped typing for 600 ms
             _exePathDebounceTimer.Tick += (s, e) =>
@@ -125,6 +156,40 @@ namespace DisplayMagician.UIForms
             // Center the form on the primary screen
             //Utils.CenterOnPrimaryScreen(this);
 
+        }
+
+        private bool CanUpdateView => !IsDisposed && !Disposing && !_lifetimeToken.IsCancellationRequested;
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if (!e.Cancel && !_lifetimeDisposed) _lifetimeSource.Cancel();
+        }
+
+        private async Task RunEditorActionAsync(Func<Task> action)
+        {
+            if (!CanUpdateView || _serviceActionInProgress) return;
+            _serviceActionInProgress = true;
+            btn_save.Enabled = false;
+            btn_refresh_games_list.Enabled = false;
+            RefreshAudioAccessWarning();
+            try { await action(); }
+            catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested) { /* The editor closed while waiting. */ }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ShortcutForm/RunEditorActionAsync: Could not complete the requested editor action.");
+                if (CanUpdateView) _showMessage("DisplayMagician could not complete the requested action through the Control Service. Please try again.", "Shortcut Editor", MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _serviceActionInProgress = false;
+                if (CanUpdateView)
+                {
+                    btn_save.Enabled = _configurationLoaded;
+                    btn_refresh_games_list.Enabled = true;
+                    RefreshAudioAccessWarning();
+                }
+            }
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -205,7 +270,35 @@ namespace DisplayMagician.UIForms
 
 
 
-        private void btn_save_Click(object sender, EventArgs e)
+        private async void btn_save_Click(object sender, EventArgs e)
+        {
+            await SaveShortcutAsync();
+        }
+
+        private async Task SaveShortcutAsync()
+        {
+            await RunEditorActionAsync(async () =>
+            {
+                tabc_shortcut.Enabled = false;
+                try
+                {
+                    if (!cb_dont_change_audio.Checked)
+                    {
+                        await RefreshAudioProfilesAsync(_audioProfileToUse?.Id);
+                        if (!CanUpdateView) return;
+                        if (_audioProfileToUse == null)
+                        {
+                            _showMessage("The selected Audio Profile is no longer available. Choose another Audio Profile or select 'Don't change audio settings' before saving.", "Audio Profile no longer available", MessageBoxIcon.Warning);
+                            return;
+                        }
+                    }
+                    CommitShortcut();
+                }
+                finally { if (CanUpdateView) tabc_shortcut.Enabled = true; }
+            });
+        }
+
+        private void CommitShortcut()
         {
             // Store all of the information in the Shortcut object based on what's been selected in this form
 
@@ -312,7 +405,7 @@ namespace DisplayMagician.UIForms
             // If we're launching a game
             if (_shortcutCategory == ShortcutCategory.Game)
             {
-                logger.Trace($"ShortcutForm/btn_save_Click: We're saving a game!");
+                logger.Trace($"ShortcutForm/CommitShortcut: We're saving a game!");
 
                 _gameToUse = new GameShorcutData
                 {
@@ -328,7 +421,7 @@ namespace DisplayMagician.UIForms
 
                 if (_gameToUse.GameToPlay == null)
                 {
-                    logger.Error($"ShortcutForm/btn_save_Click: Could not find game with ID '{_gameId}' in library '{_gameLauncher}'. The game may have been uninstalled. Aborting save.");
+                    logger.Error($"ShortcutForm/CommitShortcut: Could not find game with ID '{_gameId}' in library '{_gameLauncher}'. The game may have been uninstalled. Aborting save.");
                     MessageBox.Show(
                         $"The selected game could not be found in the '{_gameLauncher}' library. It may have been uninstalled since this shortcut was created. Please re-select the game.",
                         "Game Not Found",
@@ -362,7 +455,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a game shortcut.");
+                    logger.Error(ex, $"ShortcutForm/CommitShortcut: Exception while trying to update a game shortcut.");
                     MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -371,7 +464,7 @@ namespace DisplayMagician.UIForms
             // If we're saving an executable
             else if (_shortcutCategory == ShortcutCategory.Executable)
             {
-                logger.Trace($"ShortcutForm/btn_save_Click: We're saving a standalone executable!");
+                logger.Trace($"ShortcutForm/CommitShortcut: We're saving a standalone executable!");
                 _executableToUse = new ExecutableShortcutData
                 {
                     ExecutableArguments = txt_args_executable.Text,
@@ -419,7 +512,7 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an executable shortcut.");
+                    logger.Error(ex, $"ShortcutForm/CommitShortcut: Exception while trying to update an executable shortcut.");
                     MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -427,7 +520,7 @@ namespace DisplayMagician.UIForms
             else if (_shortcutCategory == ShortcutCategory.Application)
             {
                 // Otherwise we're saving an app selected from the list
-                logger.Trace($"ShortcutForm/btn_save_Click: We're saving an app!");
+                logger.Trace($"ShortcutForm/CommitShortcut: We're saving an app!");
 
                 if (_selectedApp == null)
                 {
@@ -484,14 +577,14 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update an application shortcut.");
+                    logger.Error(ex, $"ShortcutForm/CommitShortcut: Exception while trying to update an application shortcut.");
                     MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
             else if (_shortcutCategory == ShortcutCategory.NoGame)
             {
-                logger.Trace($"ShortcutForm/btn_save_Click: We're not saving any game or executable to start!");
+                logger.Trace($"ShortcutForm/CommitShortcut: We're not saving any game or executable to start!");
                 try
                 {
                     _shortcutToEdit.UpdateNoGameShortcut(
@@ -512,14 +605,14 @@ namespace DisplayMagician.UIForms
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, $"ShortcutForm/btn_save_Click: Exception while trying to update a shortcut that doesn't run anything.");
+                    logger.Error(ex, $"ShortcutForm/CommitShortcut: Exception while trying to update a shortcut that doesn't run anything.");
                     MessageBox.Show(this, "The shortcut could not be updated. Your changes have not been saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
             else
             {
-                logger.Error($"ShortcutForm/btn_save_Click: We're unable to save as the Shortut Category isn't a category we support! {_shortcutCategory.ToString("G")}");
+                logger.Error($"ShortcutForm/CommitShortcut: We're unable to save as the Shortut Category isn't a category we support! {_shortcutCategory.ToString("G")}");
                 MessageBox.Show(this, "This shortcut type cannot be saved.", "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -540,7 +633,7 @@ namespace DisplayMagician.UIForms
                 : ShortcutRepository.AddShortcut(_shortcutToEdit);
             if (!saved)
             {
-                MessageBox.Show(this, ShortcutRepository.LastSaveErrorMessage, "Shortcut Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                _showMessage(ShortcutRepository.LastSaveErrorMessage, "Shortcut Save Failed", MessageBoxIcon.Warning);
                 return; // Keep the draft and controls available for correction or retry.
             }
 
@@ -601,6 +694,8 @@ namespace DisplayMagician.UIForms
 
             // initialise errors list
             List<string> errors = new List<string>();
+            if (!_configurationLoaded)
+                errors.Add("Wait for the shortcut data and pending editor action to finish before saving.");
 
             // Check the name is valid to save
             if (String.IsNullOrWhiteSpace(txt_shortcut_save_name.Text))
@@ -826,9 +921,10 @@ namespace DisplayMagician.UIForms
             {
                 if (showErrorsToUser)
                 {
-                    ShortcutErrorForm errorForm = new ShortcutErrorForm();
+                    using ShortcutErrorForm errorForm = new ShortcutErrorForm();
                     errorForm.Errors = errors;
-                    errorForm.ShowDialog();
+                    errorForm.StartPosition = FormStartPosition.CenterParent;
+                    errorForm.ShowDialog(this);
 
                 }
                 return false;
@@ -993,9 +1089,10 @@ namespace DisplayMagician.UIForms
             if (_shortcutToEdit == null)
             {
                 logger.Error("ShortcutForm/LoadShortcut: No shortcut was supplied before the form was opened.");
-                MessageBox.Show(this, "The shortcut is no longer available. Please close this window, refresh the Shortcut Library, and try again.", "Shortcut Not Available", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _showMessage("The shortcut is no longer available. Please close this window, refresh the Shortcut Library, and try again.", "Shortcut Not Available", MessageBoxIcon.Error);
                 DialogResult = DialogResult.Cancel;
-                BeginInvoke(new Action(Close));
+                if (IsHandleCreated) BeginInvoke(new Action(Close));
+                else Close();
                 return;
             }
 
@@ -1024,28 +1121,7 @@ namespace DisplayMagician.UIForms
 
             _isUnsaved = false;
 
-            // Populate all the Games into the Games ListView            
-            ilv_games.Enabled = true;
-            ilv_games.Visible = true;
-            ilv_games.SuspendLayout();
-            ilv_games.Items.Clear();
-
-            // Add the rest of the true profiles
-            foreach (GameView game in _availableGames.OrderBy(game => game.Name))
-            {
-                // Add the game to the game array
-                ImageListViewItem newItem = new ImageListViewItem(game, game.Name);
-                ilv_games.Items.Add(newItem, _gameAdaptor);
-                //newItem.Update();
-            }
-            // Make sure that if the item is selected that it's visible
-            if (ilv_games.SelectedItems.Count > 0)
-            {
-                int selectedIndex = ilv_games.SelectedItems[0].Index;
-                ilv_games.EnsureVisible(selectedIndex);
-            }
-            ilv_games.Update();
-            ilv_games.ResumeLayout();
+            RefreshGamesList();
 
             // =============================================
             // IF THE SHORTCUT IS AN EXISTING SHORTCUT
@@ -1843,19 +1919,23 @@ namespace DisplayMagician.UIForms
 
         private async void ShortcutForm_Load(object sender, EventArgs e)
         {
-            ControlServicePipeClient controlServiceClient = new ControlServicePipeClient();
+            _loadingSplashScreen = Program.AppShortcutLoadingSplashScreen;
+            ControlServicePipeClient controlServiceClient = _controlServiceClient;
 
             try
             {
-                DisplayMagician.Contracts.ProfileListResult profiles = await controlServiceClient.ListProfilesAsync(CancellationToken.None);
+                DisplayMagician.Contracts.ProfileListResult profiles = await controlServiceClient.ListProfilesAsync(_lifetimeToken);
+                if (!CanUpdateView) return;
                 _displayProfiles = profiles.SavedProfiles.ToList();
                 await RefreshAudioProfilesAsync();
+                if (!CanUpdateView) return;
                 await Task.Run(() =>
                 {
                     UserAgentRepositoryConnection userAgentRepositoryConnection = new UserAgentRepositoryConnection(controlServiceClient);
                     ShortcutRepository.ConnectToUserAgent(userAgentRepositoryConnection);
                 });
 
+                if (!CanUpdateView) return;
                 // Load a draft of the latest authoritative shortcut when opening the editor.
                 if (_editingExistingShortcut && _shortcutToEdit != null)
                     Shortcut = ShortcutRepository.GetShortcut(_shortcutToEdit.UUID);
@@ -1863,13 +1943,16 @@ namespace DisplayMagician.UIForms
             catch (Exception ex)
             {
                 logger.Error(ex, "ShortcutForm/ShortcutForm_Load: Could not load service-authoritative audio profiles.");
-                MessageBox.Show(this, "DisplayMagician could not load Audio Profiles through the User Agent.", "Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (CanUpdateView) _showMessage("DisplayMagician could not load the shortcut data through the User Agent. Close this editor and try again.", "Shortcut Data", MessageBoxIcon.Error);
+                CloseTheSplashScreen();
+                return;
             }
 
             // Load the shortcut info
             try
             {
-                DisplayMagician.Contracts.GameListResult games = await controlServiceClient.ListGamesAsync(System.Threading.CancellationToken.None);
+                DisplayMagician.Contracts.GameListResult games = await controlServiceClient.ListGamesAsync(_lifetimeToken);
+                if (!CanUpdateView) return;
                 _availableGames = games.Games.ToList();
             }
             catch (Exception ex)
@@ -1878,21 +1961,32 @@ namespace DisplayMagician.UIForms
                 _availableGames = new List<GameView>();
             }
 
-            LoadShortcut();
-
-            CloseTheSplashScreen();
-
-            //Utils.CenterOnPrimaryScreen(this);
-            //this.Focus();
-            this.BringToFront();
+            if (!CanUpdateView) return;
+            try
+            {
+                LoadShortcut();
+                if (!CanUpdateView || !_loadedShortcut) return;
+                _configurationLoaded = true;
+                btn_save.Enabled = true;
+                BringToFront();
+            }
+            catch (Exception ex)
+            {
+                _configurationLoaded = false;
+                logger.Error(ex, "ShortcutForm/ShortcutForm_Load: Could not populate the shortcut editor.");
+                if (CanUpdateView)
+                {
+                    btn_save.Enabled = false;
+                    _showMessage("DisplayMagician could not load this shortcut for editing. Close this editor and try again.", "Shortcut Editor", MessageBoxIcon.Error);
+                }
+            }
+            finally { CloseTheSplashScreen(); }
         }
 
         private void CloseTheSplashScreen()
         {
-            // Close the splash screen
-            if (Program.AppShortcutLoadingSplashScreen != null && !Program.AppShortcutLoadingSplashScreen.Disposing && !Program.AppShortcutLoadingSplashScreen.IsDisposed)
-                Program.AppShortcutLoadingSplashScreen.Invoke(new Action(() => Program.AppShortcutLoadingSplashScreen.Close()));
-            this.Activate();
+            _loadingSplashScreen?.RequestClose();
+            if (CanUpdateView) Activate();
         }
 
         private void rb_standalone_CheckedChanged(object sender, EventArgs e)
@@ -2154,11 +2248,13 @@ namespace DisplayMagician.UIForms
 
         private async Task LoadDetailedProfilePreviewAsync(DisplayProfileView profile)
         {
+            if (!CanUpdateView) return;
+            int refreshVersion = ++_previewRefreshVersion;
             try
             {
-                ProfileListResult profiles = await new ControlServicePipeClient().ListProfilesAsync(CancellationToken.None, detailedProfileId: profile.Id);
+                ProfileListResult profiles = await _controlServiceClient.ListProfilesAsync(_lifetimeToken, detailedProfileId: profile.Id);
                 DisplayProfileView detailedProfile = profiles.SavedProfiles.FirstOrDefault(item => string.Equals(item.Id, profile.Id, StringComparison.OrdinalIgnoreCase));
-                if (detailedProfile == null || IsDisposed || !string.Equals(_profileToUse?.Id, profile.Id, StringComparison.OrdinalIgnoreCase))
+                if (detailedProfile == null || !CanUpdateView || refreshVersion != _previewRefreshVersion || !ReferenceEquals(_profileToUse, profile))
                     return;
 
                 profile.DetailedLayoutPngBase64 = detailedProfile.DetailedLayoutPngBase64;
@@ -2342,33 +2438,27 @@ namespace DisplayMagician.UIForms
                 _isUnsaved = true;
         }
 
-        private void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
+        private async void ShortcutForm_FormClosing(object sender, FormClosingEventArgs e)
         {
 
             if (_isUnsaved && _loadedShortcut)
             {
                 // If the user doesn't want to close this window without saving (when they can save), then don't close the window.
-                DialogResult result = MessageBox.Show(
-                    @"You have unsaved changes! Do you want to save your changes?",
-                    @"You have unsaved changes.",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Exclamation);
+                DialogResult result = _askToSave("You have unsaved changes! Do you want to save your changes?", "You have unsaved changes.");
                 if (result == DialogResult.Yes)
                 {
                     logger.Trace($"ShortcutForm/ShortcutForm_FormClosing: User said yes they want us to save their changes. SO attempting to save changes");
-                    if (AllowedToSave(false))
+                    if (_saveBeforeClose != null)
                     {
-                        // Press the save button for the user as we're allowed to save
-                        btn_save.PerformClick();
+                        _saveBeforeClose();
+                        e.Cancel = _isUnsaved;
                     }
                     else
                     {
-                        // We're not allowed to save so record this in the logs
-                        logger.Warn($"ShortcutForm/ShortcutForm_FormClosing: The shortcut isn't valid, so we'll skip closing the form to let the user modify it without losing their changes.");
-                        AllowedToSave(true);
-                        // Cancel the event!
+                        // Keep the window and lifetime token available while validation/save awaits the service.
                         e.Cancel = true;
-                        this.Show();
+                        await SaveShortcutAsync();
+                        if (CanUpdateView && !_isUnsaved) Close();
                     }
                 }
                 else
@@ -2520,7 +2610,10 @@ namespace DisplayMagician.UIForms
 
         private async Task RefreshAudioProfilesAsync(string selectedProfileId = null)
         {
-            AudioProfileListResult profileList = await new ControlServicePipeClient().ListAudioProfilesAsync(CancellationToken.None);
+            if (!CanUpdateView) return;
+            int refreshVersion = ++_audioRefreshVersion;
+            AudioProfileListResult profileList = await _controlServiceClient.ListAudioProfilesAsync(_lifetimeToken);
+            if (!CanUpdateView || refreshVersion != _audioRefreshVersion) return;
             _audioProfiles = profileList.SavedProfiles.ToList();
             _canAccessAudioSettings = profileList.CanAccessAudioSettings;
             RefreshAudioProfilesList(selectedProfileId);
@@ -2528,6 +2621,8 @@ namespace DisplayMagician.UIForms
 
         private void RefreshAudioProfilesList(string selectedProfileId = null)
         {
+            string selectedId = selectedProfileId ?? _audioProfileToUse?.Id;
+            bool wasUnsaved = _isUnsaved;
             lb_audio_profiles.Items.Clear();
             lb_audio_profiles.DisplayMember = nameof(AudioProfileView.Name);
             foreach (AudioProfileView audioProfile in _audioProfiles.OrderBy(profile => profile.Name))
@@ -2535,12 +2630,11 @@ namespace DisplayMagician.UIForms
                 lb_audio_profiles.Items.Add(audioProfile);
             }
 
-            if (!string.IsNullOrWhiteSpace(selectedProfileId))
-            {
-                _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase));
-                lb_audio_profiles.SelectedItem = _audioProfileToUse;
-            }
-
+            _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedId, StringComparison.OrdinalIgnoreCase));
+            lb_audio_profiles.SelectedItem = _audioProfileToUse;
+            if (_audioProfileToUse == null) txt_audio_profile_settings.Clear();
+            gb_selected_audio_settings.Enabled = _audioProfileToUse != null;
+            _isUnsaved = wasUnsaved || (_loadedShortcut && !cb_dont_change_audio.Checked && !string.IsNullOrWhiteSpace(selectedId) && _audioProfileToUse == null);
             RefreshAudioAccessWarning();
         }
 
@@ -2548,8 +2642,9 @@ namespace DisplayMagician.UIForms
         {
             bool audioAccessDenied = !_canAccessAudioSettings;
             p_audio_access_warning.Visible = audioAccessDenied;
-            btn_create_audio_profile.Enabled = !audioAccessDenied;
-            btn_update_audio_profile.Enabled = !audioAccessDenied && _audioProfileToUse != null;
+            btn_create_audio_profile.Enabled = !_serviceActionInProgress && !audioAccessDenied;
+            btn_update_audio_profile.Enabled = !_serviceActionInProgress && !audioAccessDenied && _audioProfileToUse != null;
+            btn_delete_audio_profile.Enabled = !_serviceActionInProgress && _audioProfileToUse != null;
 
             if (!audioAccessDenied)
                 return;
@@ -2654,98 +2749,100 @@ namespace DisplayMagician.UIForms
             if (_loadedShortcut)
                 _isUnsaved = true;
             _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
-            btn_update_audio_profile.Enabled = _canAccessAudioSettings && _audioProfileToUse != null;
-            btn_delete_audio_profile.Enabled = _audioProfileToUse != null;
+            btn_update_audio_profile.Enabled = !_serviceActionInProgress && _canAccessAudioSettings && _audioProfileToUse != null;
+            btn_delete_audio_profile.Enabled = !_serviceActionInProgress && _audioProfileToUse != null;
             gb_selected_audio_settings.Enabled = _audioProfileToUse != null;
             if (_audioProfileToUse != null)
             {
                 // Update the UI settings window too
                 txt_audio_profile_settings.Text = _audioProfileToUse.SettingsText;
             }
+            else txt_audio_profile_settings.Clear();
         }
 
         private async void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
-            string profileName = PromptForAudioProfileName("Create Audio Profile");
-            if (string.IsNullOrWhiteSpace(profileName))
-                return;
-
-            ControlResponse response = await new ControlServicePipeClient().CreateAudioProfileFromCurrentAsync(profileName, CancellationToken.None);
-            if (response.IsSuccessful)
+            await RunEditorActionAsync(async () =>
             {
-                await RefreshAudioProfilesAsync();
-                _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Name, profileName, StringComparison.OrdinalIgnoreCase));
-                lb_audio_profiles.SelectedItem = _audioProfileToUse;
-                cb_dont_change_audio.Checked = false;
+                string profileName = PromptForAudioProfileName("Create Audio Profile");
+                if (string.IsNullOrWhiteSpace(profileName))
+                    return;
 
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-            }
-            else
-            {
-                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+                ControlResponse response = await _controlServiceClient.CreateAudioProfileFromCurrentAsync(profileName, _lifetimeToken);
+                if (!CanUpdateView) return;
+                if (response.IsSuccessful)
+                {
+                    await RefreshAudioProfilesAsync();
+                    if (!CanUpdateView) return;
+                    _audioProfileToUse = _audioProfiles.FirstOrDefault(profile => string.Equals(profile.Name, profileName, StringComparison.OrdinalIgnoreCase));
+                    lb_audio_profiles.SelectedItem = _audioProfileToUse;
+                    cb_dont_change_audio.Checked = false;
+
+                    if (_loadedShortcut)
+                        _isUnsaved = true;
+                }
+                else
+                {
+                    _showMessage(response.Message, "Audio Profile", MessageBoxIcon.Error);
+                }
+            });
         }
 
         private async void btn_update_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
-            if (selected == null)
-                return;
+            await RunEditorActionAsync(async () =>
+            {
+                AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
+                if (selected == null)
+                    return;
 
-            ControlResponse response = await new ControlServicePipeClient().UpdateAudioProfileFromCurrentAsync(selected.Id, CancellationToken.None);
-            if (response.IsSuccessful)
-            {
-                await RefreshAudioProfilesAsync(selected.Id);
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-            }
-            else
-            {
-                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+                ControlResponse response = await _controlServiceClient.UpdateAudioProfileFromCurrentAsync(selected.Id, _lifetimeToken);
+                if (!CanUpdateView) return;
+                if (response.IsSuccessful)
+                {
+                    await RefreshAudioProfilesAsync(selected.Id);
+                    if (!CanUpdateView) return;
+                    if (_loadedShortcut)
+                        _isUnsaved = true;
+                }
+                else
+                {
+                    _showMessage(response.Message, "Audio Profile", MessageBoxIcon.Error);
+                }
+            });
         }
 
         private async void btn_delete_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
-            if (selected == null)
-                return;
-
-            DialogResult result = MessageBox.Show(this,
-                $"Delete the Audio Profile '{selected.Name}'?",
-                "Delete Audio Profile",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
-
-            if (result != DialogResult.Yes)
-                return;
-
-            ControlResponse response = await new ControlServicePipeClient().DeleteAudioProfileAsync(selected.Id, CancellationToken.None);
-            if (response.IsSuccessful)
+            await RunEditorActionAsync(async () =>
             {
-                await RefreshAudioProfilesAsync();
-                if (lb_audio_profiles.Items.Count > 0)
+                AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
+                if (selected == null)
+                    return;
+
+                DialogResult result = MessageBox.Show(this,
+                    $"Delete the Audio Profile '{selected.Name}'?",
+                    "Delete Audio Profile",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result != DialogResult.Yes)
+                    return;
+
+                ControlResponse response = await _controlServiceClient.DeleteAudioProfileAsync(selected.Id, _lifetimeToken);
+                if (!CanUpdateView) return;
+                if (response.IsSuccessful)
                 {
-                    lb_audio_profiles.SelectedIndex = 0;
-                    _audioProfileToUse = lb_audio_profiles.SelectedItem as AudioProfileView;
-                    btn_update_audio_profile.Enabled = false;
-                    btn_delete_audio_profile.Enabled = false;
+                    await RefreshAudioProfilesAsync();
+                    if (!CanUpdateView) return;
+                    if (_loadedShortcut)
+                        _isUnsaved = true;
                 }
                 else
                 {
-                    _audioProfileToUse = null;
-                    gb_audio_profile.Enabled = false;
-                    txt_audio_profile_settings.Clear();
+                    _showMessage(response.Message, "Audio Profile", MessageBoxIcon.Error);
                 }
-
-                if (_loadedShortcut)
-                    _isUnsaved = true;
-            }
-            else
-            {
-                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            });
         }
 
 
@@ -3269,23 +3366,38 @@ namespace DisplayMagician.UIForms
 
         private async void btn_refresh_games_list_Click(object sender, EventArgs e)
         {
-            this.Cursor = Cursors.WaitCursor;
+            await RunEditorActionAsync(async () =>
+            {
+                Cursor = Cursors.WaitCursor;
+                try
+                {
+                    GameListResult games = await _controlServiceClient.ListGamesAsync(_lifetimeToken);
+                    if (!CanUpdateView) return;
+                    _availableGames = games.Games.ToList();
+                    RefreshGamesList();
+                    _showMessage("The list of available games has been updated.", "Games List Updated", MessageBoxIcon.Information);
+                }
+                finally { if (CanUpdateView) Cursor = Cursors.Default; }
+            });
+        }
+
+        private void RefreshGamesList()
+        {
+            ilv_games.SuspendLayout();
             try
             {
-                GameListResult games = await new ControlServicePipeClient().ListGamesAsync(System.Threading.CancellationToken.None);
-                _availableGames = games.Games.ToList();
-                LoadShortcut();
-                MessageBox.Show(this, "The list of available games has been updated.", "Games List Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ilv_games.Items.Clear();
+                foreach (GameView game in _availableGames.OrderBy(game => game.Name))
+                {
+                    ImageListViewItem item = new ImageListViewItem(game, game.Name)
+                    {
+                        Selected = string.Equals(game.Id, _gameId, StringComparison.OrdinalIgnoreCase) &&
+                            string.Equals(((SupportedGameLibraryType)game.Library).ToString(), _gameLauncher, StringComparison.OrdinalIgnoreCase)
+                    };
+                    ilv_games.Items.Add(item, _gameAdaptor);
+                }
             }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, "ShortcutForm/btn_refresh_games_list_Click: Could not refresh games through the User Agent.");
-                MessageBox.Show(this, "DisplayMagician could not refresh games through the User Agent.", "Games List", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            finally
-            {
-                this.Cursor = Cursors.Default;
-            }
+            finally { ilv_games.ResumeLayout(); }
         }
 
         private static List<ShortcutBitmap> GetGameImages(GameView game)
