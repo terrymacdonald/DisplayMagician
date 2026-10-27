@@ -8,6 +8,8 @@ This xUnit test project verifies Control Service behaviour without installing th
 
 ## Run
 
+`LocalReplayReliabilityTests` exercises reservation-before-dispatch, restart replay/unknown outcomes, concurrent duplicates, corrupt and missing ledgers, explicit-failure retries, capacity, legacy compatibility and failed atomic writes. `RoutingReliabilityTests` covers remote shortcut machine leases, asynchronous profile acceptance, stale/foreign heartbeats, running-Agent reconnects, launcher failures and malformed nested Gateway commands. The forced-restart failure test waits through the production ten-second stop deadline but never stops an installed process.
+
 ```powershell
 dotnet test .\DisplayMagician.ControlService.Tests\DisplayMagician.ControlService.Tests.csproj
 ```

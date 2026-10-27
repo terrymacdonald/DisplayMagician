@@ -3157,6 +3157,7 @@
           "decision-already-resolved",
           "operation-not-cancellable",
           "operation-busy",
+          "operation-outcome-unknown",
           "recovery-conflict",
           "cursor-invalid",
           "cursor-expired",

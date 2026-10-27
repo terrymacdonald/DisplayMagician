@@ -36,7 +36,6 @@ public sealed class ControlClientPipeServer
     private readonly GatewayIdentityRegistry _gatewayIdentityRegistry;
     private readonly MachineDiagnosticLogLevelStore _machineDiagnosticLogLevelStore;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
-    private readonly SemaphoreSlim _replayableMutationLock = new SemaphoreSlim(1, 1);
 
     public ControlClientPipeServer(ProfileOperationRouter profileOperationRouter, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, MachineScheduleCoordinator machineScheduleCoordinator, ControlStateCoordinator stateCoordinator, AuditStore auditStore, RecoveryAdministrationStore recoveryAdministrationStore, OperationDecisionStore operationDecisionStore, StoragePaths storagePaths, ControlRequestReplayStore requestReplayStore, GatewaySettingsStore gatewaySettingsStore, GatewayFirewallManager gatewayFirewallManager, DevicePairingCoordinator devicePairingCoordinator, GatewayIdentityRegistry gatewayIdentityRegistry, MachineDiagnosticLogLevelStore machineDiagnosticLogLevelStore)
     {
@@ -170,87 +169,63 @@ public sealed class ControlClientPipeServer
                 else
                 {
                     PipeClientIdentity identity = GetClientIdentity(pipe);
-                    bool isReplayableMutation = IsReplayableMutation(request.MessageType);
-                    if (isReplayableMutation)
+                    response = await _requestReplayStore.ExecuteAsync(identity.UserSid, request, async () =>
                     {
-                        await _replayableMutationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-                    }
-
-                    try
-                    {
-                        if (isReplayableMutation && _requestReplayStore.TryGet(identity.UserSid, request, DateTime.UtcNow, out ControlResponse replayedResponse))
+                        try
                         {
-                            response = replayedResponse;
+                            if (request.Payload == null) throw new JsonException("Missing client request payload.");
+                            return request.MessageType switch
+                            {
+                                ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.ListGames => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.ListApps => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.ListShortcuts => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.SyncMessages => await SyncClientAsync(identity, new ClientSyncRequest { IsManual = true }, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.SyncClient => await SyncClientAsync(identity, JsonSerializer.Deserialize<ClientSyncRequest>(request.Payload) ?? new ClientSyncRequest(), cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.GetAnonymousMetricsSettings => GetAnonymousMetricsSettings(),
+                                ControlMessageType.UpdateAnonymousMetricsSettings => UpdateAnonymousMetricsSettings(request),
+                                ControlMessageType.InitializeAnonymousMetrics => InitializeAnonymousMetrics(request),
+                                ControlMessageType.ReportAnonymousMetricsUsage => ReportAnonymousMetricsUsage(request),
+                                ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.GetActiveWindowPlacementSession or ControlMessageType.SaveWindowPlacements or ControlMessageType.ClearWindowPlacements => await _profileOperationRouter.ManageActiveWindowPlacementsAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.RestartUserAgent => await _profileOperationRouter.RestartUserAgentAsync(identity.UserSid, identity.SessionId, request.RequestId, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.CreateUserSupportBundle => await CreateUserSupportBundleAsync(identity, request, cancellationToken).ConfigureAwait(false),
+                                ControlMessageType.ResolveOperationDecision => ResolveOperationDecision(identity, request),
+                                ControlMessageType.ListOperationDecisions => ListOperationDecisions(identity),
+                                ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
+                                ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
+                                ControlMessageType.GetServiceStatus => GetServiceStatus(identity),
+                                ControlMessageType.GetGatewaySettings => GetGatewaySettings(),
+                                ControlMessageType.UpdateGatewaySettings => UpdateGatewaySettings(identity, request),
+                                ControlMessageType.ApproveGatewayTlsKeyReplacement => ApproveGatewayTlsKeyReplacement(identity),
+                                ControlMessageType.GetGatewayIdentity => GetGatewayIdentity(),
+                                ControlMessageType.CreateDevicePairingQr => CreateDevicePairingQr(identity, request),
+                                ControlMessageType.ListDevicePairingRequests => new ControlResponse { IsSuccessful = true, DevicePairingRequests = _devicePairingCoordinator.GetPendingForUser(identity.UserSid, DateTime.UtcNow) },
+                                ControlMessageType.ApproveDevicePairing => ApproveDevicePairing(identity, request),
+                                ControlMessageType.RejectDevicePairing => RejectDevicePairing(identity, request),
+                                ControlMessageType.ListPairedClients => new ControlResponse { IsSuccessful = true, PairedClients = _devicePairingCoordinator.GetPairedClients(identity.UserSid) },
+                                ControlMessageType.RevokePairedClient => RevokePairedClient(identity, request),
+                                ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
+                                ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
+                                ControlMessageType.SetTemporaryDiagnosticLogLevel => SetTemporaryDiagnosticLogLevel(request),
+                                ControlMessageType.ReleaseTemporaryDiagnosticLogLevel => ReleaseTemporaryDiagnosticLogLevel(request),
+                                _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
+                            };
                         }
-                        else
+                        catch (Exception ex) when (ex is JsonException || ex is ArgumentNullException { ParamName: "json" })
                         {
-                            try
-                            {
-                                response = request.MessageType switch
-                                {
-                                    ControlMessageType.ListProfiles => await _profileOperationRouter.ListProfilesAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.ListGames => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.ListApps => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.ListShortcuts => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.ListMessages or ControlMessageType.SetMessageReadState => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.SyncMessages => await SyncClientAsync(identity, new ClientSyncRequest { IsManual = true }, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.SyncClient => await SyncClientAsync(identity, JsonSerializer.Deserialize<ClientSyncRequest>(request.Payload) ?? new ClientSyncRequest(), cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.GetAnonymousMetricsSettings => GetAnonymousMetricsSettings(),
-                                    ControlMessageType.UpdateAnonymousMetricsSettings => UpdateAnonymousMetricsSettings(request),
-                                    ControlMessageType.InitializeAnonymousMetrics => InitializeAnonymousMetrics(request),
-                                    ControlMessageType.ReportAnonymousMetricsUsage => ReportAnonymousMetricsUsage(request),
-                                    ControlMessageType.ApplyProfile => await ApplyProfileAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.StartShortcut => await StartShortcutAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.GetActiveWindowPlacementSession or ControlMessageType.SaveWindowPlacements or ControlMessageType.ClearWindowPlacements => await _profileOperationRouter.ManageActiveWindowPlacementsAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.CancelOperation => await CancelOperationAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.StopAgentIfIdle => await _profileOperationRouter.StopAgentIfIdleAsync(identity.UserSid, identity.SessionId, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.RestartUserAgent => await _profileOperationRouter.RestartUserAgentAsync(identity.UserSid, identity.SessionId, request.RequestId, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.ListAudioProfiles or ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.GetRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.CommitRepositorySnapshot => await _profileOperationRouter.ManageProfileAsync(identity.UserSid, identity.SessionId, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.CreateUserSupportBundle => await CreateUserSupportBundleAsync(identity, request, cancellationToken).ConfigureAwait(false),
-                                    ControlMessageType.ResolveOperationDecision => ResolveOperationDecision(identity, request),
-                                    ControlMessageType.ListOperationDecisions => ListOperationDecisions(identity),
-                                    ControlMessageType.GetOperationStatus => GetOperationStatus(identity, request),
-                                    ControlMessageType.ListOperationStatuses => ListOperationStatuses(identity),
-                                    ControlMessageType.GetServiceStatus => GetServiceStatus(identity),
-                                    ControlMessageType.GetGatewaySettings => GetGatewaySettings(),
-                                    ControlMessageType.UpdateGatewaySettings => UpdateGatewaySettings(identity, request),
-                                    ControlMessageType.ApproveGatewayTlsKeyReplacement => ApproveGatewayTlsKeyReplacement(identity),
-                                    ControlMessageType.GetGatewayIdentity => GetGatewayIdentity(),
-                                    ControlMessageType.CreateDevicePairingQr => CreateDevicePairingQr(identity, request),
-                                    ControlMessageType.ListDevicePairingRequests => new ControlResponse { IsSuccessful = true, DevicePairingRequests = _devicePairingCoordinator.GetPendingForUser(identity.UserSid, DateTime.UtcNow) },
-                                    ControlMessageType.ApproveDevicePairing => ApproveDevicePairing(identity, request),
-                                    ControlMessageType.RejectDevicePairing => RejectDevicePairing(identity, request),
-                                    ControlMessageType.ListPairedClients => new ControlResponse { IsSuccessful = true, PairedClients = _devicePairingCoordinator.GetPairedClients(identity.UserSid) },
-                                    ControlMessageType.RevokePairedClient => RevokePairedClient(identity, request),
-                                    ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
-                                    ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
-                                    ControlMessageType.SetTemporaryDiagnosticLogLevel => SetTemporaryDiagnosticLogLevel(request),
-                                    ControlMessageType.ReleaseTemporaryDiagnosticLogLevel => ReleaseTemporaryDiagnosticLogLevel(request),
-                                    _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
-                                };
-                            }
-                            catch (JsonException ex)
-                            {
-                                _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: The client sent an invalid JSON request payload.");
-                                response = new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The client request payload was invalid." };
-                            }
-
-                            if (isReplayableMutation && response.IsSuccessful)
-                            {
-                                _requestReplayStore.Store(identity.UserSid, request, response, DateTime.UtcNow);
-                            }
+                            _logger.Warn(ex, "ControlClientPipeServer/HandleClientAsync: The client sent an invalid JSON request payload.");
+                            return new ControlResponse { ErrorCode = ControlErrorCode.InvalidRequest, Message = "The client request payload was invalid." };
                         }
-                    }
-                    finally
-                    {
-                        if (isReplayableMutation)
-                        {
-                            _replayableMutationLock.Release();
-                        }
-                    }
+                    }, cancellationToken).ConfigureAwait(false);
 
                     response.ProtocolWelcome = welcome;
                 }
@@ -295,16 +270,6 @@ public sealed class ControlClientPipeServer
         {
             throw new TimeoutException($"The client did not send a complete request within {timeout.TotalSeconds:0} seconds.", ex);
         }
-    }
-
-    private static bool IsReplayableMutation(ControlMessageType messageType)
-    {
-        return messageType is ControlMessageType.ApplyProfile or ControlMessageType.StartShortcut or ControlMessageType.SaveWindowPlacements or ControlMessageType.ClearWindowPlacements or ControlMessageType.CancelOperation or
-            ControlMessageType.CreateProfileFromCurrent or ControlMessageType.RenameProfile or ControlMessageType.DeleteProfile or ControlMessageType.UpdateProfileFromCurrent or ControlMessageType.UpdateDisplayProfileSettings or
-            ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent or
-            ControlMessageType.CommitRepositorySnapshot or ControlMessageType.SetMessageReadState or ControlMessageType.ResolveOperationDecision or ControlMessageType.UpdateAnonymousMetricsSettings or
-            ControlMessageType.InitializeAnonymousMetrics or ControlMessageType.ForceReleaseDisplayControl or ControlMessageType.RecordRecoveryAdministration or ControlMessageType.RestartUserAgent or
-            ControlMessageType.CreateUserSupportBundle;
     }
 
     private ControlResponse SetTemporaryDiagnosticLogLevel(ControlEnvelope request)

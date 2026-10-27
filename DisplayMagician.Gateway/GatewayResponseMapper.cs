@@ -22,6 +22,7 @@ public static class GatewayResponseMapper
             ControlErrorCode.OperationNotCancellable => (StatusCodes.Status409Conflict, "operation-not-cancellable", "Operation not cancellable"),
             ControlErrorCode.DisplayControlBusy => (StatusCodes.Status409Conflict, "operation-busy", "Operation busy"),
             ControlErrorCode.RecoveryRequired => (StatusCodes.Status409Conflict, "recovery-conflict", "Recovery required"),
+            ControlErrorCode.OutcomeUnknown => (StatusCodes.Status409Conflict, "operation-outcome-unknown", "Operation outcome unknown"),
             ControlErrorCode.DecisionUnavailable => (StatusCodes.Status409Conflict, "decision-already-resolved", "Decision unavailable"),
             ControlErrorCode.AgentUnavailable or ControlErrorCode.AgentNotConnected or ControlErrorCode.AgentNotHealthy or ControlErrorCode.NotActiveConsoleUser or ControlErrorCode.SessionLocked => (StatusCodes.Status503ServiceUnavailable, "target-unavailable", "Target unavailable"),
             ControlErrorCode.UnsupportedProtocolVersion or ControlErrorCode.IncompatibleProtocolVersion => (StatusCodes.Status409Conflict, "protocol-version-incompatible", "Protocol version incompatible"),

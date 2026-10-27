@@ -72,6 +72,20 @@ public sealed class ProfileOperationRouter
 
     public async Task<ControlResponse> RestartUserAgentAsync(string userSid, int sessionId, Guid requestId, CancellationToken cancellationToken)
     {
+        try
+        {
+            return await RestartUserAgentCoreAsync(userSid, sessionId, requestId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is SessionLauncherUnavailableException || ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is UnauthorizedAccessException)
+        {
+            Logger.Warn(ex, "ProfileOperationRouter/RestartUserAgentAsync: Could not restart User Agent for SID {0}, session {1}.", userSid, sessionId);
+            RecordRestart(userSid, sessionId, "Failed");
+            return new ControlResponse { ErrorCode = ControlErrorCode.OutcomeUnknown, Message = "The Session Launcher could not confirm the User Agent restart. No replacement was started after an unconfirmed stop." };
+        }
+    }
+
+    private async Task<ControlResponse> RestartUserAgentCoreAsync(string userSid, int sessionId, Guid requestId, CancellationToken cancellationToken)
+    {
         AgentRegistration? existingAgent = _coordinator.GetAgentRegistration(userSid, sessionId);
         if (existingAgent != null)
         {
@@ -214,7 +228,12 @@ public sealed class ProfileOperationRouter
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "A display profile ID and correlation IDs are required." };
         }
 
-        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
+        AgentRegistration? agent;
+        try { agent = await GetOrStartAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false); }
+        catch (SessionLauncherUnavailableException ex)
+        {
+            return new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed, Message = ex.Message };
+        }
         if (agent == null)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
@@ -239,13 +258,16 @@ public sealed class ProfileOperationRouter
                 RequestId = requestId,
                 Payload = JsonSerializer.Serialize(new ApplyProfileRequest { ProfileId = profileId, OperationId = operationId })
             }, cancellationToken).ConfigureAwait(false);
-            _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
+            // Acceptance of an asynchronous operation is not completion. Keep its
+            // lease until the Agent publishes the matching terminal status.
+            if (!response.IsSuccessful || response.OperationStatus == null || response.OperationStatus.IsTerminal)
+                _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, false, DateTime.UtcNow);
             return response;
         }
-        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is InvalidDataException || ex is TimeoutException)
+        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is UnauthorizedAccessException)
         {
             _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, true, DateTime.UtcNow);
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
+            return new ControlResponse { ErrorCode = ControlErrorCode.OutcomeUnknown, Message = "The User Agent could not confirm the command result. The operation may have started; inspect its status before retrying." };
         }
     }
 
@@ -267,7 +289,12 @@ public sealed class ProfileOperationRouter
             RequestId = requestId,
             Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = shortcutId, OperationId = operationId })
         };
-        AgentRegistration? agent = await GetOrStartAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false);
+        AgentRegistration? agent;
+        try { agent = await GetOrStartAgentAsync(userSid, sessionId, requestId, operationId, cancellationToken).ConfigureAwait(false); }
+        catch (SessionLauncherUnavailableException ex)
+        {
+            return new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed, Message = ex.Message };
+        }
         if (agent == null)
         {
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent is not connected for this session." };
@@ -294,10 +321,10 @@ public sealed class ProfileOperationRouter
 
             return response;
         }
-        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+        catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is InvalidDataException || ex is TimeoutException || ex is UnauthorizedAccessException)
         {
             _coordinator.CompleteDisplayOperation(userSid, sessionId, operationId, true, DateTime.UtcNow);
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
+            return new ControlResponse { ErrorCode = ControlErrorCode.OutcomeUnknown, Message = "The User Agent could not confirm the command result. The operation may have started; inspect its status before retrying." };
         }
     }
 
@@ -349,7 +376,8 @@ public sealed class ProfileOperationRouter
         }
         catch (Exception ex) when (ex is InvalidOperationException || ex is System.IO.IOException || ex is InvalidDataException || ex is TimeoutException)
         {
-            return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The User Agent command endpoint is unavailable." };
+            return new ControlResponse { ErrorCode = ControlRequestReplayStore.IsReadOnlyRequest(command.MessageType) ? ControlErrorCode.AgentUnavailable : ControlErrorCode.OutcomeUnknown,
+                Message = "The User Agent could not confirm the command result. Inspect the current state before retrying a mutation." };
         }
     }
 

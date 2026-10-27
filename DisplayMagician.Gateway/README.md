@@ -21,6 +21,8 @@ Gateway limits HTTP request bodies to 64 KiB and non-streaming JSON responses to
 
 ## Development
 
+Unconfirmed Agent mutation outcomes map to non-retryable `409 operation-outcome-unknown`. The request may have run; inspect operation/resource state before starting another action. Remote shortcuts use ControlService's normal shortcut lease/serialization path.
+
 ```powershell
 dotnet build .\DisplayMagician.Gateway\DisplayMagician.Gateway.csproj
 ```

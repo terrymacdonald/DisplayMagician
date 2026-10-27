@@ -18,6 +18,7 @@ public sealed class ControlServiceRetryPolicyTests
     [InlineData(ControlErrorCode.NotActiveConsoleUser)]
     [InlineData(ControlErrorCode.DisplayControlBusy)]
     [InlineData(ControlErrorCode.InvalidRequest)]
+    [InlineData(ControlErrorCode.OutcomeUnknown)]
     public void ShouldRetryAfterStartingAgent_DoesNotRetryTerminalResponses(ControlErrorCode errorCode)
     {
         ControlResponse response = new ControlResponse { IsSuccessful = false, ErrorCode = errorCode };

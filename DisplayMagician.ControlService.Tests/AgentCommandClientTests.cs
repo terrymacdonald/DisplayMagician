@@ -11,6 +11,27 @@ namespace DisplayMagician.ControlService.Tests;
 
 public sealed class AgentCommandClientTests
 {
+    [Theory]
+    [InlineData("{")]
+    [InlineData("null")]
+    [InlineData(null)]
+    [InlineData("wrong-frame-version")]
+    public async Task MalformedReplyIsReportedAsInvalidData(string? payload)
+    {
+        string name = "displaymagician-test-" + Guid.NewGuid().ToString("N");
+        using CancellationTokenSource timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using NamedPipeServerStream server = new NamedPipeServerStream(name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        Task connected = server.WaitForConnectionAsync(timeout.Token);
+        Task<ControlResponse> sent = new AgentCommandClient(TimeSpan.FromSeconds(2)).SendAsync(new AgentRegistration { CommandPipeName = name },
+            new ControlEnvelope { MessageType = ControlMessageType.StartShortcut }, timeout.Token);
+        await connected;
+        ControlEnvelope request = (await ControlEnvelopeSerializer.ReadAsync(server, timeout.Token))!;
+        await ControlEnvelopeSerializer.WriteAsync(server, new ControlEnvelope { RequestId = request.RequestId, MessageType = request.MessageType,
+            ProtocolVersion = request.ProtocolVersion + (payload == "wrong-frame-version" ? 1 : 0),
+            Payload = payload == "wrong-frame-version" ? JsonSerializer.Serialize(new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed }) : payload! }, timeout.Token);
+        await Assert.ThrowsAsync<InvalidDataException>(() => sent);
+    }
+
     [Fact]
     public async Task SendAsync_TimesOutWhenTheUserAgentDoesNotRespond()
     {

@@ -60,6 +60,7 @@ public sealed class GatewayResponseMapperTests
     [Theory]
     [InlineData(ControlErrorCode.SessionLocked, StatusCodes.Status503ServiceUnavailable, "target-unavailable")]
     [InlineData(ControlErrorCode.RecoveryRequired, StatusCodes.Status409Conflict, "recovery-conflict")]
+    [InlineData(ControlErrorCode.OutcomeUnknown, StatusCodes.Status409Conflict, "operation-outcome-unknown")]
     [InlineData(ControlErrorCode.ResourceNotFound, StatusCodes.Status404NotFound, "resource-not-found")]
     [InlineData(ControlErrorCode.PairingRequired, StatusCodes.Status401Unauthorized, "authentication-required")]
     [InlineData(ControlErrorCode.ValidationFailed, StatusCodes.Status422UnprocessableEntity, "validation-failed")]
@@ -77,6 +78,7 @@ public sealed class GatewayResponseMapperTests
         context.Response.Body.Position = 0;
         using JsonDocument problem = JsonDocument.Parse(context.Response.Body);
         Assert.Equal(expectedCode, problem.RootElement.GetProperty("errorCode").GetString());
+        if (errorCode == ControlErrorCode.OutcomeUnknown) Assert.False(problem.RootElement.GetProperty("retryable").GetBoolean());
         if (expectedStatus == StatusCodes.Status503ServiceUnavailable)
         {
             Assert.True(problem.RootElement.GetProperty("retryable").GetBoolean());

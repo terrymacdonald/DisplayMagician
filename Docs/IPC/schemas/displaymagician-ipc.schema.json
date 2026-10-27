@@ -29,7 +29,7 @@
     "ControlErrorCode": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 23
+      "maximum": 27
     },
     "ProtocolHello": {
       "type": "object",

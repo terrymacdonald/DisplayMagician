@@ -12,6 +12,7 @@ public sealed class ControlStateCoordinator
     private readonly Dictionary<int, RegisteredAgent> _agentsBySession = new Dictionary<int, RegisteredAgent>();
     private readonly DisplayControlLeaseStore? _leaseStore;
     private DisplayControlLease? _displayControlLease;
+    private bool _activeOperationIsExplicit;
 
     public ControlStateCoordinator()
     {
@@ -21,6 +22,7 @@ public sealed class ControlStateCoordinator
     {
         _leaseStore = leaseStore ?? throw new ArgumentNullException(nameof(leaseStore));
         _displayControlLease = _leaseStore.Load();
+        _activeOperationIsExplicit = _displayControlLease?.ActiveOperationId.HasValue == true;
     }
 
     public void RegisterAgent(AgentRegistration registration, DateTime utcNow)
@@ -92,15 +94,20 @@ public sealed class ControlStateCoordinator
             agent.Registration.OperationState = operationState;
             agent.Registration.IsRecoveryRequired = isRecoveryRequired;
 
-            if (_displayControlLease != null && _displayControlLease.OwnerSessionId == sessionId)
+            if (_displayControlLease != null && _displayControlLease.OwnerSessionId == sessionId &&
+                string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase))
             {
                 _displayControlLease.LastHeartbeatUtc = utcNow;
-                _displayControlLease.IsRecoveryRequired = isRecoveryRequired;
+                _displayControlLease.IsRecoveryRequired |= isRecoveryRequired;
                 if (operationState == AgentOperationState.Running || operationState == AgentOperationState.Restoring)
                 {
-                    _displayControlLease.ActiveOperationId ??= Guid.NewGuid();
+                    if (!_displayControlLease.ActiveOperationId.HasValue)
+                    {
+                        _displayControlLease.ActiveOperationId = Guid.NewGuid();
+                        _activeOperationIsExplicit = false;
+                    }
                 }
-                else if (operationState == AgentOperationState.Idle && !isRecoveryRequired)
+                else if (operationState == AgentOperationState.Idle && !isRecoveryRequired && !_activeOperationIsExplicit)
                 {
                     _displayControlLease.ActiveOperationId = null;
                 }
@@ -129,6 +136,9 @@ public sealed class ControlStateCoordinator
             {
                 return Deny(ControlErrorCode.RecoveryRequired, "The User Agent must restore temporary state before a new operation can begin.");
             }
+            if (_displayControlLease?.IsRecoveryRequired == true && _displayControlLease.OwnerSessionId == sessionId &&
+                string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase))
+                return Deny(ControlErrorCode.RecoveryRequired, "The display lease still requires confirmed recovery before new work can begin.");
 
             if (_displayControlLease != null && (_displayControlLease.OwnerSessionId != sessionId || !string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase)))
             {
@@ -141,6 +151,7 @@ public sealed class ControlStateCoordinator
                 _displayControlLease = null;
             }
 
+            if (_displayControlLease == null) _activeOperationIsExplicit = false;
             _displayControlLease ??= new DisplayControlLease
             {
                 OwnerUserSid = userSid,
@@ -183,6 +194,7 @@ public sealed class ControlStateCoordinator
             }
 
             _displayControlLease.ActiveOperationId = operationId;
+            _activeOperationIsExplicit = true;
             _displayControlLease.LastHeartbeatUtc = utcNow;
             PersistLease();
             return true;
@@ -202,6 +214,7 @@ public sealed class ControlStateCoordinator
             _displayControlLease.LastHeartbeatUtc = utcNow;
             _displayControlLease.IsRecoveryRequired = requiresRecovery;
             _displayControlLease.ActiveOperationId = requiresRecovery ? operationId : null;
+            _activeOperationIsExplicit = requiresRecovery;
             PersistLease();
         }
     }
@@ -219,6 +232,29 @@ public sealed class ControlStateCoordinator
             _displayControlLease = null;
             ClearPersistedLease();
             return releasedLease;
+        }
+    }
+
+    public void RecordOperationStatus(OperationStatus status, DateTime utcNow)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+        lock (_syncRoot)
+        {
+            if (_displayControlLease == null || _displayControlLease.OwnerSessionId != status.OwnerSessionId ||
+                !string.Equals(_displayControlLease.OwnerUserSid, status.OwnerUserSid, StringComparison.OrdinalIgnoreCase)) return;
+            if (status.IsTerminal)
+            {
+                CompleteDisplayOperation(status.OwnerUserSid, status.OwnerSessionId, status.OperationId,
+                    status.ErrorCode == ControlErrorCode.RecoveryRequired, utcNow);
+            }
+            else if (!_activeOperationIsExplicit)
+            {
+                // Automatically detected games acquire a lease without a client
+                // reservation. Bind their real operation ID when progress arrives.
+                _displayControlLease.ActiveOperationId = status.OperationId;
+                _activeOperationIsExplicit = true;
+                PersistLease();
+            }
         }
     }
 
@@ -392,7 +428,7 @@ public sealed class ControlStateCoordinator
 
     private void ConfirmRecoveryRestored(AgentRegistration registration)
     {
-        if (_displayControlLease == null || !_displayControlLease.IsRecoveryRequired || registration.IsRecoveryRequired ||
+        if (_displayControlLease == null || !_displayControlLease.IsRecoveryRequired || registration.IsRecoveryRequired || registration.OperationState != AgentOperationState.Idle ||
             _displayControlLease.OwnerSessionId != registration.SessionId ||
             !string.Equals(_displayControlLease.OwnerUserSid, registration.UserSid, StringComparison.OrdinalIgnoreCase))
         {
@@ -401,6 +437,7 @@ public sealed class ControlStateCoordinator
 
         _displayControlLease.IsRecoveryRequired = false;
         _displayControlLease.ActiveOperationId = null;
+        _activeOperationIsExplicit = false;
         PersistLease();
     }
 

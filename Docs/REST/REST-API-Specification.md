@@ -780,6 +780,7 @@ The IPC-to-HTTP mapping for shared failure codes is:
 | `AgentNotConnected`, `AgentNotHealthy`, `NotActiveConsoleUser`, `SessionLocked`, `AgentUnavailable` | `503 target-unavailable` when a route requires live target work; retained operation reads follow section 5.7 |
 | `DisplayControlBusy` | `409 operation-busy` |
 | `RecoveryRequired` | `409 recovery-conflict` |
+| `OutcomeUnknown` | Non-retryable `409 operation-outcome-unknown`; inspect state before another action. |
 | `Unauthorized`, `AdministratorRequired` | `403 capability-denied` after valid device authentication |
 | `ProfileNotFound`, `AudioProfileNotFound`, `ShortcutNotFound`, `OperationNotFound`, `ResourceNotFound` | `404 resource-not-found` |
 | `ValidationFailed` | `422 validation-failed` |

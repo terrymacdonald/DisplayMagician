@@ -331,6 +331,7 @@ public sealed class NamedPipeControlServer
             try
             {
                 OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
+                _coordinator.RecordOperationStatus(status, DateTime.UtcNow);
                 await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Operation status recorded.", cancellationToken, operationStatus: status).ConfigureAwait(false);
             }
             catch (InvalidOperationException ex)
@@ -352,7 +353,8 @@ public sealed class NamedPipeControlServer
 
             foreach (OperationStatusUpdate update in reconciliation.ActiveUpdates!)
             {
-                _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
+                OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
+                _coordinator.RecordOperationStatus(status, DateTime.UtcNow);
             }
             await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Active operation statuses reconciled.", cancellationToken).ConfigureAwait(false);
             return;

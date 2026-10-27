@@ -53,7 +53,7 @@ public sealed class AgentCommandClient : IAgentCommandClient
             responseTimeoutSource.CancelAfter(_responseTimeout);
             await ControlEnvelopeSerializer.WriteAsync(pipe, request, responseTimeoutSource.Token).ConfigureAwait(false);
             ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, responseTimeoutSource.Token).ConfigureAwait(false);
-            if (response == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType)
+            if (response == null || response.Payload == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType || response.ProtocolVersion != request.ProtocolVersion)
             {
                 throw new InvalidDataException("The User Agent returned an invalid command response.");
             }
@@ -66,6 +66,10 @@ public sealed class AgentCommandClient : IAgentCommandClient
             }
 
             return controlResponse;
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException("The User Agent returned an unreadable command response.", ex);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {

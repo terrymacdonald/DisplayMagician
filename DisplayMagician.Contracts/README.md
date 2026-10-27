@@ -28,6 +28,8 @@ Successful saved-definition edits may include `SavedResourceChanges` with the re
 
 Successful replies must satisfy both the negotiated protocol version and every capability required by the caller. Undefined numeric client kinds are rejected during hello validation.
 
+`ControlErrorCode.OutcomeUnknown` (27) reports an unconfirmed command outcome and must not trigger automatic re-execution. It is additive to the existing version-1 contract. Local replay reservations survive interruptions; the Gateway maps this condition to non-retryable `409 operation-outcome-unknown`.
+
 ```powershell
 dotnet build .\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj
 ```

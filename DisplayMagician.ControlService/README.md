@@ -26,6 +26,10 @@ ControlService reconciles the installer-owned Private, Domain, and Public Gatewa
 
 ## Development
 
+Local replay-protected mutations reserve their user/request ID and payload fingerprint before dispatch. Successful replies are retained for 24 hours; confirmed failures release their reservations. Pending/uncertain requests remain blocked as `OutcomeUnknown` across service restarts and are not evicted to make room. Capacity exhaustion rejects new reservations rather than losing an existing guarantee. Version-2 records add pending state; unversioned version-1 completed records remain readable, and atomic writes retain the prior ledger as backup. An unreadable/invalid/missing-with-backup local ledger blocks all state-changing client requests while read-only queries continue. Repair the authoritative ledger and restart ControlService; do not silently restore an older backup or discard history.
+
+Remote shortcut execution uses the same machine lease and operation routing as local shortcuts. Asynchronous display-profile acceptance retains its lease until the matching terminal Agent status arrives. Idle heartbeats cannot clear an explicit reservation or a recovery requirement, and a reused Windows session ID cannot let another user's heartbeat update the old lease. Launcher/RPC failures return structured responses; ambiguous mutation replies retain their replay reservation and display recovery lease. Gateway requests validate both the envelope version and nested JSON before dispatch.
+
 Decision answers arriving at or after expiry resolve the prompt using its existing default and reject the late answer, independently of the periodic expiry sweep. Atomic state replacement retries sharing/lock violations and Windows replacement contention up to three attempts, retaining atomic replacement and backup semantics. Persistent or unrelated failures still propagate.
 
 ```powershell

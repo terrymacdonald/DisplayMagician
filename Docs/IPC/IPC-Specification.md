@@ -343,8 +343,14 @@ The server sends a heartbeat after 20 seconds without a domain event. A client S
 | 21 | `RequiredCapabilityUnavailable` | A required capability is unsupported. |
 | 22 | `AuthenticationRequired` | Remote authentication is missing. |
 | 23 | `PairingRequired` | Remote device must pair. |
+| 24 | `PairingAlreadyResolved` | Pairing has already been approved or rejected. |
+| 25 | `OperationNotCancellable` | The operation cannot currently be cancelled. |
+| 26 | `ResourceNotFound` | The requested resource does not exist. |
+| 27 | `OutcomeUnknown` | Work may have run, but its result was not confirmed. Inspect state; do not rerun automatically. |
 
 Clients MAY retry transport failures and transient Agent availability errors with backoff. Validation, authorisation, not-found, and compatibility failures SHOULD NOT be retried without changing the relevant input or environment.
+
+Replay-protected local mutations are reserved durably before execution. A matching successful result replays for 24 hours after completion. A confirmed failure releases its reservation; an interrupted or uncertain outcome remains blocked and returns `OutcomeUnknown`, including after service restart. Pending reservations do not expire automatically. Do not switch to a new request ID as an automatic workaround for an unknown outcome. An unreadable replay ledger disables state-changing requests while read-only queries remain available until the authoritative ledger is repaired and ControlService restarted. Pairing/administrative flows outside the existing replay-protected set retain their own domain transition checks; they are also blocked while the local ledger is unavailable.
 
 ## 14. Security and privacy requirements
 
