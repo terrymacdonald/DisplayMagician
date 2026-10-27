@@ -138,10 +138,93 @@ Verification: all 34 focused tests pass; affected builds pass with warnings trea
 
 Next batch: deeper desktop repository/cache concurrency and caller-held mutable collections, then game/application catalog identity and refresh semantics. Inspect title-only/ID-only catalog matching across libraries through all callers before changing it. Continue native/vendor invariants, diagnostic collection, UI resource ownership and installed Sandbox validation afterwards. The entire-codebase review remains ongoing.
 
+## Batch 8: desktop cache transactions and shortcut edit conflicts
+
+Reviewed on 28 October 2026. The user clarified that an existing shortcut changed elsewhere should offer reopening the latest version or saving the current draft as a new shortcut. Cancel retains the draft. New shortcuts have no existing edited version to compare.
+
+- Desktop shortcut loads, lookups, mutations and commits now share a transaction lock. A refresh cannot install a list and revision halfway through another commit. AllShortcuts retains its public type but returns a separate list of the current members, so a caller cannot clear the repository or invalidate another reader's enumeration by changing that returned list. ShortcutItem objects remain mutable desktop models; this is not a whole-model immutability conversion.
+- Loads parse, link and sort a candidate list before publishing it. Unreadable JSON, missing collections and null shortcut entries cannot erase the last usable cache. Failed reconnects retain the prior working connection and revision. Absent program/image collections receive their existing empty-list defaults instead of remaining null after JSON.NET Populate.
+- Commit replies are checked for the correct repository and parsed before advancing the revision/rollback snapshot. Successful commits install the returned authoritative data and separate it from the editor's draft. Failed commits retain the known-good cache and the separate draft. Existing service-side optimistic concurrency and persistence schemas remain unchanged.
+- Editors retain an independent original snapshot. An update compares the current shortcut's editable definition and chosen image with that baseline, excluding window-placement captures because those have their own action. Same-shortcut edits/deletions detected after a desktop refresh or a service conflict trigger the user's choice. Changes confined to other shortcuts allow one bounded rebase/retry; a second conflicting commit stops and logs exhaustion. Newer placement captures survive the edit.
+- Added the Designer-backed, modal, parent-centred ShortcutConflictForm with Reopen latest version, Save as new shortcut and Cancel. Reopen reads the latest shortcut/dependencies and keeps the editor open; failed reads preserve the draft. Save as new retains draft settings, scoped start-program IDs and placements under a new shortcut UUID/icon path with the existing '(Copy)' naming convention. It leaves the other client's shortcut intact. Save-on-close distinguishes reopening from a successful save.
+- Display-profile cache responses and reads now copy mutable views and nested settings. Neither transport-response owners nor readers can alter the cached data through shared objects. Cancelled successful replies cannot publish. Earlier latest-request ordering remains covered.
+
+File/caller inventory for this batch: all methods in DisplayMagician/ShortcutRepository.cs and DesktopProfileViewCache.cs; UserAgentRepositoryConnection.cs; ShortcutItem's editing-copy/configuration conversion, profile linking and relevant collection properties; shortcut editor save/load/close paths; library activation/edit/delete/copy/snapshot paths; cache reads in tray, context menus, validators, hotkey labels and image renderers; Program startup/capture refresh calls. Caller tracing does not mark those entire larger files complete.
+
+Verification: added 21 regression cases in DesktopCacheRepositoryTests and updated a preceding UI test to seed private test state rather than mutate the now-detached public list. Final test_displaymagician.ps1 run passed ControlService 237, Gateway 48, UserAgent/desktop 351 and Console 4: 640 passed, zero failed/skipped, with no build warnings/errors. Tests use temporary icon paths, restored static state/logging, substituted pipe replies, STA controls and bounded synchronization barriers; no installed service or real display/audio/game operation runs. The first restricted-network full run passed the first three suites but Console restore failed with NU1301/SSPI errors and vulnerability-feed warnings. The normal-network rerun succeeded without weakening feeds/auditing. Final affected-project build passed with warnings treated as errors. Logging audit: zero issues; generated report removed. Diff and CRLF checks passed.
+
+Follow-ups: game/application catalog identity and executable-selection callers are next. A deletion caller also exposed removal from the live hotkey lists during foreach in DirectInputManager.RemoveHotkeysByUUID; review that cleanup and polling/binding ownership with regression tests in the remaining desktop/hotkey pass. Remaining mutable ShortcutItem/image ownership and native/vendor, diagnostics, installer/Sandbox and native-client validation stay pending. The whole-app review remains ongoing.
+
 ## Decisions and next work
 
 The user approved the coordinated SessionLauncher handshake on 27 October 2026. Both launch and stop now carry a ControlService hello requiring protocol-negotiation/session-launcher. The authenticated broker negotiates before dispatch and returns the shared welcome/error metadata; the caller validates successful replies, endpoint kind, frame version/type and request identity. The version-1 envelope/pipe remain unchanged, but both components must be deployed together because unnegotiated successes are rejected. Twenty-four additional regression cases exercise real framing and isolated same-user test pipes with substituted process callbacks. No installed process launch/stop or pipe authentication rules were changed. Full follow-up verification passed: 178 service/broker tests, 47 Gateway tests, 152 Agent/UI tests and 4 Console tests (381 total), with zero failures/skips and no build warnings/errors. This adds 24 protocol regression cases to the preceding 357-test milestone. The affected build also passed with warnings treated as errors; the logging audit reported zero issues.
 
-The deeper service routing/replay pass is recorded in Batch 2 above. Agent validation and in-flight command handling are recorded in Batch 3. Repository commit and migration checks are recorded in Batch 4. Display/audio profile forms and stale edit references are recorded in Batch 5. Pairing/server-settings checks are recorded in Batch 6. Shortcut forms and tray refreshes are recorded in Batch 7. Continue with desktop repository/cache concurrency, game/application catalog identity and remaining mutable-list/native integration paths. Record each subsequent check and test result here rather than resetting the review.
+The deeper service routing/replay pass is recorded in Batch 2 above. Agent validation and in-flight command handling are recorded in Batch 3. Repository commit and migration checks are recorded in Batch 4. Display/audio profile forms and stale edit references are recorded in Batch 5. Pairing/server-settings checks are recorded in Batch 6. Shortcut forms and tray refreshes are recorded in Batch 7. Desktop cache transactions and shortcut edit conflicts are recorded in Batch 8. Continue with game/application catalog identity, hotkey cleanup and remaining mutable-list/native integration paths. Record each subsequent check and test result here rather than resetting the review.
+
+### Planned review batches
+
+The planned sequence below is retained for continuity. Item 1 received its targeted pass in Batch 8; remaining mutable-model/resource checks stay open. Item 2 is next:
+
+1. Desktop caches and repositories: concurrent refreshes, caller-held mutable objects/collections, lost edits and controls retaining replaced data.
+2. Game and application detection: catalog identity across libraries, executable selection, launcher handoffs, and consistency between shortcuts and start programs.
+3. Operation events and cancellation: delayed events after completion, operation identity, and cancellation targeting the intended run.
+4. Support bundles and diagnostics: collection completeness, redaction, interrupted exports and unavailable component reporting.
+5. Installation and service lifecycle: installed startup/shutdown, upgrades and recovery using Windows Sandbox, including SessionLauncher's privileged process-launch path.
+
+For each batch, add meaningful regression tests for confirmed bugs, build affected projects and periodically run all test suites. Ask before changes that materially affect behaviour, data, security, compatibility or scope. Continue the remaining native/vendor invariants and UI resource-ownership checks as relevant to these batches.
+
+SessionLauncher already has validation and protocol tests in DisplayMagician.ControlService.Tests; a separate test project is not required to extend that coverage. Substituted process callbacks do not validate real privileged launch/token handling, so installed Sandbox validation remains pending. The latest completed milestone is 640 passing tests; no code-coverage measurement has been collected, and test counts do not establish completeness.
+
+## Whole-app completion checklist
+
+Status at the end of Batch 8: eight batches completed; the whole-app review remains in progress. The latest full test run passed 640 tests (ControlService 237, Gateway 48, UserAgent/desktop 351, Console 4), with no failures/skips or build warnings/errors. These are recorded results from Batch 8, not a new run for this documentation update. No code-coverage report has been collected.
+
+The five planned batches above are the immediate sequence. The following checklist also tracks deeper work needed before closing the whole-app review. Initial or targeted checks do not mean every file or caller path in a component has been reviewed.
+
+| Area | Evidence so far | Remaining review / validation | Status |
+| --- | --- | --- | --- |
+| Desktop caches and repositories | Batch 8 transaction, rollback, reader isolation and stale-draft tests | Remaining mutable ShortcutItem/image ownership and broader caller checks | Targeted pass complete; follow-ups pending |
+| Game/application detection | Earlier process/window work and existing regression suites | Cross-library catalog identity, executable selection, launcher handoffs, shortcut/start-program consistency and catalog refresh semantics | Next batch |
+| Operation events and cancellation | Batch 2 leases/routing; Batch 3 command concurrency; Batch 7 UI polling | Delayed terminal/nonterminal events, cancellation identity, reconnects and multi-client ordering | Planned |
+| Support bundles and diagnostics | Initial collection/filter/staging checks and existing tests | All retained component logs, manifest completeness, redaction, unavailable sources, reparse points and interrupted exports | Planned |
+| Gateway remote boundary | Initial protocol/paging checks; Batch 2 routing/replay checks | Authentication/authorisation, pairing/revocation races, TLS renewal, replay lifecycle and event-stream disconnects | Deeper pass pending |
+| ControlService coordination | Batches 1-4 decisions, leases, replay and persistence | Remaining scheduling, event-journal durability, restart recovery and concurrent machine-state changes | Deeper pass pending |
+| UserAgent lifecycle | Batches 3-4 command handling/storage plus earlier lifecycle fixes | End-to-end shortcut execution/restoration, startup recovery, cancellation and interrupted operations | Deeper pass pending |
+| Native display/audio integrations | Existing tests and initial failure-path checks | Windows/vendor structures, device removal and failed/partial changes; validate on real hardware | Source and hardware checks pending |
+| Contracts and ConfigurationDefinitions | Negotiation/framing checks and Batches 3-4 validation/migrations | Remaining nested payloads, schema/migration chains, consumer agreement and compatibility | Deeper pass pending |
+| Desktop forms and resources | Messages form plus Batches 5-7 profile, pairing, server, shortcut and tray work | Remaining forms/callers, dialog ownership, timers, images and native-resource disposal | Partial |
+| Console client | Four tests; initial decision/reply fixes | Argument handling, retries/cancellation, error output and reconnect behaviour | Deeper pass pending |
+| Kotlin and Swift clients | Generated-contract checks, Kotlin compilation/tests | Connection recovery, cancellation, TLS and secure credential storage; execute Swift tests on macOS/Xcode | Deeper/native checks pending |
+| SessionLauncher | Validation and negotiated launch/stop pipe tests in ControlService.Tests | Real privileged tokens, fixed signed payload launch/stop and installed lifecycle in Windows Sandbox | Installed validation pending |
+| Build, packaging and identity | Script failure handling and initial installer declarations | Release/package builds, prerequisites, identity registration, script failures and Sandbox install/upgrade/uninstall/recovery | Integration checks pending |
+
+### File-level review ledger
+
+This ledger starts with identifiable files from completed batches and the next batch. It is not yet a complete source-file inventory. At the start of each area, enumerate its production files and relevant scripts/configuration, then add rows or an explicitly listed file group. A file without recorded evidence remains unreviewed for completion tracking. Include tests and generated/native sources in the inventory, identifying generated files and reviewing their generators/contracts rather than claiming a manual review of every generated line.
+
+| File or explicit file group | Recorded review evidence | Remaining work / status |
+| --- | --- | --- |
+| DisplayMagician/DesktopProfileViewCache.cs | Batches 7-8 ordering, cancellation and view/settings isolation tests | Targeted pass complete; broader UI/native consumers pending |
+| DisplayMagician/ShortcutRepository.cs | Batch 8 full-method review; transaction, rollback, snapshot and edit-conflict tests | Targeted pass complete; mutable item/image ownership and hotkey cleanup follow-ups pending |
+| DisplayMagician/UIForms/MainForm.cs | Batch 7 tray ordering, lifetime and stale-operation tests | Partial: remaining events and resource ownership |
+| DisplayMagician/UIForms/ShortcutForm.cs; ShortcutLibraryForm.cs; ShortcutLoadingForm.cs | Batch 7 draft, disposal, polling and action tests | Batches 7-8 targeted passes complete; catalog identity and remaining resource checks pending |
+| DisplayMagician/UIForms/DisplayProfileForm.cs; AudioProfilesForm.cs | Batch 5 refresh/action/lifetime tests | Targeted pass complete; remaining callers included in deeper UI/native checks |
+| DisplayMagician/UIForms/PairDeviceForm.cs; ServerSettingsForm.cs | Batch 6 ordering, lifetime and action tests | Targeted pass complete; end-to-end pairing/service validation pending |
+| DisplayMagician/UIForms/ShortcutConflictForm.cs; ShortcutConflictForm.Designer.cs | Batch 8 Designer-backed choice dialog and injected-choice workflow tests | Interactive visual/Designer validation pending |
+| DisplayMagician/DirectInputManager.cs (RemoveHotkeysByUUID caller only) | Batch 8 deletion trace found live-list removal during foreach | Pending: cleanup regression tests and binding/polling ownership review |
+| DisplayMagician/UIForms/MessagesForm.cs | Initial async failure/disposal fixes and tests | Targeted pass complete; remaining integration paths pending |
+| DisplayMagician/ConfigMigrationRunner.cs; DisplayMagician.ControlService/UserDataMigrationRunner.cs; LegacyFileMigration.cs | Batch 4 migration validation/failure coverage | Targeted pass complete; remaining migration chains and installed upgrades pending |
+| DisplayMagician.UserAgent/Processes/ProcessTreeMonitor.cs; WindowPlacementService.cs | Earlier process/window reviews and existing regression suites | Recheck through game detection, shortcut lifecycle and real-game validation; earlier reviews are not whole-file completion evidence |
+
+For every subsequent ledger entry, record the files and caller paths inspected, findings/fixes or no findings, regression tests and commands/results, and outstanding manual checks. Link evidence to the corresponding batch. Mark an area complete only when its inventory has been accounted for and outstanding checks are completed or explicitly deferred with the user's agreement. Record unavailable hardware/platform validation as pending rather than passed.
+
+- [x] Record completed Batches 1-8 and their verification evidence.
+- [x] Record the next five batches and the broader remaining areas.
+- [ ] Expand the file ledger as each area is reviewed; reconcile it against the final repository inventory.
+- [ ] Collect test-coverage reports where supported and inspect untested critical branches; do not use a percentage as the sole completion criterion.
+- [ ] Complete the remaining source, caller-path and regression-test checks above.
+- [ ] Complete Windows Sandbox installation/service/broker validation.
+- [ ] Complete real display/audio/game validation and macOS/Swift execution, or record explicitly agreed deferrals.
+- [ ] Run final builds, relevant contract/generated-client/logging checks and all test suites; record results and any remaining limitations.
 
 Item 7 from the preceding window review (completed window-handle reservation) remains deferred as agreed.

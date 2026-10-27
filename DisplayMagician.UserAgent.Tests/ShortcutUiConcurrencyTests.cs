@@ -435,8 +435,8 @@ public sealed class ShortcutUiConcurrencyTests : IDisposable
         using ShortcutLibraryForm form = new(client, (_, _, _) => { }, (_, _) => save.Task);
         global::DisplayMagician.ShortcutItem original = new() { Name = "Original" };
         global::DisplayMagician.ShortcutItem current = new() { Name = "Current" };
-        global::DisplayMagician.ShortcutRepository.AllShortcuts.Add(original);
-        global::DisplayMagician.ShortcutRepository.AllShortcuts.Add(current);
+        typeof(global::DisplayMagician.ShortcutRepository).GetField("_allShortcuts", BindingFlags.Static | BindingFlags.NonPublic)!
+            .SetValue(null, new List<global::DisplayMagician.ShortcutItem> { original, current });
         Set(form, "_selectedShortcut", original);
         Set(form, "_activeShortcutOperationId", Guid.NewGuid());
         Click(form, "btn_save_window_positions_Click");

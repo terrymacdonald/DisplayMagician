@@ -22,7 +22,7 @@ internal static class DesktopProfileViewCache
         {
             lock (_syncRoot)
             {
-                return _views;
+                return _views.Select(CopyView).ToArray();
             }
         }
     }
@@ -33,7 +33,7 @@ internal static class DesktopProfileViewCache
         {
             lock (_syncRoot)
             {
-                return _currentLayout;
+                return CopyView(_currentLayout);
             }
         }
     }
@@ -48,9 +48,11 @@ internal static class DesktopProfileViewCache
             ProfileListResult profiles = await client.ListProfilesAsync(cancellationToken).ConfigureAwait(false);
             lock (_syncRoot)
             {
-                if (refreshVersion != Interlocked.Read(ref _refreshVersion)) return false;
-                _views = profiles.SavedProfiles ?? Array.Empty<DisplayProfileView>();
-                _currentLayout = profiles.CurrentLayout;
+                if (cancellationToken.IsCancellationRequested || refreshVersion != Interlocked.Read(ref _refreshVersion)) return false;
+                DisplayProfileView[] views = (profiles.SavedProfiles ?? Array.Empty<DisplayProfileView>()).Select(CopyView).ToArray();
+                DisplayProfileView currentLayout = CopyView(profiles.CurrentLayout);
+                _views = views;
+                _currentLayout = currentLayout;
             }
 
             return true;
@@ -72,12 +74,42 @@ internal static class DesktopProfileViewCache
 
         lock (_syncRoot)
         {
-            return _views.FirstOrDefault(profile => string.Equals(profile.Id, profileId, StringComparison.OrdinalIgnoreCase));
+            return CopyView(_views.FirstOrDefault(profile => string.Equals(profile.Id, profileId, StringComparison.OrdinalIgnoreCase)));
         }
     }
 
     public static string GetName(string profileId)
     {
         return Get(profileId)?.Name ?? "Unknown";
+    }
+
+    // Transport DTOs are mutable. Neither the response owner nor a cache reader
+    // should be able to change another reader's profile/settings snapshot.
+    private static DisplayProfileView CopyView(DisplayProfileView profile)
+    {
+        if (profile == null) return null;
+        return new DisplayProfileView
+        {
+            Id = profile.Id,
+            Name = profile.Name,
+            ThumbnailPngBase64 = profile.ThumbnailPngBase64,
+            DetailedLayoutPngBase64 = profile.DetailedLayoutPngBase64,
+            DesktopIconIcoBase64 = profile.DesktopIconIcoBase64,
+            ConnectedDisplayCount = profile.ConnectedDisplayCount,
+            PrimaryDisplayWidth = profile.PrimaryDisplayWidth,
+            PrimaryDisplayHeight = profile.PrimaryDisplayHeight,
+            IsSaved = profile.IsSaved,
+            IsActive = profile.IsActive,
+            IsValid = profile.IsValid,
+            DiagnosticMessage = profile.DiagnosticMessage,
+            Settings = profile.Settings == null ? new DisplayProfileSettings() : new DisplayProfileSettings
+            {
+                ApplyWallpaper = profile.Settings.ApplyWallpaper,
+                BackgroundDescription = profile.Settings.BackgroundDescription,
+                ForceExplorerRestart = profile.Settings.ForceExplorerRestart,
+                ApplyProfileCount = profile.Settings.ApplyProfileCount,
+                ApplyProfileDelay = profile.Settings.ApplyProfileDelay
+            }
+        };
     }
 }

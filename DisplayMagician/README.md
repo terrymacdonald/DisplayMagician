@@ -51,3 +51,7 @@ Tray refreshes marshal to the UI thread, coalesce follow-up requests and reject 
 - `DisplayMagicianConsole` offers the same local service through a command-line interface.
 
 See the [repository README](../README.md) for product usage and the [control-service plan](../DISPLAYMAGICIAN_V4_CONTROL_SERVICE_PLAN.md) for the component architecture.
+
+Desktop shortcut-cache reads and commits share a transaction lock. List readers receive a stable membership snapshot; editors continue using separate drafts. Refreshes publish only fully parsed/linked data, failed reconnects retain the previous connection, and successful commits install the returned authoritative snapshot. Missing program collections load as empty lists. Display-profile views and nested settings are copied on cache entry and read, and cancelled refresh replies cannot publish.
+
+When an existing shortcut changes or is deleted elsewhere, saving its draft offers Reopen latest version, Save as new shortcut, or Cancel. Reopen replaces the draft with the latest data and keeps the editor open; Save as new preserves it under a new UUID and icon path with a (Copy) name. Unrelated shortcut changes permit one bounded retry; a newer window-position capture is preserved without treating it as an editor conflict.

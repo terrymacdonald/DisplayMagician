@@ -44,6 +44,7 @@ namespace DisplayMagician.UIForms
         private List<AudioProfileView> _audioProfiles = new List<AudioProfileView>();
         private bool _canAccessAudioSettings;
         private ShortcutItem _shortcutToEdit = null;
+        private ShortcutItem _originalShortcut = null;
         private bool _overrideAudioSpeakerVolume = false;
         private bool _overrideAudioMicrophoneVolume = false;
         private int _overrideAudioSpeakerVolumeLevel = 50;
@@ -80,13 +81,19 @@ namespace DisplayMagician.UIForms
         private int _previewRefreshVersion;
         private ShortcutLoadingForm _loadingSplashScreen;
         private readonly Action _saveBeforeClose;
+        private readonly Func<DialogResult> _resolveShortcutConflict;
 
         public ShortcutForm() : this(new ControlServicePipeClient()) { }
 
-        internal ShortcutForm(ControlServicePipeClient client, Action<string, string, MessageBoxIcon> showMessage = null, Func<string, string, DialogResult> askToSave = null, Action saveBeforeClose = null)
+        internal ShortcutForm(ControlServicePipeClient client, Action<string, string, MessageBoxIcon> showMessage = null, Func<string, string, DialogResult> askToSave = null, Action saveBeforeClose = null, Func<DialogResult> resolveShortcutConflict = null)
         {
             _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
             _saveBeforeClose = saveBeforeClose;
+            _resolveShortcutConflict = resolveShortcutConflict ?? (() =>
+            {
+                using ShortcutConflictForm dialog = new ShortcutConflictForm();
+                return dialog.ShowDialog(this);
+            });
             _showMessage = showMessage ?? ((message, title, icon) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, icon));
             _askToSave = askToSave ?? ((message, title) => MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation));
             _lifetimeToken = _lifetimeSource.Token;
@@ -197,7 +204,11 @@ namespace DisplayMagician.UIForms
         {
             get => _shortcutToEdit;
             // Edit a draft so Cancel and failed commits cannot change the live cache.
-            set => _shortcutToEdit = value?.CreateEditingCopy();
+            set
+            {
+                _shortcutToEdit = value?.CreateEditingCopy();
+                _originalShortcut = value?.CreateEditingCopy();
+            }
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -292,13 +303,13 @@ namespace DisplayMagician.UIForms
                             return;
                         }
                     }
-                    CommitShortcut();
+                    await CommitShortcut();
                 }
                 finally { if (CanUpdateView) tabc_shortcut.Enabled = true; }
             });
         }
 
-        private void CommitShortcut()
+        private async Task CommitShortcut()
         {
             // Store all of the information in the Shortcut object based on what's been selected in this form
 
@@ -628,14 +639,7 @@ namespace DisplayMagician.UIForms
             _shortcutToEdit.WindowPlacementTimeoutSeconds = Convert.ToInt32(nud_window_placement_timeout.Value);
             _shortcutToEdit.RefreshValidity();
 
-            bool saved = _editingExistingShortcut
-                ? ShortcutRepository.UpdateShortcut(_shortcutToEdit)
-                : ShortcutRepository.AddShortcut(_shortcutToEdit);
-            if (!saved)
-            {
-                _showMessage(ShortcutRepository.LastSaveErrorMessage, "Shortcut Save Failed", MessageBoxIcon.Warning);
-                return; // Keep the draft and controls available for correction or retry.
-            }
+            if (!await SaveDraftAsync()) return;
 
             // We've saved, so mark it as so
             _isUnsaved = false;
@@ -643,6 +647,61 @@ namespace DisplayMagician.UIForms
             // Save everything is golden and close the form.
             DialogResult = DialogResult.OK;
             this.Hide();
+        }
+
+        private async Task<bool> SaveDraftAsync()
+        {
+            bool shortcutChanged = false;
+            bool saved = _editingExistingShortcut
+                ? ShortcutRepository.UpdateShortcut(_shortcutToEdit, _originalShortcut, out shortcutChanged)
+                : ShortcutRepository.AddShortcut(_shortcutToEdit);
+            if (saved) return true;
+            if (shortcutChanged)
+            {
+                DialogResult choice = _resolveShortcutConflict();
+                if (!CanUpdateView) return false;
+                if (choice == DialogResult.Yes)
+                {
+                    // Read dependencies before replacing the draft so failed reads
+                    // leave the user's existing edits available.
+                    ProfileListResult profiles = await _controlServiceClient.ListProfilesAsync(_lifetimeToken);
+                    if (!CanUpdateView) return false;
+                    AudioProfileListResult audio = await _controlServiceClient.ListAudioProfilesAsync(_lifetimeToken);
+                    if (!CanUpdateView) return false;
+                    await Task.Run(() => ShortcutRepository.LoadShortcuts());
+                    if (!CanUpdateView) return false;
+                    ShortcutItem latest = ShortcutRepository.GetShortcut(_shortcutToEdit.UUID);
+                    if (latest == null)
+                    {
+                        _showMessage("This shortcut has been deleted. You can keep your draft and save it as a new shortcut.", "Shortcut Not Available", MessageBoxIcon.Warning);
+                        return false;
+                    }
+                    _displayProfiles = profiles.SavedProfiles.ToList();
+                    _audioProfiles = audio.SavedProfiles.ToList();
+                    _canAccessAudioSettings = audio.CanAccessAudioSettings;
+                    Shortcut = latest;
+                    DialogResult = DialogResult.None;
+                    _loadedShortcut = false;
+                    LoadShortcut();
+                    return false; // Reopened for editing; this attempt did not save.
+                }
+                if (choice != DialogResult.No) return false;
+
+                // Keep the complete draft, including scoped start-program IDs and
+                // placements, under a new shortcut identity and icon path.
+                _shortcutToEdit = _shortcutToEdit.CreateEditingCopy();
+                _shortcutToEdit.UUID = Guid.NewGuid().ToString("D");
+                _shortcutToEdit.SavedShortcutIconCacheFilename = string.Empty;
+                _shortcutToEdit.AutoName = false;
+                _shortcutToEdit.Name += " (Copy)";
+                _uuid = _shortcutToEdit.UUID;
+                _editingExistingShortcut = false;
+                cb_autosuggest.Checked = false;
+                txt_shortcut_save_name.Text = _shortcutToEdit.Name;
+                if (ShortcutRepository.AddShortcut(_shortcutToEdit)) return true;
+            }
+            _showMessage(ShortcutRepository.LastSaveErrorMessage, "Shortcut Save Failed", MessageBoxIcon.Warning);
+            return false;
         }
 
         private void btn_app_executable_Click(object sender, EventArgs e)
@@ -2458,7 +2517,7 @@ namespace DisplayMagician.UIForms
                         // Keep the window and lifetime token available while validation/save awaits the service.
                         e.Cancel = true;
                         await SaveShortcutAsync();
-                        if (CanUpdateView && !_isUnsaved) Close();
+                        if (CanUpdateView && !_isUnsaved && DialogResult == DialogResult.OK) Close();
                     }
                 }
                 else
