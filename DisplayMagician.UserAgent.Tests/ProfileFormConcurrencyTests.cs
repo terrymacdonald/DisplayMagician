@@ -224,27 +224,7 @@ public sealed class ProfileFormConcurrencyTests
         while (!condition()) { Assert.True(DateTime.UtcNow < deadline, "The form action did not complete."); await Task.Delay(10); }
     }
 
-    private static void RunSta(Func<Task> test)
-    {
-        Exception? failure = null;
-        Thread thread = new Thread(() =>
-        {
-            using Control dispatcher = new Control();
-            _ = dispatcher.Handle;
-            SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
-            dispatcher.BeginInvoke((Action)(async () =>
-            {
-                try { await test(); }
-                catch (Exception ex) { failure = ex; }
-                finally { Application.ExitThread(); }
-            }));
-            Application.Run();
-        }) { IsBackground = true };
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(20)), "The form test did not complete.");
-        if (failure != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
-    }
+    private static void RunSta(Func<Task> test) => WinFormsTestRunner.Run(test);
 
     private sealed class FakeClient : global::DisplayMagician.ControlServicePipeClient
     {

@@ -38,6 +38,8 @@ For a complete installable build, use `build_displaymagician.ps1` from the repos
 
 Display/audio profile forms ignore superseded refresh replies, cancel pending waits when closed or disposed, and contain service failures at their asynchronous action boundary. Each form prevents overlapping actions and retains the original target ID while awaiting replies. Buttons reflect the selected profile and audio access state. Display-change refreshes marshal to the UI thread and also work when the window handle exists but its controls are hidden. Forms remain backed by the existing Designer files and use the shared Control Service contracts; the injectable internal client/error reporter support isolated UI tests.
 
+Pairing QR/list refreshes and server-status/settings reads also ignore stale or post-close results. Changing the pairing endpoint clears the previous QR immediately. Pairing decisions, revocation, settings saves and recovery actions reject overlapping submissions. Gateway settings must load before saving; Refresh retries a failed initial load without reloading an existing draft. Emergency recovery remains available if settings cannot load. An already-submitted settings save/restart retains its existing completion behaviour after closure, with UI updates suppressed. Restart/UAC failures distinguish saved settings from a failed or cancelled restart. Service authorization, pairing grants and administrator confirmations remain unchanged.
+
 ## Related components
 
 - `DisplayMagician.ControlService` routes desktop requests and owns machine-wide coordination.

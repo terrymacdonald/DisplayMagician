@@ -12,17 +12,50 @@ namespace DisplayMagician.UIForms;
 
 public partial class PairDeviceForm : DisplayMagicianForm
 {
-    private readonly ControlServicePipeClient _controlServiceClient = new ControlServicePipeClient();
+    private readonly ControlServicePipeClient _controlServiceClient;
     private readonly GatewaySettings _settings;
+    private readonly Func<string, string, bool> _confirmAction;
+    private readonly CancellationTokenSource _lifetimeSource = new CancellationTokenSource();
+    private readonly CancellationToken _lifetimeToken;
+    private bool _lifetimeDisposed;
+    private bool _loaded;
+    private bool _actionInProgress;
+    private int _qrRefreshVersion;
+    private int _requestsRefreshVersion;
+    private int _clientsRefreshVersion;
+    private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public PairDeviceForm(GatewaySettings settings)
+    public PairDeviceForm(GatewaySettings settings) : this(settings, new ControlServicePipeClient()) { }
+
+    internal PairDeviceForm(GatewaySettings settings, ControlServicePipeClient client, Func<string, string, bool> confirmAction = null)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
+        _confirmAction = confirmAction ?? ((message, title) => MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes);
+        _lifetimeToken = _lifetimeSource.Token;
         InitializeComponent();
+        lv_pairing_requests.SelectedIndexChanged += (_, _) => SetActionsEnabled();
+        Disposed += (_, _) =>
+        {
+            if (_lifetimeDisposed) return;
+            _lifetimeDisposed = true;
+            _lifetimeSource.Cancel();
+            _lifetimeSource.Dispose();
+        };
+        SetActionsEnabled();
+    }
+
+    private bool CanUpdateView => !IsDisposed && !Disposing && !_lifetimeToken.IsCancellationRequested;
+
+    protected override void OnFormClosing(FormClosingEventArgs e)
+    {
+        base.OnFormClosing(e);
+        if (!e.Cancel && !_lifetimeDisposed) _lifetimeSource.Cancel();
     }
 
     private async void PairDeviceForm_Load(object sender, EventArgs e)
     {
+        _loaded = true;
         await RefreshQrCodeAsync();
         await RefreshRequestsAsync();
         await RefreshPairedDevicesAsync();
@@ -30,7 +63,7 @@ public partial class PairDeviceForm : DisplayMagicianForm
 
     private async void rdo_gateway_location_CheckedChanged(object sender, EventArgs e)
     {
-        if (rdo_local_lan.Checked || rdo_remote_network.Checked)
+        if (_loaded && (rdo_local_lan.Checked || rdo_remote_network.Checked))
         {
             await RefreshQrCodeAsync();
         }
@@ -48,80 +81,85 @@ public partial class PairDeviceForm : DisplayMagicianForm
 
     private async void dgv_paired_devices_CellContentClick(object sender, DataGridViewCellEventArgs e)
     {
-        if (e.RowIndex < 0 || e.ColumnIndex != col_paired_remove.Index || dgv_paired_devices.Rows[e.RowIndex].Tag is not PairedClientView client)
+        if (_actionInProgress || !CanUpdateView || e.RowIndex < 0 || e.RowIndex >= dgv_paired_devices.Rows.Count || e.ColumnIndex != col_paired_remove.Index || dgv_paired_devices.Rows[e.RowIndex].Tag is not PairedClientView client)
         {
             return;
         }
 
-        if (MessageBox.Show(this, $"Remove {client.DisplayName}? This device will need to pair again before it can use DisplayMagician.", "Remove Paired Device", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+        if (!_confirmAction($"Remove {client.DisplayName}? This device will need to pair again before it can use DisplayMagician.", "Remove Paired Device"))
         {
             return;
         }
 
-        ControlResponse response = await _controlServiceClient.RevokePairedClientAsync(client.DeviceId, CancellationToken.None);
-        lbl_paired_result.Text = response.Message;
-        await RefreshPairedDevicesAsync();
+        await RunPairingActionAsync(async () =>
+        {
+            ControlResponse response = await _controlServiceClient.RevokePairedClientAsync(client.DeviceId, _lifetimeToken);
+            if (!CanUpdateView) return;
+            lbl_paired_result.Text = response.Message;
+            await RefreshPairedDevicesAsync();
+            if (CanUpdateView && !response.IsSuccessful) lbl_paired_result.Text = response.Message;
+        }, lbl_paired_result);
     }
 
     private async void btn_approve_request_Click(object sender, EventArgs e)
     {
-        if (lv_pairing_requests.SelectedItems.Count != 1 || lv_pairing_requests.SelectedItems[0].Tag is not DevicePairingSessionView request)
+        if (_actionInProgress || !CanUpdateView || lv_pairing_requests.SelectedItems.Count != 1 || lv_pairing_requests.SelectedItems[0].Tag is not DevicePairingSessionView request)
         {
             return;
         }
 
-        btn_approve_request.Enabled = false;
-        try
+        await RunPairingActionAsync(async () =>
         {
-            ControlResponse response = await _controlServiceClient.ApproveDevicePairingAsync(new ApproveDevicePairingRequest { PairingSessionId = request.PairingSessionId, GrantedCapabilities = request.RequestedCapabilities }, CancellationToken.None);
+            ControlResponse response = await _controlServiceClient.ApproveDevicePairingAsync(new ApproveDevicePairingRequest { PairingSessionId = request.PairingSessionId, GrantedCapabilities = request.RequestedCapabilities }, _lifetimeToken);
+            if (!CanUpdateView) return;
             lbl_request_result.Text = response.Message;
             await RefreshRequestsAsync();
-        }
-        catch (Exception ex)
-        {
-            lbl_request_result.Text = $"Could not approve the device: {ex.Message}";
-        }
-        finally
-        {
-            btn_approve_request.Enabled = true;
-        }
+            if (CanUpdateView && !response.IsSuccessful) lbl_request_result.Text = response.Message;
+        }, lbl_request_result);
     }
 
     private async void btn_reject_request_Click(object sender, EventArgs e)
     {
-        if (lv_pairing_requests.SelectedItems.Count != 1 || lv_pairing_requests.SelectedItems[0].Tag is not DevicePairingSessionView request)
+        if (_actionInProgress || !CanUpdateView || lv_pairing_requests.SelectedItems.Count != 1 || lv_pairing_requests.SelectedItems[0].Tag is not DevicePairingSessionView request)
         {
             return;
         }
 
-        if (MessageBox.Show(this, $"Reject pairing for {request.DeviceDisplayName}?", "Reject Device Pairing", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+        if (!_confirmAction($"Reject pairing for {request.DeviceDisplayName}?", "Reject Device Pairing"))
         {
             return;
         }
 
-        btn_reject_request.Enabled = false;
-        try
+        await RunPairingActionAsync(async () =>
         {
-            ControlResponse response = await _controlServiceClient.RejectDevicePairingAsync(request.PairingSessionId, CancellationToken.None);
+            ControlResponse response = await _controlServiceClient.RejectDevicePairingAsync(request.PairingSessionId, _lifetimeToken);
+            if (!CanUpdateView) return;
             lbl_request_result.Text = response.Message;
             await RefreshRequestsAsync();
-        }
-        catch (Exception ex)
-        {
-            lbl_request_result.Text = $"Could not reject the device: {ex.Message}";
-        }
-        finally
-        {
-            btn_reject_request.Enabled = true;
-        }
+            if (CanUpdateView && !response.IsSuccessful) lbl_request_result.Text = response.Message;
+        }, lbl_request_result);
     }
 
     private async Task RefreshQrCodeAsync()
     {
+        if (!CanUpdateView) return;
+        int refreshVersion = ++_qrRefreshVersion;
+        Image previous = pb_qr_code.Image;
+        pb_qr_code.Image = null;
+        previous?.Dispose();
+        lbl_qr_endpoint.Text = string.Empty;
+        lbl_qr_expiry.Text = string.Empty;
+        lbl_qr_result.Text = "Creating a pairing QR code...";
         try
         {
             string gatewayUri = GetSelectedGatewayUri();
-            DevicePairingQrCode qrCode = await _controlServiceClient.CreateDevicePairingQrAsync(gatewayUri, CancellationToken.None);
+            DevicePairingQrCode qrCode = await _controlServiceClient.CreateDevicePairingQrAsync(gatewayUri, _lifetimeToken);
+            if (!CanUpdateView || refreshVersion != _qrRefreshVersion) return;
+            if (qrCode.ExpiresUtc <= DateTime.UtcNow)
+            {
+                lbl_qr_result.Text = "This pairing QR code has expired. Select the gateway location again to request another code.";
+                return;
+            }
             byte[] pairingPayload = JsonSerializer.SerializeToUtf8Bytes(new
             {
                 version = 1,
@@ -138,7 +176,8 @@ public partial class PairDeviceForm : DisplayMagicianForm
             using QRCodeData data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
             PngByteQRCode pngQrCode = new PngByteQRCode(data);
             using MemoryStream pngStream = new MemoryStream(pngQrCode.GetGraphic(8));
-            Image image = new Bitmap(pngStream);
+            using Image decoded = Image.FromStream(pngStream);
+            Image image = new Bitmap(decoded);
             Image previousImage = pb_qr_code.Image;
             pb_qr_code.Image = image;
             previousImage?.Dispose();
@@ -148,6 +187,8 @@ public partial class PairDeviceForm : DisplayMagicianForm
         }
         catch (Exception ex)
         {
+            if (!CanUpdateView || refreshVersion != _qrRefreshVersion) return;
+            logger.Warn(ex, "PairDeviceForm/RefreshQrCodeAsync: Could not create a pairing QR code.");
             lbl_qr_result.Text = $"Could not create a pairing QR code: {ex.Message}";
             pb_qr_code.Image?.Dispose();
             pb_qr_code.Image = null;
@@ -156,32 +197,43 @@ public partial class PairDeviceForm : DisplayMagicianForm
 
     private async Task RefreshRequestsAsync()
     {
+        if (!CanUpdateView) return;
+        int refreshVersion = ++_requestsRefreshVersion;
         try
         {
-            DevicePairingSessionView[] requests = await _controlServiceClient.ListDevicePairingRequestsAsync(CancellationToken.None);
+            DevicePairingSessionView[] requests = await _controlServiceClient.ListDevicePairingRequestsAsync(_lifetimeToken);
+            if (!CanUpdateView || refreshVersion != _requestsRefreshVersion) return;
             lv_pairing_requests.BeginUpdate();
-            lv_pairing_requests.Items.Clear();
-            foreach (DevicePairingSessionView request in requests)
+            try
             {
-                ListViewItem item = new ListViewItem(request.DeviceDisplayName) { Tag = request };
-                item.SubItems.Add(string.Join(", ", request.RequestedCapabilities));
-                item.SubItems.Add(request.ExpiresUtc.ToLocalTime().ToString("g"));
-                lv_pairing_requests.Items.Add(item);
+                lv_pairing_requests.Items.Clear();
+                foreach (DevicePairingSessionView request in requests)
+                {
+                    ListViewItem item = new ListViewItem(request.DeviceDisplayName) { Tag = request };
+                    item.SubItems.Add(string.Join(", ", request.RequestedCapabilities));
+                    item.SubItems.Add(request.ExpiresUtc.ToLocalTime().ToString("g"));
+                    lv_pairing_requests.Items.Add(item);
+                }
             }
-            lv_pairing_requests.EndUpdate();
+            finally { lv_pairing_requests.EndUpdate(); }
             lbl_request_result.Text = requests.Length == 0 ? "No devices are waiting for approval." : $"{requests.Length} device(s) waiting for approval.";
         }
         catch (Exception ex)
         {
+            if (!CanUpdateView || refreshVersion != _requestsRefreshVersion) return;
+            logger.Warn(ex, "PairDeviceForm/RefreshRequestsAsync: Could not load pending pairing requests.");
             lbl_request_result.Text = $"Could not load pairing requests: {ex.Message}";
         }
     }
 
     private async Task RefreshPairedDevicesAsync()
     {
+        if (!CanUpdateView) return;
+        int refreshVersion = ++_clientsRefreshVersion;
         try
         {
-            PairedClientView[] clients = await _controlServiceClient.ListPairedClientsAsync(CancellationToken.None);
+            PairedClientView[] clients = await _controlServiceClient.ListPairedClientsAsync(_lifetimeToken);
+            if (!CanUpdateView || refreshVersion != _clientsRefreshVersion) return;
             dgv_paired_devices.Rows.Clear();
             foreach (PairedClientView client in clients)
             {
@@ -192,7 +244,39 @@ public partial class PairDeviceForm : DisplayMagicianForm
         }
         catch (Exception ex)
         {
+            if (!CanUpdateView || refreshVersion != _clientsRefreshVersion) return;
+            logger.Warn(ex, "PairDeviceForm/RefreshPairedDevicesAsync: Could not load paired devices.");
             lbl_paired_result.Text = $"Could not load paired devices: {ex.Message}";
+        }
+    }
+
+    private void SetActionsEnabled()
+    {
+        if (!CanUpdateView) return;
+        bool hasRequest = lv_pairing_requests.SelectedItems.Count == 1;
+        btn_approve_request.Enabled = !_actionInProgress && hasRequest;
+        btn_reject_request.Enabled = !_actionInProgress && hasRequest;
+        btn_refresh_requests.Enabled = !_actionInProgress;
+        btn_refresh_paired_devices.Enabled = !_actionInProgress;
+        dgv_paired_devices.Enabled = !_actionInProgress;
+    }
+
+    private async Task RunPairingActionAsync(Func<Task> action, Label resultLabel)
+    {
+        if (_actionInProgress || !CanUpdateView) return;
+        _actionInProgress = true;
+        SetActionsEnabled();
+        try { await action(); }
+        catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested) { /* The dialog closed while waiting. */ }
+        catch (Exception ex)
+        {
+            logger.Warn(ex, "PairDeviceForm/RunPairingActionAsync: Could not complete the pairing action.");
+            if (CanUpdateView) resultLabel.Text = $"Could not complete the pairing action: {ex.Message}";
+        }
+        finally
+        {
+            _actionInProgress = false;
+            SetActionsEnabled();
         }
     }
 
