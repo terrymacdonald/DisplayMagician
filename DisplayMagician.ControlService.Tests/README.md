@@ -21,3 +21,5 @@ Migration failure tests preserve an existing destination when a source is invali
 Gateway event tests cover replay restart/user isolation, grant/session filtering, published retention bounds, empty-history snapshot cursors, interrupted publication markers, actual journal-write failures, and startup reconciliation against authoritative operation state. These use disposable temporary storage and do not alter installed machine data.
 
 Gateway replay-ledger tests also verify that corrupt, incomplete, or inaccessible state blocks mutations while preserving the primary and backup files and allowing store construction for local service startup.
+
+OperationEventOrderingTests uses temporary stores and deterministic barriers to verify commit-ordered notifications without holding the state lock, subscriber exception/mutation isolation, and independent deep event snapshots across authorised sessions. The existing delivery test checks event values rather than requiring a shared mutable object instance.

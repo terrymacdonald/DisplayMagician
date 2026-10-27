@@ -141,7 +141,7 @@ public class ControlServiceClient
     /// Sends an operation status update over the User Agent's persistent authenticated
     /// Control Service connection.
     /// </summary>
-    public async Task<OperationStatus> PublishOperationStatusAsync(AgentRegistration registration, OperationStatusUpdate update, CancellationToken cancellationToken)
+    public virtual async Task<OperationStatus> PublishOperationStatusAsync(AgentRegistration registration, OperationStatusUpdate update, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);
         ArgumentNullException.ThrowIfNull(update);
@@ -159,7 +159,7 @@ public class ControlServiceClient
         return statusResponse.OperationStatus;
     }
 
-    public async Task ReconcileOperationStatusesAsync(AgentRegistration registration, OperationStatusUpdate[] activeUpdates, CancellationToken cancellationToken)
+    public virtual async Task ReconcileOperationStatusesAsync(AgentRegistration registration, OperationStatusUpdate[] activeUpdates, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(registration);
         ControlResponse response = await SendPersistentAsync(new ControlEnvelope

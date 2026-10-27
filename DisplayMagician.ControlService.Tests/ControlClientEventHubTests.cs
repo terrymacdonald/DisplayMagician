@@ -37,6 +37,9 @@ public sealed class ControlClientEventHubTests
         hub.Publish("S-1-5-21-100", 11, clientEvent);
 
         Assert.True(subscription.Reader.TryRead(out ControlClientEvent? delivered));
-        Assert.Same(clientEvent, delivered);
+        Assert.NotNull(delivered);
+        Assert.Equal(clientEvent.EventType, delivered.EventType);
+        Assert.Equal(clientEvent.Scope, delivered.Scope);
+        Assert.Equal(clientEvent.PublishedUtc, delivered.PublishedUtc);
     }
 }

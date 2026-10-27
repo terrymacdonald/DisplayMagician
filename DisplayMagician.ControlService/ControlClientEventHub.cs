@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Text.Json;
 using System.Threading.Channels;
 using DisplayMagician.Contracts;
 
@@ -21,12 +22,14 @@ public sealed class ControlClientEventHub
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userSid);
         ArgumentNullException.ThrowIfNull(clientEvent);
+        string json = JsonSerializer.Serialize(clientEvent);
         foreach (Subscription subscription in _subscriptions.Values)
         {
             if (string.Equals(subscription.UserSid, userSid, StringComparison.OrdinalIgnoreCase) &&
                 (clientEvent.Scope == ControlClientEventScope.User || subscription.SessionId == sessionId))
             {
-                if (!subscription.Events.Writer.TryWrite(clientEvent))
+                ControlClientEvent snapshot = JsonSerializer.Deserialize<ControlClientEvent>(json)!;
+                if (!subscription.Events.Writer.TryWrite(snapshot))
                 {
                     // A client that cannot keep up must reconnect and receive a fresh
                     // authoritative snapshot rather than silently missing an event.

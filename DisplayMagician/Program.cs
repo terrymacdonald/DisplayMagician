@@ -94,7 +94,7 @@ namespace DisplayMagician {
         private static SynchronizationContext _mainSynchronizationContext;
         private static readonly Stopwatch _interactiveRuntimeStopwatch = Stopwatch.StartNew();
         private static readonly CancellationTokenSource _clientEventListenerCancellationSource = new CancellationTokenSource();
-        private static readonly ConcurrentDictionary<Guid, long> _lastOperationStatusSequences = new ConcurrentDictionary<Guid, long>();
+        private static readonly OperationEventTracker _operationEventTracker = new OperationEventTracker();
         private static string _controlServiceInstanceId;
         private static readonly ConcurrentDictionary<Guid, byte> _displayedOperationDecisionPrompts = new ConcurrentDictionary<Guid, byte>();
         private static readonly ConcurrentDictionary<Guid, OperationDecisionForm> _operationDecisionForms = new ConcurrentDictionary<Guid, OperationDecisionForm>();
@@ -1554,7 +1554,12 @@ namespace DisplayMagician {
                         string previous = _controlServiceInstanceId;
                         _controlServiceInstanceId = welcome.ServiceInstanceId;
                         if (string.IsNullOrWhiteSpace(previous)) logger.Info("Program/ListenForControlServiceEventsAsync: Connected to Control Service instance {0}.", welcome.ServiceInstanceId);
-                        else if (!string.Equals(previous, welcome.ServiceInstanceId, StringComparison.Ordinal)) logger.Warn("Program/ListenForControlServiceEventsAsync: Control Service instance changed from {0} to {1}. Event state was resynchronised.", previous, welcome.ServiceInstanceId);
+                        else if (!string.Equals(previous, welcome.ServiceInstanceId, StringComparison.Ordinal))
+                        {
+                            _mainSynchronizationContext?.Post(_ => _operationEventTracker.ResetActiveSequences(), null);
+                            logger.Warn("Program/ListenForControlServiceEventsAsync: Control Service instance changed from {0} to {1}. Event state was resynchronised.", previous, welcome.ServiceInstanceId);
+                        }
+                        _mainSynchronizationContext?.Post(async _ => await RefreshOperationDecisionFormsAsync(new ControlServicePipeClient(), _operationDecisionForms, _operationEventTracker), null);
                     }, cancellationToken);
                     retrySeconds = 5;
                 }
@@ -1604,16 +1609,7 @@ namespace DisplayMagician {
 
         private static void HandleOperationStatusEvent(OperationStatus status)
         {
-            if (_lastOperationStatusSequences.TryGetValue(status.OperationId, out long lastSequence) && status.Sequence <= lastSequence)
-            {
-                return;
-            }
-
-            _lastOperationStatusSequences[status.OperationId] = status.Sequence;
-            if (status.IsTerminal)
-            {
-                _lastOperationStatusSequences.TryRemove(status.OperationId, out _);
-            }
+            if (!_operationEventTracker.TryAcceptStatus(status, DateTime.UtcNow)) return;
 
             if (status.OperationType == DisplayOperationType.StartShortcut &&
                 (status.Phase == OperationPhase.WaitingForGameToClose || status.IsTerminal))
@@ -1624,6 +1620,7 @@ namespace DisplayMagician {
 
         private static void HandleOperationDecisionEvent(OperationDecision decision)
         {
+            if (!_operationEventTracker.TryAcceptDecision(decision, DateTime.UtcNow)) return;
             if (decision.IsResolved)
             {
                 if (_operationDecisionForms.TryRemove(decision.PromptId, out OperationDecisionForm activeForm) && !activeForm.IsDisposed)
@@ -1645,7 +1642,7 @@ namespace DisplayMagician {
             try
             {
                 form.ShowDialog(AppMainForm);
-                if (!form.WasResolvedByAnotherClient)
+                if (!form.WasResolvedByAnotherClient && !form.HasExpired)
                 {
                     _ = ResolveOperationDecisionAsync(decision.PromptId, form.SelectedChoice);
                 }
@@ -1653,6 +1650,35 @@ namespace DisplayMagician {
             finally
             {
                 _operationDecisionForms.TryRemove(decision.PromptId, out _);
+                if (form.HasExpired || form.WasResolvedByAnotherClient)
+                    _displayedOperationDecisionPrompts.TryRemove(decision.PromptId, out _);
+            }
+        }
+
+        internal static async Task RefreshOperationDecisionFormsAsync(ControlServicePipeClient client, IDictionary<Guid, OperationDecisionForm> forms, OperationEventTracker tracker)
+        {
+            // Only reconcile windows that existed before this authoritative read.
+            // A new prompt arriving while the read is pending must stay open.
+            KeyValuePair<Guid, OperationDecisionForm>[] candidates = forms.ToArray();
+            if (candidates.Length == 0) return;
+            try
+            {
+                OperationDecision[] pending = await client.ListOperationDecisionsAsync(CancellationToken.None);
+                if (pending == null || pending.Any(decision => decision == null))
+                    throw new InvalidDataException("The Control Service returned an invalid pending-decision list.");
+                foreach (KeyValuePair<Guid, OperationDecisionForm> candidate in candidates)
+                {
+                    if (!forms.TryGetValue(candidate.Key, out OperationDecisionForm current) || !ReferenceEquals(current, candidate.Value) || current.IsDisposed) continue;
+                    if (pending.Any(decision => decision.PromptId == candidate.Key && !decision.IsResolved && decision.ExpiresUtc > DateTime.UtcNow)) continue;
+                    tracker.TryAcceptDecision(new OperationDecision { PromptId = candidate.Key, ExpiresUtc = current.ExpiresUtc, IsResolved = true }, DateTime.UtcNow);
+                    forms.Remove(candidate.Key);
+                    _displayedOperationDecisionPrompts.TryRemove(candidate.Key, out _);
+                    current.CloseBecauseAnotherClientResponded();
+                }
+            }
+            catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
+            {
+                logger.Warn(ex, "Program/RefreshOperationDecisionFormsAsync: Could not reconcile open decision dialogs after reconnecting.");
             }
         }
 
@@ -1660,7 +1686,9 @@ namespace DisplayMagician {
         {
             try
             {
-                await new ControlServicePipeClient().ResolveOperationDecisionAsync(promptId, choice, CancellationToken.None).ConfigureAwait(false);
+                OperationDecision decision = await new ControlServicePipeClient().ResolveOperationDecisionAsync(promptId, choice, CancellationToken.None).ConfigureAwait(false);
+                if (decision.IsResolved) _operationEventTracker.TryAcceptDecision(decision, DateTime.UtcNow);
+                _mainSynchronizationContext?.Post(_ => HandleOperationDecisionEvent(decision), null);
             }
             catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is InvalidOperationException)
             {

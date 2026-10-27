@@ -75,7 +75,6 @@ internal static class Program
         {
             try
             {
-                await profileCommandHandler.FlushPendingOperationStatusUpdatesAsync(cancellationToken).ConfigureAwait(false);
                 await profileCommandHandler.ReconcileOperationStatusesAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)

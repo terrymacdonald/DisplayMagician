@@ -6,6 +6,8 @@ namespace DisplayMagician.Contracts;
 
 public static class ControlProtocol
 {
+    public const int MaximumCompletedOperationsPerUser = 100;
+    public static readonly TimeSpan CompletedOperationLifetime = TimeSpan.FromDays(7);
     public const int CurrentVersion = 1;
     public const int MinimumSupportedVersion = 1;
     public const string ServicePipeName = "DisplayMagician.ControlService.v1";

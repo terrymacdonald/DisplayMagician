@@ -15,6 +15,10 @@ namespace DisplayMagician.UIForms
 
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
+            deadline_timer = new System.Windows.Forms.Timer(components);
+            deadline_timer.Interval = 1000;
+            deadline_timer.Tick += deadline_timer_Tick;
             lbl_message = new System.Windows.Forms.Label();
             btn_continue = new System.Windows.Forms.Button();
             btn_stop_and_restore = new System.Windows.Forms.Button();
@@ -73,6 +77,7 @@ namespace DisplayMagician.UIForms
         #endregion
 
         private System.Windows.Forms.Label lbl_message;
+        private System.Windows.Forms.Timer deadline_timer;
         private System.Windows.Forms.Button btn_continue;
         private System.Windows.Forms.Button btn_stop_and_restore;
     }

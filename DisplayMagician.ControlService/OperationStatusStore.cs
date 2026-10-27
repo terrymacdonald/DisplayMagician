@@ -14,12 +14,12 @@ namespace DisplayMagician.ControlService;
 /// </summary>
 public sealed class OperationStatusStore
 {
-    private const int MaximumCompletedOperationsPerUser = 100;
-    private static readonly TimeSpan CompletedOperationLifetime = TimeSpan.FromDays(7);
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly object _syncRoot = new object();
     private readonly string _storagePath;
     private readonly Dictionary<Guid, OperationStatus> _operations = new Dictionary<Guid, OperationStatus>();
+    private readonly Queue<OperationStatus> _notifications = new Queue<OperationStatus>();
+    private bool _publishingNotifications;
 
     public OperationStatusStore(StoragePaths storagePaths)
     {
@@ -90,11 +90,11 @@ public sealed class OperationStatusStore
             _operations[status.OperationId] = status;
             PruneCompletedOperationsUnsafe(utcNow);
             Persist();
+            _notifications.Enqueue(Copy(status));
         }
 
-        OperationStatus publishedStatus = Copy(status);
-        StatusUpdated?.Invoke(publishedStatus);
-        return publishedStatus;
+        PublishNotifications();
+        return Copy(status);
     }
 
     public OperationStatus? Get(string ownerUserSid, Guid operationId)
@@ -176,9 +176,42 @@ public sealed class OperationStatusStore
                 status.Sequence++;
                 changedStatuses.Add(Copy(status));
             }
-            if (changedStatuses.Count > 0) Persist();
+            if (changedStatuses.Count > 0)
+            {
+                Persist();
+                foreach (OperationStatus status in changedStatuses) _notifications.Enqueue(status);
+            }
         }
-        foreach (OperationStatus status in changedStatuses) StatusUpdated?.Invoke(status);
+        PublishNotifications();
+    }
+
+    private void PublishNotifications()
+    {
+        lock (_syncRoot)
+        {
+            if (_publishingNotifications) return;
+            _publishingNotifications = true;
+        }
+        while (true)
+        {
+            OperationStatus status;
+            lock (_syncRoot)
+            {
+                if (_notifications.Count == 0)
+                {
+                    _publishingNotifications = false;
+                    return;
+                }
+                status = _notifications.Dequeue();
+            }
+            // Preserve commit order without invoking subscribers under the state lock.
+            using IDisposable operationScope = SupportLogScope.BeginOperation(status.OperationId);
+            foreach (Action<OperationStatus> subscriber in StatusUpdated?.GetInvocationList() ?? Array.Empty<Delegate>())
+            {
+                try { subscriber(Copy(status)); }
+                catch (Exception ex) { _logger.Error(ex, "OperationStatusStore/PublishNotifications: Could not notify a subscriber for operation {0} sequence {1}.", status.OperationId, status.Sequence); }
+            }
+        }
     }
 
     private void Load()
@@ -224,14 +257,14 @@ public sealed class OperationStatusStore
     private bool PruneCompletedOperationsUnsafe(DateTime utcNow)
     {
         Guid[] expiredOperationIds = _operations.Values
-            .Where(status => status.IsTerminal && status.UpdatedUtc.ToUniversalTime().Add(CompletedOperationLifetime) <= utcNow.ToUniversalTime())
+            .Where(status => status.IsTerminal && status.UpdatedUtc.ToUniversalTime() <= utcNow.ToUniversalTime() - ControlProtocol.CompletedOperationLifetime)
             .Select(status => status.OperationId)
             .ToArray();
         Guid[] excessOperationIds = _operations.Values
             .Where(status => status.IsTerminal && !expiredOperationIds.Contains(status.OperationId))
             .GroupBy(status => status.OwnerUserSid, StringComparer.OrdinalIgnoreCase)
             .SelectMany(group => group.OrderByDescending(status => status.UpdatedUtc).ThenBy(status => status.OperationId)
-                .Skip(MaximumCompletedOperationsPerUser))
+                .Skip(ControlProtocol.MaximumCompletedOperationsPerUser))
             .Select(status => status.OperationId)
             .ToArray();
         foreach (Guid operationId in expiredOperationIds.Concat(excessOperationIds))

@@ -42,6 +42,7 @@ public sealed class ProfileCommandHandler
     private readonly IInteractiveSessionStateProvider _interactiveSessionStateProvider;
     private readonly ControlServiceClient _controlServiceClient;
     private readonly OperationStatusOutbox _operationStatusOutbox;
+    private readonly SemaphoreSlim _statusDeliveryLock = new SemaphoreSlim(1, 1);
     private readonly object _operationsLock = new object();
     private readonly Dictionary<Guid, (CancellationTokenSource Source, DisplayOperationType Type)> _operations = new Dictionary<Guid, (CancellationTokenSource, DisplayOperationType)>();
     private bool _stopRequested;
@@ -83,7 +84,9 @@ public sealed class ProfileCommandHandler
     {
         bool restored = await _shortcutRunner.RestorePendingRecoveryAsync(0, cancellationToken).ConfigureAwait(false);
         _registration.IsRecoveryRequired = !restored;
-        _operationStatusOutbox.CompleteInterruptedOperations(!restored);
+        await _statusDeliveryLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try { _operationStatusOutbox.CompleteInterruptedOperations(!restored); }
+        finally { _statusDeliveryLock.Release(); }
         return restored;
     }
 
@@ -991,15 +994,28 @@ public sealed class ProfileCommandHandler
 
     private async Task PublishShortcutStatusAsync(OperationStatusUpdate update, CancellationToken cancellationToken)
     {
-        _operationStatusOutbox.Enqueue(update);
-        await FlushPendingOperationStatusUpdatesAsync(cancellationToken).ConfigureAwait(false);
+        await _statusDeliveryLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _operationStatusOutbox.Enqueue(update);
+            await FlushPendingStatusUpdatesCoreAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally { _statusDeliveryLock.Release(); }
     }
 
     /// <summary>Retries every status accepted locally but not yet acknowledged by ControlService.</summary>
     public async Task FlushPendingOperationStatusUpdatesAsync(CancellationToken cancellationToken)
     {
+        await _statusDeliveryLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try { await FlushPendingStatusUpdatesCoreAsync(cancellationToken).ConfigureAwait(false); }
+        finally { _statusDeliveryLock.Release(); }
+    }
+
+    private async Task<bool> FlushPendingStatusUpdatesCoreAsync(CancellationToken cancellationToken)
+    {
         foreach (OperationStatusUpdate update in _operationStatusOutbox.GetPending())
         {
+            using IDisposable operationScope = SupportLogScope.BeginOperation(update.OperationId);
             try
             {
                 await _controlServiceClient.PublishOperationStatusAsync(_registration, update, cancellationToken).ConfigureAwait(false);
@@ -1007,16 +1023,23 @@ public sealed class ProfileCommandHandler
             }
             catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)
             {
-                _logger.Warn(ex, "ProfileCommandHandler/FlushPendingOperationStatusUpdatesAsync: Could not publish shortcut operation {0} phase {1}; it remains queued for retry.", update.OperationId, update.Phase);
-                return;
+                _logger.Warn(ex, "ProfileCommandHandler/FlushPendingStatusUpdatesCoreAsync: Could not publish shortcut operation {0} phase {1}; it remains queued for retry.", update.OperationId, update.Phase);
+                return false;
             }
         }
+        return true;
     }
 
     /// <summary>Restores the current Agent view of active operations after ControlService has restarted.</summary>
-    public Task ReconcileOperationStatusesAsync(CancellationToken cancellationToken)
+    public async Task ReconcileOperationStatusesAsync(CancellationToken cancellationToken)
     {
-        return _controlServiceClient.ReconcileOperationStatusesAsync(_registration, _operationStatusOutbox.GetActive(), cancellationToken);
+        await _statusDeliveryLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (await FlushPendingStatusUpdatesCoreAsync(cancellationToken).ConfigureAwait(false))
+                await _controlServiceClient.ReconcileOperationStatusesAsync(_registration, _operationStatusOutbox.GetActive(), cancellationToken).ConfigureAwait(false);
+        }
+        finally { _statusDeliveryLock.Release(); }
     }
 
     private static string? GetThumbnailPngBase64(ProfileItem profile)
