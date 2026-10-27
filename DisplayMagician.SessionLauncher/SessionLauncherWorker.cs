@@ -91,29 +91,54 @@ public sealed class SessionLauncherPipeServer
     private async Task HandleClientAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
     {
         ControlEnvelope? request = await ReadEnvelopeWithTimeoutAsync(pipe, cancellationToken).ConfigureAwait(false);
-        UserAgentLaunchResult result;
-        if (request == null || request.ProtocolVersion != ControlProtocol.CurrentVersion || request.MessageType is not (ControlMessageType.LaunchUserAgent or ControlMessageType.StopUserAgent) || !IsControlService(pipe))
+        if (request == null) return;
+        UserAgentLaunchResult result = ExecuteCommand(request, IsControlService(pipe), _processLauncher.Launch, _processLauncher.Stop);
+        await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope { MessageType = request.MessageType, RequestId = request.RequestId, Payload = JsonSerializer.Serialize(result) }, cancellationToken).ConfigureAwait(false);
+    }
+
+    internal static UserAgentLaunchResult ExecuteCommand(ControlEnvelope request, bool isControlService,
+        Func<UserAgentLaunchRequest, UserAgentLaunchResult> launch, Func<UserAgentStopRequest, UserAgentLaunchResult> stop)
+    {
+        if (!isControlService)
         {
-            result = new UserAgentLaunchResult { IsSuccessful = false, Message = "The Session Launcher rejected the caller or request." };
+            return new UserAgentLaunchResult { ErrorCode = ControlErrorCode.Unauthorized, Message = "The Session Launcher rejected the caller." };
         }
-        else
+        if (request.ProtocolVersion != ControlProtocol.CurrentVersion)
+            return new UserAgentLaunchResult { ErrorCode = ControlErrorCode.UnsupportedProtocolVersion, Message = "The Control Service uses an unsupported protocol version." };
+        if (request.MessageType is not (ControlMessageType.LaunchUserAgent or ControlMessageType.StopUserAgent))
+            return new UserAgentLaunchResult { ErrorCode = ControlErrorCode.InvalidRequest, Message = "The Session Launcher rejected the request type." };
+        if (!ControlProtocol.TryCreateWelcome(request.Hello, "SessionLauncher", ControlProtocol.SessionLauncherCapabilities,
+            out ProtocolWelcome? welcome, out ControlErrorCode errorCode, out string message))
+            return new UserAgentLaunchResult { ErrorCode = errorCode, Message = message };
+        if (request.Hello.ClientKind != ControlClientKind.ControlService)
+            return new UserAgentLaunchResult { ErrorCode = ControlErrorCode.InvalidRequest, Message = "Only Control Service protocol requests are supported." };
+
+        using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
+        UserAgentLaunchResult result;
+        try
         {
-            using IDisposable requestScope = SupportLogScope.BeginRequest(request.RequestId);
+            if (string.IsNullOrWhiteSpace(request.Payload)) throw new JsonException("Missing User Agent request payload.");
             if (request.MessageType == ControlMessageType.LaunchUserAgent)
             {
                 UserAgentLaunchRequest? launchRequest = JsonSerializer.Deserialize<UserAgentLaunchRequest>(request.Payload);
                 using IDisposable? operationScope = launchRequest?.OperationId is Guid operationId && operationId != Guid.Empty ? SupportLogScope.BeginOperation(operationId) : null;
-                result = launchRequest == null ? new UserAgentLaunchResult { IsSuccessful = false, Message = "The User Agent launch request was invalid." } : _processLauncher.Launch(launchRequest);
+                result = launchRequest == null ? new UserAgentLaunchResult { ErrorCode = ControlErrorCode.InvalidRequest, Message = "The User Agent launch request was invalid." } : launch(launchRequest);
             }
             else
             {
                 UserAgentStopRequest? stopRequest = JsonSerializer.Deserialize<UserAgentStopRequest>(request.Payload);
-                result = stopRequest == null ? new UserAgentLaunchResult { IsSuccessful = false, Message = "The User Agent stop request was invalid." } : _processLauncher.Stop(stopRequest);
+                result = stopRequest == null ? new UserAgentLaunchResult { ErrorCode = ControlErrorCode.InvalidRequest, Message = "The User Agent stop request was invalid." } : stop(stopRequest);
             }
         }
-
-        Guid requestId = request?.RequestId ?? Guid.NewGuid();
-        await ControlEnvelopeSerializer.WriteAsync(pipe, new ControlEnvelope { MessageType = request?.MessageType ?? ControlMessageType.Unknown, RequestId = requestId, Payload = JsonSerializer.Serialize(result) }, cancellationToken).ConfigureAwait(false);
+        catch (JsonException ex)
+        {
+            _logger.Warn(ex, "SessionLauncherPipeServer/ExecuteCommand: The Control Service sent an invalid request payload.");
+            result = new UserAgentLaunchResult { ErrorCode = ControlErrorCode.InvalidRequest, Message = "The User Agent request payload was invalid." };
+        }
+        if (!result.IsSuccessful && result.ErrorCode == ControlErrorCode.None)
+            result.ErrorCode = ControlErrorCode.ExecutionFailed;
+        result.ProtocolWelcome = welcome;
+        return result;
     }
 
     private static async Task<ControlEnvelope?> ReadEnvelopeWithTimeoutAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
@@ -203,7 +228,12 @@ public sealed class InteractiveUserProcessLauncher
                 return new UserAgentLaunchResult { IsSuccessful = false, Message = "The requested user does not own the active console session." };
             }
 
-            CreateEnvironmentBlock(out environment, primaryToken, false);
+            if (!CreateEnvironmentBlock(out environment, primaryToken, false))
+            {
+                int errorCode = Marshal.GetLastWin32Error();
+                _logger.Error("InteractiveUserProcessLauncher/Launch: Windows could not create the user environment for SID {0}, session {1}. Win32 error {2}.", request.UserSid, request.SessionId, errorCode);
+                return new UserAgentLaunchResult { IsSuccessful = false, Message = "Windows could not prepare the User Agent's user environment." };
+            }
             STARTUPINFO startupInfo = new STARTUPINFO { cb = Marshal.SizeOf<STARTUPINFO>(), lpDesktop = "winsta0\\default" };
             string diagnosticArgument = string.Equals(request.DiagnosticLogLevel, "Trace", StringComparison.OrdinalIgnoreCase) || string.Equals(request.DiagnosticLogLevel, "Debug", StringComparison.OrdinalIgnoreCase)
                 ? $" --diagnostic-log-level {request.DiagnosticLogLevel}" : string.Empty;

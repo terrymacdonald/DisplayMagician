@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace DisplayMagician.ControlService;
 
@@ -46,7 +47,7 @@ public static class AtomicFileStore
                     }
                 }
 
-                File.Replace(temporaryPath, destinationPath, backupPath, ignoreMetadataErrors: true);
+                ReplaceWithRetry(temporaryPath, destinationPath, backupPath);
             }
             else
             {
@@ -58,6 +59,30 @@ public static class AtomicFileStore
             if (File.Exists(temporaryPath))
             {
                 File.Delete(temporaryPath);
+            }
+        }
+    }
+
+    internal static void ReplaceWithRetry(string temporaryPath, string destinationPath, string? backupPath, Action<string, string, string?>? replace = null)
+    {
+        replace ??= (source, destination, backup) => File.Replace(source, destination, backup, ignoreMetadataErrors: true);
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                replace(temporaryPath, destinationPath, backupPath);
+                return;
+            }
+            catch (IOException ex) when ((ex.HResult & 0xffff) is 32 or 33 or 1175 &&
+                File.Exists(temporaryPath) && File.Exists(destinationPath))
+            {
+                if (attempt >= 3)
+                {
+                    NLog.LogManager.GetCurrentClassLogger().Error(ex, "AtomicFileStore/ReplaceWithRetry: Stopped replacing {0} after {1} failed attempts; the write failed.", destinationPath, attempt);
+                    throw;
+                }
+                NLog.LogManager.GetCurrentClassLogger().Warn(ex, "AtomicFileStore/ReplaceWithRetry: Transient replacement failure for {0} on attempt {1}; retrying.", destinationPath, attempt);
+                Thread.Sleep(attempt * 100);
             }
         }
     }

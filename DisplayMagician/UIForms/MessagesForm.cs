@@ -19,7 +19,7 @@ namespace DisplayMagician.UIForms
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private WebView2 webView;
         private readonly bool _selectNewestUnreadOnLoad;
-        private readonly ControlServicePipeClient _controlServicePipeClient = new ControlServicePipeClient();
+        private readonly ControlServicePipeClient _controlServicePipeClient;
 
         private List<MessageView> _messages = new List<MessageView>();
         private bool _isUpdatingList = false;
@@ -29,7 +29,13 @@ namespace DisplayMagician.UIForms
         }
 
         public MessagesForm(bool selectNewestUnreadOnLoad)
+            : this(selectNewestUnreadOnLoad, new ControlServicePipeClient())
         {
+        }
+
+        internal MessagesForm(bool selectNewestUnreadOnLoad, ControlServicePipeClient controlServicePipeClient)
+        {
+            _controlServicePipeClient = controlServicePipeClient ?? throw new ArgumentNullException(nameof(controlServicePipeClient));
             _selectNewestUnreadOnLoad = selectNewestUnreadOnLoad;
             InitializeComponent();
             dgv_messages.DefaultCellStyle.BackColor = Color.White;
@@ -51,13 +57,22 @@ namespace DisplayMagician.UIForms
             try
             {
                 await LoadMessagesIntoListAsync();
+                if (IsDisposed) return;
                 await InitializeWebViewIfNeededAsync();
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+            {
+                logger.Warn(ex, "MessagesForm/OnLoad: Could not load messages from the Control Service.");
+                if (!IsDisposed)
+                    lbl_count.Text = "Messages could not be loaded. Please try again later.";
+                return;
             }
             finally
             {
                 _isUpdatingList = false;
             }
 
+            if (IsDisposed) return;
             dgv_messages.ClearSelection();
             SelectInitialMessageIfNeeded();
             await ShowSelectedMessageAsync();
@@ -92,6 +107,7 @@ namespace DisplayMagician.UIForms
         private async Task LoadMessagesIntoListAsync()
         {
             MessageListResult messageList = await _controlServicePipeClient.ListMessagesAsync(System.Threading.CancellationToken.None);
+            if (IsDisposed) return;
             SetMessages(messageList);
         }
 
@@ -186,6 +202,7 @@ namespace DisplayMagician.UIForms
             {
                 _isUpdatingList = true;
                 MessageListResult messageList = await _controlServicePipeClient.SetMessageReadStateAsync(unreadIds, true, System.Threading.CancellationToken.None);
+                if (IsDisposed) return;
                 SetMessages(messageList);
                 RestoreSelection(selectedIds);
                 RefreshMessageIndicators(messageList.UnreadCount);
@@ -252,9 +269,16 @@ namespace DisplayMagician.UIForms
             {
                 _isUpdatingList = true;
                 MessageListResult messageList = await _controlServicePipeClient.SetMessageReadStateAsync(selectedIds, isRead, System.Threading.CancellationToken.None);
+                if (IsDisposed) return;
                 SetMessages(messageList);
                 RestoreSelection(selectedIds);
                 RefreshMessageIndicators(messageList.UnreadCount);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+            {
+                logger.Warn(ex, "MessagesForm/ApplyReadStateForSelection: Could not save the selected message read state.");
+                if (!IsDisposed)
+                    MessageBox.Show(this, "DisplayMagician could not save the message read state. Please try again later.", "Messages", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             finally
             {

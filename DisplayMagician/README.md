@@ -20,6 +20,8 @@ Server Settings also has an administrator-confirmed TLS key replacement action f
 
 ## Development
 
+The Messages form retains a usable window when initial service loading fails and handles failed read/unread actions without an unhandled asynchronous event exception. Its fake-client regression tests live in `DisplayMagician.UserAgent.Tests` alongside the desktop repository tests.
+
 Build the project from the repository root:
 
 ```powershell

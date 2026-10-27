@@ -292,8 +292,16 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "At least one message ID is required." };
             }
 
-            _userMessageStore.SetReadState(setReadStateRequest.MessageIds, setReadStateRequest.IsRead);
-            return new ControlResponse { IsSuccessful = true, Message = "Message read state updated.", MessageList = _userMessageStore.GetMessages() };
+            try
+            {
+                _userMessageStore.SetReadState(setReadStateRequest.MessageIds, setReadStateRequest.IsRead);
+                return new ControlResponse { IsSuccessful = true, Message = "Message read state updated.", MessageList = _userMessageStore.GetMessages() };
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                _logger.Warn(ex, "ProfileCommandHandler/HandleAsync: Could not save the requested message read state.");
+                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The message read state could not be saved. Please retry." };
+            }
         }
 
         if (request.MessageType == ControlMessageType.SyncMessages)

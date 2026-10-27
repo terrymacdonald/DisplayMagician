@@ -89,6 +89,29 @@ public sealed class ProtocolNegotiationTests
     }
 
     [Fact]
+    public void IsCompatibleWelcome_RequiresTheRequestedCapabilitiesAsWellAsTheVersion()
+    {
+        ProtocolHello hello = ControlProtocol.CreateHello(ControlClientKind.DesktopApplication, "DisplayMagician.Test");
+        hello.RequiredCapabilities = new[] { ControlCapabilities.Shortcuts };
+        ProtocolWelcome welcome = new ProtocolWelcome { SelectedProtocolVersion = ControlProtocol.CurrentVersion };
+        Assert.False(ControlProtocol.IsCompatibleWelcome(hello, welcome));
+        welcome.SupportedCapabilities = new[] { "Shortcuts" };
+        Assert.False(ControlProtocol.IsCompatibleWelcome(hello, welcome));
+        welcome.SupportedCapabilities = new[] { ControlCapabilities.Shortcuts };
+        Assert.True(ControlProtocol.IsCompatibleWelcome(hello, welcome));
+        welcome.SupportedCapabilities = null!;
+        Assert.False(ControlProtocol.IsCompatibleWelcome(hello, welcome));
+    }
+
+    [Fact]
+    public void TryCreateWelcome_RejectsUndefinedNumericClientKinds()
+    {
+        ProtocolHello hello = ControlProtocol.CreateHello((ControlClientKind)int.MaxValue, "DisplayMagician.Test");
+        Assert.False(ControlProtocol.TryCreateWelcome(hello, "ControlService", ControlProtocol.ControlServiceCapabilities, out _, out ControlErrorCode error, out _));
+        Assert.Equal(ControlErrorCode.InvalidRequest, error);
+    }
+
+    [Fact]
     public void TryCreateWelcome_NegotiatesOptionalCapabilitiesWithoutRejectingTheClient()
     {
         ProtocolHello hello = ControlProtocol.CreateHello(ControlClientKind.DesktopApplication, "DisplayMagician.Test");

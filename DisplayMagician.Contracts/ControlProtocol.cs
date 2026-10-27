@@ -30,6 +30,7 @@ public static class ControlProtocol
     public static readonly string EndpointInstanceId = Guid.NewGuid().ToString("N");
     public static readonly string[] ControlServiceCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.ClientEvents, ControlCapabilities.ClientSync, ControlCapabilities.Diagnostics };
     public static readonly string[] UserAgentCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.Messages };
+    public static readonly string[] SessionLauncherCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.SessionLauncher };
 
     public static ProtocolHello CreateHello(ControlClientKind clientKind, string clientId, string? displayName = null)
     {
@@ -41,7 +42,7 @@ public static class ControlProtocol
         welcome = null;
         errorCode = ControlErrorCode.None;
         message = string.Empty;
-        if (hello == null || hello.MinimumProtocolVersion <= 0 || hello.MaximumProtocolVersion < hello.MinimumProtocolVersion || hello.ClientKind == ControlClientKind.Unknown || !IsValidIdentityValue(hello.ClientId, MaximumClientIdLength) || !IsOptionalIdentityValue(hello.DeviceId, MaximumDeviceIdLength) || !IsOptionalIdentityValue(hello.DisplayName, MaximumDisplayNameLength))
+        if (hello == null || hello.MinimumProtocolVersion <= 0 || hello.MaximumProtocolVersion < hello.MinimumProtocolVersion || hello.ClientKind == ControlClientKind.Unknown || !Enum.IsDefined(hello.ClientKind) || !IsValidIdentityValue(hello.ClientId, MaximumClientIdLength) || !IsOptionalIdentityValue(hello.DeviceId, MaximumDeviceIdLength) || !IsOptionalIdentityValue(hello.DisplayName, MaximumDisplayNameLength))
         {
             errorCode = ControlErrorCode.InvalidRequest;
             message = "The protocol hello was invalid.";
@@ -79,7 +80,9 @@ public static class ControlProtocol
 
     public static bool IsCompatibleWelcome(ProtocolHello hello, ProtocolWelcome? welcome)
     {
-        return hello != null && welcome != null && welcome.SelectedProtocolVersion >= hello.MinimumProtocolVersion && welcome.SelectedProtocolVersion <= hello.MaximumProtocolVersion && welcome.SelectedProtocolVersion >= MinimumSupportedVersion && welcome.SelectedProtocolVersion <= CurrentVersion;
+        return hello != null && welcome != null && welcome.SelectedProtocolVersion >= hello.MinimumProtocolVersion && welcome.SelectedProtocolVersion <= hello.MaximumProtocolVersion && welcome.SelectedProtocolVersion >= MinimumSupportedVersion && welcome.SelectedProtocolVersion <= CurrentVersion &&
+            welcome.SupportedCapabilities != null && (hello.RequiredCapabilities ?? Array.Empty<string>())
+                .All(capability => IsValidCapabilityId(capability) && welcome.SupportedCapabilities.Contains(capability, StringComparer.Ordinal));
     }
 
     private static bool IsValidCapabilityId(string? capability)
@@ -104,6 +107,7 @@ public static class ControlCapabilities
     public const string ClientSync = "client-sync";
     public const string Diagnostics = "diagnostics";
     public const string Messages = "messages";
+    public const string SessionLauncher = "session-launcher";
 }
 
 /// <summary>Stable authorisation scopes that may be granted to a paired remote device.</summary>
@@ -1196,6 +1200,8 @@ public sealed class UserAgentLaunchResult
     public bool IsSuccessful { get; set; }
 
     public string Message { get; set; } = string.Empty;
+    public ControlErrorCode ErrorCode { get; set; }
+    public ProtocolWelcome? ProtocolWelcome { get; set; }
 }
 
 public sealed class UserAgentStopRequest

@@ -128,7 +128,7 @@ namespace DisplayMagicianConsole
                 throw new TimeoutException("The Control Service did not respond within the permitted time.");
             }
 
-            if (response.RequestId != request.RequestId || response.MessageType != request.MessageType)
+            if (response == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType)
             {
                 throw new InvalidDataException("The Control Service returned an invalid response.");
             }

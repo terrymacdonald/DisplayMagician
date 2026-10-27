@@ -10,6 +10,23 @@ namespace DisplayMagician.ControlService.Tests;
 
 public sealed class ProtocolReliabilityTests
 {
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task EnvelopeSerializer_RejectsTruncatedLengthPrefixes(int bytes)
+    {
+        using MemoryStream stream = new MemoryStream(new byte[bytes]);
+        await Assert.ThrowsAsync<EndOfStreamException>(() => ControlEnvelopeSerializer.ReadAsync(stream, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task EnvelopeSerializer_TreatsAnEmptyStreamAsCleanDisconnect()
+    {
+        using MemoryStream stream = new MemoryStream();
+        Assert.Null(await ControlEnvelopeSerializer.ReadAsync(stream, CancellationToken.None));
+    }
+
     [Fact]
     public async Task EnvelopeSerializer_AcceptsMessagesBelowTheSharedFiveMiBLimit()
     {

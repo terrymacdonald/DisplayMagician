@@ -560,7 +560,7 @@ namespace DisplayMagicianConsole
 
         public static ERRORLEVEL ResolveOperationDecision(string promptIdText, string choiceText)
         {
-            if (!Guid.TryParse(promptIdText, out Guid promptId) || !Enum.TryParse(choiceText, true, out OperationDecisionChoice choice) || choice == OperationDecisionChoice.Unknown)
+            if (!Guid.TryParse(promptIdText, out Guid promptId) || promptId == Guid.Empty || !Enum.TryParse(choiceText, true, out OperationDecisionChoice choice) || choice is not (OperationDecisionChoice.Continue or OperationDecisionChoice.StopAndRestore))
             {
                 Console.Error.WriteLine("Specify a valid prompt ID and either Continue or StopAndRestore.");
                 return ERRORLEVEL.ERROR_EXCEPTION;

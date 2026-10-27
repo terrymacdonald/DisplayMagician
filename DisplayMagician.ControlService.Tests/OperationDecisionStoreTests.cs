@@ -9,6 +9,29 @@ namespace DisplayMagician.ControlService.Tests;
 
 public sealed class OperationDecisionStoreTests
 {
+    [Theory]
+    [InlineData(60)]
+    [InlineData(61)]
+    public async Task LateAnswerAppliesTheDefaultEvenBeforeTheExpirySweep(int seconds)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            StoragePaths paths = new StoragePaths(root);
+            OperationDecisionStore store = new OperationDecisionStore(paths);
+            DateTime now = DateTime.UtcNow;
+            OperationDecision prompt = store.Create("owner", 1, Guid.NewGuid(), "Continue?", "Test",
+                new[] { OperationDecisionChoice.Continue, OperationDecisionChoice.StopAndRestore }, OperationDecisionChoice.Continue, now.AddMinutes(1), now);
+            Task<OperationDecision> waiting = store.WaitForResolutionAsync(prompt.PromptId, CancellationToken.None);
+
+            Assert.Null(store.Resolve("owner", 2, prompt.PromptId, OperationDecisionChoice.StopAndRestore, now.AddSeconds(seconds)));
+            Assert.Equal(OperationDecisionChoice.Continue, (await waiting.WaitAsync(TimeSpan.FromSeconds(5))).ResolvedChoice);
+            Assert.Equal(OperationDecisionChoice.Continue, new OperationDecisionStore(paths).Get("owner", prompt.PromptId)!.ResolvedChoice);
+            Assert.Empty(store.GetPending("owner", 1));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
     [Fact]
     public void Resolve_RejectsAnotherUsersDecisionEvenWhenThePromptIdIsKnown()
     {

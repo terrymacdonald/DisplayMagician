@@ -236,3 +236,9 @@ I’m so very thankful for the help of the following people, who make DisplayMag
 * Markus Ewert 'dinex86' (Thanks for letting my use your FOV logic)
 
 Also big thanks to [the amazing list of people who have donated and helped shown here](CREDITS.md).
+
+## Codebase regression checks
+
+Run `.\test_displaymagician.ps1` from the repository root to restore, build and run all test projects with Visual Studio MSBuild. A failed test run returns its nonzero exit code after printing its diagnostics, including when output is captured in Windows PowerShell.
+
+The ongoing [systematic bug review](Docs/CODEBASE_BUG_REVIEW.md) records reviewed areas, fixes, test milestones, open compatibility decisions and checks that require hardware or Windows Sandbox.

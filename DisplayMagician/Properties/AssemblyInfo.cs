@@ -14,6 +14,7 @@ using System.Runtime.Versioning;
 [assembly: ComVisible(false)]
 [assembly: Guid("4F319902-EB8C-43E6-8A51-8EA74E4308F8")]
 [assembly: SupportedOSPlatform("windows10.0.19041.0")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("DisplayMagician.UserAgent.Tests")]
 
 /*[assembly: AssemblyVersion(ThisAssembly.Git.BaseVersion.Major + "." + ThisAssembly.Git.BaseVersion.Minor + "." + ThisAssembly.Git.BaseVersion.Patch)]
 

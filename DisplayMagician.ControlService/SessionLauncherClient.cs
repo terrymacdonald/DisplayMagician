@@ -34,14 +34,7 @@ public sealed class SessionLauncherClient : ISessionLauncherClient
                 RequestId = requestId,
                 Payload = JsonSerializer.Serialize(new UserAgentLaunchRequest { UserSid = userSid, SessionId = sessionId, OperationId = operationId, DiagnosticLogLevel = diagnosticLogLevel })
             };
-            ControlEnvelope response = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-            if (response.MessageType != request.MessageType)
-            {
-                throw new InvalidDataException("The Session Launcher returned an invalid response.");
-            }
-
-            return JsonSerializer.Deserialize<UserAgentLaunchResult>(response.Payload)
-                ?? throw new InvalidDataException("The Session Launcher returned an unreadable response.");
+            return await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
         }
         catch (SessionLauncherUnavailableException)
         {
@@ -102,30 +95,34 @@ public sealed class SessionLauncherClient : ISessionLauncherClient
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.SessionLauncherPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         ControlEnvelope request = new ControlEnvelope { MessageType = ControlMessageType.StopUserAgent, RequestId = requestId, Payload = JsonSerializer.Serialize(new UserAgentStopRequest { UserSid = userSid, SessionId = sessionId, ProcessId = processId }) };
-        ControlEnvelope response = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
-        if (response.MessageType != request.MessageType)
-        {
-            throw new InvalidDataException("The Session Launcher returned an invalid response.");
-        }
-
-        return JsonSerializer.Deserialize<UserAgentLaunchResult>(response.Payload)
-            ?? throw new InvalidDataException("The Session Launcher returned an unreadable response.");
+        return await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task<ControlEnvelope> SendAndReceiveAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)
+    internal static async Task<UserAgentLaunchResult> SendAndReceiveAsync(Stream pipe, ControlEnvelope request, CancellationToken cancellationToken)
     {
+        request.Hello = ControlProtocol.CreateHello(ControlClientKind.ControlService, "DisplayMagician.ControlService", "DisplayMagician Control Service");
+        request.Hello.RequiredCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.SessionLauncher };
         using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutSource.CancelAfter(ControlProtocol.ResponseTimeout);
         try
         {
             await ControlEnvelopeSerializer.WriteAsync(pipe, request, timeoutSource.Token).ConfigureAwait(false);
             ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, timeoutSource.Token).ConfigureAwait(false);
-            if (response == null || response.RequestId != request.RequestId)
+            if (response == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType || response.ProtocolVersion != request.ProtocolVersion)
             {
                 throw new InvalidDataException("The Session Launcher returned an invalid response.");
             }
 
-            return response;
+            UserAgentLaunchResult result = JsonSerializer.Deserialize<UserAgentLaunchResult>(response.Payload)
+                ?? throw new InvalidDataException("The Session Launcher returned an unreadable response.");
+            if (result.IsSuccessful && (!ControlProtocol.IsCompatibleWelcome(request.Hello, result.ProtocolWelcome) ||
+                !string.Equals(result.ProtocolWelcome?.EndpointKind, "SessionLauncher", StringComparison.Ordinal)))
+                throw new InvalidDataException("The Session Launcher did not complete a compatible protocol negotiation.");
+            return result;
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException("The Session Launcher returned an unreadable response.", ex);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {

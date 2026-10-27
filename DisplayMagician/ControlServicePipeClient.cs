@@ -10,7 +10,7 @@ using DisplayMagician.Contracts;
 
 namespace DisplayMagician;
 
-internal sealed class ControlServicePipeClient
+internal class ControlServicePipeClient
 {
     public async Task<ControlResponse> ApplyProfileAsync(string profileId, CancellationToken cancellationToken)
     {
@@ -218,13 +218,13 @@ internal sealed class ControlServicePipeClient
         return response.IsSuccessful && response.ShortcutList != null ? response.ShortcutList : throw new InvalidOperationException(response.Message);
     }
 
-    public async Task<MessageListResult> ListMessagesAsync(CancellationToken cancellationToken)
+    public virtual async Task<MessageListResult> ListMessagesAsync(CancellationToken cancellationToken)
     {
         ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListMessages }, cancellationToken).ConfigureAwait(false);
         return response.IsSuccessful && response.MessageList != null ? response.MessageList : throw new InvalidOperationException(response.Message);
     }
 
-    public async Task<MessageListResult> SetMessageReadStateAsync(IEnumerable<string> messageIds, bool isRead, CancellationToken cancellationToken)
+    public virtual async Task<MessageListResult> SetMessageReadStateAsync(IEnumerable<string> messageIds, bool isRead, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(messageIds);
         ControlResponse response = await SendAsync(new ControlEnvelope

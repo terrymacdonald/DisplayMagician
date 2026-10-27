@@ -51,7 +51,7 @@ public sealed class MachineScheduleCoordinator
         return _store.Update(state =>
         {
             EnsureInstallId(state);
-            state.ConsecutiveClientSyncFailures = Math.Min(state.ConsecutiveClientSyncFailures + 1, 6);
+            state.ConsecutiveClientSyncFailures = Math.Min(state.ConsecutiveClientSyncFailures, 5) + 1;
             state.NextClientSyncUtc = utcNow.AddHours(Math.Min(Math.Pow(2, state.ConsecutiveClientSyncFailures - 1), 24));
         });
     }

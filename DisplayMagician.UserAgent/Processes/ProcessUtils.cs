@@ -64,7 +64,7 @@ namespace DisplayMagician.Processes
                     return returnedProcesses;
                 }
 
-                logger.Info($"ProcessUtils/StartProcess: {executable} {arguments} has successfully been started by Process.Start (Process ID: {processCreated.Id})");
+                logger.Info($"ProcessUtils/StartProcess: {executable} has successfully been started by Process.Start (Process ID: {processCreated.Id})");
                 try
                 {
                     if (!processCreated.HasExited && processCreated.PriorityClass != wantedPriority)
@@ -82,7 +82,7 @@ namespace DisplayMagician.Processes
             }
             else
             {
-                logger.Warn($"ProcessUtils/StartProcess: DisplayMagician was unable to start {executable} {arguments}.");
+                logger.Warn($"ProcessUtils/StartProcess: DisplayMagician was unable to start {executable}.");
             }
 
             return returnedProcesses;

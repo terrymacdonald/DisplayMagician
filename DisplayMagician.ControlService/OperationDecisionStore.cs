@@ -89,6 +89,7 @@ public sealed class OperationDecisionStore
     public OperationDecision? Resolve(string ownerUserSid, int ownerSessionId, Guid promptId, OperationDecisionChoice choice, DateTime utcNow)
     {
         OperationDecision? resolved = null;
+        bool expired = false;
         lock (_syncRoot)
         {
             if (!_decisions.TryGetValue(promptId, out OperationDecision? decision) || !string.Equals(decision.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) || decision.IsResolved || !decision.AllowedChoices.Contains(choice))
@@ -96,14 +97,15 @@ public sealed class OperationDecisionStore
                 return null;
             }
 
-            ResolveUnsafe(decision, choice, utcNow);
+            expired = decision.ExpiresUtc <= utcNow;
+            ResolveUnsafe(decision, expired ? decision.DefaultChoice : choice, utcNow);
             Persist();
             resolved = Copy(decision);
         }
 
         Publish(resolved);
         CompleteWaiter(resolved);
-        return resolved;
+        return expired ? null : resolved;
     }
 
     public OperationDecision? Get(string ownerUserSid, Guid promptId)

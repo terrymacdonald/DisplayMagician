@@ -10,6 +10,8 @@ The Gateway replay ledger uses the shared atomic JSON writer and retains its bac
 
 When an authorised interactive user session has no connected Agent, the service can request `DisplayMagician.SessionLauncher` to demand-start one in that verified SID/session. A physical-console session is not required. QR pairing records that local SID/session as the paired device's preferred route. ControlService revalidates it before every remote request, falls back only when the owner has exactly one healthy ready Agent, and otherwise requires an explicit target selection.
 
+Both launch and stop commands carry the shared Hello/Welcome handshake over the SessionLauncher pipe. The common caller validates response version, message type, request ID, endpoint kind, and required capabilities. Caller and broker must be deployed together; this adds metadata to the shared result without changing the version-1 pipe or persisted configuration schemas.
+
 Control Service routes work only to a ready Agent whose process and command-pipe identity match the fixed installed payload. It bounds pipe handshakes and subscribers, retains successful mutating client responses for 24 hours for safe retry, and makes lagging event subscribers reconnect for an authoritative status/decision snapshot. Active operation statuses remain available; terminal statuses are retained for seven days or the newest 100 per user, whichever bound is reached first. It journals operation, decision, and saved-resource changes for the planned Gateway SSE replay path, bounded per user to 24 hours, 10,000 events, and 10 MiB. The Gateway-only pipe reads bounded replay batches after checking the caller's grants and preferred session. Bulk repository edits require a readable pre-edit snapshot so creation, update, and deletion events have accurate saved IDs.
 
 An authorised session requesting display control takes over an idle lease from another session, including when the previous Agent is still heartbeating. Active operations and recovery-required leases remain reserved for their owner until the work or recovery is resolved.
@@ -23,6 +25,8 @@ Pairing QR creation also checks that the requested HTTPS origin matches an endpo
 ControlService reconciles the installer-owned Private, Domain, and Public Gateway firewall rules with the saved listener port and `AllowPublicNetworks` setting. Public is off by default; only an administrator may change the setting.
 
 ## Development
+
+Decision answers arriving at or after expiry resolve the prompt using its existing default and reject the late answer, independently of the periodic expiry sweep. Atomic state replacement retries sharing/lock violations and Windows replacement contention up to three attempts, retaining atomic replacement and backup semantics. Persistent or unrelated failures still propagate.
 
 ```powershell
 dotnet build .\DisplayMagician.ControlService\DisplayMagician.ControlService.csproj

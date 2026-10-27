@@ -13,5 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DisplayMagician.ControlService\DisplayMagician.ControlService.csproj" />
+    <ProjectReference Include="..\DisplayMagician.SessionLauncher\DisplayMagician.SessionLauncher.csproj" />
   </ItemGroup>
 </Project>

@@ -8,6 +8,31 @@ namespace DisplayMagician.Gateway.Tests;
 public sealed class GatewayCursorPageStoreTests
 {
     [Fact]
+    public void MutableResourcesAndReturnedPagesCannotChangeTheCapturedSnapshot()
+    {
+        GatewayCursorPageStore store = new GatewayCursorPageStore();
+        DateTime now = DateTime.UtcNow;
+        MutableResource[] resources = { new MutableResource { Name = "first" }, new MutableResource { Name = "second", Tags = new[] { "original" } } };
+        GatewayCursorPageResult<MutableResource> first = store.Create("owner/device", "/v1/shortcuts", "", resources, 1, now);
+        resources[1].Name = "changed by original caller";
+        resources[1].Tags[0] = "changed nested collection";
+        GatewayCursorPageResult<MutableResource> second = store.Read<MutableResource>("owner/device", "/v1/shortcuts", "", first.NextCursor!, 1, now);
+        Assert.Equal("second", Assert.Single(second.Items).Name);
+        Assert.Equal("original", Assert.Single(second.Items[0].Tags));
+        second.Items[0].Name = "changed by page consumer";
+        second.Items[0].Tags[0] = "changed by page consumer";
+        GatewayCursorPageResult<MutableResource> repeated = store.Read<MutableResource>("owner/device", "/v1/shortcuts", "", first.NextCursor!, 1, now);
+        Assert.Equal("second", Assert.Single(repeated.Items).Name);
+        Assert.Equal("original", Assert.Single(repeated.Items[0].Tags));
+    }
+
+    public sealed class MutableResource
+    {
+        public string Name { get; set; } = "";
+        public string[] Tags { get; set; } = Array.Empty<string>();
+    }
+
+    [Fact]
     public void SubsequentPagesUseTheOriginalSnapshotAndBindTheCallerAndFilters()
     {
         GatewayCursorPageStore store = new GatewayCursorPageStore();

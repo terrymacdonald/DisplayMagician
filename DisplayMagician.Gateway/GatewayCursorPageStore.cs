@@ -24,9 +24,12 @@ public sealed class GatewayCursorPageStore
     {
         ArgumentNullException.ThrowIfNull(items);
         if (limit is < 1 or > 100) return new GatewayCursorPageResult<T>(GatewayCursorPageState.Invalid);
-        T[] capturedItems = items.ToArray();
-        int snapshotBytes = JsonSerializer.SerializeToUtf8Bytes(capturedItems, WebJson).Length;
+        byte[] serializedItems = JsonSerializer.SerializeToUtf8Bytes(items, WebJson);
+        int snapshotBytes = serializedItems.Length;
         if (snapshotBytes > MaximumSnapshotBytes) return new GatewayCursorPageResult<T>(GatewayCursorPageState.TooLarge);
+        // A copied array still shares mutable DTOs and their nested collections.
+        // Capture the representation so later caller changes cannot alter a page.
+        T[] capturedItems = JsonSerializer.Deserialize<T[]>(serializedItems, WebJson)!;
 
         lock (_syncRoot)
         {
@@ -96,7 +99,8 @@ public sealed class GatewayCursorPageStore
 
         int nextOffset = offset + page.Count;
         string? nextCursor = nextOffset < items.Length ? $"v1.{snapshot.Id:N}.{nextOffset.ToString(CultureInfo.InvariantCulture)}.{Convert.ToHexString(Signature(snapshot, nextOffset))}" : null;
-        return new GatewayCursorPageResult<T>(GatewayCursorPageState.Success, page.ToArray(), nextCursor);
+        T[] pageItems = JsonSerializer.Deserialize<T[]>(JsonSerializer.SerializeToUtf8Bytes(page, WebJson), WebJson)!;
+        return new GatewayCursorPageResult<T>(GatewayCursorPageState.Success, pageItems, nextCursor);
     }
 
     private static byte[] Signature(Snapshot snapshot, int offset)

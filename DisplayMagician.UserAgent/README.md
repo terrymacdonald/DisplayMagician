@@ -41,6 +41,8 @@ MessageSyncService owns message-index writes. Sync downloads are serialized, whi
 
 ## Development
 
+Message read-state changes and synchronization report index-write failures instead of reporting an unsaved change as successful. Process launch logs include the executable and process ID, with raw command arguments omitted from support logs.
+
 ```powershell
 dotnet build .\DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj
 dotnet test .\DisplayMagician.UserAgent.Tests\DisplayMagician.UserAgent.Tests.csproj

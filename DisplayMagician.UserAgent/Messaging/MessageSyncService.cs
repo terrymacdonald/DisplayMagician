@@ -55,8 +55,8 @@ namespace DisplayMagician.Messaging
                 Directory.CreateDirectory(_messagesFolderPath);
                 if (!File.Exists(_storePath))
                 {
-                    SaveStore(new MessageStoreDocument());
-                    _logger.Info($"MessageSyncService/EnsureStorage: Created new message index store at {_storePath}.");
+                    if (SaveStore(new MessageStoreDocument()))
+                        _logger.Info($"MessageSyncService/EnsureStorage: Created new message index store at {_storePath}.");
                 }
             }
             catch (Exception ex)
@@ -124,7 +124,7 @@ namespace DisplayMagician.Messaging
 
                 if (changed)
                 {
-                    SaveStore(store);
+                    if (!SaveStore(store)) throw new IOException("The message read state could not be saved.");
                 }
 
                 return changed;
@@ -148,7 +148,7 @@ namespace DisplayMagician.Messaging
             {
                 store = LoadStore();
                 store.LastAttemptCheckUtc = DateTime.UtcNow;
-                SaveStore(store);
+                if (!SaveStore(store)) return new MessageSyncResult { Success = false, UnreadCount = store.Messages.Count(message => !message.IsRead) };
             }
 
             _logger.Trace($"MessageSyncService/SyncMessagesAsync: Starting sync (manifestUrl={_manifestUrl}, appVersion={appVersion}, existingMessages={store.Messages.Count}).");
@@ -448,7 +448,7 @@ namespace DisplayMagician.Messaging
                     .ToDictionary(group => group.Key, group => group.Last().IsRead, StringComparer.OrdinalIgnoreCase);
                 foreach (LocalMessage message in store.Messages)
                     if (readStates.TryGetValue(message.Id, out bool isRead)) message.IsRead = isRead;
-                SaveStore(store);
+                if (!SaveStore(store)) return new MessageSyncResult { Success = false, UnreadCount = readStates.Count(item => !item.Value) };
             }
 
             _logger.Info($"MessageSyncService/SyncMessagesAsync: Sync finished (newMessages={newMessages}, totalMessages={store.Messages.Count}, unread={store.Messages.Count(m => !m.IsRead)}).");
@@ -917,7 +917,7 @@ namespace DisplayMagician.Messaging
             }
         }
 
-        private void SaveStore(MessageStoreDocument store)
+        private bool SaveStore(MessageStoreDocument store)
         {
             lock (_storeLock)
             {
@@ -926,10 +926,12 @@ namespace DisplayMagician.Messaging
                     Directory.CreateDirectory(_messagesFolderPath);
                     string json = JsonConvert.SerializeObject(store, Formatting.Indented);
                     AtomicFile.WriteAllText(_storePath, json, Encoding.UTF8);
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     _logger.Warn(ex, $"MessageSyncService/SaveStore: Failed to persist message store (storePath={_storePath}, messageCount={store?.Messages?.Count ?? 0}).");
+                    return false;
                 }
             }
         }

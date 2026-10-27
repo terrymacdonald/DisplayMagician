@@ -29,6 +29,45 @@ public sealed class AgentReliabilityTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), "DisplayMagician-AgentReliability", Guid.NewGuid().ToString("N"));
     private readonly List<(FieldInfo Field, object? Value)> _originalState = new List<(FieldInfo, object?)>();
 
+    [Fact]
+    public void FailedLaunchDoesNotPutArgumentsInSupportLogs()
+    {
+        NLog.Config.LoggingConfiguration? original = NLog.LogManager.Configuration;
+        NLog.Targets.MemoryTarget messages = new NLog.Targets.MemoryTarget { Layout = "${message} ${exception:format=message}" };
+        NLog.Config.LoggingConfiguration configuration = new NLog.Config.LoggingConfiguration();
+        configuration.AddRuleForAllLevels(messages);
+        string marker = "private-argument-" + Guid.NewGuid().ToString("N");
+        try
+        {
+            NLog.LogManager.Configuration = configuration;
+            Assert.Empty(global::DisplayMagician.Processes.ProcessUtils.StartProcess(Path.Combine(_root, "missing.exe"), marker, global::DisplayMagician.Contracts.ProcessPriority.Normal));
+            Assert.NotEmpty(messages.Logs);
+            Assert.DoesNotContain(messages.Logs, message => message.Contains(marker, StringComparison.Ordinal));
+        }
+        finally { NLog.LogManager.Configuration = original; }
+    }
+
+    [Fact]
+    public async Task MessageWriteFailureIsReportedAndKeepsThePreviousReadState()
+    {
+        using FakeProfileOperations profiles = new FakeProfileOperations();
+        ProfileCommandHandler handler = new ProfileCommandHandler(new AgentRegistration { UserSid = "test", SessionId = 1 }, new FakeServiceClient(), null, _root, profiles);
+        string path = Path.Combine(_root, "Messages", "MessagesIndex.json");
+        string id = Guid.NewGuid().ToString("D");
+        string original = Newtonsoft.Json.JsonConvert.SerializeObject(new DisplayMagician.Messaging.MessageStoreDocument
+        { Messages = new List<DisplayMagician.Messaging.LocalMessage> { new DisplayMagician.Messaging.LocalMessage { Id = id, IsRead = false } } });
+        File.WriteAllText(path, original);
+        using FileStream locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        ControlResponse response = await handler.HandleAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.SetMessageReadState,
+            Payload = JsonSerializer.Serialize(new SetMessageReadStateRequest { MessageIds = new[] { id }, IsRead = true })
+        }, CancellationToken.None);
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.ExecutionFailed, response.ErrorCode);
+        Assert.Equal(original, File.ReadAllText(path));
+    }
+
     public AgentReliabilityTests()
     {
         foreach (Type type in new[] { typeof(AgentProfileRepository), typeof(AgentAudioRepository), typeof(AgentProfile), typeof(AgentAudioProfile) })

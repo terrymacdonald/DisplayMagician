@@ -6,6 +6,8 @@ Agent reliability regressions cover stale cached profile identities, failed rest
 
 ## Run
 
+Additional regression cases cover locked message-index writes, omission of launch arguments from logs, and the desktop Messages form's disconnected-service, timeout, and rejected-request paths. Form tests use an injected client and do not connect to installed services or initialize WebView2.
+
 ```powershell
 dotnet test .\DisplayMagician.UserAgent.Tests\DisplayMagician.UserAgent.Tests.csproj
 ```

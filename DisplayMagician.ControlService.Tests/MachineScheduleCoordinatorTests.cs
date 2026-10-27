@@ -7,6 +7,23 @@ namespace DisplayMagician.ControlService.Tests;
 public sealed class MachineScheduleCoordinatorTests
 {
     [Fact]
+    public void PersistedLargeFailureCountCannotOverflowIntoImmediateRetries()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            MachineScheduleStore store = new MachineScheduleStore(new StoragePaths(root));
+            store.Update(state => state.ConsecutiveClientSyncFailures = int.MaxValue);
+            MachineScheduleCoordinator coordinator = new MachineScheduleCoordinator(store);
+            DateTime now = DateTime.UtcNow;
+            MachineScheduleState state = coordinator.RecordClientSyncFailure(now);
+            Assert.Equal(6, state.ConsecutiveClientSyncFailures);
+            Assert.Equal(now.AddHours(24), state.NextClientSyncUtc);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
     public void EnsureInitialized_SchedulesFirstClientSyncWithinTwelveHours()
     {
         string storageRoot = Path.Combine(Path.GetTempPath(), "DisplayMagicianTests", Guid.NewGuid().ToString("N"));

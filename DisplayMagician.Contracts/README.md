@@ -22,8 +22,11 @@ Successful saved-definition edits may include `SavedResourceChanges` with the re
 - Use the shared connection and response timeouts. A caller must not wait indefinitely for a pipe connection or response.
 - Reuse a request ID only to retry the identical operation. Control Service retains successful mutating request results for 24 hours so a lost reply cannot repeat an operation.
 - Do not place persisted configuration definitions here; they belong in `DisplayMagician.ConfigurationDefinitions`.
+- Internal launch/stop replies use `UserAgentLaunchResult`, including `ErrorCode` and `ProtocolWelcome`. ControlService requires `protocol-negotiation` and `session-launcher` from SessionLauncher. These are compatibility capabilities, not permission grants. Deploy the caller and broker together: missing hello metadata is rejected before broker execution, and a successful reply without a compatible welcome is rejected by the caller. The version-1 envelope and pipe name are unchanged.
 
 ## Build
+
+Successful replies must satisfy both the negotiated protocol version and every capability required by the caller. Undefined numeric client kinds are rejected during hello validation.
 
 ```powershell
 dotnet build .\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj

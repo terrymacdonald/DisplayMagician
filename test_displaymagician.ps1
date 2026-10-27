@@ -45,6 +45,7 @@ function Find-MSBuild {
 
 $root = $PSScriptRoot
 $msbuild = Find-MSBuild
+$dotnet = (Get-Command dotnet -CommandType Application -ErrorAction Stop).Source
 $controlServiceProject = Join-Path $root 'DisplayMagician.ControlService\DisplayMagician.ControlService.csproj'
 $testProjects = @(Get-ChildItem -Path $root -Recurse -Filter '*.Tests.csproj' -File | Sort-Object FullName)
 if ($testProjects.Count -eq 0) {
@@ -74,9 +75,19 @@ foreach ($testProject in $testProjects) {
     }
 
     Write-Host "==> Test $relativePath" -ForegroundColor Cyan
-    & dotnet test $testProject.FullName --no-build --no-restore --configuration $Configuration --property:Platform=$Platform --verbosity minimal
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
+    # Windows PowerShell turns captured native stderr into ErrorRecords. Let the
+    # test runner finish its failure report, then use its exit code as authority.
+    $testErrorPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $dotnet test $testProject.FullName --no-build --no-restore --configuration $Configuration --property:Platform=$Platform --verbosity minimal
+        $testExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $testErrorPreference
+    }
+    if ($testExitCode -ne 0) {
+        exit $testExitCode
     }
 }
 

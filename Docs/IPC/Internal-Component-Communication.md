@@ -97,6 +97,8 @@ When an authorized request needs an absent UserAgent:
 
 SessionLauncher does not receive or route the original display, audio, profile, or shortcut command.
 
+Every launch/stop envelope includes a `ProtocolHello` identifying ControlService and requiring `protocol-negotiation` and `session-launcher`. SessionLauncher first authenticates the operating-system caller, then checks compatibility before dispatch. Its `UserAgentLaunchResult` includes the shared `ErrorCode` and negotiated `ProtocolWelcome`; ControlService validates successful replies against the requested capabilities, version, endpoint kind, request ID and message type. Handshake compatibility does not replace authentication. These result fields are additive JSON metadata; the version-1 pipe name is unchanged. ControlService and SessionLauncher must be updated together, because the broker rejects missing hello metadata and the caller rejects unnegotiated successes.
+
 ## 7. Reading user-scoped information
 
 Listing profiles, audio profiles, shortcuts, games, applications, messages, or repository data follows this pattern:

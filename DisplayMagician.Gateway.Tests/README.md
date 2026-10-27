@@ -1,5 +1,7 @@
 # DisplayMagician.Gateway.Tests
 
+Paging regressions verify that mutations to original DTOs, nested collections, and returned pages cannot change an existing snapshot.
+
 Run `dotnet test DisplayMagician.Gateway.Tests/DisplayMagician.Gateway.Tests.csproj -p:Platform=x64` from the repository root.
 
 These isolated tests cover HTTP protocol/authentication middleware, idempotency, response limits, paging, ETags, and SSE snapshot/replay, grant omission, concurrent streams, credential revocation, and stalled reads. `MobileContractFixtureTests` verifies that the shared Swift/Kotlin operation fixture matches the actual Gateway mapper, including a 64-bit sequence.

@@ -1,5 +1,7 @@
 # DisplayMagicianConsole
 
+Decision commands reject empty prompt IDs and unsupported choices locally. A service disconnect before a reply is reported as an invalid response rather than a null-reference failure.
+
 `DisplayMagicianConsole.exe` controls the locally installed DisplayMagician instance from a command prompt, PowerShell script, Stream Deck action, or another application. It sends requests to the local Control Service; it does not directly alter display or audio settings itself.
 
 Run it in the signed-in user's Windows session. DisplayMagician's Control Service and UserAgent must be running. Names with spaces must be enclosed in double quotes.
