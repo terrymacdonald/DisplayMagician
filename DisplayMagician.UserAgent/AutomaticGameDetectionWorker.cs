@@ -50,7 +50,7 @@ public sealed class AutomaticGameDetectionWorker
                 foreach (ShortcutDefinition shortcut in shortcuts)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    Game? game = GameLibrary.GetAnyGameById(shortcut.GameAppId);
+                    Game? game = GameLibrary.GetAnyGameById(shortcut.GameAppId, (SupportedGameLibraryType)shortcut.GameLibrary);
                     if (game == null)
                     {
                         _stateTracker.Remove(shortcut.Id);

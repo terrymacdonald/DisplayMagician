@@ -428,12 +428,12 @@ namespace DisplayMagician.UIForms
                     ProcessPriority = (ProcessPriority)cbx_game_priority.SelectedValue,
                 };
 
-                _gameToUse.GameToPlay = _availableGames.FirstOrDefault(game => string.Equals(game.Id, _gameId, StringComparison.OrdinalIgnoreCase));
+                _gameToUse.GameToPlay = FindSelectedGame();
 
                 if (_gameToUse.GameToPlay == null)
                 {
                     logger.Error($"ShortcutForm/CommitShortcut: Could not find game with ID '{_gameId}' in library '{_gameLauncher}'. The game may have been uninstalled. Aborting save.");
-                    MessageBox.Show(
+                    MessageBox.Show(this,
                         $"The selected game could not be found in the '{_gameLauncher}' library. It may have been uninstalled since this shortcut was created. Please re-select the game.",
                         "Game Not Found",
                         MessageBoxButtons.OK,
@@ -882,26 +882,17 @@ namespace DisplayMagician.UIForms
                     errors.Add("No game has been selected. Please choose a game from the list of games shown in the list.");
                 }
 
-                bool gameStillInstalled = false;
-                foreach (ImageListViewItem gameItem in ilv_games.Items)
-                {
-                    if (gameItem.Text.Equals(txt_game_name.Text))
-                    {
-                        gameStillInstalled = true;
-                        break;
-                    }
-
-                }
+                GameView selectedGame = FindSelectedGame();
+                bool gameStillInstalled = selectedGame != null;
                 if (!gameStillInstalled)
                 {
                     logger.Error($"ShortcutForm/AllowedToSave: The {_gameLauncher} game with ID {_gameId} isn't installed at present, so can't be used!");
                     errors.Add("This shortcut uses a game that is no longer installed on this computer. Please choose a different game from the list of games shown in the list, or reinstall the game this shortcut uses.");
                 }
 
-                GameView selectedGame = _availableGames.FirstOrDefault(game => string.Equals(game.Id, _gameId, StringComparison.OrdinalIgnoreCase));
-                if (_shortcutToEdit?.GameLaunchMode == GameLaunchMode.DetectGameRunning && !cb_wait_alternative_game.Checked &&
+                if (!cb_wait_alternative_game.Checked &&
                     (selectedGame == null || !string.Equals(Path.GetExtension(selectedGame.ExecutablePath), ".exe", StringComparison.OrdinalIgnoreCase) || !File.Exists(selectedGame.ExecutablePath)))
-                    errors.Add("Automatic game detection requires the actual game .exe. Select it with 'Monitor different executable'.");
+                    errors.Add("Game monitoring requires the actual game .exe. Select it with 'Monitor different executable'.");
 
                 if (cb_wait_alternative_game.Checked)
                 {
@@ -1660,7 +1651,9 @@ namespace DisplayMagician.UIForms
                         bool gameStillInstalled = false;
                         foreach (ImageListViewItem gameItem in ilv_games.Items)
                         {
-                            if (gameItem.Text.Equals(_shortcutToEdit.GameName))
+                            if (gameItem.VirtualItemKey is GameView installedGame &&
+                                installedGame.Library == (int)_shortcutToEdit.GameLibrary &&
+                                string.Equals(installedGame.Id, _shortcutToEdit.GameAppId, StringComparison.OrdinalIgnoreCase))
                             {
                                 gameStillInstalled = true;
                                 gameItem.Selected = true;
@@ -1671,16 +1664,15 @@ namespace DisplayMagician.UIForms
                         }
                         if (!gameStillInstalled)
                         {
-                            DialogResult result = MessageBox.Show(
+                            _showMessage(
                                 $"This shortcut refers to the '{_shortcutToEdit.GameName}' game that was installed in your {_shortcutToEdit.GameLibrary.ToString("G")} library. This game is no longer installed, so the shortcut won't work. You either need to change the game used in the Shortcut to another installed game, or you need to install the game files on your computer again.",
                                 @"Game no longer exists",
-                                MessageBoxButtons.OK,
                                 MessageBoxIcon.Exclamation);
                         }
 
                         foreach (GameView game in _availableGames)
                         {
-                            if (string.Equals(game.Id, _shortcutToEdit.GameAppId, StringComparison.OrdinalIgnoreCase))
+                            if (game.Library == (int)_shortcutToEdit.GameLibrary && string.Equals(game.Id, _shortcutToEdit.GameAppId, StringComparison.OrdinalIgnoreCase))
                             {
                                 _selectedGame = game;
                                 break;
@@ -2531,25 +2523,22 @@ namespace DisplayMagician.UIForms
 
         private void btn_exe_to_start_Click(object sender, EventArgs e)
         {
-            ChooseExecutableForm exeForm = new ChooseExecutableForm();
-            if (!String.IsNullOrWhiteSpace(txt_executable.Text))
+            using ChooseExecutableForm exeForm = new ChooseExecutableForm();
+            if (_shortcutCategory == ShortcutCategory.Application)
             {
-                if (_shortcutCategory == ShortcutCategory.Application)
-                {
-                    exeForm.Mode = ChooseExecutableFormMode.AppMode;
-                    exeForm.PreviousAppId = _selectedAppId;
-                    exeForm.PreviousExe = txt_executable.Text;
-                }
-                else if (_shortcutCategory == ShortcutCategory.Executable)
-                {
-                    exeForm.Mode = ChooseExecutableFormMode.ExeMode;
-                    exeForm.PreviousExe = txt_executable.Text;
-                    exeForm.PreviousAppId = "";
-
-                }
+                exeForm.Mode = ChooseExecutableFormMode.AppMode;
+                exeForm.PreviousAppId = _selectedAppId;
+                exeForm.PreviousAppLibrary = _selectedApp?.Library ?? (int)_shortcutToEdit.ApplicationLibrary;
+                exeForm.PreviousExe = txt_executable.Text;
+            }
+            else if (_shortcutCategory == ShortcutCategory.Executable)
+            {
+                exeForm.Mode = ChooseExecutableFormMode.ExeMode;
+                exeForm.PreviousExe = txt_executable.Text;
+                exeForm.PreviousAppId = "";
             }
 
-            if (exeForm.ShowDialog() == DialogResult.OK)
+            if (exeForm.ShowDialog(this) == DialogResult.OK)
             {
                 if (_loadedShortcut)
                     _isUnsaved = true;
@@ -2924,15 +2913,7 @@ namespace DisplayMagician.UIForms
 
         private void btn_choose_alternative_game_Click(object sender, EventArgs e)
         {
-            string gamePath = "";
-            foreach (GameView game in _availableGames)
-            {
-                if (game.Name == txt_game_name.Text)
-                {
-                    gamePath = game.Directory;
-                    break;
-                }
-            }
+            string gamePath = FindSelectedGame()?.Directory;
 
             // Fall back to the existing text or Program Files if the game directory is not found
             if (string.IsNullOrWhiteSpace(gamePath))
@@ -3280,7 +3261,8 @@ namespace DisplayMagician.UIForms
             txt_game_name.Text = e.Item.Text;
             foreach (GameView game in _availableGames)
             {
-                if (game.Name == txt_game_name.Text)
+                if (e.Item.VirtualItemKey is GameView selected && game.Library == selected.Library &&
+                    string.Equals(game.Id, selected.Id, StringComparison.OrdinalIgnoreCase))
                 {
                     if (_loadedShortcut)
                         _isUnsaved = true;
@@ -3430,7 +3412,7 @@ namespace DisplayMagician.UIForms
                 Cursor = Cursors.WaitCursor;
                 try
                 {
-                    GameListResult games = await _controlServiceClient.ListGamesAsync(_lifetimeToken);
+                    GameListResult games = await _controlServiceClient.ListGamesAsync(_lifetimeToken, true);
                     if (!CanUpdateView) return;
                     _availableGames = games.Games.ToList();
                     RefreshGamesList();
@@ -3442,6 +3424,7 @@ namespace DisplayMagician.UIForms
 
         private void RefreshGamesList()
         {
+            _selectedGame = FindSelectedGame();
             ilv_games.SuspendLayout();
             try
             {
@@ -3457,6 +3440,12 @@ namespace DisplayMagician.UIForms
                 }
             }
             finally { ilv_games.ResumeLayout(); }
+        }
+
+        private GameView FindSelectedGame()
+        {
+            return _availableGames.FirstOrDefault(game => game.Library == (int)GameLibrary &&
+                string.Equals(game.Id, _gameId, StringComparison.OrdinalIgnoreCase));
         }
 
         private static List<ShortcutBitmap> GetGameImages(GameView game)

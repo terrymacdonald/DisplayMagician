@@ -748,6 +748,11 @@ public sealed class GameView
     public string Directory { get; set; } = string.Empty;
 }
 
+public sealed class GameListRequest
+{
+    public bool Refresh { get; set; }
+}
+
 public sealed class GameListResult
 {
     public GameView[] Games { get; set; } = Array.Empty<GameView>();

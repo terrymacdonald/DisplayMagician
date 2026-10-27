@@ -23,6 +23,9 @@
     <ProjectReference Include="..\DisplayMagician.UserAgent\DisplayMagician.UserAgent.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="ImageListViewCore">
+      <HintPath>..\DisplayMagician\DLL\ImageListViewCore.dll</HintPath>
+    </Reference>
     <Reference Include="ADLXWrapper">
       <HintPath>..\DisplayMagician.UserAgent\DLL\ADLXWrapper.dll</HintPath>
     </Reference>

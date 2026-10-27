@@ -223,7 +223,8 @@ namespace DisplayMagician
                     {
                         if (!string.IsNullOrWhiteSpace(shortcut.SavedShortcutIconCacheFilename))
                             File.Delete(shortcut.SavedShortcutIconCacheFilename);
-                        Program.AppDirectInputManager?.RemoveHotkeysByUUID(shortcut.UUID);
+                        if (Program.AppDirectInputManager != null && !Program.AppDirectInputManager.RemoveHotkeysByUUID(shortcut.UUID))
+                            logger.Warn("ShortcutRepository/RemoveShortcut: Shortcut {0} was deleted but its local hotkey cleanup did not complete.", shortcut.UUID);
                     }
                     catch (Exception ex)
                     {

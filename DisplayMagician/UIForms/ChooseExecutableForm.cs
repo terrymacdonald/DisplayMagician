@@ -30,19 +30,48 @@ namespace DisplayMagician.UIForms
         private string _exeToUse = null;
         private string _previousExe = null;
         private string _previousAppId = null;
+        private readonly ControlServicePipeClient _client;
+        private readonly Action<string> _showError;
+        private readonly Func<string> _chooseExecutable;
+        private readonly CancellationTokenSource _lifetimeSource = new CancellationTokenSource();
+        private readonly CancellationToken _lifetimeToken;
+        private bool _lifetimeDisposed;
         private ChooseExecutableFormMode _chooseExecutableFormMode = ChooseExecutableFormMode.AppMode;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public ChooseExecutableForm()
+        public ChooseExecutableForm() : this(new ControlServicePipeClient()) { }
+
+        internal ChooseExecutableForm(ControlServicePipeClient client, Action<string> showError = null, Func<string> chooseExecutable = null)
         {
+            _client = client ?? throw new ArgumentNullException(nameof(client));
+            _showError = showError ?? (message => MessageBox.Show(this, message, "Applications Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Exclamation));
+            _chooseExecutable = chooseExecutable ?? getExeFile;
+            _lifetimeToken = _lifetimeSource.Token;
             InitializeComponent();
+            btn_select_app.Enabled = false;
+            Disposed += (_, _) =>
+            {
+                if (_lifetimeDisposed) return;
+                _lifetimeDisposed = true;
+                _lifetimeSource.Cancel();
+                _lifetimeSource.Dispose();
+            };
             ilv_installed_apps.MultiSelect = false;
             ilv_installed_apps.ThumbnailSize = new Size(100, 100);
             ilv_installed_apps.AllowDrag = false;
             ilv_installed_apps.AllowDrop = false;
             ilv_installed_apps.SetRenderer(new AppILVRenderer());
         }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if (!e.Cancel && !_lifetimeDisposed) _lifetimeSource.Cancel();
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int? PreviousAppLibrary { get; set; }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public AppView AppToUse
@@ -56,7 +85,7 @@ namespace DisplayMagician.UIForms
                 if (value is AppView)
                 {
                     _appToUse = value;
-                }                    
+                }
             }
         }
 
@@ -127,7 +156,7 @@ namespace DisplayMagician.UIForms
             this.Close();
         }
 
-        
+
         private string getExeFile()
         {
             dialog_open.InitialDirectory = Environment.SpecialFolder.ProgramFiles.ToString();
@@ -156,36 +185,30 @@ namespace DisplayMagician.UIForms
 
         private async void ChooseExecutableForm_Load(object sender, EventArgs e)
         {
+            await LoadAppsAsync();
+        }
+
+        private async Task LoadAppsAsync()
+        {
             try
             {
-                ControlServicePipeClient client = new ControlServicePipeClient();
-                AppListResult result = await client.ListAppsAsync(CancellationToken.None);
+                AppListResult result = await _client.ListAppsAsync(_lifetimeToken);
+                if (IsDisposed || Disposing || _lifetimeToken.IsCancellationRequested) return;
+                _installedApps.Clear();
                 _installedApps.AddRange(result.Apps);
             }
             catch (Exception ex)
             {
+                if (IsDisposed || Disposing || _lifetimeToken.IsCancellationRequested) return;
                 logger.Error(ex, "ChooseExecutableForm/ChooseExecutableForm_Load: Failed to retrieve applications from the User Agent.");
-                MessageBox.Show(this, "DisplayMagician could not retrieve installed applications. You can still choose an executable file.", "Applications Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                _showError("DisplayMagician could not retrieve installed applications. You can still choose an executable file.");
             }
 
-            if (!String.IsNullOrWhiteSpace(_previousExe))
-            {
-                // First lookup to see if this path is an app or just an exe
-                // If it is an app then select it
-                foreach (AppView installedApp in _installedApps)
-                {
-                    if (installedApp.Id.Equals(_previousAppId))
-                    {
-                        _selectedApp = installedApp;
-                    }
-                }
-            }
-
-            // Set up the _selectedApp if we're passed something
-            if (_chooseExecutableFormMode == ChooseExecutableFormMode.AppMode && _appToUse is AppView)
-            {
-                _selectedApp = _appToUse;
-            }
+            string previousId = _appToUse?.Id ?? _previousAppId;
+            int? previousLibrary = _appToUse?.Library ?? PreviousAppLibrary;
+            AppView[] matches = _installedApps.Where(app => string.Equals(app.Id, previousId, StringComparison.OrdinalIgnoreCase) &&
+                (!previousLibrary.HasValue || app.Library == previousLibrary.Value)).ToArray();
+            _selectedApp = matches.Length == 1 ? matches[0] : null;
 
             // Refresh the Installed Apps Library UI
             RefreshExecutableFormUI();
@@ -198,15 +221,12 @@ namespace DisplayMagician.UIForms
                 if (ilv_installed_apps.IsItemVisible(ilv_installed_apps.SelectedItems[0]) == ItemVisibility.NotVisible)
                 {
                     ilv_installed_apps.EnsureVisible(selectedIndex);
-                }                    
+                }
             }
         }
 
         private void RefreshExecutableFormUI()
         {
-
-            if (_installedApps.Count == 0)
-                return;
 
             // Temporarily stop updating the saved_profiles listview
             logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: Suspending the imagelistview layout");
@@ -215,6 +235,7 @@ namespace DisplayMagician.UIForms
             ImageListViewItem newItem = null;
             logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: Emptying shortcut list");
             ilv_installed_apps.Items.Clear();
+            btn_select_app.Enabled = false;
 
 
             foreach (AppView installedApp in _installedApps.OrderBy(app => app.Name))
@@ -229,7 +250,7 @@ namespace DisplayMagician.UIForms
 
 
                 // Select it if its the selectedProfile
-                if (_selectedApp != null && _selectedApp.Id == installedApp.Id)
+                if (_selectedApp != null && _selectedApp.Library == installedApp.Library && string.Equals(_selectedApp.Id, installedApp.Id, StringComparison.OrdinalIgnoreCase))
                 {
                     logger.Trace($"ChooseExecutableForm/RefreshExecutableFormUI: This shortcut {installedApp.Name} is the selected one so selecting it in the UI");
                     newItem.Selected = true;
@@ -250,10 +271,11 @@ namespace DisplayMagician.UIForms
 
         private void ilv_installed_apps_ItemClick(object sender, ItemClickEventArgs e)
         {
-            string selectedInstalledApp = e.Item.Text;
+            _selectedApp = null;
             foreach (AppView app in _installedApps)
             {
-                if (app.Name == selectedInstalledApp)
+                if (e.Item.VirtualItemKey is AppView selected && app.Library == selected.Library &&
+                    string.Equals(app.Id, selected.Id, StringComparison.OrdinalIgnoreCase))
                 {
                     _selectedApp = app;
                     break;
@@ -262,11 +284,11 @@ namespace DisplayMagician.UIForms
 
             try
             {
-                btn_select_app.Enabled = true;
+                btn_select_app.Enabled = _selectedApp != null;
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"ShortcutForm/ilv_games_ItemClick: Exception while figuring out if the select button shoud be enabled.");
+                logger.Warn(ex, "ChooseExecutableForm/ilv_installed_apps_ItemClick: Could not update application selection controls.");
             }
         }
 
@@ -284,9 +306,11 @@ namespace DisplayMagician.UIForms
 
         private void btn_select_exe_Click(object sender, EventArgs e)
         {
+            string executable = _chooseExecutable();
+            if (string.IsNullOrWhiteSpace(executable)) return;
             _chooseExecutableFormMode = ChooseExecutableFormMode.ExeMode;
             _appToUse = null;
-            _exeToUse = getExeFile();
+            _exeToUse = executable;
             DialogResult = DialogResult.OK;
             this.Close();
         }
@@ -302,11 +326,11 @@ namespace DisplayMagician.UIForms
         }
 
         private void ChooseExecutableForm_Shown(object sender, EventArgs e)
-        {            
+        {
         }
 
         private void ilv_installed_apps_VisibleChanged(object sender, EventArgs e)
-        {            
+        {
         }
     }
 }

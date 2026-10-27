@@ -1,6 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using DisplayMagician;
 #if !USER_AGENT
@@ -119,190 +121,93 @@ namespace DisplayMagician.GameLibraries
             return true;
         }
 
+        private static readonly object _catalogSyncRoot = new object();
+
         public static bool LoadGamesInBackground()
         {
-
-            logger.Trace($"Program/LoadGamesInBackground: Attempting to load games from detected game libraries.");
-
-
-            // Clear the game libraries in case this is a refresh
-            SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
-            steamLibrary.AllInstalledGames.Clear();
-            UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
-            uplayLibrary.AllInstalledGames.Clear();
-            OriginLibrary originLibrary = OriginLibrary.GetLibrary();
-            originLibrary.AllInstalledGames.Clear();
-            EpicLibrary epicLibrary = EpicLibrary.GetLibrary();
-            epicLibrary.AllInstalledGames.Clear();
-            GogLibrary gogLibrary = GogLibrary.GetLibrary();
-            gogLibrary.AllInstalledGames.Clear();
-
-            // Now lets prepare loading all the Steam games we have installed
-            Action loadSteamGamesAction = new Action(() =>
-            {
-                SteamLibrary steamLibrary = SteamLibrary.GetLibrary();
-                // Check if Steam is installed
-                if (steamLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Steam library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Steam Games");
-                    if (!steamLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Steam Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Steam Games (found {steamLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Steam not installed.");
-                    Console.WriteLine("Steam not installed.");
-                }
-            });
-
-            // Now lets prepare loading all the Uplay games we have installed
-            Action loadUplayGamesAction = new Action(() =>
-            {
-                UplayLibrary uplayLibrary = UplayLibrary.GetLibrary();
-                // Check if Uplay is installed
-                if (uplayLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Uplay library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Uplay Games");
-                    if (!uplayLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Uplay Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Uplay Games (found {uplayLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Uplay not installed.");
-                    Console.WriteLine("Uplay not installed.");
-                }
-
-            });
-
-            // Now lets prepare loading all the Origin games we have installed
-            Action loadOriginGamesAction = new Action(() =>
-            {
-                OriginLibrary originLibrary = OriginLibrary.GetLibrary();
-                // Check if Origin is installed
-                if (originLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Origin library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Origin Games");
-                    if (!originLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Origin Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Origin Games (found {originLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Origin not installed.");
-                    Console.WriteLine("Origin not installed.");
-                }
-
-            });
-
-            // Now lets prepare loading all the Epic games we have installed
-            Action loadEpicGamesAction = new Action(() =>
-            {
-                EpicLibrary epicLibrary = EpicLibrary.GetLibrary();
-                // Check if Epic is installed
-                if (epicLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Origin library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed Epic Games");
-                    if (!epicLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed Epic Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed Epic Games (found {epicLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: Epic not installed.");
-                    Console.WriteLine("Epic not installed.");
-                }
-
-            });
-
-            // Now lets prepare loading all the GOG games we have installed
-            Action loadGogGamesAction = new Action(() =>
-            {
-                GogLibrary gogLibrary = GogLibrary.GetLibrary();
-                // Check if GOG is installed
-                if (gogLibrary.IsGameLibraryInstalled)
-                {
-                    // Load Origin library games
-                    logger.Info($"Program/LoadGamesInBackground: Loading Installed GOG Games");
-                    if (!gogLibrary.LoadInstalledGames())
-                    {
-                        logger.Info($"Program/LoadGamesInBackground: Cannot load installed GOG Games!");
-                    }
-                    logger.Info($"Program/LoadGamesInBackground: Loaded all Installed GOG Games (found {gogLibrary.InstalledGameCount})");
-                }
-                else
-                {
-                    logger.Info($"Program/LoadGamesInBackground: GOG not installed.");
-                    Console.WriteLine("GOG not installed.");
-                }
-
-            });
-
-            // Store all the actions in a array so we can wait on them later
-            List<Action> loadGamesActions = new List<Action>();
-            loadGamesActions.Add(loadSteamGamesAction);
-            loadGamesActions.Add(loadUplayGamesAction);
-            loadGamesActions.Add(loadOriginGamesAction);
-            loadGamesActions.Add(loadEpicGamesAction);
-            loadGamesActions.Add(loadGogGamesAction);
-
             try
             {
-                logger.Debug($"Program/LoadGamesInBackground: Running game loading actions.");
-                // Go through and start all the actions, making sure we only have one threat per action to avoid thread issues
-                int threads = loadGamesActions.Count;
-                ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = threads };
-                Parallel.Invoke(options, loadGamesActions.ToArray());
-                // Once we get here , we know that all the parallel actions have returned
-                logger.Debug($"Program/LoadGamesInBackground: All game loading tasks finished");
-            }
-            catch (AggregateException ae)
-            {
-                logger.Error(ae, $"Program/LoadGamesInBackground: One or more exception during execution of loadGamesActions");
-                foreach (Exception ex in ae.InnerExceptions)
+                return LoadGamesInBackground(new GameLibrary[]
                 {
-                    logger.Error(ex, $"Program/LoadGamesInBackground: LoadGamesActions exception:");
-                }
+                    SteamLibrary.GetLibrary(), UplayLibrary.GetLibrary(), OriginLibrary.GetLibrary(),
+                    EpicLibrary.GetLibrary(), GogLibrary.GetLibrary()
+                });
             }
-            
-            // Produce a single array of Games we can reference later
-            GameLibrary.AllInstalledGamesInAllLibraries = new List<Game>();
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(steamLibrary.AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(uplayLibrary.AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(originLibrary.AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(epicLibrary.AllInstalledGames);
-            GameLibrary.AllInstalledGamesInAllLibraries.AddRange(gogLibrary.AllInstalledGames);
+            catch (Exception ex)
+            {
+                logger.Error(ex, "GameLibrary/LoadGamesInBackground: Could not initialize game libraries for scanning.");
+                return false;
+            }
+        }
 
+        internal static bool LoadGamesInBackground(IReadOnlyList<GameLibrary> libraries)
+        {
+            lock (_catalogSyncRoot)
+            {
+                Dictionary<GameLibrary, Game[]> previous = new Dictionary<GameLibrary, Game[]>();
+                try
+                {
+                    foreach (GameLibrary library in libraries)
+                        previous.Add(library, library.AllInstalledGames.ToArray());
+                    ConcurrentBag<GameLibrary> failures = new ConcurrentBag<GameLibrary>();
+                    Parallel.ForEach(libraries, library =>
+                    {
+                        try
+                        {
+                            library.AllInstalledGames.Clear();
+                            if (!library.IsGameLibraryInstalled) return;
+                            logger.Info("GameLibrary/LoadGamesInBackground: Loading installed games from {0}.", library.GameLibraryType);
+                            if (!library.LoadInstalledGames())
+                            {
+                                failures.Add(library);
+                                logger.Warn("GameLibrary/LoadGamesInBackground: Could not load installed games from {0}.", library.GameLibraryType);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            failures.Add(library);
+                            logger.Error(ex, "GameLibrary/LoadGamesInBackground: Game scan failed for {0}.", library.GameLibraryType);
+                        }
+                    });
+                    if (failures.IsEmpty || !GamesLoaded)
+                    {
+                        // Preserve first-start availability using successful providers only.
+                        // Once a catalogue exists, failed refreshes retain it in full.
+                        if (!failures.IsEmpty)
+                        {
+                            foreach (GameLibrary failed in failures) failed.AllInstalledGames.Clear();
+                            logger.Warn("GameLibrary/LoadGamesInBackground: Initial scan was incomplete; using successful libraries. Failed library count: {0}.", failures.Count);
+                        }
+                        // Publish only after every provider has finished.
+                        List<Game> games = libraries.SelectMany(library => library.AllInstalledGames).ToList();
+                        AllInstalledGamesInAllLibraries = games;
 #if !USER_AGENT
-            Program.AppGameList = GameLibrary.AllInstalledGamesInAllLibraries;
+                        Program.AppGameList = games;
 #endif
+                        GamesLoaded = true;
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, "GameLibrary/LoadGamesInBackground: Game scan failed; retaining the previous catalogue.");
+                }
 
-            // Stop creating Game Bitmaps from the Games so the rest of the program is faster later
-            //RefreshGameBitmaps();
-
-            GamesLoaded = true;
-
-            return true;
+                // Provider scans may have cleared or replaced their lists before failing.
+                foreach (KeyValuePair<GameLibrary, Game[]> entry in previous)
+                {
+                    entry.Key.AllInstalledGames.Clear();
+                    entry.Key.AllInstalledGames.AddRange(entry.Value);
+                }
+                return false;
+            }
         }
 
 #if !USER_AGENT
         public static void RefreshGameBitmaps()
         {
             // Create Game Bitmaps from the Games so the rest of the program is faster later
-            // Get the bitmap out of the IconPath 
+            // Get the bitmap out of the IconPath
             // IconPath can be an ICO, or an EXE
             foreach (var game in GameLibrary.AllInstalledGamesInAllLibraries)
             {
@@ -373,11 +278,15 @@ namespace DisplayMagician.GameLibraries
 #endif
 
         public static Game? GetAnyGameById(string gameId)
+            => GetAnyGameById(gameId, null);
+
+        public static Game? GetAnyGameById(string gameId, SupportedGameLibraryType? libraryType)
         {
             Game? gameToUse = null;
             foreach (Game game in GameLibrary.AllInstalledGamesInAllLibraries)
             {
-                if (game.Id.Equals(gameId))
+                if (string.Equals(game.Id, gameId, StringComparison.Ordinal) &&
+                    (!libraryType.HasValue || game.GameLibraryType == libraryType.Value))
                 {
                     gameToUse = game;
                     break;

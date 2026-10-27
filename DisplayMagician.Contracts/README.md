@@ -33,3 +33,5 @@ Successful replies must satisfy both the negotiated protocol version and every c
 ```powershell
 dotnet build .\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj
 ```
+
+ListGames accepts the shared optional GameListRequest. Refresh defaults to false; true requests a fresh UserAgent-owned library scan. Empty legacy payloads and {} remain cached reads. The version-1 envelope and GameListResult are unchanged; no persisted configuration schema changes. REST catalogue reads retain their existing behaviour.

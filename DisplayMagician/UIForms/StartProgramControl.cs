@@ -175,6 +175,7 @@ namespace DisplayMagician.UIForms
             {
                 chooseExecutableForm.PreviousExe = myStartProgram.Executable;
                 chooseExecutableForm.PreviousAppId = myStartProgram.ApplicationId;
+                chooseExecutableForm.PreviousAppLibrary = String.IsNullOrWhiteSpace(myStartProgram.ApplicationId) ? null : 2;
                 chooseExecutableForm.StartPosition = FormStartPosition.CenterParent;
                 if (chooseExecutableForm.ShowDialog(this) != DialogResult.OK)
                     return;

@@ -28,6 +28,7 @@ public sealed class ProfileCommandHandler
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+    private readonly Func<bool> _loadGames;
     private readonly AgentRegistration _registration;
     private readonly string _userDataPath;
     private readonly ShortcutStore _shortcutStore;
@@ -55,8 +56,9 @@ public sealed class ProfileCommandHandler
     {
     }
 
-    internal ProfileCommandHandler(AgentRegistration registration, ControlServiceClient controlServiceClient, IInteractiveSessionStateProvider? interactiveSessionStateProvider, string userDataPath, UserProfileOperationService profileOperationService)
+    internal ProfileCommandHandler(AgentRegistration registration, ControlServiceClient controlServiceClient, IInteractiveSessionStateProvider? interactiveSessionStateProvider, string userDataPath, UserProfileOperationService profileOperationService, Func<bool>? loadGames = null)
     {
+        _loadGames = loadGames ?? GameLibrary.LoadGamesInBackground;
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
         _controlServiceClient = controlServiceClient ?? throw new ArgumentNullException(nameof(controlServiceClient));
         _interactiveSessionStateProvider = interactiveSessionStateProvider ?? new WtsInteractiveSessionStateProvider();
@@ -219,9 +221,22 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.ListGames)
         {
-            if (!GameLibrary.GamesLoaded)
+            GameListRequest? listRequest;
+            try
             {
-                await Task.Run(GameLibrary.LoadGamesInBackground, cancellationToken).ConfigureAwait(false);
+                // Older clients send no payload for an ordinary cached read.
+                listRequest = string.IsNullOrWhiteSpace(request.Payload) ? new GameListRequest() : JsonSerializer.Deserialize<GameListRequest>(request.Payload);
+            }
+            catch (JsonException)
+            {
+                return new ControlResponse { ErrorCode = ControlErrorCode.InvalidRequest, Message = "The game list request is invalid." };
+            }
+            if (listRequest == null)
+                return new ControlResponse { ErrorCode = ControlErrorCode.InvalidRequest, Message = "A game list request is required." };
+            if (listRequest.Refresh || !GameLibrary.GamesLoaded)
+            {
+                if (!await Task.Run(_loadGames, cancellationToken).ConfigureAwait(false))
+                    return new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The game scan failed. The previous catalogue has been retained." };
             }
 
             GameView[] games = GameLibrary.AllInstalledGamesInAllLibraries

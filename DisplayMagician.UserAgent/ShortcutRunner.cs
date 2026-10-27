@@ -175,7 +175,7 @@ public sealed class ShortcutRunner
                 // cannot be mistaken for the game that triggered automatic detection.
                 if (!GameLibrary.GamesLoaded)
                     await Task.Run(GameLibrary.LoadGamesInBackground, cancellationToken).ConfigureAwait(false);
-                Game? detectedGame = GameLibrary.GetAnyGameById(shortcut.GameAppId);
+                Game? detectedGame = GameLibrary.GetAnyGameById(shortcut.GameAppId, (SupportedGameLibraryType)shortcut.GameLibrary);
                 string detectedExecutable = shortcut.MonitorDifferentGameExecutable
                     ? shortcut.DifferentGameExecutablePathToMonitor : detectedGame?.ExePath ?? string.Empty;
                 if (detectedProcess.HasValue)
@@ -314,7 +314,7 @@ public sealed class ShortcutRunner
                     return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                 }
 
-                Game? game = GameLibrary.GetAnyGameById(shortcut.GameAppId);
+                Game? game = GameLibrary.GetAnyGameById(shortcut.GameAppId, (SupportedGameLibraryType)shortcut.GameLibrary);
                 if (game == null)
                 {
                     return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);

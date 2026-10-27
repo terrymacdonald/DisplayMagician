@@ -1,4 +1,4 @@
-﻿using DisplayMagician.UIForms;
+using DisplayMagician.UIForms;
 using NLog;
 using NLog.Targets;
 using SharpGen.Runtime;
@@ -141,6 +141,7 @@ namespace DisplayMagician
     public class DirectInputManager : IDisposable
     {
         private readonly IDirectInput8 _directInput;
+        private readonly object _bindingSyncRoot = new object();
         private readonly Dictionary<Guid, IDirectInputDevice8> _keyboardDevices;
         private readonly Dictionary<Guid, IDirectInputDevice8> _joystickDevices;
         private readonly Dictionary<List<Key>, Action> _keyBindings = new Dictionary<List<Key>, Action>(new KeyCombinationComparer());
@@ -154,10 +155,12 @@ namespace DisplayMagician
         /// <summary>
         /// Creates the DirectInput factory and sets up empty device dictionaries.
         /// </summary>
-        public DirectInputManager()
+        public DirectInputManager() : this(DInput.DirectInput8Create()) { }
+
+        // Supplying no native factory allows binding/cleanup tests without devices.
+        internal DirectInputManager(IDirectInput8 directInput)
         {
-            // 1) Factory via DInput helper
-            _directInput = DInput.DirectInput8Create();      
+            _directInput = directInput;
             _keyboardDevices = new Dictionary<Guid, IDirectInputDevice8>();
             _joystickDevices = new Dictionary<Guid, IDirectInputDevice8>();
         }
@@ -190,7 +193,7 @@ namespace DisplayMagician
                 {
                     ConfigureDevice(dev, windowHandle, false);
                     _joystickDevices[di.InstanceGuid] = dev;
-                }                
+                }
             }
         }
 
@@ -200,21 +203,21 @@ namespace DisplayMagician
         private void ConfigureDevice(IDirectInputDevice8 device, IntPtr hwnd, bool isKeyboard)
         {
             device.SetCooperativeLevel(hwnd,
-                CooperativeLevel.Background | CooperativeLevel.NonExclusive);      
-            device.Properties.BufferSize = 16;                                      
+                CooperativeLevel.Background | CooperativeLevel.NonExclusive);
+            device.Properties.BufferSize = 16;
             // Choose format
             if (isKeyboard)
             {
-                var r = device.SetDataFormat<RawKeyboardState>();                 
+                var r = device.SetDataFormat<RawKeyboardState>();
                 if (!r.Success) throw new InvalidOperationException("Keyboard DFMT failed");
             }
             else
             {
-                var r = device.SetDataFormat<RawJoystickState>();                  
+                var r = device.SetDataFormat<RawJoystickState>();
                 if (!r.Success) throw new InvalidOperationException("Joystick DFMT failed");
             }
 
-            device.Acquire();                                                       
+            device.Acquire();
         }
 
         /// <summary>
@@ -239,14 +242,20 @@ namespace DisplayMagician
             _pollThread.Start();
         }
 
-        public bool HasRegisteredHotkeys => _keyBindings.Count > 0 || _buttonBindings.Count > 0;
+        public bool HasRegisteredHotkeys
+        {
+            get { lock (_bindingSyncRoot) return _keyBindings.Count > 0 || _buttonBindings.Count > 0; }
+        }
 
         public void ClearRegisteredHotkeys()
         {
-            _keyBindings.Clear();
-            _buttonBindings.Clear();
-            _activeKeyboardBindings.Clear();
-            _activeJoystickBindings.Clear();
+            lock (_bindingSyncRoot)
+            {
+                _keyBindings.Clear();
+                _buttonBindings.Clear();
+                _activeKeyboardBindings.Clear();
+                _activeJoystickBindings.Clear();
+            }
         }
 
         public void StopIfNoRegisteredHotkeys()
@@ -289,26 +298,32 @@ namespace DisplayMagician
         /// </summary>
         public void RegisterKeyCombination(List<Key> keyCombination, Action action)
         {
-            _keyBindings[keyCombination] = action;
+            lock (_bindingSyncRoot) _keyBindings[new List<Key>(keyCombination)] = action;
         }
 
         /// <summary>
         /// Remove a previously registered key combination.
         /// </summary>
         public bool RemoveKeyCombination(List<Key> keyCombination)
-            => _keyBindings.Remove(keyCombination);
+        {
+            lock (_bindingSyncRoot) return keyCombination != null && _keyBindings.Remove(keyCombination);
+        }
 
         /// <summary>
         /// Register a joystick button combination on a device GUID for an action.
         /// </summary>
         public void RegisterJoystickButtons(List<JoystickButton> buttonCombination, Action action)
-            => _buttonBindings[buttonCombination] = action;
+        {
+            lock (_bindingSyncRoot) _buttonBindings[new List<JoystickButton>(buttonCombination)] = action;
+        }
 
         /// <summary>
         /// Remove a previously registered joystick button combination.
         /// </summary>
         public bool RemoveJoystickButtons(List<JoystickButton> buttonCombination)
-            => _buttonBindings.Remove(buttonCombination);
+        {
+            lock (_bindingSyncRoot) return buttonCombination != null && _buttonBindings.Remove(buttonCombination);
+        }
 
         /// <summary>The background poll loop: reads buffered events and fires your callbacks.</summary>
         private void PollLoop(CancellationToken token, int intervalMs)
@@ -317,6 +332,13 @@ namespace DisplayMagician
             {
                 HashSet<string> keyboardBindingsDownThisPoll = new HashSet<string>();
                 HashSet<string> joystickBindingsDownThisPoll = new HashSet<string>();
+                KeyValuePair<List<Key>, Action>[] keyboardBindings;
+                KeyValuePair<List<JoystickButton>, Action>[] joystickBindings;
+                lock (_bindingSyncRoot)
+                {
+                    keyboardBindings = _keyBindings.ToArray();
+                    joystickBindings = _buttonBindings.ToArray();
+                }
 
                 // Keyboards
                 foreach (var kv in _keyboardDevices)
@@ -336,13 +358,15 @@ namespace DisplayMagician
                     {
                         var state = keyboard.GetCurrentKeyboardState();
 
-                        foreach (var binding in _keyBindings)
+                        foreach (var binding in keyboardBindings)
                         {
                             if (state.PressedKeys.Count > 0 && binding.Key.Count > 0 && binding.Key.All(k => state.IsPressed(k)))
                             {
                                 string bindingSignature = CreateKeyboardBindingSignature(binding.Key);
                                 keyboardBindingsDownThisPoll.Add(bindingSignature);
-                                if (_activeKeyboardBindings.Add(bindingSignature))
+                                bool newlyPressed;
+                                lock (_bindingSyncRoot) newlyPressed = _keyBindings.TryGetValue(binding.Key, out Action currentAction) && currentAction == binding.Value && _activeKeyboardBindings.Add(bindingSignature);
+                                if (newlyPressed)
                                 {
                                     DispatchHotkeyAction(binding.Value);
                                 }
@@ -376,7 +400,7 @@ namespace DisplayMagician
                         // convert the state to a list of joystick buttons to our JoystickButton struct
                         var pressedButtons = CreateJoystickButtonsList(state.Buttons, joystick.Value.DeviceInfo.Type, joystick.Value.DeviceInfo.InstanceName, joystick.Key);
 
-                        foreach (var binding in _buttonBindings)
+                        foreach (var binding in joystickBindings)
                         {
 
                             // If there is a button pressed and it is in the list of buttons for the binding
@@ -384,7 +408,9 @@ namespace DisplayMagician
                             {
                                 string bindingSignature = CreateJoystickBindingSignature(binding.Key);
                                 joystickBindingsDownThisPoll.Add(bindingSignature);
-                                if (_activeJoystickBindings.Add(bindingSignature))
+                                bool newlyPressed;
+                                lock (_bindingSyncRoot) newlyPressed = _buttonBindings.TryGetValue(binding.Key, out Action currentAction) && currentAction == binding.Value && _activeJoystickBindings.Add(bindingSignature);
+                                if (newlyPressed)
                                 {
                                     DispatchHotkeyAction(binding.Value);
                                 }
@@ -413,7 +439,7 @@ namespace DisplayMagician
                                         act();
                                     }
                                 }
-                                    
+
                             }
                             Trace.WriteLine(bufferedData[0].ToString());
                         }*/
@@ -424,8 +450,11 @@ namespace DisplayMagician
                     }
                 }
 
-                _activeKeyboardBindings.RemoveWhere(binding => !keyboardBindingsDownThisPoll.Contains(binding));
-                _activeJoystickBindings.RemoveWhere(binding => !joystickBindingsDownThisPoll.Contains(binding));
+                lock (_bindingSyncRoot)
+                {
+                    _activeKeyboardBindings.RemoveWhere(binding => !keyboardBindingsDownThisPoll.Contains(binding));
+                    _activeJoystickBindings.RemoveWhere(binding => !joystickBindingsDownThisPoll.Contains(binding));
+                }
 
                 Thread.Sleep(intervalMs);
             }
@@ -480,7 +509,7 @@ namespace DisplayMagician
             }
 
             // dispose all devices and the interface
-            foreach (var dev in _keyboardDevices.Values) 
+            foreach (var dev in _keyboardDevices.Values)
             {
                 if (dev != null)
                 {
@@ -488,7 +517,7 @@ namespace DisplayMagician
                     dev.Dispose();
                 }
             }
-            foreach (var dev in _joystickDevices.Values) 
+            foreach (var dev in _joystickDevices.Values)
             {
                 if (dev != null)
                 {
@@ -496,11 +525,11 @@ namespace DisplayMagician
                     dev.Dispose();
                 }
             }
-            _directInput.Dispose();
+            _directInput?.Dispose();
         }
 
         /// <summary>
-        /// Gets the product name of the joystick device associated with the hotkey.
+        /// Formats the configured buttons, including when their device is disconnected.
         /// </summary>
         public List<JoystickButton> CreateJoystickButtonsList(bool[] joystickButtons, DeviceType deviceType, string deviceName, Guid deviceGuid)
         {
@@ -520,16 +549,9 @@ namespace DisplayMagician
         /// </summary>
         public string GetNameOfJoystickHotkey(HotkeyJoystick joystickHotkey)
         {
-            foreach (var device in _joystickDevices)
-            {
-
-                if (joystickHotkey.Buttons == null || !joystickHotkey.Buttons.Any())
-                    return string.Empty;
-
-                return string.Join(" + ", joystickHotkey.Buttons.Select(k => k.ToString()));
-               
-            }
-            return "";
+            if (joystickHotkey.Buttons == null || !joystickHotkey.Buttons.Any())
+                return string.Empty;
+            return string.Join(" + ", joystickHotkey.Buttons.Select(k => k.ToString()));
         }
 
         // <summary>
@@ -543,7 +565,7 @@ namespace DisplayMagician
             return string.Join(" + ", keyboardHotkey.KeyCodes.Select(k => k.ToString()));
         }
 
-        
+
         public bool RegisterStoredHotkeys(ProgramSettings programSettings)
         {
             try
@@ -631,7 +653,7 @@ namespace DisplayMagician
                             logger.Trace($"DirectInputManager/RegisterStoredHotkeys: Skipping registering joystick combination as it has no buttons selected!");
                             continue;
                         }
-                        
+
 
 
                         if (hotkey.Task == HotkeyTask.OpenMainWindow)
@@ -708,7 +730,7 @@ namespace DisplayMagician
                         if (numRemoved > 0)
                         {
                             RemoveKeyCombination(updatedHotkey.KeyCodes);
-                        }                        
+                        }
 
                         // Add the key combination to the store of keyboard hotkeys
                         Program.AppProgramSettings.KeyboardHotkeys.Add(updatedHotkey);
@@ -796,7 +818,7 @@ namespace DisplayMagician
 
                 // Save the settings
                 Program.AppProgramSettings.SaveSettings();
-                
+
 
             }
             catch (Exception ex)
@@ -807,113 +829,40 @@ namespace DisplayMagician
         }
 
         public bool RemoveHotkeysByName(string hotkeyName)
-        {
-            try
-            {
-                if (Program.AppProgramSettings.KeyboardHotkeys != null && Program.AppProgramSettings.KeyboardHotkeys is List<HotkeyKeyboard> && Program.AppProgramSettings.KeyboardHotkeys.Count > 0)
-                {
-                    foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
-                    {
-                        if (GetNameOfKeyboardHotkey(hotkey) == hotkeyName)
-                        {
-                            // Remove it from the stored list
-                            Program.AppProgramSettings.KeyboardHotkeys.Remove(hotkey);
-
-                            // If it is currently registered, then deregister it
-                            RemoveKeyCombination(hotkey.KeyCodes);
-                        }
-                    }
-                }
-                else
-                {
-                    logger.Trace($"DirectInputManager/RemoveHotkeysByName: We have no keyboard hotkeys to remove so skipping them.");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Warn(ex, $"DirectInputManager/RemoveHotkeysByName: WARNING - Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.");
-            }
-
-            if (Program.AppProgramSettings.JoystickHotkeys != null && Program.AppProgramSettings.JoystickHotkeys is List<HotkeyJoystick> && Program.AppProgramSettings.JoystickHotkeys.Count > 0)
-            {
-                foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
-                {
-                    if (GetNameOfJoystickHotkey(hotkey) == hotkeyName)
-                    {
-                        // Remove it from the stored list
-                        Program.AppProgramSettings.JoystickHotkeys.Remove(hotkey);
-
-                        // If it is currently registered, then deregister it
-                        RemoveJoystickButtons(hotkey.Buttons);
-                    }
-                }
-            }
-            else
-            {
-                logger.Trace($"DirectInputManager/RemoveHotkeysByName: We have no joystick hotkeys to remove so skipping them.");
-            }
-
-            // Save the settings
-            Program.AppProgramSettings.SaveSettings();
-
-            StopIfNoRegisteredHotkeys();
-
-            return true;
-        }
+            => !string.IsNullOrWhiteSpace(hotkeyName) && RemoveHotkeys(
+                hotkey => GetNameOfKeyboardHotkey(hotkey) == hotkeyName,
+                hotkey => GetNameOfJoystickHotkey(hotkey) == hotkeyName, hotkeyName);
 
         public bool RemoveHotkeysByUUID(string uuid)
+            => !string.IsNullOrWhiteSpace(uuid) && RemoveHotkeys(
+                hotkey => string.Equals(hotkey.UUID, uuid, StringComparison.OrdinalIgnoreCase),
+                hotkey => string.Equals(hotkey.UUID, uuid, StringComparison.OrdinalIgnoreCase), uuid);
+
+        private bool RemoveHotkeys(Func<HotkeyKeyboard, bool> keyboardMatch, Func<HotkeyJoystick, bool> joystickMatch, string identity)
         {
             try
             {
-                if (Program.AppProgramSettings.KeyboardHotkeys != null && Program.AppProgramSettings.KeyboardHotkeys is List<HotkeyKeyboard> && Program.AppProgramSettings.KeyboardHotkeys.Count > 0)
+                // Enumerate matching snapshots: removal must not invalidate its own iterator.
+                foreach (HotkeyKeyboard hotkey in Program.AppProgramSettings.KeyboardHotkeys?.Where(keyboardMatch).ToArray() ?? Array.Empty<HotkeyKeyboard>())
                 {
-                    foreach (var hotkey in Program.AppProgramSettings.KeyboardHotkeys)
-                    {
-                        if (hotkey.UUID.ToString() == uuid)
-                        {
-                            // Remove it from the stored list
-                            Program.AppProgramSettings.KeyboardHotkeys.Remove(hotkey);
-
-                            // If it is currently registered, then deregister it
-                            RemoveKeyCombination(hotkey.KeyCodes);
-                        }
-                    }
+                    Program.AppProgramSettings.KeyboardHotkeys.Remove(hotkey);
+                    RemoveKeyCombination(hotkey.KeyCodes);
                 }
-                else
+                foreach (HotkeyJoystick hotkey in Program.AppProgramSettings.JoystickHotkeys?.Where(joystickMatch).ToArray() ?? Array.Empty<HotkeyJoystick>())
                 {
-                    logger.Trace($"DirectInputManager/RemoveHotkeysByUUID: We have no keyboard hotkeys to remove so skipping them.");
+                    Program.AppProgramSettings.JoystickHotkeys.Remove(hotkey);
+                    RemoveJoystickButtons(hotkey.Buttons);
                 }
+                bool saved = Program.AppProgramSettings.SaveSettings();
+                StopIfNoRegisteredHotkeys();
+                if (!saved) logger.Warn("DirectInputManager/RemoveHotkeys: Could not persist hotkey removal for {0}.", identity);
+                return saved;
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"DirectInputManager/RemoveHotkeysByUUID: WARNING - Exception while trying to register the Keyboard Hotkey. It may already be registered to something else. Please choose another Hotkey, or stop the other application from using it.");
+                logger.Warn(ex, "DirectInputManager/RemoveHotkeys: Could not remove hotkeys for {0}.", identity);
+                return false;
             }
-
-            if (Program.AppProgramSettings.JoystickHotkeys != null && Program.AppProgramSettings.JoystickHotkeys is List<HotkeyJoystick> && Program.AppProgramSettings.JoystickHotkeys.Count > 0)
-            {
-                foreach (var hotkey in Program.AppProgramSettings.JoystickHotkeys)
-                {
-                    if (hotkey.UUID.ToString() == uuid)
-                    {
-                        // Remove it from the stored list
-                        Program.AppProgramSettings.JoystickHotkeys.Remove(hotkey);
-
-                        // If it is currently registered, then deregister it
-                        RemoveJoystickButtons(hotkey.Buttons);
-                    }
-                }
-            }
-            else
-            {
-                logger.Trace($"DirectInputManager/RemoveHotkeysByUUID: We have no joystick hotkeys to remove so skipping them.");
-            }
-
-            // Save the settings
-            Program.AppProgramSettings.SaveSettings();
-
-            StopIfNoRegisteredHotkeys();
-
-            return true;
         }
 
         public List<HotkeyKeyboard> GetKeyboardHotkeysByUUID(string uuid)
@@ -939,8 +888,8 @@ namespace DisplayMagician
             }
             catch (Exception ex)
             {
-                logger.Warn(ex, $"DirectInputManager/GetKeyboardHotkeysByUUID: WARNING - Exception while trying to find a keyboard hotkey by task.");                
-            }            
+                logger.Warn(ex, $"DirectInputManager/GetKeyboardHotkeysByUUID: WARNING - Exception while trying to find a keyboard hotkey by task.");
+            }
 
             return hotkeysToReturn;
         }
@@ -1044,14 +993,14 @@ namespace DisplayMagician
             {
                 keyNames.Add(key.ToString("G"));
             }
-            
+
             return string.Join(" + ", keyNames);
         }
 
         public string GenerateKeyboardHotkeyText(List<HotkeyKeyboard> keyboardHotkeys)
         {
             // We want the keyboard hotkeys to win if both are provided. Joystick and keyboard hotkeys do not mix and cannot be used together.
-            
+
             string hotkeyListText = string.Empty;
 
             foreach (var singleHotkey in keyboardHotkeys)
@@ -1076,7 +1025,7 @@ namespace DisplayMagician
                 keyNames.Add(button.ToString());
             }
 
-            return string.Join(" + ", keyNames);            
+            return string.Join(" + ", keyNames);
         }
 
         public string GenerateJoystickHotkeyText(List<HotkeyJoystick> joystickHotkeys)

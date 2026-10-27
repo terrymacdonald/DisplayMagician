@@ -201,8 +201,11 @@ internal class ControlServicePipeClient
     }
 
     public async Task<GameListResult> ListGamesAsync(CancellationToken cancellationToken)
+        => await ListGamesAsync(cancellationToken, false).ConfigureAwait(false);
+
+    public async Task<GameListResult> ListGamesAsync(CancellationToken cancellationToken, bool refresh)
     {
-        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListGames }, cancellationToken).ConfigureAwait(false);
+        ControlResponse response = await SendAsync(new ControlEnvelope { MessageType = ControlMessageType.ListGames, Payload = JsonSerializer.Serialize(new GameListRequest { Refresh = refresh }) }, cancellationToken).ConfigureAwait(false);
         return response.IsSuccessful && response.GameList != null ? response.GameList : throw new InvalidOperationException(response.Message);
     }
 

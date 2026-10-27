@@ -180,6 +180,17 @@
         }
       }
     },
+    "GameListRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Refresh": {
+          "type": "boolean",
+          "default": false,
+          "description": "Explicitly rescan the game libraries. Omitted or empty legacy requests use the cached catalogue."
+        }
+      }
+    },
     "ProfileListRequest": {
       "type": "object",
       "additionalProperties": false,

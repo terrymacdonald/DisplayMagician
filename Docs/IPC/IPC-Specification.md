@@ -1,7 +1,7 @@
 # DisplayMagician v4 local IPC specification
 
-**Status:** Implemented protocol documentation  
-**Protocol version:** 1  
+**Status:** Implemented protocol documentation
+**Protocol version:** 1
 **Last verified:** 2026-10-08
 
 ## 1. Scope
@@ -217,7 +217,7 @@ The numeric values are stable wire values. “Local” means callable through th
 | Value | Message | Request payload | Primary response | Notes |
 |---:|---|---|---|---|
 | 27 | `StartShortcut` | `StartShortcutRequest` | Operation status via response/events | Client-supplied non-empty operation ID is recommended. |
-| 30 | `ListGames` | Empty | `GameListResult` | UserAgent-owned discovery. |
+| 30 | `ListGames` | `GameListRequest` or empty | `GameListResult` | UserAgent-owned discovery; optional `Refresh: true` rescans libraries. Omitted/false uses the loaded cache. Failed refreshes retain an existing catalogue and return `ExecutionFailed`; the first scan keeps successful libraries and logs failed ones. |
 | 34 | `ListApps` | Empty | `AppListResult` | UserAgent-owned discovery. |
 | 35 | `ListShortcuts` | Empty | `ShortcutListResult` | Client-safe shortcut views. |
 | 25 | `GetRepositorySnapshot` | `RepositorySnapshotRequest` | `RepositorySnapshot` | Advanced local editing primitive. |
