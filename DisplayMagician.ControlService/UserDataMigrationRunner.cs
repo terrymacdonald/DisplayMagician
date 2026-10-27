@@ -9,7 +9,9 @@ namespace DisplayMagician.ControlService;
 
 public sealed class UserDataMigrationRunner
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly LegacyFileMigration _legacyFileMigration;
+    private readonly object _migrationLock = new object();
 
     public UserDataMigrationRunner(LegacyFileMigration legacyFileMigration)
     {
@@ -18,42 +20,62 @@ public sealed class UserDataMigrationRunner
 
     public UserDataMigrationResult Migrate(string legacyAppDataPath, UserStoragePaths userPaths)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(legacyAppDataPath);
-        ArgumentNullException.ThrowIfNull(userPaths);
-
-        if (File.Exists(userPaths.MigrationMarkerPath))
+        lock (_migrationLock)
         {
-            return new UserDataMigrationResult(true, true, "This user's legacy data has already been migrated.", Array.Empty<LegacyFileMigrationResult>());
-        }
+            ArgumentException.ThrowIfNullOrWhiteSpace(legacyAppDataPath);
+            ArgumentNullException.ThrowIfNull(userPaths);
 
-        List<LegacyFileMigrationResult> results = new List<LegacyFileMigrationResult>();
-        foreach (MigrationFile file in GetMigrationFiles(legacyAppDataPath, userPaths))
-        {
-            results.Add(_legacyFileMigration.MigrateFile(file.LegacyFilePath, file.DestinationFilePath, userPaths, file.JsonTransform));
-        }
-
-        bool hasFailure = results.Exists(result => !result.IsSuccessful && File.Exists(result.LegacyFilePath));
-        if (hasFailure)
-        {
-            return new UserDataMigrationResult(false, false, "One or more legacy files could not be migrated. Their source files were left in place.", results);
-        }
-
-        MigrationMarker marker = new MigrationMarker
-        {
-            SchemaVersion = 1,
-            MigratedUtc = DateTime.UtcNow,
-            LegacyAppDataPath = legacyAppDataPath,
-            Files = results.ConvertAll(result => new MigrationMarkerFile
+            if (File.Exists(userPaths.MigrationMarkerPath) || Directory.Exists(userPaths.MigrationMarkerPath))
             {
-                LegacyFilePath = result.LegacyFilePath,
-                DestinationFilePath = result.DestinationFilePath,
-                RetiredLegacyPath = result.RetiredLegacyPath,
-                IsMigrated = result.IsSuccessful
-            })
-        };
-        AtomicFileStore.WriteAllText(userPaths.MigrationMarkerPath, JsonSerializer.Serialize(marker, new JsonSerializerOptions { WriteIndented = true }));
+                try
+                {
+                    using JsonDocument markerDocument = JsonDocument.Parse(File.ReadAllText(userPaths.MigrationMarkerPath));
+                    if (markerDocument.RootElement.ValueKind != JsonValueKind.Object ||
+                        !markerDocument.RootElement.TryGetProperty("Files", out JsonElement markerFiles) || markerFiles.ValueKind != JsonValueKind.Array)
+                        throw new JsonException("The migration marker must contain its completed file list.");
+                    MigrationMarker? existing = markerDocument.RootElement.Deserialize<MigrationMarker>();
+                    if (existing == null || existing.SchemaVersion != 1 || existing.MigratedUtc == default ||
+                        string.IsNullOrWhiteSpace(existing.LegacyAppDataPath) || existing.Files == null ||
+                        existing.Files.Any(file => file == null || !file.IsMigrated || string.IsNullOrWhiteSpace(file.LegacyFilePath) || string.IsNullOrWhiteSpace(file.DestinationFilePath)))
+                        throw new JsonException("The migration marker is incomplete or uses an unsupported schema.");
+                    return new UserDataMigrationResult(true, true, "This user's legacy data has already been migrated.", Array.Empty<LegacyFileMigrationResult>());
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+                {
+                    Logger.Warn(ex, "UserDataMigrationRunner/Migrate: Could not validate migration marker {0}; import was stopped.", userPaths.MigrationMarkerPath);
+                    return new UserDataMigrationResult(false, false, $"The migration marker at {userPaths.MigrationMarkerPath} could not be validated. Repair it before retrying migration. Existing files were preserved.", Array.Empty<LegacyFileMigrationResult>());
+                }
+            }
 
-        return new UserDataMigrationResult(true, false, "Legacy user data migration completed.", results);
+            List<LegacyFileMigrationResult> results = new List<LegacyFileMigrationResult>();
+            foreach (MigrationFile file in GetMigrationFiles(legacyAppDataPath, userPaths))
+            {
+                results.Add(_legacyFileMigration.MigrateFile(file.LegacyFilePath, file.DestinationFilePath, userPaths, file.JsonTransform));
+            }
+
+            bool hasFailure = results.Exists(result => !result.IsSuccessful && File.Exists(result.LegacyFilePath));
+            if (hasFailure)
+            {
+                return new UserDataMigrationResult(false, false, "One or more legacy files could not be migrated. Their source files were left in place.", results);
+            }
+
+            MigrationMarker marker = new MigrationMarker
+            {
+                SchemaVersion = 1,
+                MigratedUtc = DateTime.UtcNow,
+                LegacyAppDataPath = legacyAppDataPath,
+                Files = results.ConvertAll(result => new MigrationMarkerFile
+                {
+                    LegacyFilePath = result.LegacyFilePath,
+                    DestinationFilePath = result.DestinationFilePath,
+                    RetiredLegacyPath = result.RetiredLegacyPath,
+                    IsMigrated = result.IsSuccessful
+                })
+            };
+            AtomicFileStore.WriteAllText(userPaths.MigrationMarkerPath, JsonSerializer.Serialize(marker, new JsonSerializerOptions { WriteIndented = true }));
+
+            return new UserDataMigrationResult(true, false, "Legacy user data migration completed.", results);
+        }
     }
 
     private static List<MigrationFile> GetMigrationFiles(string legacyAppDataPath, UserStoragePaths userPaths)
@@ -107,6 +129,9 @@ public sealed class UserDataMigrationRunner
 
         foreach (string legacyFilePath in Directory.GetFiles(legacyDirectoryPath, "*", SearchOption.AllDirectories))
         {
+            // Retired sources from a partial migration must remain backups, not new imports.
+            if (legacyFilePath.EndsWith(".old", StringComparison.OrdinalIgnoreCase))
+                continue;
             string relativePath = Path.GetRelativePath(legacyDirectoryPath, legacyFilePath);
             Func<string, string>? jsonTransform = transformDisplayProfileJson && string.Equals(relativePath, "DisplayProfiles.json", StringComparison.OrdinalIgnoreCase)
                 ? json => RewriteWallpaperPaths(json, Path.Combine(legacyAppDataPath, "Wallpaper"), userPaths.WallpaperPath)

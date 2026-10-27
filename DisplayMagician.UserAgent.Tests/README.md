@@ -14,6 +14,8 @@ dotnet test .\DisplayMagician.UserAgent.Tests\DisplayMagician.UserAgent.Tests.cs
 
 Tests must not require a real display topology, audio device, game installation, or installed service. Add tests alongside changes to User Agent-owned behaviour.
 
+Repository regressions cover malformed envelopes/entries, duplicate IDs, typed profile errors, competing commits with one winner, exact conflict snapshots, previous-file backups, locked replacement cleanup/retry and an immediate runtime save after a profile commit. Shortcut migration tests preserve newer schemas and verify immediate retry after a locked destination without leaking temporary files. All storage is disposable test data.
+
 Command-dispatch regressions use deterministic task barriers to verify single execution for overlapping duplicate IDs, changed-payload/type conflicts, independent cancellation commands, cancelled waiters/owners, failure cleanup and protocol validation before cached replies. Handler tests reject null message/media collections, undefined repository kinds, null repository content and blank profile names without changing temporary stored data. These checks use the production dispatch path with fake operation services and do not change the pipe ACL or start an installed Agent.
 
 Regression cases cover full-path process stopping with executable name collisions, newest-root selection, launcher handover beyond the discovery timeout, independent recovery snapshots and legacy recovery records, and desktop shortcut commit failures/draft isolation. Process tests launch only disposable test executables and clean up their own process trees.

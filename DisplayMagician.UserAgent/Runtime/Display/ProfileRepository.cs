@@ -65,6 +65,7 @@ namespace DisplayMagician.UserAgent.Runtime
     public static class ProfileRepository
     {
         #region Class Variables
+        private static readonly object _repositoryLock = new object();
         // Common items to the class
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
         private static bool _profilesLoaded = false;
@@ -213,21 +214,61 @@ namespace DisplayMagician.UserAgent.Runtime
         #endregion
 
         #region Class Methods
+        internal static RepositorySnapshot GetSnapshot()
+        {
+            lock (_repositoryLock)
+                return AtomicFile.GetSnapshot(_profileStorageJsonFullFileName, RepositoryKind.DisplayProfiles);
+        }
+
+        internal static RepositoryCommitResult CommitSnapshot(RepositoryCommitRequest request)
+        {
+            if (request.Repository != RepositoryKind.DisplayProfiles)
+                throw new ArgumentException("A display-profile repository is required.", nameof(request));
+            lock (_repositoryLock)
+            {
+                ProfileFile validatedFile = default;
+                RepositoryCommitResult result = AtomicFile.CommitSnapshot(_profileStorageJsonFullFileName, request, json =>
+                {
+                    validatedFile = JsonConvert.DeserializeObject<ProfileFile>(json, new JsonSerializerSettings
+                    {
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        ObjectCreationHandling = ObjectCreationHandling.Replace
+                    });
+                    if (validatedFile.Profiles == null)
+                        throw new JsonSerializationException("The repository did not deserialize into display profiles.");
+                });
+                if (!result.WasConflict)
+                {
+                    // A direct runtime save can precede the next lazy load. Keep the committed
+                    // definitions available so that save cannot overwrite them with an empty cache.
+                    _allProfiles = validatedFile.Profiles!;
+                    _currentProfile = null;
+                    _profilesLoaded = false;
+                }
+                return result;
+            }
+        }
+
         public static void ConfigureStoragePath(string applicationDataPath)
         {
-            if (string.IsNullOrWhiteSpace(applicationDataPath))
-                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+            lock (_repositoryLock)
+            {
+                if (string.IsNullOrWhiteSpace(applicationDataPath))
+                    throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
 
-            AppDataPath = Path.GetFullPath(applicationDataPath);
-            AppIconPath = Path.Combine(AppDataPath, "Icons");
-            AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
-            AppProfileStoragePath = Path.Combine(AppDataPath, "Profiles");
-            ProfileItem.ConfigureStoragePath(AppDataPath);
-            _profileStorageJsonFullFileName = Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
-            _allProfiles = new List<ProfileItem>();
-            _currentProfile = null;
-            _profilesLoaded = false;
-            Directory.CreateDirectory(AppProfileStoragePath);
+                AppDataPath = Path.GetFullPath(applicationDataPath);
+                AppIconPath = Path.Combine(AppDataPath, "Icons");
+                AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
+                AppProfileStoragePath = Path.Combine(AppDataPath, "Profiles");
+                ProfileItem.ConfigureStoragePath(AppDataPath);
+                _profileStorageJsonFullFileName = Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
+                _allProfiles = new List<ProfileItem>();
+                _currentProfile = null;
+                _profilesLoaded = false;
+                Directory.CreateDirectory(AppProfileStoragePath);
+            }
         }
 
         /// <summary>
@@ -269,262 +310,274 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool AddProfile(ProfileItem profile)
         {
-            if (!(profile is ProfileItem))
-                return false;
-
-            SharedLogger.logger.Debug($"ProfileRepository/AddProfile: Adding profile {profile.Name} to our profile repository");
-
-            // Doublecheck if it already exists
-            // Because then we just update the one that already exists
-            if (!ContainsProfile(profile))
+            lock (_repositoryLock)
             {
-                // Add the Profile to the list of Profiles
-                List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
-                _allProfiles.Add(profile);
-
-                profile.PreSave();
-                string previousIconPath = profile.SavedProfileIconCacheFilename;
-                profile.SavedProfileIconCacheFilename = Path.Combine(AppProfileStoragePath, $"profile-{profile.UUID}.ico");
-
-                // Save the Profiles JSON as it's different
-                if (!SaveProfiles())
-                {
-                    _allProfiles = previousProfiles;
-                    profile.SavedProfileIconCacheFilename = previousIconPath;
+                if (!(profile is ProfileItem))
                     return false;
-                }
-                try { SaveProfileIconToCache(profile); }
-                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+
+                SharedLogger.logger.Debug($"ProfileRepository/AddProfile: Adding profile {profile.Name} to our profile repository");
+
+                // Doublecheck if it already exists
+                // Because then we just update the one that already exists
+                if (!ContainsProfile(profile))
                 {
-                    SharedLogger.logger.Warn(ex, "ProfileRepository/AddProfile: Profile {0} was saved, but its cached icon could not be written to {1}.", profile.UUID, profile.SavedProfileIconCacheFilename);
+                    // Add the Profile to the list of Profiles
+                    List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
+                    _allProfiles.Add(profile);
+
+                    profile.PreSave();
+                    string previousIconPath = profile.SavedProfileIconCacheFilename;
+                    profile.SavedProfileIconCacheFilename = Path.Combine(AppProfileStoragePath, $"profile-{profile.UUID}.ico");
+
+                    // Save the Profiles JSON as it's different
+                    if (!SaveProfiles())
+                    {
+                        _allProfiles = previousProfiles;
+                        profile.SavedProfileIconCacheFilename = previousIconPath;
+                        return false;
+                    }
+                    try { SaveProfileIconToCache(profile); }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        SharedLogger.logger.Warn(ex, "ProfileRepository/AddProfile: Profile {0} was saved, but its cached icon could not be written to {1}.", profile.UUID, profile.SavedProfileIconCacheFilename);
+                    }
                 }
+
+                // Refresh the profiles to see whats valid
+                RefreshDisplayDetectionState();
+
+
+                //Doublecheck it's been added
+                if (ContainsProfile(profile))
+                {
+                    return true;
+                }
+                else
+                    return false;
+
             }
-
-            // Refresh the profiles to see whats valid
-            RefreshDisplayDetectionState();
-
-
-            //Doublecheck it's been added
-            if (ContainsProfile(profile))
-            {
-                return true;
-            }
-            else
-                return false;
-
         }
 
 
         public static bool RemoveProfile(ProfileItem profile)
         {
-            if (!(profile is ProfileItem))
-                return false;
-
-            SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile: Removing profile {profile.Name} if it exists in our profile repository");
-
-            // Remove the Profile Icons from the Cache
-            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profile.UUID));
-            List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
-                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
-            // Remove the Profile from the list.
-            List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
-            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profile.UUID));
-
-            if (numRemoved == 1)
+            lock (_repositoryLock)
             {
-                if (!SaveProfiles())
-                {
-                    _allProfiles = previousProfiles;
+                if (!(profile is ProfileItem))
                     return false;
-                }
-                foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
-                {
-                    // Attempt to delete the icon
 
-                    try
+                SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile: Removing profile {profile.Name} if it exists in our profile repository");
+
+                // Remove the Profile Icons from the Cache
+                List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profile.UUID));
+                List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
+                    .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
+                // Remove the Profile from the list.
+                List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
+                int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profile.UUID));
+
+                if (numRemoved == 1)
+                {
+                    if (!SaveProfiles())
                     {
-                        if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                        _allProfiles = previousProfiles;
+                        return false;
+                    }
+                    foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
+                    {
+                        // Attempt to delete the icon
+
+                        try
                         {
-                            File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                            if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                            {
+                                File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                            }
+
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                        }
+                        catch (PathTooLongException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                        }
+                        catch (DirectoryNotFoundException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
+                        }
+                        catch (IOException ex)
+                        {
+                            SharedLogger.logger.Warn(ex, "ProfileRepository/RemoveProfile: The profile was deleted, but its cached icon could not be removed from {0}.", ProfileToRemove.SavedProfileIconCacheFilename);
                         }
 
                     }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
-                    }
-                    catch (PathTooLongException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
-                    }
-                    catch (DirectoryNotFoundException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
-                    }
-                    catch (IOException ex)
-                    {
-                        SharedLogger.logger.Warn(ex, "ProfileRepository/RemoveProfile: The profile was deleted, but its cached icon could not be removed from {0}.", ProfileToRemove.SavedProfileIconCacheFilename);
-                    }
 
+
+                    DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
+                    RefreshDisplayDetectionState();
+                    UpdateActiveProfile();
+                    return true;
                 }
-
-
-                DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
-                RefreshDisplayDetectionState();
-                UpdateActiveProfile();
-                return true;
+                else if (numRemoved == 0)
+                    return false;
+                else
+                    throw new ProfileRepositoryException();
             }
-            else if (numRemoved == 0)
-                return false;
-            else
-                throw new ProfileRepositoryException();
         }
 
 
         public static bool RemoveProfile(string profileName)
         {
-
-            if (String.IsNullOrWhiteSpace(profileName))
-                return false;
-
-            SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile2: Removing profile {profileName} if it exists in our profile repository");
-
-            // Remove the Profile Icons from the Cache
-            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.Name.Equals(profileName));
-            List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
-                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
-            // Remove the Profile from the list.
-            List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
-            int numRemoved = _allProfiles.RemoveAll(item => item.Name.Equals(profileName));
-
-            if (numRemoved == 1)
+            lock (_repositoryLock)
             {
-                if (!SaveProfiles())
-                {
-                    _allProfiles = previousProfiles;
-                    return false;
-                }
-                foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
-                {
-                    // Attempt to delete the icon
 
-                    try
+                if (String.IsNullOrWhiteSpace(profileName))
+                    return false;
+
+                SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile2: Removing profile {profileName} if it exists in our profile repository");
+
+                // Remove the Profile Icons from the Cache
+                List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.Name.Equals(profileName));
+                List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
+                    .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
+                // Remove the Profile from the list.
+                List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
+                int numRemoved = _allProfiles.RemoveAll(item => item.Name.Equals(profileName));
+
+                if (numRemoved == 1)
+                {
+                    if (!SaveProfiles())
                     {
-                        if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                        _allProfiles = previousProfiles;
+                        return false;
+                    }
+                    foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
+                    {
+                        // Attempt to delete the icon
+
+                        try
                         {
-                            File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                            if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                            {
+                                File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                            }
+
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                        }
+                        catch (PathTooLongException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                        }
+                        catch (DirectoryNotFoundException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
+                        }
+                        catch (IOException ex)
+                        {
+                            SharedLogger.logger.Warn(ex, "ProfileRepository/RemoveProfile: The profile was deleted, but its cached icon could not be removed from {0}.", ProfileToRemove.SavedProfileIconCacheFilename);
                         }
 
                     }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
-                    }
-                    catch (PathTooLongException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
-                    }
-                    catch (DirectoryNotFoundException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
-                    }
-                    catch (IOException ex)
-                    {
-                        SharedLogger.logger.Warn(ex, "ProfileRepository/RemoveProfile: The profile was deleted, but its cached icon could not be removed from {0}.", ProfileToRemove.SavedProfileIconCacheFilename);
-                    }
 
+
+                    DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
+                    RefreshDisplayDetectionState();
+                    UpdateActiveProfile();
+                    return true;
                 }
+                else if (numRemoved == 0)
+                    return false;
+                else
+                    throw new ProfileRepositoryException();
 
-
-                DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
-                RefreshDisplayDetectionState();
-                UpdateActiveProfile();
-                return true;
             }
-            else if (numRemoved == 0)
-                return false;
-            else
-                throw new ProfileRepositoryException();
-
         }
 
         public static bool RemoveProfile(uint profileId)
         {
-            if (profileId == 0)
-                return false;
-
-            SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile3: Removing profile wih profileId {profileId} if it exists in our profile repository");
-
-            string profileIdStr = profileId.ToString();
-
-            // Remove the Profile Icons from the Cache
-            List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profileIdStr));
-            List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
-                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
-            // Remove the Profile from the list.
-            List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
-            int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profileIdStr));
-
-            if (numRemoved == 1)
+            lock (_repositoryLock)
             {
-                if (!SaveProfiles())
-                {
-                    _allProfiles = previousProfiles;
+                if (profileId == 0)
                     return false;
-                }
-                foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
-                {
-                    // Attempt to delete the icon
 
-                    try
+                SharedLogger.logger.Debug($"ProfileRepository/RemoveProfile3: Removing profile wih profileId {profileId} if it exists in our profile repository");
+
+                string profileIdStr = profileId.ToString();
+
+                // Remove the Profile Icons from the Cache
+                List<ProfileItem> ProfilesToRemove = _allProfiles.FindAll(item => item.UUID.Equals(profileIdStr));
+                List<string> wallpaperPathsToRemove = ProfilesToRemove.SelectMany(item => item.WallpaperConfiguration.MonitorWallpapers)
+                    .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
+                // Remove the Profile from the list.
+                List<ProfileItem> previousProfiles = new List<ProfileItem>(_allProfiles);
+                int numRemoved = _allProfiles.RemoveAll(item => item.UUID.Equals(profileIdStr));
+
+                if (numRemoved == 1)
+                {
+                    if (!SaveProfiles())
                     {
-                        if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                        _allProfiles = previousProfiles;
+                        return false;
+                    }
+                    foreach (ProfileItem ProfileToRemove in ProfilesToRemove)
+                    {
+                        // Attempt to delete the icon
+
+                        try
                         {
-                            File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                            if (File.Exists(ProfileToRemove.SavedProfileIconCacheFilename))
+                            {
+                                File.Delete(ProfileToRemove.SavedProfileIconCacheFilename);
+                            }
+
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
+                        }
+                        catch (PathTooLongException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
+                        }
+                        catch (DirectoryNotFoundException ex)
+                        {
+                            SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
+                        }
+                        catch (IOException ex)
+                        {
+                            SharedLogger.logger.Warn(ex, "ProfileRepository/RemoveProfile: The profile was deleted, but its cached icon could not be removed from {0}.", ProfileToRemove.SavedProfileIconCacheFilename);
                         }
 
                     }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician doesn't have permissions to delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename}.");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} due to an invalid argument.");
-                    }
-                    catch (PathTooLongException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the path is too long.");
-                    }
-                    catch (DirectoryNotFoundException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/RemoveProfile: DisplayMagician can't delete the cached Profile Icon {ProfileToRemove.SavedProfileIconCacheFilename} as the parent folder isn't there.");
-                    }
-                    catch (IOException ex)
-                    {
-                        SharedLogger.logger.Warn(ex, "ProfileRepository/RemoveProfile: The profile was deleted, but its cached icon could not be removed from {0}.", ProfileToRemove.SavedProfileIconCacheFilename);
-                    }
 
+
+                    DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
+                    RefreshDisplayDetectionState();
+                    UpdateActiveProfile();
+                    return true;
                 }
-
-
-                DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
-                RefreshDisplayDetectionState();
-                UpdateActiveProfile();
-                return true;
+                else if (numRemoved == 0)
+                    return false;
+                else
+                    throw new ProfileRepositoryException();
             }
-            else if (numRemoved == 0)
-                return false;
-            else
-                throw new ProfileRepositoryException();
         }
 
 
@@ -682,43 +735,46 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool RenameProfile(ProfileItem profile, string renamedName)
         {
-            if (!(profile is ProfileItem))
+            lock (_repositoryLock)
             {
-                SharedLogger.logger.Error($"ProfileRepository/RenameProfile: Profile to rename was empty or only whitespace");
-                return false;
-            }
-
-
-            SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: Attempting to rename profile {profile.Name} to {renamedName}");
-
-            if (!IsValidFilename(renamedName))
-            {
-                SharedLogger.logger.Error($"ProfileRepository/RenameProfile: The name the user wanted to renamed to profile to is not a valid filename");
-                return false;
-            }
-
-            string oldProfileName = profile.Name;
-            profile.Name = GetValidFilename(renamedName);
-
-            RefreshDisplayDetectionState();
-
-            // If it's been added to the list of AllProfiles
-            // then we also need to reproduce the Icons
-            if (ContainsProfile(profile))
-            {
-                // Save the Profiles JSON as it's different now
-                if (!SaveProfiles())
+                if (!(profile is ProfileItem))
                 {
-                    profile.Name = oldProfileName;
+                    SharedLogger.logger.Error($"ProfileRepository/RenameProfile: Profile to rename was empty or only whitespace");
                     return false;
                 }
-                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was successfully renamed from {oldProfileName} to {renamedName}");
-                return true;
-            }
-            else
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {oldProfileName} to {renamedName}");
-                return false;
+
+
+                SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: Attempting to rename profile {profile.Name} to {renamedName}");
+
+                if (!IsValidFilename(renamedName))
+                {
+                    SharedLogger.logger.Error($"ProfileRepository/RenameProfile: The name the user wanted to renamed to profile to is not a valid filename");
+                    return false;
+                }
+
+                string oldProfileName = profile.Name;
+                profile.Name = GetValidFilename(renamedName);
+
+                RefreshDisplayDetectionState();
+
+                // If it's been added to the list of AllProfiles
+                // then we also need to reproduce the Icons
+                if (ContainsProfile(profile))
+                {
+                    // Save the Profiles JSON as it's different now
+                    if (!SaveProfiles())
+                    {
+                        profile.Name = oldProfileName;
+                        return false;
+                    }
+                    SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was successfully renamed from {oldProfileName} to {renamedName}");
+                    return true;
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/RenameProfile: The profile was not renamed from {oldProfileName} to {renamedName}");
+                    return false;
+                }
             }
         }
 
@@ -812,104 +868,57 @@ namespace DisplayMagician.UserAgent.Runtime
 
         private static bool LoadProfiles()
         {
-            SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFullFileName} into the Profile Repository");
-
-            _profilesLoaded = false;
-
-            // Figure out if we need to upgrade the shortcuts file
-            if (Utils.OldFileVersionsExist(AppProfileStoragePath, "DisplayProfiles_*.json"))
+            lock (_repositoryLock)
             {
-                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Upgrading the older profiles file to the latest version.");
-                if (!Utils.UpgradeOldFileVersions(AppProfileStoragePath, "DisplayProfiles_*.json", _profileStorageJsonFileName))
+                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Loading profiles from {_profileStorageJsonFullFileName} into the Profile Repository");
+
+                _profilesLoaded = false;
+
+                // Figure out if we need to upgrade the shortcuts file
+                if (Utils.OldFileVersionsExist(AppProfileStoragePath, "DisplayProfiles_*.json"))
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: Error upgrading the older profiles file to the latest version.");
+                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Upgrading the older profiles file to the latest version.");
+                    if (!Utils.UpgradeOldFileVersions(AppProfileStoragePath, "DisplayProfiles_*.json", _profileStorageJsonFileName))
+                    {
+                        SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: Error upgrading the older profiles file to the latest version.");
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Trace($"ProfileRepository/LoadProfiles: Upgraded the older profiles file to the latest version.");
+                    }
                 }
                 else
                 {
-                    SharedLogger.logger.Trace($"ProfileRepository/LoadProfiles: Upgraded the older profiles file to the latest version.");
-                }
-            }
-            else
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: No need to upgrade the older profiles file to the latest version.");
-            }
-
-
-            if (File.Exists(_profileStorageJsonFullFileName))
-            {
-                string json = "";
-                try
-                {
-                    json = File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode);
-                    if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
-                    {
-                        AtomicFile.WriteAllText(_profileStorageJsonFullFileName, migratedJson, Encoding.Unicode);
-                        json = migratedJson;
-                        SharedLogger.logger.Info("ProfileRepository/LoadProfiles: Migrated legacy DisplayMagicianShared type names in {0}.", _profileStorageJsonFullFileName);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
+                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: No need to upgrade the older profiles file to the latest version.");
                 }
 
-                // Temporarily removing as not needed at present. May need this for future format migrations.
-                // Migrate any previous entries to the latest version of the file format to the latest one
-                //json = MigrateJsonToLatestVersion(json);
 
-                if (!string.IsNullOrWhiteSpace(json))
+                if (File.Exists(_profileStorageJsonFullFileName))
                 {
-                    List<string> jsonErrors = new List<string>();
-
+                    string json = "";
                     try
                     {
-                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                        json = File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode);
+                        if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
                         {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Ignore,
-                            DefaultValueHandling = DefaultValueHandling.Populate,
-                            TypeNameHandling = TypeNameHandling.Auto,
-                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                            {
-                                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                                        args.ErrorContext.Handled = true;
-                                    },
-                                };
-
-                                ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
-
-                            if (profileFile is not ProfileFile loadedProfileFile || loadedProfileFile.Profiles == null)
-                        {
-                            throw new Exception("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
+                            AtomicFile.WriteAllText(_profileStorageJsonFullFileName, migratedJson, Encoding.Unicode);
+                            json = migratedJson;
+                            SharedLogger.logger.Info("ProfileRepository/LoadProfiles: Migrated legacy DisplayMagicianShared type names in {0}.", _profileStorageJsonFullFileName);
                         }
-
-                            _allProfiles = loadedProfileFile.Profiles;
-
-                        // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
-                        foreach (ProfileItem profile in _allProfiles)
-                        {
-                            PatchLoadedProfile(profile);
-                        }
-
                     }
-                    catch (JsonReaderException ex)
+                    catch (Exception ex)
                     {
-                        // If there is a error in the JSON format
-                        if (ex.HResult == -2146233088)
-                        {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
-                        }
-                        MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
                     }
-                    catch (Exception)
+
+                    // Temporarily removing as not needed at present. May need this for future format migrations.
+                    // Migrate any previous entries to the latest version of the file format to the latest one
+                    //json = MigrateJsonToLatestVersion(json);
+
+                    if (!string.IsNullOrWhiteSpace(json))
                     {
+                        List<string> jsonErrors = new List<string>();
+
                         try
                         {
                             JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
@@ -922,19 +931,19 @@ namespace DisplayMagician.UserAgent.Runtime
                                 ObjectCreationHandling = ObjectCreationHandling.Replace,
                                 Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                                 {
-                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                                    args.ErrorContext.Handled = true;
-                                },
-                            };
+                                            jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
+                                            args.ErrorContext.Handled = true;
+                                        },
+                                    };
 
-                            List<ProfileItem>? profiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
-                            if (profiles == null)
-                                throw new InvalidDataException("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
+                                    ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
 
-                            _allProfiles = profiles;
+                                if (profileFile is not ProfileFile loadedProfileFile || loadedProfileFile.Profiles == null)
+                            {
+                                throw new Exception("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
+                            }
 
-                            // Save the Profiles JSON as it's different now, and we want to save the upgrade!
-                            SaveProfiles();
+                                _allProfiles = loadedProfileFile.Profiles;
 
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in _allProfiles)
@@ -943,96 +952,149 @@ namespace DisplayMagician.UserAgent.Runtime
                             }
 
                         }
-                        catch (JsonReaderException nex)
+                        catch (JsonReaderException ex)
                         {
                             // If there is a error in the JSON format
-                            if (nex.HResult == -2146233088)
+                            if (ex.HResult == -2146233088)
                             {
-                                SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
                             else
                             {
-                                SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
+                                SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
                             }
                             MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                         }
-                        catch (Exception nex)
+                        catch (Exception)
                         {
-                            SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception. The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. To correct this error, please remove the JSON file, restart DisplayMagician and create new Display Profiles.");
-                            MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. To correct this error, please remove the JSON file, restart DisplayMagician and create new Display Profiles.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
+                            try
+                            {
+                                JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                                {
+                                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                                    NullValueHandling = NullValueHandling.Ignore,
+                                    DefaultValueHandling = DefaultValueHandling.Populate,
+                                    TypeNameHandling = TypeNameHandling.Auto,
+                                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                                    ObjectCreationHandling = ObjectCreationHandling.Replace,
+                                    Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                                    {
+                                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
+                                        args.ErrorContext.Handled = true;
+                                    },
+                                };
 
-                    // If we have any JSON.net errors, then we need to records them in the logs
-                    if (jsonErrors.Count > 0)
+                                List<ProfileItem>? profiles = JsonConvert.DeserializeObject<List<ProfileItem>>(json, mySerializerSettings);
+                                if (profiles == null)
+                                    throw new InvalidDataException("ProfileRepository/LoadProfiles: The Profiles file was an older file format, so we need to upgrade it.");
+
+                                _allProfiles = profiles;
+
+                                // Save the Profiles JSON as it's different now, and we want to save the upgrade!
+                                SaveProfiles();
+
+                                // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
+                                foreach (ProfileItem profile in _allProfiles)
+                                {
+                                    PatchLoadedProfile(profile);
+                                }
+
+                            }
+                            catch (JsonReaderException nex)
+                            {
+                                // If there is a error in the JSON format
+                                if (nex.HResult == -2146233088)
+                                {
+                                    SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                                }
+                                else
+                                {
+                                    SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
+                                }
+                                MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                            }
+                            catch (Exception nex)
+                            {
+                                SharedLogger.logger.Error(nex, $"ProfileRepository/LoadProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception. The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. To correct this error, please remove the JSON file, restart DisplayMagician and create new Display Profiles.");
+                                MessageBox.Show($"The Display Profiles file {_profileStorageJsonFullFileName} is from an earlier version of DisplayMagician, or contains a syntax error. To correct this error, please remove the JSON file, restart DisplayMagician and create new Display Profiles.", "Error loading the Display Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+
+                        // If we have any JSON.net errors, then we need to records them in the logs
+                        if (jsonErrors.Count > 0)
+                        {
+                            foreach (string jsonError in jsonErrors)
+                            {
+                                SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: {jsonError}");
+                            }
+                        }
+
+                        // Sort the profiles alphabetically
+                        _allProfiles.Sort();
+
+                    }
+                    else
                     {
-                        foreach (string jsonError in jsonErrors)
-                        {
-                            SharedLogger.logger.Error($"ProfileRepository/LoadProfiles: {jsonError}");
-                        }
+                        SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: The {_profileStorageJsonFullFileName} profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
+                        //UpdateActiveProfile();
                     }
-
-                    // Sort the profiles alphabetically
-                    _allProfiles.Sort();
-
                 }
                 else
                 {
-                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: The {_profileStorageJsonFullFileName} profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
+                    // If we get here, then we don't have any profiles saved!
+                    // So we gotta start from scratch
+                    SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Couldn't find the {_profileStorageJsonFullFileName} profile JSON file that contains the Profiles. This is likely due to none being saved yet.");
                     //UpdateActiveProfile();
                 }
-            }
-            else
-            {
-                // If we get here, then we don't have any profiles saved!
-                // So we gotta start from scratch
-                SharedLogger.logger.Debug($"ProfileRepository/LoadProfiles: Couldn't find the {_profileStorageJsonFullFileName} profile JSON file that contains the Profiles. This is likely due to none being saved yet.");
+                _profilesLoaded = true;
+
+                // Update the current active profile
                 //UpdateActiveProfile();
+                RefreshDisplayDetectionState();
+
+                return true;
             }
-            _profilesLoaded = true;
-
-            // Update the current active profile
-            //UpdateActiveProfile();
-            RefreshDisplayDetectionState();
-
-            return true;
         }
 
         private static void LoadProfilesFromJson(string json)
         {
-            _allProfiles = new List<ProfileItem>();
-            _currentProfile = null;
-
-            if (string.IsNullOrWhiteSpace(json))
-                return;
-
-            try
+            lock (_repositoryLock)
             {
-                JsonSerializerSettings serializerSettings = new JsonSerializerSettings
+                _allProfiles = new List<ProfileItem>();
+                _currentProfile = null;
+
+                if (string.IsNullOrWhiteSpace(json))
+                    return;
+
+                try
                 {
-                    MissingMemberHandling = MissingMemberHandling.Ignore,
-                    NullValueHandling = NullValueHandling.Ignore,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
-                    TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
-                    ObjectCreationHandling = ObjectCreationHandling.Replace
-                };
+                    JsonSerializerSettings serializerSettings = new JsonSerializerSettings
+                    {
+                        MissingMemberHandling = MissingMemberHandling.Ignore,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        DefaultValueHandling = DefaultValueHandling.Populate,
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                        ObjectCreationHandling = ObjectCreationHandling.Replace
+                    };
 
-                ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, serializerSettings);
-                if (profileFile is not ProfileFile loadedProfileFile || loadedProfileFile.Profiles == null)
-                    throw new InvalidDataException("The User Agent returned display profiles in an unsupported format.");
+                    ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, serializerSettings);
+                    if (profileFile is not ProfileFile loadedProfileFile || loadedProfileFile.Profiles == null)
+                        throw new InvalidDataException("The User Agent returned display profiles in an unsupported format.");
 
-                _allProfiles = loadedProfileFile.Profiles;
-                foreach (ProfileItem profile in _allProfiles)
-                    PatchLoadedProfile(profile);
+                    _allProfiles = loadedProfileFile.Profiles;
+                    foreach (ProfileItem profile in _allProfiles)
+                        PatchLoadedProfile(profile);
 
-                _allProfiles.Sort();
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, "ProfileRepository/LoadProfilesFromJson: The User Agent returned unreadable display profile data.");
-                throw new InvalidDataException("The User Agent returned unreadable display profile data.", ex);
+                    _allProfiles.Sort();
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Error(ex, "ProfileRepository/LoadProfilesFromJson: The User Agent returned unreadable display profile data.");
+                    throw new InvalidDataException("The User Agent returned unreadable display profile data.", ex);
+                }
             }
         }
 
@@ -1061,41 +1123,47 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool CopyCurrentLayoutToProfile(ProfileItem profile)
         {
-
-            SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
-
-            List<string> previousWallpaperPaths = profile.WallpaperConfiguration.MonitorWallpapers
-                .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
-            string previousConfiguration = UserProfileOperationService.SerializeDisplayRecoveryProfile(profile);
-            if (!profile.CreateProfileFromCurrentDisplaySettings() || !profile.PreSave() || !SaveProfiles())
+            lock (_repositoryLock)
             {
-                JsonConvert.PopulateObject(previousConfiguration, profile, UserProfileOperationService.RecoveryJsonSettings);
-                return false;
+
+                SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
+
+                List<string> previousWallpaperPaths = profile.WallpaperConfiguration.MonitorWallpapers
+                    .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
+                string previousConfiguration = UserProfileOperationService.SerializeDisplayRecoveryProfile(profile);
+                if (!profile.CreateProfileFromCurrentDisplaySettings() || !profile.PreSave() || !SaveProfiles())
+                {
+                    JsonConvert.PopulateObject(previousConfiguration, profile, UserProfileOperationService.RecoveryJsonSettings);
+                    return false;
+                }
+
+                // The new profile snapshot is durable; old copies can be removed only if
+                // no saved profile still refers to them.
+                DeleteUnusedProfileWallpapers(previousWallpaperPaths);
+                return true;
+
             }
-
-            // The new profile snapshot is durable; old copies can be removed only if
-            // no saved profile still refers to them.
-            DeleteUnusedProfileWallpapers(previousWallpaperPaths);
-            return true;
-
         }
 
         public static bool UpdateProfileSettings(ProfileItem profile, DisplayProfileSettings settings)
         {
-            Wallpaper.Mode previousMode = profile.WallpaperConfiguration.WallpaperMode;
-            int previousCount = profile.ApplyProfileCount;
-            int previousDelay = profile.ApplyProfileDelay;
-            bool previousRestart = profile.ForceExplorerRestart;
-            profile.WallpaperConfiguration.WallpaperMode = settings.ApplyWallpaper ? Wallpaper.Mode.Apply : Wallpaper.Mode.DoNothing;
-            profile.ApplyProfileCount = settings.ApplyProfileCount;
-            profile.ApplyProfileDelay = settings.ApplyProfileDelay;
-            profile.ForceExplorerRestart = settings.ForceExplorerRestart;
-            if (SaveProfiles()) return true;
-            profile.WallpaperConfiguration.WallpaperMode = previousMode;
-            profile.ApplyProfileCount = previousCount;
-            profile.ApplyProfileDelay = previousDelay;
-            profile.ForceExplorerRestart = previousRestart;
-            return false;
+            lock (_repositoryLock)
+            {
+                Wallpaper.Mode previousMode = profile.WallpaperConfiguration.WallpaperMode;
+                int previousCount = profile.ApplyProfileCount;
+                int previousDelay = profile.ApplyProfileDelay;
+                bool previousRestart = profile.ForceExplorerRestart;
+                profile.WallpaperConfiguration.WallpaperMode = settings.ApplyWallpaper ? Wallpaper.Mode.Apply : Wallpaper.Mode.DoNothing;
+                profile.ApplyProfileCount = settings.ApplyProfileCount;
+                profile.ApplyProfileDelay = settings.ApplyProfileDelay;
+                profile.ForceExplorerRestart = settings.ForceExplorerRestart;
+                if (SaveProfiles()) return true;
+                profile.WallpaperConfiguration.WallpaperMode = previousMode;
+                profile.ApplyProfileCount = previousCount;
+                profile.ApplyProfileDelay = previousDelay;
+                profile.ForceExplorerRestart = previousRestart;
+                return false;
+            }
         }
 
         // Disabled the migrate to latest version as it's not needed. We will assume that all v2.6.0 profiles are using v2.5.0 formatting at the latest.
@@ -1185,301 +1253,176 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool SaveProfiles()
         {
-            SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Attempting to save the profiles repository to the {AppProfileStoragePath}.");
-
-            if (!Directory.Exists(AppProfileStoragePath))
+            lock (_repositoryLock)
             {
+                SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Attempting to save the profiles repository to the {AppProfileStoragePath}.");
+
+                if (!Directory.Exists(AppProfileStoragePath))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(AppProfileStoragePath);
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician doesn't have permissions to create the Profiles storage folder {AppProfileStoragePath}.");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} due to an invalid argument.");
+                    }
+                    catch (PathTooLongException ex)
+                    {
+                        SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the path is too long.");
+                    }
+                    catch (DirectoryNotFoundException ex)
+                    {
+                        SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the parent folder isn't there.");
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Profiles folder {AppProfileStoragePath} exists.");
+                }
+
+                // Sort the _allProfile so that the display profiles are in name order in the saved file
+                _allProfiles.Sort();
+
+                List<string> jsonErrors = new List<string>();
+                List<ProfileRepositoryException> errors = new List<ProfileRepositoryException>();
+
                 try
                 {
-                    Directory.CreateDirectory(AppProfileStoragePath);
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician doesn't have permissions to create the Profiles storage folder {AppProfileStoragePath}.");
-                }
-                catch (ArgumentException ex)
-                {
-                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} due to an invalid argument.");
-                }
-                catch (PathTooLongException ex)
-                {
-                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the path is too long.");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    SharedLogger.logger.Fatal(ex, $"ProfileRepository/SaveProfiles: DisplayMagician can't create the Profiles storage folder {AppProfileStoragePath} as the parent folder isn't there.");
-                }
-            }
-            else
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Profiles folder {AppProfileStoragePath} exists.");
-            }
+                    SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Converting the objects to JSON format.");
 
-            // Sort the _allProfile so that the display profiles are in name order in the saved file
-            _allProfiles.Sort();
-
-            List<string> jsonErrors = new List<string>();
-            List<ProfileRepositoryException> errors = new List<ProfileRepositoryException>();
-
-            try
-            {
-                SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Converting the objects to JSON format.");
-
-                JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Include,
-                    TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
-                    MissingMemberHandling = MissingMemberHandling.Error,
-                    ObjectCreationHandling = ObjectCreationHandling.Replace,
-                    Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                    JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
                     {
-                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                        //errors.Add(new ProfileRepositoryException(String.Format("Parse error: {0}", args.ErrorContext.Error.Message), args.ErrorContext.Error));
-                        args.ErrorContext.Handled = true;
-                    },
-                };
+                        NullValueHandling = NullValueHandling.Include,
+                        DefaultValueHandling = DefaultValueHandling.Include,
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                        MissingMemberHandling = MissingMemberHandling.Error,
+                        ObjectCreationHandling = ObjectCreationHandling.Replace,
+                        Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        {
+                            jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
+                            //errors.Add(new ProfileRepositoryException(String.Format("Parse error: {0}", args.ErrorContext.Error.Message), args.ErrorContext.Error));
+                            args.ErrorContext.Handled = true;
+                        },
+                    };
 
-                ProfileFile profileFile = new ProfileFile
-                {
-                    ProfileFileVersion = _profileFileVersion,
-                    LastUpdated = DateTime.Now,
-                    Profiles = _allProfiles
-                };
-
-                var json = JsonConvert.SerializeObject(profileFile, Formatting.Indented, mySerializerSettings);
-
-                // If we have any JSON.net errors, then we need to record them in the logs
-                if (jsonErrors.Count > 0)
-                {
-                    foreach (string jsonError in jsonErrors)
+                    ProfileFile profileFile = new ProfileFile
                     {
-                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: {jsonError}");
-                    }
+                        ProfileFileVersion = _profileFileVersion,
+                        LastUpdated = DateTime.Now,
+                        Profiles = _allProfiles
+                    };
 
-                    return false;
-                }
+                    var json = JsonConvert.SerializeObject(profileFile, Formatting.Indented, mySerializerSettings);
 
-
-                if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
-                {
-                    RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
+                    // If we have any JSON.net errors, then we need to record them in the logs
+                    if (jsonErrors.Count > 0)
                     {
-                        Repository = RepositoryKind.DisplayProfiles,
-                        ExpectedRevision = _userAgentRepositoryRevision,
-                        Json = json
-                    });
+                        foreach (string jsonError in jsonErrors)
+                        {
+                            SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: {jsonError}");
+                        }
 
-                    if (commitResult.Snapshot == null)
-                    {
-                        SharedLogger.logger.Error("ProfileRepository/SaveProfiles: The User Agent did not return a display-profile snapshot after the commit.");
                         return false;
                     }
 
-                    _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
-                    if (commitResult.WasConflict)
+
+                    if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
                     {
-                        LoadProfilesFromJson(commitResult.Snapshot.Json);
-                        _profilesLoaded = true;
-                        SharedLogger.logger.Warn("ProfileRepository/SaveProfiles: The display-profile cache was stale. Reloaded the User Agent version instead of overwriting it.");
-                        return false;
-                    }
+                        RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
+                        {
+                            Repository = RepositoryKind.DisplayProfiles,
+                            ExpectedRevision = _userAgentRepositoryRevision,
+                            Json = json
+                        });
 
-                    SharedLogger.logger.Debug("ProfileRepository/SaveProfiles: Committed the display-profile cache through the User Agent.");
-                    return true;
-                }
+                        if (commitResult.Snapshot == null)
+                        {
+                            SharedLogger.logger.Error("ProfileRepository/SaveProfiles: The User Agent did not return a display-profile snapshot after the commit.");
+                            return false;
+                        }
 
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName}.");
+                        _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
+                        if (commitResult.WasConflict)
+                        {
+                            LoadProfilesFromJson(commitResult.Snapshot.Json);
+                            _profilesLoaded = true;
+                            SharedLogger.logger.Warn("ProfileRepository/SaveProfiles: The display-profile cache was stale. Reloaded the User Agent version instead of overwriting it.");
+                            return false;
+                        }
 
-                    AtomicFile.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
-                    if (ValidateProfiles())
-                    {
-                        SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFullFileName}.");
+                        SharedLogger.logger.Debug("ProfileRepository/SaveProfiles: Committed the display-profile cache through the User Agent.");
                         return true;
                     }
-                    else
+
+                    if (!string.IsNullOrWhiteSpace(json))
                     {
-                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFullFileName} failed. The profile repository was unable to be saved the first time. Attempting to save again.");
-
-                        // Waiting a second to let any transient issue pass.
-                        Thread.Sleep(1000);
-
-                        SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName} for a second time.");
+                        SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName}.");
 
                         AtomicFile.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
-
-                        if (ValidateProfiles())
+                        if (ValidateProfiles(json))
                         {
-                            SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFullFileName} on the second try.");
+                            SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFullFileName}.");
                             return true;
                         }
                         else
                         {
-                            SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFullFileName} a second time failed. The profile repository was unable to be saved twice. There is an underlying issue here.");
-                            return false;
+                            SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFullFileName} failed. The profile repository was unable to be saved the first time. Attempting to save again.");
+
+                            // Waiting a second to let any transient issue pass.
+                            Thread.Sleep(1000);
+
+                            SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Saving the profile repository to the {_profileStorageJsonFullFileName} for a second time.");
+
+                            AtomicFile.WriteAllText(_profileStorageJsonFullFileName, json, Encoding.Unicode);
+
+                            if (ValidateProfiles(json))
+                            {
+                                SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Validated that we successfully saved the profile repository to {_profileStorageJsonFullFileName} on the second try.");
+                                return true;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Validatation of saving the profile repository to {_profileStorageJsonFullFileName} a second time failed. The profile repository was unable to be saved twice. There is an underlying issue here.");
+                                return false;
+                            }
                         }
+
+                    }
+                    else
+                    {
+                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Problem saving the profile repository to {_profileStorageJsonFullFileName} as the JSON file contents are null or whitespace.");
+                        SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: JSON data: {json}");
+                        return false;
                     }
 
                 }
-                else
+                catch (Exception ex)
                 {
-                    SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: Problem saving the profile repository to {_profileStorageJsonFullFileName} as the JSON file contents are null or whitespace.");
-                    SharedLogger.logger.Error($"ProfileRepository/SaveProfiles: JSON data: {json}");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFullFileName}.");
+                    SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException?.Source}:{ex.InnerException?.StackTrace} - {ex.InnerException?.Message}\"");
                     return false;
                 }
-
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: Unable to save the profile repository to the {_profileStorageJsonFullFileName}.");
-                SharedLogger.logger.Error(ex, $"ProfileRepository/SaveProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException?.Source}:{ex.InnerException?.StackTrace} - {ex.InnerException?.Message}\"");
-                return false;
             }
         }
 
 
-        private static bool ValidateProfiles()
+        private static bool ValidateProfiles(string expectedJson)
         {
-            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Loading profiles from {_profileStorageJsonFullFileName} to compare the Profile Repository");
-
             try
             {
-                if (File.Exists(_profileStorageJsonFullFileName))
-                {
-                    List<ProfileItem> profilesToValidate = new List<ProfileItem>(); ;
-
-                    string json = "";
-                    try
-                    {
-                        json = File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode);
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
-                    }
-
-                    // Temporarily removing as not needed at present. May need this for future format migrations.
-                    // Migrate any previous entries to the latest version of the file format to the latest one
-                    //json = MigrateJsonToLatestVersion(json);
-
-                    if (!string.IsNullOrWhiteSpace(json))
-                    {
-                        List<string> jsonErrors = new List<string>();
-
-                        try
-                        {
-                            JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
-                            {
-                                MissingMemberHandling = MissingMemberHandling.Ignore,
-                                NullValueHandling = NullValueHandling.Include,
-                                DefaultValueHandling = DefaultValueHandling.Populate,
-                                TypeNameHandling = TypeNameHandling.Auto,
-                                SerializationBinder = DisplayMagicianSerializationBinder.Instance,
-                                ObjectCreationHandling = ObjectCreationHandling.Replace,
-                                Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                                {
-                                    jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                                    args.ErrorContext.Handled = true;
-                                },
-                            };
-
-                            ProfileFile? profilesFile = JsonConvert.DeserializeObject<ProfileFile>(json, mySerializerSettings);
-                            if (profilesFile is not ProfileFile loadedProfilesFile || loadedProfilesFile.Profiles == null)
-                                return false;
-
-                            profilesToValidate = loadedProfilesFile.Profiles;
-
-                            // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
-                            foreach (ProfileItem profile in profilesToValidate)
-                            {
-                                PatchLoadedProfile(profile);
-                            }
-
-                        }
-                        catch (JsonReaderException ex)
-                        {
-                            // If there is a error in the JSON format
-                            if (ex.HResult == -2146233088)
-                            {
-                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException - The Display Profiles file {_profileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: JSONReaderException while trying to process the Profiles json data file {_profileStorageJsonFullFileName} but JsonConvert threw an exception.");
-                            }
-                            return false;
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Tried to parse the JSON in the {_profileStorageJsonFullFileName} but the JsonConvert threw an exception.");
-                            return false;
-                        }
-
-                        // If we have any JSON.net errors, then we need to records them in the logs
-                        if (jsonErrors.Count > 0)
-                        {
-                            foreach (string jsonError in jsonErrors)
-                            {
-                                SharedLogger.logger.Error($"ProfileRepository/ValidateProfiles: {jsonError}");
-                            }
-                        }
-
-                        // Sort the profiles alphabetically so they match the loaded profiles
-                        profilesToValidate.Sort();
-                        // This sorting is now being done as we go to save, so no need to do it here.
-                        //_allProfiles.Sort();
-
-                        // Actually perform the validation
-                        if (profilesToValidate.SequenceEqual(_allProfiles))
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-
-                    }
-                    else
-                    {
-                        if (_profilesLoaded && _allProfiles.Count > 0)
-                        {
-                            // We don't have a profile repository file, yet we have some profiles. This means the file and profiles don't match. Return false.
-                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFullFileName} profile JSON file exists but is empty! We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
-                            return false;
-                        }
-                        else
-                        {
-                            // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
-                            SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: The {_profileStorageJsonFullFileName} profile JSON file exists but is empty! We also don't have any display profiles, so that matches. This is expected.");
-                            return true;
-                        }
-                    }
-                }
-                else
-                {
-                    if (_profilesLoaded && _allProfiles.Count > 0)
-                    {
-                        // We don't have a profile repository file, yet we have some profiles. This means the file and profiles don't match. Return false.
-                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFullFileName} profile JSON file that contains the Profiles. We don't have a profile repository file, yet we have some display profiles. This means the file and profiles don't match.");
-                        return false;
-                    }
-                    else
-                    {
-                        // We don't have a profile repository file, and we don't have any profiles. This means the file and profiles match. Return true.
-                        SharedLogger.logger.Debug($"ProfileRepository/ValidateProfiles: Couldn't find the {_profileStorageJsonFullFileName} profile JSON file that contains the Profiles. We also don't have any display profiles, so that matches. This is expected.");
-                        return true;
-                    }
-                }
+                return string.Equals(File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode), expectedJson, StringComparison.Ordinal);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
-                SharedLogger.logger.Error(ex, $"ProfileRepository/ValidateProfiles: Exception within ValidateProfiles function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                SharedLogger.logger.Warn(ex, "ProfileRepository/ValidateProfiles: Could not verify the saved repository at {0}.", _profileStorageJsonFullFileName);
                 return false;
-            }            
+            }
         }
 
         private static void SaveProfileIconToCache(ProfileItem profile)

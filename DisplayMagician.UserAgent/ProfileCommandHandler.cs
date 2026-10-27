@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 using DisplayMagician.ConfigurationDefinitions;
 using DisplayMagician.Contracts;
@@ -511,12 +510,7 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = _shortcutStore.GetSnapshot() };
             }
 
-            string fileName = snapshotRequest.Repository == RepositoryKind.DisplayProfiles ? "DisplayProfiles.json" : "AudioProfiles.json";
-            string directoryName = snapshotRequest.Repository == RepositoryKind.DisplayProfiles ? "Profiles" : "AudioProfiles";
-            string path = Path.Combine(_userDataPath, directoryName, fileName);
-            byte[] content = File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
-            long revision = content.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(content), 0);
-            return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = new RepositorySnapshot { Repository = snapshotRequest.Repository, Revision = revision, Json = content.Length == 0 ? string.Empty : System.Text.Encoding.Unicode.GetString(content).TrimStart('\uFEFF') } };
+            return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = snapshotRequest.Repository == RepositoryKind.DisplayProfiles ? ProfileRepository.GetSnapshot() : AudioProfileRepository.GetSnapshot() };
         }
 
         if (request.MessageType == ControlMessageType.CommitRepositorySnapshot)
@@ -531,6 +525,7 @@ public sealed class ProfileCommandHandler
             {
                 try
                 {
+                    RepositoryDocumentValidation.Validate(commitRequest.Json, RepositoryKind.Shortcuts);
                     List<ShortcutDefinition> shortcutDefinitions = _shortcutStore.GetShortcutDefinitions(commitRequest.Json);
                     if (!AutomaticGameDetectionRegistry.TryValidateAutomaticDetections(shortcutDefinitions, out string validationError))
                     {
@@ -550,28 +545,16 @@ public sealed class ProfileCommandHandler
                 }
             }
 
-            string directoryName = commitRequest.Repository == RepositoryKind.DisplayProfiles ? "Profiles" : "AudioProfiles";
-            string fileName = commitRequest.Repository == RepositoryKind.DisplayProfiles ? "DisplayProfiles.json" : "AudioProfiles.json";
-            string path = Path.Combine(_userDataPath, directoryName, fileName);
-            byte[] existing = File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
-            long revision = existing.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(existing), 0);
-            if (revision != commitRequest.ExpectedRevision)
-            {
-                return new ControlResponse { IsSuccessful = true, Message = "Repository commit conflicted with a newer Agent revision.", RepositoryCommit = new RepositoryCommitResult { WasConflict = true, Snapshot = CreateSnapshot(commitRequest.Repository, path) } };
-            }
-
             try
             {
-                using JsonDocument _ = JsonDocument.Parse(commitRequest.Json);
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                string temporaryPath = Path.Combine(Path.GetDirectoryName(path)!, $".{fileName}.{Guid.NewGuid():N}.tmp");
-                File.WriteAllText(temporaryPath, commitRequest.Json, System.Text.Encoding.Unicode);
-                if (File.Exists(path)) File.Replace(temporaryPath, path, null); else File.Move(temporaryPath, path);
-                if (commitRequest.Repository == RepositoryKind.DisplayProfiles) ProfileRepository.ConfigureStoragePath(_userDataPath); else AudioProfileRepository.ConfigureStoragePath(_userDataPath);
-                return new ControlResponse { IsSuccessful = true, Message = "Repository committed.", RepositoryCommit = new RepositoryCommitResult { Snapshot = CreateSnapshot(commitRequest.Repository, path) } };
+                RepositoryCommitResult result = commitRequest.Repository == RepositoryKind.DisplayProfiles
+                    ? ProfileRepository.CommitSnapshot(commitRequest)
+                    : AudioProfileRepository.CommitSnapshot(commitRequest);
+                return new ControlResponse { IsSuccessful = true, Message = result.WasConflict ? "Repository commit conflicted with a newer Agent revision." : "Repository committed.", RepositoryCommit = result };
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is ArgumentException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is Newtonsoft.Json.JsonException || ex is ArgumentException)
             {
+                _logger.Warn(ex, "ProfileCommandHandler/HandleAsync: Could not validate or persist repository {0}.", commitRequest.Repository);
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The repository commit could not be validated or persisted." };
             }
         }
@@ -1201,17 +1184,6 @@ public sealed class ProfileCommandHandler
 
         double scale = Math.Min((double)bounds.Width / imageSize.Width, (double)bounds.Height / imageSize.Height);
         return new Size(Math.Max(1, (int)Math.Round(imageSize.Width * scale)), Math.Max(1, (int)Math.Round(imageSize.Height * scale)));
-    }
-
-    private static RepositorySnapshot CreateSnapshot(RepositoryKind repository, string path)
-    {
-        byte[] content = File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
-        return new RepositorySnapshot
-        {
-            Repository = repository,
-            Revision = content.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(content), 0),
-            Json = content.Length == 0 ? string.Empty : System.Text.Encoding.Unicode.GetString(content).TrimStart('\uFEFF')
-        };
     }
 
     private static ControlResponse SuccessfulResourceChange(string message, RepositoryKind repository, string id, SavedResourceChangeAction action)

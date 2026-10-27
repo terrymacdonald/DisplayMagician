@@ -12,15 +12,15 @@ public sealed class LegacyFileMigration
 {
     public LegacyFileMigrationResult MigrateFile(string legacyFilePath, string destinationFilePath, UserStoragePaths userPaths, Func<string, string>? jsonTransform = null)
     {
-        if (!File.Exists(legacyFilePath))
-        {
-            return File.Exists(destinationFilePath)
-                ? new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, ValidateDestination(destinationFilePath, jsonTransform != null), "The destination was already migrated during an earlier attempt.")
-                : new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The legacy file does not exist.");
-        }
-
         try
         {
+            if (!File.Exists(legacyFilePath))
+            {
+                return File.Exists(destinationFilePath)
+                    ? new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, ValidateDestination(destinationFilePath, jsonTransform != null), "The destination was already migrated during an earlier attempt.")
+                    : new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The legacy file does not exist.");
+            }
+
             userPaths.EnsureDirectories();
             string backupPath = GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(legacyFilePath)}.{DateTime.UtcNow:yyyyMMddHHmmss}.pre-v4.bak"));
             File.Copy(legacyFilePath, backupPath, overwrite: false);
@@ -32,11 +32,15 @@ public sealed class LegacyFileMigration
                 // Display profiles are consumed by the existing repository with Encoding.Unicode.
                 // Retain that contract after rewriting wallpaper paths during v4 migration.
                 byte[] utf16Content = new UnicodeEncoding(false, true).GetPreamble().Concat(new UnicodeEncoding(false, true).GetBytes(json)).ToArray();
+                if (!ValidateContent(utf16Content, destinationFilePath, true))
+                    return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The legacy source is empty or invalid.");
                 AtomicFileStore.WriteBytes(destinationFilePath, utf16Content, GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak")));
             }
             else
             {
                 byte[] content = File.ReadAllBytes(legacyFilePath);
+                if (!ValidateContent(content, destinationFilePath, false))
+                    return new LegacyFileMigrationResult(legacyFilePath, destinationFilePath, false, "The legacy source is empty or invalid.");
                 AtomicFileStore.WriteBytes(destinationFilePath, content, GetUniquePath(Path.Combine(userPaths.BackupsPath, $"{Path.GetFileName(destinationFilePath)}.replace.bak")));
             }
 
@@ -71,14 +75,19 @@ public sealed class LegacyFileMigration
 
     private static bool ValidateDestination(string destinationFilePath, bool requiresDisplayProfileValidation)
     {
-        if (!File.Exists(destinationFilePath) || new FileInfo(destinationFilePath).Length == 0)
-        {
+        if (!File.Exists(destinationFilePath))
             return false;
-        }
+        return ValidateContent(File.ReadAllBytes(destinationFilePath), destinationFilePath, requiresDisplayProfileValidation);
+    }
 
+    private static bool ValidateContent(byte[] content, string destinationFilePath, bool requiresDisplayProfileValidation)
+    {
+        if (content.Length == 0)
+            return false;
         if (destinationFilePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
         {
-            string json = File.ReadAllText(destinationFilePath);
+            using StreamReader reader = new StreamReader(new MemoryStream(content), Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            string json = reader.ReadToEnd();
             using JsonDocument document = JsonDocument.Parse(json);
             if (requiresDisplayProfileValidation && string.Equals(Path.GetFileName(destinationFilePath), "DisplayProfiles.json", StringComparison.OrdinalIgnoreCase))
             {

@@ -12,6 +12,51 @@ namespace DisplayMagician.UserAgent.Tests;
 public sealed class ShortcutStoreTests
 {
     [Fact]
+    public void FutureShortcutSchemaIsUntouchedByBothMigrations()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagician-FutureShortcut", Guid.NewGuid().ToString("N"));
+        string directory = Path.Combine(root, "Shortcuts");
+        Directory.CreateDirectory(directory);
+        string path = Path.Combine(directory, "Shortcuts.json");
+        try
+        {
+            string json = "{\"ShortcutFileVersion\":\"99\",\"Shortcuts\":[{\"UUID\":\"future\",\"Application\":{\"Future\":true},\"MonitorExecutablePath\":false}]}";
+            File.WriteAllText(path, json, Encoding.Unicode);
+            byte[] original = File.ReadAllBytes(path);
+            _ = new ShortcutStore(root);
+            Assert.Equal(original, File.ReadAllBytes(path));
+            Assert.Single(Directory.GetFiles(directory));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void FailedShortcutMigrationKeepsOriginalAndAllowsImmediateRetryWithoutTemporaryFiles()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "DisplayMagician-LockedShortcut", Guid.NewGuid().ToString("N"));
+        string directory = Path.Combine(root, "Shortcuts");
+        Directory.CreateDirectory(directory);
+        string path = Path.Combine(directory, "Shortcuts.json");
+        try
+        {
+            string json = "{\"ShortcutFileVersion\":\"6\",\"Shortcuts\":[{\"UUID\":\"old\",\"MonitorExecutablePath\":false}]}";
+            File.WriteAllText(path, json, Encoding.Unicode);
+            using (FileStream held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                Assert.Throws<InvalidDataException>(() => new ShortcutStore(root));
+                Assert.Equal(json, File.ReadAllText(path, Encoding.Unicode));
+                Assert.Empty(Directory.GetFiles(directory, "*.tmp"));
+            }
+            ShortcutStore retried = new ShortcutStore(root);
+            Assert.True(retried.TryGetShortcutDefinition("old", out ShortcutDefinition? shortcut));
+            Assert.False(shortcut!.MonitorLaunchedExecutable);
+            Assert.All(Directory.GetFiles(directory, "Shortcuts.json.v6.*.bak"), backup => Assert.Equal(json, File.ReadAllText(backup, Encoding.Unicode)));
+            Assert.Empty(Directory.GetFiles(directory, "*.tmp"));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
     public void Constructor_MigratesWindowPlacementSchemaAndBacksUpShortcuts()
     {
         string root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-ShortcutStore-{Guid.NewGuid():N}");

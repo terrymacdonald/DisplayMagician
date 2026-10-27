@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -27,8 +26,8 @@ public sealed class ShortcutStore
 
     public RepositorySnapshot GetSnapshot()
     {
-        byte[] content = File.Exists(_shortcutFilePath) ? File.ReadAllBytes(_shortcutFilePath) : Array.Empty<byte>();
-        return new RepositorySnapshot { Repository = RepositoryKind.Shortcuts, Revision = content.Length == 0 ? 0 : BitConverter.ToInt64(SHA256.HashData(content), 0), Json = content.Length == 0 ? string.Empty : Encoding.Unicode.GetString(content).TrimStart('\uFEFF') };
+        lock (_writeLock)
+            return Runtime.AtomicFile.GetSnapshot(_shortcutFilePath, RepositoryKind.Shortcuts);
     }
 
     public bool TryGetShortcutDefinition(string shortcutId, out ShortcutDefinition? shortcutDefinition)
@@ -141,21 +140,11 @@ public sealed class ShortcutStore
 
     public RepositoryCommitResult Commit(RepositoryCommitRequest request)
     {
+        if (request.Repository != RepositoryKind.Shortcuts)
+            throw new ArgumentException("The shortcut store only accepts shortcut repositories.", nameof(request));
         lock (_writeLock)
         {
-            RepositorySnapshot snapshot = GetSnapshot();
-            if (request.ExpectedRevision != snapshot.Revision)
-            {
-                return new RepositoryCommitResult { WasConflict = true, Snapshot = snapshot };
-            }
-
-            using JsonDocument _ = JsonDocument.Parse(request.Json);
-            string directory = Path.GetDirectoryName(_shortcutFilePath)!;
-            Directory.CreateDirectory(directory);
-            string temporaryPath = Path.Combine(directory, $".Shortcuts.{Guid.NewGuid():N}.tmp");
-            File.WriteAllText(temporaryPath, request.Json, Encoding.Unicode);
-            if (File.Exists(_shortcutFilePath)) File.Replace(temporaryPath, _shortcutFilePath, null); else File.Move(temporaryPath, _shortcutFilePath);
-            return new RepositoryCommitResult { Snapshot = GetSnapshot() };
+            return Runtime.AtomicFile.CommitSnapshot(_shortcutFilePath, request);
         }
     }
 
@@ -222,11 +211,9 @@ public sealed class ShortcutStore
             string previousVersion = int.TryParse(storedVersion, out versionNumber) && versionNumber >= 0
                 ? versionNumber.ToString() : "unknown";
             root["ShortcutFileVersion"] = "8";
-            string backupPath = $"{_shortcutFilePath}.v{previousVersion}.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
+            string backupPath = $"{_shortcutFilePath}.v{previousVersion}.{DateTime.UtcNow:yyyyMMddHHmmss}.{Guid.NewGuid():N}.bak";
             File.Copy(_shortcutFilePath, backupPath, overwrite: false);
-            string temporaryPath = Path.Combine(Path.GetDirectoryName(_shortcutFilePath)!, $".Shortcuts.{Guid.NewGuid():N}.tmp");
-            File.WriteAllText(temporaryPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);
-            File.Replace(temporaryPath, _shortcutFilePath, null);
+            Runtime.AtomicFile.WriteAllText(_shortcutFilePath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);
             Logger.Info("ShortcutStore/MigrateWindowPlacementSchema: Upgraded {0} with backup {1}.", _shortcutFilePath, backupPath);
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
@@ -254,6 +241,10 @@ public sealed class ShortcutStore
                 return;
             }
 
+            if (rootObject["ShortcutFileVersion"] is JsonValue versionValue && versionValue.TryGetValue<string>(out string? version) &&
+                int.TryParse(version, out int versionNumber) && versionNumber > 8)
+                return;
+
             bool changed = false;
             foreach (JsonNode? shortcut in shortcuts)
             {
@@ -268,11 +259,9 @@ public sealed class ShortcutStore
                 return;
             }
 
-            string backupPath = $"{_shortcutFilePath}.legacy-application.{DateTime.UtcNow:yyyyMMddHHmmss}.bak";
+            string backupPath = $"{_shortcutFilePath}.legacy-application.{DateTime.UtcNow:yyyyMMddHHmmss}.{Guid.NewGuid():N}.bak";
             File.Copy(_shortcutFilePath, backupPath, overwrite: false);
-            string temporaryPath = Path.Combine(Path.GetDirectoryName(_shortcutFilePath)!, $".{Path.GetFileName(_shortcutFilePath)}.{Guid.NewGuid():N}.tmp");
-            File.WriteAllText(temporaryPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);
-            File.Replace(temporaryPath, _shortcutFilePath, null);
+            Runtime.AtomicFile.WriteAllText(_shortcutFilePath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);
             Logger.Info($"ShortcutStore/MigrateLegacyApplicationObjects: Removed legacy application objects and backed up shortcuts to {backupPath}.");
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
@@ -283,21 +272,21 @@ public sealed class ShortcutStore
 
     private static string GetString(JsonElement element, string propertyName)
     {
-        return element.TryGetProperty(propertyName, out JsonElement property) && property.ValueKind == JsonValueKind.String
+        return element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out JsonElement property) && property.ValueKind == JsonValueKind.String
             ? property.GetString() ?? string.Empty
             : string.Empty;
     }
 
     private static int GetInt32(JsonElement element, string propertyName, int defaultValue = 0)
     {
-        return element.TryGetProperty(propertyName, out JsonElement property) && property.TryGetInt32(out int value)
+        return element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out JsonElement property) && property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out int value)
             ? value
             : defaultValue;
     }
 
     private static bool GetBoolean(JsonElement element, string propertyName, bool defaultValue = false)
     {
-        return element.TryGetProperty(propertyName, out JsonElement property) && (property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
+        return element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out JsonElement property) && (property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
             ? property.GetBoolean()
             : defaultValue;
     }

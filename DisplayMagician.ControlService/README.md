@@ -41,4 +41,6 @@ The service is installed and configured by the WiX package; do not manually regi
 
 Machine-owned state, audit records, and logs live under `C:\ProgramData\DisplayMagician\Machine\` in an installed environment. See the [architecture plan](../DISPLAYMAGICIAN_V4_CONTROL_SERVICE_PLAN.md) for IPC, security, and ownership rules.
 
+Legacy imports validate source content before replacing a destination and do not re-import retired `.old` files during retries. Concurrent migrations on the service's runner serialize. An existing marker must be readable, use schema 1 and contain complete successful migration records; an invalid marker stops import and returns a repair error while preserving both source and destination data. Marker validation does not replay a completed migration or require retired source files to remain present.
+
 For a user-selected Support ZIP, ControlService stages retained machine logs, the installer transaction log, the audit log, and an allowlisted machine configuration snapshot (including gateway and temporary diagnostic settings and their backups). It does not stage pairing sessions, replay records, gateway identities, or other secret-bearing machine state.

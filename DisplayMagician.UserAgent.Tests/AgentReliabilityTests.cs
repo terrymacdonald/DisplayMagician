@@ -316,6 +316,118 @@ public sealed class AgentReliabilityTests : IDisposable
         Assert.Equal("new content", message.Content);
     }
 
+    public static IEnumerable<object[]> InvalidRepositoryDocuments()
+    {
+        foreach (RepositoryKind kind in new[] { RepositoryKind.DisplayProfiles, RepositoryKind.AudioProfiles, RepositoryKind.Shortcuts })
+        {
+            string field = kind == RepositoryKind.DisplayProfiles ? "Profiles" : kind == RepositoryKind.AudioProfiles ? "AudioProfiles" : "Shortcuts";
+            foreach (string json in new[] { "null", "[]", "42", "{}", $"{{\"{field}\":null}}", $"{{\"{field}\":{{}}}}", $"{{\"{field}\":[null]}}", $"{{\"{field}\":[{{}}]}}", $"{{\"{field}\":[{{\"UUID\":\" \"}}]}}", $"{{\"{field}\":[{{\"UUID\":\"same\"}},{{\"UUID\":\"SAME\"}}]}}" })
+                yield return new object[] { kind, json };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(InvalidRepositoryDocuments))]
+    public void InvalidRepositoryDocumentsPreserveTheLastSnapshot(RepositoryKind kind, string json)
+    {
+        ShortcutStore shortcuts = new ShortcutStore(_root);
+        string field = kind == RepositoryKind.DisplayProfiles ? "Profiles" : kind == RepositoryKind.AudioProfiles ? "AudioProfiles" : "Shortcuts";
+        RepositoryCommitResult original = CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, Json = $"{{\"{field}\":[]}}" });
+        Assert.Throws<JsonException>(() => CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, ExpectedRevision = original.Snapshot!.Revision, Json = json }));
+        RepositorySnapshot current = kind == RepositoryKind.DisplayProfiles ? AgentProfileRepository.GetSnapshot() : kind == RepositoryKind.AudioProfiles ? AgentAudioRepository.GetSnapshot() : shortcuts.GetSnapshot();
+        Assert.Equal(original.Snapshot!.Json, current.Json);
+        Assert.Equal(original.Snapshot.Revision, current.Revision);
+        Assert.Empty(Directory.GetFiles(_root, "*.tmp", SearchOption.AllDirectories));
+    }
+
+    [Theory]
+    [InlineData(RepositoryKind.DisplayProfiles)]
+    [InlineData(RepositoryKind.AudioProfiles)]
+    [InlineData(RepositoryKind.Shortcuts)]
+    public async Task ConcurrentRepositoryCommitsHaveOneWinnerAndReturnThatSnapshotToConflicts(RepositoryKind kind)
+    {
+        ShortcutStore shortcuts = new ShortcutStore(_root);
+        string field = kind == RepositoryKind.DisplayProfiles ? "Profiles" : kind == RepositoryKind.AudioProfiles ? "AudioProfiles" : "Shortcuts";
+        RepositoryCommitResult original = CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, Json = $"{{\"{field}\":[],\"Unrelated\":\"preserve\"}}" });
+        TaskCompletionSource<bool> start = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task<RepositoryCommitResult>[] requests = Enumerable.Range(0, 12).Select(index => Task.Run(async () =>
+        {
+            await start.Task;
+            return CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, ExpectedRevision = original.Snapshot!.Revision, Json = $"{{\"{field}\":[],\"Unrelated\":\"preserve\",\"Writer\":{index}}}" });
+        })).ToArray();
+        start.TrySetResult(true);
+        RepositoryCommitResult[] results = await Task.WhenAll(requests).WaitAsync(TimeSpan.FromSeconds(15));
+        RepositoryCommitResult winner = Assert.Single(results, result => !result.WasConflict);
+        Assert.All(results, result => Assert.Equal(winner.Snapshot!.Revision, result.Snapshot!.Revision));
+        Assert.All(results, result => Assert.Equal(winner.Snapshot!.Json, result.Snapshot!.Json));
+        Assert.Contains("preserve", winner.Snapshot!.Json);
+        string backup = Assert.Single(Directory.GetFiles(_root, "*.json.bak", SearchOption.AllDirectories));
+        Assert.Equal(original.Snapshot!.Json, File.ReadAllText(backup, System.Text.Encoding.Unicode));
+        Assert.Empty(Directory.GetFiles(_root, "*.tmp", SearchOption.AllDirectories));
+    }
+
+    [Theory]
+    [InlineData(RepositoryKind.DisplayProfiles)]
+    [InlineData(RepositoryKind.AudioProfiles)]
+    [InlineData(RepositoryKind.Shortcuts)]
+    public void FailedRepositoryReplacementPreservesDataAndRemovesTemporaryFiles(RepositoryKind kind)
+    {
+        ShortcutStore shortcuts = new ShortcutStore(_root);
+        string field = kind == RepositoryKind.DisplayProfiles ? "Profiles" : kind == RepositoryKind.AudioProfiles ? "AudioProfiles" : "Shortcuts";
+        RepositoryCommitResult original = CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, Json = $"{{\"{field}\":[]}}" });
+        string file = Assert.Single(Directory.GetFiles(_root, kind == RepositoryKind.DisplayProfiles ? "DisplayProfiles.json" : kind == RepositoryKind.AudioProfiles ? "AudioProfiles.json" : "Shortcuts.json", SearchOption.AllDirectories));
+        using (FileStream held = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            Assert.ThrowsAny<IOException>(() => CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, ExpectedRevision = original.Snapshot!.Revision, Json = $"{{\"{field}\":[],\"Change\":true}}" }));
+            Assert.Equal(original.Snapshot!.Json, File.ReadAllText(file, System.Text.Encoding.Unicode));
+            Assert.Empty(Directory.GetFiles(_root, "*.tmp", SearchOption.AllDirectories));
+        }
+        Assert.False(CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, ExpectedRevision = original.Snapshot!.Revision, Json = $"{{\"{field}\":[],\"Change\":true}}" }).WasConflict);
+    }
+
+    private static RepositoryCommitResult CommitRepository(ShortcutStore shortcuts, RepositoryCommitRequest request)
+        => request.Repository == RepositoryKind.DisplayProfiles ? AgentProfileRepository.CommitSnapshot(request) : request.Repository == RepositoryKind.AudioProfiles ? AgentAudioRepository.CommitSnapshot(request) : shortcuts.Commit(request);
+
+    [Theory]
+    [InlineData(RepositoryKind.DisplayProfiles)]
+    [InlineData(RepositoryKind.AudioProfiles)]
+    public void RuntimeSaveImmediatelyAfterCommitKeepsTheCommittedDefinitions(RepositoryKind kind)
+    {
+        ShortcutStore shortcuts = new ShortcutStore(_root);
+        string field = kind == RepositoryKind.DisplayProfiles ? "Profiles" : "AudioProfiles";
+        string id = Guid.NewGuid().ToString("D");
+        string json = kind == RepositoryKind.DisplayProfiles
+            ? "{\"ProfileFileVersion\":\"4\",\"Profiles\":[" + UserProfileOperationService.SerializeDisplayRecoveryProfile(new AgentProfile { UUID = id, Name = "Committed profile" }) + "]}"
+            : $"{{\"AudioProfileFileVersion\":\"1\",\"AudioProfiles\":[{{\"UUID\":\"{id}\",\"Name\":\"Committed profile\",\"WindowsAudioConfig\":{{}}}}]}}";
+        CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, Json = json });
+        Assert.True(kind == RepositoryKind.DisplayProfiles ? AgentProfileRepository.SaveProfiles() : AgentAudioRepository.SaveAudioProfiles());
+        RepositorySnapshot snapshot = kind == RepositoryKind.DisplayProfiles ? AgentProfileRepository.GetSnapshot() : AgentAudioRepository.GetSnapshot();
+        using JsonDocument saved = JsonDocument.Parse(snapshot.Json);
+        JsonElement profile = Assert.Single(saved.RootElement.GetProperty(field).EnumerateArray());
+        Assert.Equal(id, profile.GetProperty("UUID").GetString());
+        Assert.Equal("Committed profile", profile.GetProperty("Name").GetString());
+    }
+
+    [Theory]
+    [InlineData(RepositoryKind.DisplayProfiles)]
+    [InlineData(RepositoryKind.AudioProfiles)]
+    public async Task ProfileCommitRejectsInvalidKnownPropertyTypesBeforeReplacingData(RepositoryKind kind)
+    {
+        using FakeProfileOperations profiles = new FakeProfileOperations();
+        ProfileCommandHandler handler = new ProfileCommandHandler(new AgentRegistration { UserSid = "test", SessionId = 1 }, new FakeServiceClient(), null, _root, profiles);
+        ShortcutStore shortcuts = new ShortcutStore(_root);
+        string field = kind == RepositoryKind.DisplayProfiles ? "Profiles" : "AudioProfiles";
+        RepositoryCommitResult original = CommitRepository(shortcuts, new RepositoryCommitRequest { Repository = kind, Json = $"{{\"{field}\":[]}}" });
+        ControlResponse result = await handler.HandleAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.CommitRepositorySnapshot,
+            Payload = JsonSerializer.Serialize(new RepositoryCommitRequest { Repository = kind, ExpectedRevision = original.Snapshot!.Revision, Json = $"{{\"{field}\":[{{\"UUID\":\"target\",\"Name\":[]}}]}}" })
+        }, CancellationToken.None);
+        Assert.False(result.IsSuccessful);
+        Assert.Equal(ControlErrorCode.InvalidRequest, result.ErrorCode);
+        Assert.Equal(original.Snapshot!.Revision, (kind == RepositoryKind.DisplayProfiles ? AgentProfileRepository.GetSnapshot() : AgentAudioRepository.GetSnapshot()).Revision);
+    }
+
     public void Dispose()
     {
         foreach (var entry in _originalState) entry.Field.SetValue(null, entry.Value);

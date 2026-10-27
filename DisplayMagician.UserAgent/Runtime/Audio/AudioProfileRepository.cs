@@ -60,6 +60,7 @@ namespace DisplayMagician.UserAgent.Runtime
     public static class AudioProfileRepository
     {
         #region Class Variables
+        private static readonly object _repositoryLock = new object();
         // Common items to the class
         private static List<AudioProfileItem> _allAudioProfiles = new List<AudioProfileItem>();
         private static bool _audioProfilesLoaded = false;
@@ -204,20 +205,59 @@ namespace DisplayMagician.UserAgent.Runtime
         #endregion
 
         #region Class Methods
+        internal static RepositorySnapshot GetSnapshot()
+        {
+            lock (_repositoryLock)
+                return AtomicFile.GetSnapshot(_audioProfileStorageJsonFullFileName, RepositoryKind.AudioProfiles);
+        }
+
+        internal static RepositoryCommitResult CommitSnapshot(RepositoryCommitRequest request)
+        {
+            if (request.Repository != RepositoryKind.AudioProfiles)
+                throw new ArgumentException("An audio-profile repository is required.", nameof(request));
+            lock (_repositoryLock)
+            {
+                AudioProfileFile validatedFile = default;
+                RepositoryCommitResult result = AtomicFile.CommitSnapshot(_audioProfileStorageJsonFullFileName, request, json =>
+                {
+                    validatedFile = JsonConvert.DeserializeObject<AudioProfileFile>(json, new JsonSerializerSettings
+                    {
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        ObjectCreationHandling = ObjectCreationHandling.Replace
+                    });
+                    if (validatedFile.AudioProfiles == null)
+                        throw new JsonSerializationException("The repository did not deserialize into audio profiles.");
+                });
+                if (!result.WasConflict)
+                {
+                    // Retain definitions for a runtime save that precedes the next lazy load.
+                    _allAudioProfiles = validatedFile.AudioProfiles!;
+                    _currentAudioProfile = null;
+                    _audioProfilesLoaded = false;
+                }
+                return result;
+            }
+        }
+
         public static void ConfigureStoragePath(string applicationDataPath)
         {
-            if (string.IsNullOrWhiteSpace(applicationDataPath))
-                throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
+            lock (_repositoryLock)
+            {
+                if (string.IsNullOrWhiteSpace(applicationDataPath))
+                    throw new ArgumentException("An application data path is required.", nameof(applicationDataPath));
 
-            AppDataPath = Path.GetFullPath(applicationDataPath);
-            AppIconPath = Path.Combine(AppDataPath, "Icons");
-            AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
-            AppAudioProfileStoragePath = Path.Combine(AppDataPath, "AudioProfiles");
-            _audioProfileStorageJsonFullFileName = Path.Combine(AppAudioProfileStoragePath, _audioProfileStorageJsonFileName);
-            _allAudioProfiles = new List<AudioProfileItem>();
-            _currentAudioProfile = null;
-            _audioProfilesLoaded = false;
-            Directory.CreateDirectory(AppAudioProfileStoragePath);
+                AppDataPath = Path.GetFullPath(applicationDataPath);
+                AppIconPath = Path.Combine(AppDataPath, "Icons");
+                AppDisplayMagicianIconFilename = Path.Combine(AppIconPath, "DisplayMagician.ico");
+                AppAudioProfileStoragePath = Path.Combine(AppDataPath, "AudioProfiles");
+                _audioProfileStorageJsonFullFileName = Path.Combine(AppAudioProfileStoragePath, _audioProfileStorageJsonFileName);
+                _allAudioProfiles = new List<AudioProfileItem>();
+                _currentAudioProfile = null;
+                _audioProfilesLoaded = false;
+                Directory.CreateDirectory(AppAudioProfileStoragePath);
+            }
         }
 
         /// <summary>
@@ -254,125 +294,137 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool AddAudioProfile(AudioProfileItem audioProfileItem)
         {
-            if (!(audioProfileItem is AudioProfileItem))
-                return false;
-
-            SharedLogger.logger.Debug($"AudioProfileRepository/AddAudioProfile: Adding audioProfile {audioProfileItem.Name} to our audioProfile repository");
-
-            // Doublecheck if it already exists
-            // Because then we just update the one that already exists
-            if (!ContainsAudioProfile(audioProfileItem))
+            lock (_repositoryLock)
             {
-                // Add the AudioProfile to the list of AudioProfiles
-                List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
-                _allAudioProfiles.Add(audioProfileItem);
-
-                // Save the AudioProfiles JSON as it's different
-                if (!SaveAudioProfiles())
-                {
-                    _allAudioProfiles = previousProfiles;
+                if (!(audioProfileItem is AudioProfileItem))
                     return false;
+
+                SharedLogger.logger.Debug($"AudioProfileRepository/AddAudioProfile: Adding audioProfile {audioProfileItem.Name} to our audioProfile repository");
+
+                // Doublecheck if it already exists
+                // Because then we just update the one that already exists
+                if (!ContainsAudioProfile(audioProfileItem))
+                {
+                    // Add the AudioProfile to the list of AudioProfiles
+                    List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
+                    _allAudioProfiles.Add(audioProfileItem);
+
+                    // Save the AudioProfiles JSON as it's different
+                    if (!SaveAudioProfiles())
+                    {
+                        _allAudioProfiles = previousProfiles;
+                        return false;
+                    }
                 }
+
+                // Refresh the audioProfiles to see whats valid
+
+
+                //Doublecheck it's been added
+                if (ContainsAudioProfile(audioProfileItem))
+                {
+                    return true;
+                }
+                else
+                    return false;
+
             }
-
-            // Refresh the audioProfiles to see whats valid
-
-
-            //Doublecheck it's been added
-            if (ContainsAudioProfile(audioProfileItem))
-            {
-                return true;
-            }
-            else
-                return false;
-
         }
 
 
         public static bool RemoveAudioProfile(AudioProfileItem audioProfileItem)
         {
-            if (!(audioProfileItem is AudioProfileItem))
-                return false;
-
-            SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile: Removing audioProfile {audioProfileItem.Name} if it exists in our audioProfile repository");
-
-            // Remove the AudioProfile from the list.
-            List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
-            int numRemoved = _allAudioProfiles.RemoveAll(item => item.UUID.Equals(audioProfileItem.UUID));
-
-            if (numRemoved == 1)
+            lock (_repositoryLock)
             {
-                if (!SaveAudioProfiles())
-                {
-                    _allAudioProfiles = previousProfiles;
+                if (!(audioProfileItem is AudioProfileItem))
                     return false;
+
+                SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile: Removing audioProfile {audioProfileItem.Name} if it exists in our audioProfile repository");
+
+                // Remove the AudioProfile from the list.
+                List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
+                int numRemoved = _allAudioProfiles.RemoveAll(item => item.UUID.Equals(audioProfileItem.UUID));
+
+                if (numRemoved == 1)
+                {
+                    if (!SaveAudioProfiles())
+                    {
+                        _allAudioProfiles = previousProfiles;
+                        return false;
+                    }
+                    UpdateActiveAudioProfile();
+                    return true;
                 }
-                UpdateActiveAudioProfile();
-                return true;
+                else if (numRemoved == 0)
+                    return false;
+                else
+                    throw new AudioProfileRepositoryException();
             }
-            else if (numRemoved == 0)
-                return false;
-            else
-                throw new AudioProfileRepositoryException();
         }
 
 
         public static bool RemoveAudioProfile(string audioProfileName)
         {
-
-            if (String.IsNullOrWhiteSpace(audioProfileName))
-                return false;
-
-            SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile2: Removing audioProfile {audioProfileName} if it exists in our audioProfile repository");
-
-            // Remove the AudioProfile from the list.
-            List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
-            int numRemoved = _allAudioProfiles.RemoveAll(item => item.Name.Equals(audioProfileName));
-
-            if (numRemoved == 1)
+            lock (_repositoryLock)
             {
-                if (!SaveAudioProfiles())
-                {
-                    _allAudioProfiles = previousProfiles;
-                    return false;
-                }
-                UpdateActiveAudioProfile();
-                return true;
-            }
-            else if (numRemoved == 0)
-                return false;
-            else
-                throw new AudioProfileRepositoryException();
 
+                if (String.IsNullOrWhiteSpace(audioProfileName))
+                    return false;
+
+                SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile2: Removing audioProfile {audioProfileName} if it exists in our audioProfile repository");
+
+                // Remove the AudioProfile from the list.
+                List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
+                int numRemoved = _allAudioProfiles.RemoveAll(item => item.Name.Equals(audioProfileName));
+
+                if (numRemoved == 1)
+                {
+                    if (!SaveAudioProfiles())
+                    {
+                        _allAudioProfiles = previousProfiles;
+                        return false;
+                    }
+                    UpdateActiveAudioProfile();
+                    return true;
+                }
+                else if (numRemoved == 0)
+                    return false;
+                else
+                    throw new AudioProfileRepositoryException();
+
+            }
         }
 
         public static bool RemoveAudioProfile(uint audioProfileId)
         {
-            if (audioProfileId == 0)
-                return false;
-
-            SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile3: Removing audioProfile wih audioProfileId {audioProfileId} if it exists in our audioProfile repository");
-
-            string audioProfileIdStr = audioProfileId.ToString();
-
-            // Remove the AudioProfile from the list.
-            List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
-            int numRemoved = _allAudioProfiles.RemoveAll(item => item.UUID.Equals(audioProfileIdStr));
-
-            if (numRemoved == 1)
+            lock (_repositoryLock)
             {
-                if (!SaveAudioProfiles())
-                {
-                    _allAudioProfiles = previousProfiles;
+                if (audioProfileId == 0)
                     return false;
+
+                SharedLogger.logger.Debug($"AudioProfileRepository/RemoveAudioProfile3: Removing audioProfile wih audioProfileId {audioProfileId} if it exists in our audioProfile repository");
+
+                string audioProfileIdStr = audioProfileId.ToString();
+
+                // Remove the AudioProfile from the list.
+                List<AudioProfileItem> previousProfiles = new List<AudioProfileItem>(_allAudioProfiles);
+                int numRemoved = _allAudioProfiles.RemoveAll(item => item.UUID.Equals(audioProfileIdStr));
+
+                if (numRemoved == 1)
+                {
+                    if (!SaveAudioProfiles())
+                    {
+                        _allAudioProfiles = previousProfiles;
+                        return false;
+                    }
+                    UpdateActiveAudioProfile();
+                    return true;
                 }
-                UpdateActiveAudioProfile();
-                return true;
+                else if (numRemoved == 0)
+                    return false;
+                else
+                    throw new AudioProfileRepositoryException();
             }
-            else if (numRemoved == 0)
-                return false;
-            else
-                throw new AudioProfileRepositoryException();
         }
 
 
@@ -530,52 +582,58 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool RenameAudioProfile(AudioProfileItem audioProfile, string renamedName)
         {
-            if (!(audioProfile is AudioProfileItem))
+            lock (_repositoryLock)
             {
-                SharedLogger.logger.Error($"AudioProfileRepository/RenameAudioProfile: AudioProfile to rename was empty or only whitespace");
-                return false;
-            }
-
-
-            SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: Attempting to rename audioProfile {audioProfile.Name} to {renamedName}");
-
-            if (!IsValidFilename(renamedName))
-            {
-                SharedLogger.logger.Error($"AudioProfileRepository/RenameAudioProfile: The name the user wanted to renamed to audioProfile to is not a valid filename");
-                return false;
-            }
-
-            string oldAudioProfileName = audioProfile.Name;
-            audioProfile.Name = GetValidFilename(renamedName);
-
-
-            // If it's been added to the list of AllAudioProfiles
-            // then we also need to reproduce the Icons
-            if (ContainsAudioProfile(audioProfile))
-            {
-                // Save the AudioProfiles JSON as it's different now
-                if (!SaveAudioProfiles())
+                if (!(audioProfile is AudioProfileItem))
                 {
-                    audioProfile.Name = oldAudioProfileName;
+                    SharedLogger.logger.Error($"AudioProfileRepository/RenameAudioProfile: AudioProfile to rename was empty or only whitespace");
                     return false;
                 }
-                SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: The audioProfile was successfully renamed from {oldAudioProfileName} to {renamedName}");
-                return true;
-            }
-            else
-            {
-                SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: The audioProfile was not renamed from {oldAudioProfileName} to {renamedName}");
-                return false;
+
+
+                SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: Attempting to rename audioProfile {audioProfile.Name} to {renamedName}");
+
+                if (!IsValidFilename(renamedName))
+                {
+                    SharedLogger.logger.Error($"AudioProfileRepository/RenameAudioProfile: The name the user wanted to renamed to audioProfile to is not a valid filename");
+                    return false;
+                }
+
+                string oldAudioProfileName = audioProfile.Name;
+                audioProfile.Name = GetValidFilename(renamedName);
+
+
+                // If it's been added to the list of AllAudioProfiles
+                // then we also need to reproduce the Icons
+                if (ContainsAudioProfile(audioProfile))
+                {
+                    // Save the AudioProfiles JSON as it's different now
+                    if (!SaveAudioProfiles())
+                    {
+                        audioProfile.Name = oldAudioProfileName;
+                        return false;
+                    }
+                    SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: The audioProfile was successfully renamed from {oldAudioProfileName} to {renamedName}");
+                    return true;
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"AudioProfileRepository/RenameAudioProfile: The audioProfile was not renamed from {oldAudioProfileName} to {renamedName}");
+                    return false;
+                }
             }
         }
 
         public static bool CopyCurrentLayoutToProfile(AudioProfileItem profile)
         {
-            AudioProfileItem previous = new AudioProfileItem();
-            profile.CopyTo(previous);
-            if (profile.CreateProfileFromCurrentAudioSettings() && SaveAudioProfiles()) return true;
-            previous.CopyTo(profile);
-            return false;
+            lock (_repositoryLock)
+            {
+                AudioProfileItem previous = new AudioProfileItem();
+                profile.CopyTo(previous);
+                if (profile.CreateProfileFromCurrentAudioSettings() && SaveAudioProfiles()) return true;
+                previous.CopyTo(profile);
+                return false;
+            }
         }
 
         public static void UpdateActiveAudioProfile()
@@ -657,322 +715,28 @@ namespace DisplayMagician.UserAgent.Runtime
 
         private static bool LoadAudioProfiles()
         {
-            SharedLogger.logger.Debug($"AudioProfileRepository/LoadAudioProfiles: Loading Audio Profiles from {_audioProfileStorageJsonFullFileName} into the Audio Profile Repository");
-
-            _audioProfilesLoaded = false;
-
-            if (File.Exists(_audioProfileStorageJsonFullFileName))
+            lock (_repositoryLock)
             {
-                string json = "";
-                try
-                {
-                    json = File.ReadAllText(_audioProfileStorageJsonFullFileName, Encoding.Unicode);
-                    if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
-                    {
-                        AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, migratedJson, Encoding.Unicode);
-                        json = migratedJson;
-                        SharedLogger.logger.Info("AudioProfileRepository/LoadAudioProfiles: Migrated legacy DisplayMagicianShared type names in {0}.", _audioProfileStorageJsonFullFileName);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: Tried to read the JSON file {_audioProfileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
-                }
+                SharedLogger.logger.Debug($"AudioProfileRepository/LoadAudioProfiles: Loading Audio Profiles from {_audioProfileStorageJsonFullFileName} into the Audio Profile Repository");
 
-                // Temporarily removing as not needed at present. May need this for future format migrations.
-                // Migrate any previous entries to the latest version of the file format to the latest one
-                //json = MigrateJsonToLatestVersion(json);
+                _audioProfilesLoaded = false;
 
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    List<string> jsonErrors = new List<string>();
-
-                    try
-                    {
-                        JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
-                        {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Include,
-                            DefaultValueHandling = DefaultValueHandling.Populate,
-                            TypeNameHandling = TypeNameHandling.Auto,
-                            SerializationBinder = DisplayMagicianSerializationBinder.Instance,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                            {
-                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                                args.ErrorContext.Handled = true;
-                            },
-                        };
-
-                        AudioProfileFile audioProfileFile = JsonConvert.DeserializeObject<AudioProfileFile>(json, mySerializerSettings);
-
-                        if (audioProfileFile.AudioProfiles == null)
-                        {
-                            throw new Exception("AudioProfileRepository/LoadAudioProfiles: The Audio Profiles file is null.");
-                        }
-
-                        _allAudioProfiles = audioProfileFile.AudioProfiles;
-                    }
-                    catch (JsonReaderException ex)
-                    {
-                        // If there is a error in the JSON format
-                        if (ex.HResult == -2146233088)
-                        {
-                            SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: JSONReaderException - The Audio Profiles file {_audioProfileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: JSONReaderException while trying to process the Audio Profiles json data file {_audioProfileStorageJsonFullFileName} but JsonConvert threw an exception.");
-                        }
-                        MessageBox.Show($"The Audio Profiles file {_audioProfileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                    }
-                    catch (Exception)
-                    {
-                        SharedLogger.logger.Error($"AudioProfileRepository/LoadAudioProfiles: Exception while trying to process the Audio Profiles json data file {_audioProfileStorageJsonFullFileName} but JsonConvert threw an exception.");
-                    }
-
-
-                    // If we have any JSON.net errors, then we need to records them in the logs
-                    if (jsonErrors.Count > 0)
-                    {
-                        foreach (string jsonError in jsonErrors)
-                        {
-                            SharedLogger.logger.Error($"AudioProfileRepository/LoadAudioProfiles: {jsonError}");
-                        }
-                    }
-
-                    // Sort the audioProfiles alphabetically
-                    _allAudioProfiles.Sort();
-
-                }
-                else
-                {
-                    SharedLogger.logger.Debug($"AudioProfileRepository/LoadAudioProfiles: The {_audioProfileStorageJsonFullFileName} Audio Profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
-                }
-            }
-            else
-            {
-                // If we get here, then we don't have any Audio Profiles saved!
-                // So we gotta start from scratch
-                SharedLogger.logger.Debug($"AudioProfileRepository/LoadAudioProfiles: Couldn't find the {_audioProfileStorageJsonFullFileName} Audio Profile JSON file that contains the Audio Profiles. This is likely due to none being saved yet.");
-            }
-            _audioProfilesLoaded = true;
-
-
-            return true;
-        }
-
-        private static void LoadAudioProfilesFromJson(string json)
-        {
-            _allAudioProfiles = new List<AudioProfileItem>();
-            _currentAudioProfile = null;
-
-            if (string.IsNullOrWhiteSpace(json))
-                return;
-
-            try
-            {
-                JsonSerializerSettings serializerSettings = new JsonSerializerSettings
-                {
-                    MissingMemberHandling = MissingMemberHandling.Ignore,
-                    NullValueHandling = NullValueHandling.Ignore,
-                    DefaultValueHandling = DefaultValueHandling.Populate,
-                    TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
-                    ObjectCreationHandling = ObjectCreationHandling.Replace
-                };
-
-                AudioProfileFile profileFile = JsonConvert.DeserializeObject<AudioProfileFile>(json, serializerSettings);
-                if (profileFile.AudioProfiles == null)
-                    throw new InvalidDataException("The User Agent returned audio profiles in an unsupported format.");
-
-                _allAudioProfiles = profileFile.AudioProfiles;
-                _allAudioProfiles.Sort();
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, "AudioProfileRepository/LoadAudioProfilesFromJson: The User Agent returned unreadable audio profile data.");
-                throw new InvalidDataException("The User Agent returned unreadable audio profile data.", ex);
-            }
-        }
-
-        public static bool SaveAudioProfiles()
-        {
-            SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Attempting to save the Audio Profiles repository to the {AppAudioProfileStoragePath}.");
-
-            if (!Directory.Exists(AppAudioProfileStoragePath))
-            {
-                try
-                {
-                    Directory.CreateDirectory(AppAudioProfileStoragePath);
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician doesn't have permissions to create the Audio Profiles storage folder {AppAudioProfileStoragePath}.");
-                }
-                catch (ArgumentException ex)
-                {
-                SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician can't create the Audio Profiles storage folder {AppAudioProfileStoragePath} due to an invalid argument.");
-                }
-                catch (PathTooLongException ex)
-                {
-                    SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician can't create the AudioProfiles storage folder {AppAudioProfileStoragePath} as the path is too long.");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician can't create the Audio Profiles storage folder {AppAudioProfileStoragePath} as the parent folder isn't there.");
-                }
-            }
-            else
-            {
-                SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Audio Profiles folder {AppAudioProfileStoragePath} exists.");
-            }
-
-            // Sort the _allAudioProfile so that the display audioProfiles are in name order in the saved file
-            _allAudioProfiles.Sort();
-
-            List<string> jsonErrors = new List<string>();
-            List<AudioProfileRepositoryException> errors = new List<AudioProfileRepositoryException>();
-
-            try
-            {
-                SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Converting the objects to JSON format.");
-
-                JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Include,
-                    TypeNameHandling = TypeNameHandling.Auto,
-                    SerializationBinder = DisplayMagicianSerializationBinder.Instance,
-                    MissingMemberHandling = MissingMemberHandling.Error,
-                    ObjectCreationHandling = ObjectCreationHandling.Replace,
-                    Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                    {
-                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                        //errors.Add(new AudioProfileRepositoryException(String.Format("Parse error: {0}", args.ErrorContext.Error.Message), args.ErrorContext.Error));
-                        args.ErrorContext.Handled = true;
-                    },
-                };
-
-                AudioProfileFile audioProfileFile = new AudioProfileFile
-                {
-                    AudioProfileFileVersion = _audioProfileFileVersion,
-                    LastUpdated = DateTime.Now,
-                    AudioProfiles = _allAudioProfiles
-                };
-
-                var json = JsonConvert.SerializeObject(audioProfileFile, Formatting.Indented, mySerializerSettings);
-
-                // If we have any JSON.net errors, then we need to record them in the logs
-                if (jsonErrors.Count > 0)
-                {
-                    foreach (string jsonError in jsonErrors)
-                    {
-                        SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: {jsonError}");
-                    }
-
-                    SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: JSON data: {json}");
-                }
-
-
-                if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
-                {
-                    RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
-                    {
-                        Repository = RepositoryKind.AudioProfiles,
-                        ExpectedRevision = _userAgentRepositoryRevision,
-                        Json = json
-                    });
-
-                    if (commitResult.Snapshot == null)
-                    {
-                        SharedLogger.logger.Error("AudioProfileRepository/SaveAudioProfiles: The User Agent did not return an audio-profile snapshot after the commit.");
-                        return false;
-                    }
-
-                    _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
-                    if (commitResult.WasConflict)
-                    {
-                        LoadAudioProfilesFromJson(commitResult.Snapshot.Json);
-                        _audioProfilesLoaded = true;
-                        SharedLogger.logger.Warn("AudioProfileRepository/SaveAudioProfiles: The audio-profile cache was stale. Reloaded the User Agent version instead of overwriting it.");
-                        return false;
-                    }
-
-                    SharedLogger.logger.Debug("AudioProfileRepository/SaveAudioProfiles: Committed the audio-profile cache through the User Agent.");
-                    return true;
-                }
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Saving the audioProfile repository to the {_audioProfileStorageJsonFullFileName}.");
-
-                    AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
-                    if (ValidateAudioProfiles())
-                    {
-                        SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Validated that we successfully saved the Audio Profiles repository to {_audioProfileStorageJsonFullFileName}.");
-                        return true;
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: Validatation of saving the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} failed. The Audio Profiles repository was unable to be saved the first time. Attempting to save again.");
-
-                        // Waiting a second to let any transient issue pass.
-                        Thread.Sleep(1000);
-
-                        SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Saving the Audio Profiles repository to the {_audioProfileStorageJsonFullFileName} for a second time.");
-
-                        AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
-
-                        if (ValidateAudioProfiles())
-                        {
-                            SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Validated that we successfully saved the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} on the second try.");
-                            return true;
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: Validatation of saving the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} a second time failed. The Audio Profiles repository was unable to be saved twice. There is an underlying issue here.");
-                            return false;
-                        }
-                    }
-
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: Problem saving the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} as the JSON file contents are null or whitespace.");
-                    SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: JSON data: {json}");
-                    return false;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, $"AudioProfileRepository/SaveAudioProfiles: Unable to save the Audio Profiles repository to the {_audioProfileStorageJsonFullFileName}.");
-                SharedLogger.logger.Error(ex, $"AudioProfileRepository/SaveAudioProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException?.Source}:{ex.InnerException?.StackTrace} - {ex.InnerException?.Message}\"");
-                return false;
-            }
-        }
-
-
-        private static bool ValidateAudioProfiles()
-        {
-            SharedLogger.logger.Debug($"AudioProfileRepository/ValidateAudioProfiles: Loading Audio Profiles from {_audioProfileStorageJsonFullFileName} to compare the Audio Profiles repository");
-
-            try
-            {
                 if (File.Exists(_audioProfileStorageJsonFullFileName))
                 {
-                    List<AudioProfileItem> audioProfilesToValidate = new List<AudioProfileItem>(); ;
-
                     string json = "";
                     try
                     {
                         json = File.ReadAllText(_audioProfileStorageJsonFullFileName, Encoding.Unicode);
+                        if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
+                        {
+                            AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, migratedJson, Encoding.Unicode);
+                            json = migratedJson;
+                            SharedLogger.logger.Info("AudioProfileRepository/LoadAudioProfiles: Migrated legacy DisplayMagicianShared type names in {0}.", _audioProfileStorageJsonFullFileName);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"AudioProfileRepository/ValidateAudioProfiles: Tried to read the JSON file {_audioProfileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
+                        SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: Tried to read the JSON file {_audioProfileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
                     }
 
                     // Temporarily removing as not needed at present. May need this for future format migrations.
@@ -1000,89 +764,276 @@ namespace DisplayMagician.UserAgent.Runtime
                                 },
                             };
 
-                            AudioProfileFile audioProfilesFile = JsonConvert.DeserializeObject<AudioProfileFile>(json, mySerializerSettings);
-                            audioProfilesToValidate = audioProfilesFile.AudioProfiles;                        
+                            AudioProfileFile audioProfileFile = JsonConvert.DeserializeObject<AudioProfileFile>(json, mySerializerSettings);
 
+                            if (audioProfileFile.AudioProfiles == null)
+                            {
+                                throw new Exception("AudioProfileRepository/LoadAudioProfiles: The Audio Profiles file is null.");
+                            }
+
+                            _allAudioProfiles = audioProfileFile.AudioProfiles;
                         }
                         catch (JsonReaderException ex)
                         {
                             // If there is a error in the JSON format
                             if (ex.HResult == -2146233088)
                             {
-                                SharedLogger.logger.Error(ex, $"AudioProfileRepository/ValidateAudioProfiles: JSONReaderException - The Display AudioProfiles file {_audioProfileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
+                                SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: JSONReaderException - The Audio Profiles file {_audioProfileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.");
                             }
                             else
                             {
-                                SharedLogger.logger.Error(ex, $"AudioProfileRepository/ValidateAudioProfiles: JSONReaderException while trying to process the AudioProfiles json data file {_audioProfileStorageJsonFullFileName} but JsonConvert threw an exception.");
+                                SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: JSONReaderException while trying to process the Audio Profiles json data file {_audioProfileStorageJsonFullFileName} but JsonConvert threw an exception.");
                             }
-                            return false;
+                            MessageBox.Show($"The Audio Profiles file {_audioProfileStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            SharedLogger.logger.Error(ex, $"AudioProfileRepository/ValidateAudioProfiles: Tried to parse the JSON in the {_audioProfileStorageJsonFullFileName} but the JsonConvert threw an exception.");
-                            return false;
+                            SharedLogger.logger.Error($"AudioProfileRepository/LoadAudioProfiles: Exception while trying to process the Audio Profiles json data file {_audioProfileStorageJsonFullFileName} but JsonConvert threw an exception.");
                         }
+
 
                         // If we have any JSON.net errors, then we need to records them in the logs
                         if (jsonErrors.Count > 0)
                         {
                             foreach (string jsonError in jsonErrors)
                             {
-                                SharedLogger.logger.Error($"AudioProfileRepository/ValidateAudioProfiles: {jsonError}");
+                                SharedLogger.logger.Error($"AudioProfileRepository/LoadAudioProfiles: {jsonError}");
                             }
                         }
 
-                        // Sort the audioProfiles alphabetically so they match the loaded audioProfiles
-                        audioProfilesToValidate.Sort();
-
-                        // Actually perform the validation
-                        if (audioProfilesToValidate.SequenceEqual(_allAudioProfiles))
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
+                        // Sort the audioProfiles alphabetically
+                        _allAudioProfiles.Sort();
 
                     }
                     else
                     {
-                        if (_audioProfilesLoaded && _allAudioProfiles.Count > 0)
-                        {
-                            // We don't have a audioProfile repository file, yet we have some audioProfiles. This means the file and audioProfiles don't match. Return false.
-                            SharedLogger.logger.Debug($"AudioProfileRepository/ValidateAudioProfiles: The {_audioProfileStorageJsonFullFileName} audioProfile JSON file exists but is empty! We don't have a audioProfile repository file, yet we have some display audioProfiles. This means the file and audioProfiles don't match.");
-                            return false;
-                        }
-                        else
-                        {
-                            // We don't have a audioProfile repository file, and we don't have any audioProfiles. This means the file and audioProfiles match. Return true.
-                            SharedLogger.logger.Debug($"AudioProfileRepository/ValidateAudioProfiles: The {_audioProfileStorageJsonFullFileName} audioProfile JSON file exists but is empty! We also don't have any display audioProfiles, so that matches. This is expected.");
-                            return true;
-                        }
+                        SharedLogger.logger.Debug($"AudioProfileRepository/LoadAudioProfiles: The {_audioProfileStorageJsonFullFileName} Audio Profile JSON file exists but is empty! So we're going to treat it as if it didn't exist.");
                     }
                 }
                 else
                 {
-                    if (_audioProfilesLoaded && _allAudioProfiles.Count > 0)
+                    // If we get here, then we don't have any Audio Profiles saved!
+                    // So we gotta start from scratch
+                    SharedLogger.logger.Debug($"AudioProfileRepository/LoadAudioProfiles: Couldn't find the {_audioProfileStorageJsonFullFileName} Audio Profile JSON file that contains the Audio Profiles. This is likely due to none being saved yet.");
+                }
+                _audioProfilesLoaded = true;
+
+
+                return true;
+            }
+        }
+
+        private static void LoadAudioProfilesFromJson(string json)
+        {
+            lock (_repositoryLock)
+            {
+                _allAudioProfiles = new List<AudioProfileItem>();
+                _currentAudioProfile = null;
+
+                if (string.IsNullOrWhiteSpace(json))
+                    return;
+
+                try
+                {
+                    JsonSerializerSettings serializerSettings = new JsonSerializerSettings
                     {
-                        // We don't have a audioProfile repository file, yet we have some audioProfiles. This means the file and audioProfiles don't match. Return false.
-                        SharedLogger.logger.Debug($"AudioProfileRepository/ValidateAudioProfiles: Couldn't find the {_audioProfileStorageJsonFullFileName} audioProfile JSON file that contains the AudioProfiles. We don't have a audioProfile repository file, yet we have some display audioProfiles. This means the file and audioProfiles don't match.");
+                        MissingMemberHandling = MissingMemberHandling.Ignore,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        DefaultValueHandling = DefaultValueHandling.Populate,
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                        ObjectCreationHandling = ObjectCreationHandling.Replace
+                    };
+
+                    AudioProfileFile profileFile = JsonConvert.DeserializeObject<AudioProfileFile>(json, serializerSettings);
+                    if (profileFile.AudioProfiles == null)
+                        throw new InvalidDataException("The User Agent returned audio profiles in an unsupported format.");
+
+                    _allAudioProfiles = profileFile.AudioProfiles;
+                    _allAudioProfiles.Sort();
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Error(ex, "AudioProfileRepository/LoadAudioProfilesFromJson: The User Agent returned unreadable audio profile data.");
+                    throw new InvalidDataException("The User Agent returned unreadable audio profile data.", ex);
+                }
+            }
+        }
+
+        public static bool SaveAudioProfiles()
+        {
+            lock (_repositoryLock)
+            {
+                SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Attempting to save the Audio Profiles repository to the {AppAudioProfileStoragePath}.");
+
+                if (!Directory.Exists(AppAudioProfileStoragePath))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(AppAudioProfileStoragePath);
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician doesn't have permissions to create the Audio Profiles storage folder {AppAudioProfileStoragePath}.");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                    SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician can't create the Audio Profiles storage folder {AppAudioProfileStoragePath} due to an invalid argument.");
+                    }
+                    catch (PathTooLongException ex)
+                    {
+                        SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician can't create the AudioProfiles storage folder {AppAudioProfileStoragePath} as the path is too long.");
+                    }
+                    catch (DirectoryNotFoundException ex)
+                    {
+                        SharedLogger.logger.Fatal(ex, $"AudioProfileRepository/SaveAudioProfiles: DisplayMagician can't create the Audio Profiles storage folder {AppAudioProfileStoragePath} as the parent folder isn't there.");
+                    }
+                }
+                else
+                {
+                    SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Audio Profiles folder {AppAudioProfileStoragePath} exists.");
+                }
+
+                // Sort the _allAudioProfile so that the display audioProfiles are in name order in the saved file
+                _allAudioProfiles.Sort();
+
+                List<string> jsonErrors = new List<string>();
+                List<AudioProfileRepositoryException> errors = new List<AudioProfileRepositoryException>();
+
+                try
+                {
+                    SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Converting the objects to JSON format.");
+
+                    JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Include,
+                        DefaultValueHandling = DefaultValueHandling.Include,
+                        TypeNameHandling = TypeNameHandling.Auto,
+                        SerializationBinder = DisplayMagicianSerializationBinder.Instance,
+                        MissingMemberHandling = MissingMemberHandling.Error,
+                        ObjectCreationHandling = ObjectCreationHandling.Replace,
+                        Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        {
+                            jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
+                            //errors.Add(new AudioProfileRepositoryException(String.Format("Parse error: {0}", args.ErrorContext.Error.Message), args.ErrorContext.Error));
+                            args.ErrorContext.Handled = true;
+                        },
+                    };
+
+                    AudioProfileFile audioProfileFile = new AudioProfileFile
+                    {
+                        AudioProfileFileVersion = _audioProfileFileVersion,
+                        LastUpdated = DateTime.Now,
+                        AudioProfiles = _allAudioProfiles
+                    };
+
+                    var json = JsonConvert.SerializeObject(audioProfileFile, Formatting.Indented, mySerializerSettings);
+
+                    // If we have any JSON.net errors, then we need to record them in the logs
+                    if (jsonErrors.Count > 0)
+                    {
+                        foreach (string jsonError in jsonErrors)
+                        {
+                            SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: {jsonError}");
+                        }
+
+                        SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: JSON data: {json}");
                         return false;
+                    }
+
+
+                    if (!string.IsNullOrWhiteSpace(json) && _userAgentRepositoryConnection != null)
+                    {
+                        RepositoryCommitResult commitResult = _userAgentRepositoryConnection.CommitRepositorySnapshot(new RepositoryCommitRequest
+                        {
+                            Repository = RepositoryKind.AudioProfiles,
+                            ExpectedRevision = _userAgentRepositoryRevision,
+                            Json = json
+                        });
+
+                        if (commitResult.Snapshot == null)
+                        {
+                            SharedLogger.logger.Error("AudioProfileRepository/SaveAudioProfiles: The User Agent did not return an audio-profile snapshot after the commit.");
+                            return false;
+                        }
+
+                        _userAgentRepositoryRevision = commitResult.Snapshot.Revision;
+                        if (commitResult.WasConflict)
+                        {
+                            LoadAudioProfilesFromJson(commitResult.Snapshot.Json);
+                            _audioProfilesLoaded = true;
+                            SharedLogger.logger.Warn("AudioProfileRepository/SaveAudioProfiles: The audio-profile cache was stale. Reloaded the User Agent version instead of overwriting it.");
+                            return false;
+                        }
+
+                        SharedLogger.logger.Debug("AudioProfileRepository/SaveAudioProfiles: Committed the audio-profile cache through the User Agent.");
+                        return true;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(json))
+                    {
+                        SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Saving the audioProfile repository to the {_audioProfileStorageJsonFullFileName}.");
+
+                        AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
+                        if (ValidateAudioProfiles(json))
+                        {
+                            SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Validated that we successfully saved the Audio Profiles repository to {_audioProfileStorageJsonFullFileName}.");
+                            return true;
+                        }
+                        else
+                        {
+                            SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: Validatation of saving the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} failed. The Audio Profiles repository was unable to be saved the first time. Attempting to save again.");
+
+                            // Waiting a second to let any transient issue pass.
+                            Thread.Sleep(1000);
+
+                            SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Saving the Audio Profiles repository to the {_audioProfileStorageJsonFullFileName} for a second time.");
+
+                            AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, json, Encoding.Unicode);
+
+                            if (ValidateAudioProfiles(json))
+                            {
+                                SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Validated that we successfully saved the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} on the second try.");
+                                return true;
+                            }
+                            else
+                            {
+                                SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: Validatation of saving the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} a second time failed. The Audio Profiles repository was unable to be saved twice. There is an underlying issue here.");
+                                return false;
+                            }
+                        }
+
                     }
                     else
                     {
-                        // We don't have a audioProfile repository file, and we don't have any audioProfiles. This means the file and audioProfiles match. Return true.
-                        SharedLogger.logger.Debug($"AudioProfileRepository/ValidateAudioProfiles: Couldn't find the {_audioProfileStorageJsonFullFileName} audioProfile JSON file that contains the AudioProfiles. We also don't have any display audioProfiles, so that matches. This is expected.");
-                        return true;
+                        SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: Problem saving the Audio Profiles repository to {_audioProfileStorageJsonFullFileName} as the JSON file contents are null or whitespace.");
+                        SharedLogger.logger.Error($"AudioProfileRepository/SaveAudioProfiles: JSON data: {json}");
+                        return false;
                     }
+
+                }
+                catch (Exception ex)
+                {
+                    SharedLogger.logger.Error(ex, $"AudioProfileRepository/SaveAudioProfiles: Unable to save the Audio Profiles repository to the {_audioProfileStorageJsonFullFileName}.");
+                    SharedLogger.logger.Error(ex, $"AudioProfileRepository/SaveAudioProfiles: JSON.net Error: {ex.Source}:{ex.StackTrace} - {ex.Message} | InnerException:{ex.InnerException?.Source}:{ex.InnerException?.StackTrace} - {ex.InnerException?.Message}\"");
+                    return false;
                 }
             }
-            catch (Exception ex)
+        }
+
+
+        private static bool ValidateAudioProfiles(string expectedJson)
+        {
+            try
             {
-                SharedLogger.logger.Error(ex, $"AudioProfileRepository/ValidateAudioProfiles: Exception within ValidateAudioProfiles function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                return string.Equals(File.ReadAllText(_audioProfileStorageJsonFullFileName, Encoding.Unicode), expectedJson, StringComparison.Ordinal);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                SharedLogger.logger.Warn(ex, "AudioProfileRepository/ValidateAudioProfiles: Could not verify the saved repository at {0}.", _audioProfileStorageJsonFullFileName);
                 return false;
-            }            
+            }
         }
 
         public static bool IsValidFilename(string testName)
