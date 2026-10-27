@@ -16,7 +16,12 @@ namespace DisplayMagician.UIForms
     {
         protected override bool FitToWorkingAreaAfterDpiChange => true;
 
-        private readonly ControlServicePipeClient _controlServiceClient = new ControlServicePipeClient();
+        private readonly ControlServicePipeClient _controlServiceClient;
+        private readonly Action<string, string> _showError;
+        private readonly CancellationToken _lifetimeToken;
+        private int _profileRefreshVersion;
+        private bool _commandInProgress;
+        private bool _lifetimeDisposed;
         private readonly ProfileAdaptor _profileAdaptor = new ProfileAdaptor();
         private readonly CancellationTokenSource _initialLoadCancellationTokenSource = new CancellationTokenSource();
         private DisplayProfileView _selectedProfile;
@@ -24,9 +29,22 @@ namespace DisplayMagician.UIForms
         private bool _initialLoadStarted;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public DisplayProfileForm()
+        public DisplayProfileForm() : this(new ControlServicePipeClient()) { }
+
+        internal DisplayProfileForm(ControlServicePipeClient client, Action<string, string> showError = null)
         {
+            _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
+            _showError = showError ?? ((message, title) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error));
+            _lifetimeToken = _initialLoadCancellationTokenSource.Token;
             InitializeComponent();
+            Disposed += (_, _) =>
+            {
+                if (_lifetimeDisposed) return;
+                _lifetimeDisposed = true;
+                _initialLoadCancellationTokenSource.Cancel();
+                _initialLoadCancellationTokenSource.Dispose();
+                pb_profile_layout.Image?.Dispose();
+            };
             DoubleBuffered = true;
             AcceptButton = btn_save_or_rename;
             ilv_saved_profiles.MultiSelect = false;
@@ -37,8 +55,8 @@ namespace DisplayMagician.UIForms
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            _initialLoadCancellationTokenSource.Cancel();
             base.OnFormClosing(e);
+            if (!e.Cancel && !_lifetimeDisposed) _initialLoadCancellationTokenSource.Cancel();
         }
 
         protected override void OnShown(EventArgs e)
@@ -47,7 +65,7 @@ namespace DisplayMagician.UIForms
             if (!_initialLoadStarted)
             {
                 _initialLoadStarted = true;
-                _ = InitialiseDisplayProfileAsync(_initialLoadCancellationTokenSource.Token);
+                _ = InitialiseDisplayProfileAsync(_lifetimeToken);
             }
         }
 
@@ -64,7 +82,7 @@ namespace DisplayMagician.UIForms
             try
             {
                 await RefreshProfilesAsync(null, cancellationToken);
-                if (Utils.TimeToRunDonationAnimation()) Utils.AddAnimation(btn_donate);
+                if (!IsDisposed && !_lifetimeToken.IsCancellationRequested && Utils.TimeToRunDonationAnimation()) Utils.AddAnimation(btn_donate);
             }
             catch (OperationCanceledException)
             {
@@ -73,18 +91,21 @@ namespace DisplayMagician.UIForms
             catch (Exception ex)
             {
                 logger.Error(ex, "DisplayProfileForm/InitialiseDisplayProfileAsync: Failed to load the current display configuration.");
-                MessageBox.Show(this, "DisplayMagician could not read the current display configuration. You can close this window and try again.", "Display Profile Window Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!IsDisposed && !_lifetimeToken.IsCancellationRequested) _showError("DisplayMagician could not read the current display configuration. You can close this window and try again.", "Display Profile Window Load Error");
             }
-            finally { if (!IsDisposed && IsHandleCreated) SetProfileActionsEnabled(true); }
+            finally { if (!IsDisposed && !_lifetimeToken.IsCancellationRequested && IsHandleCreated) SetProfileActionsEnabled(true); }
         }
 
         private async Task RefreshProfilesAsync(string selectedProfileId, CancellationToken cancellationToken, bool showCurrentLayout = false)
         {
+            if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+            int refreshVersion = ++_profileRefreshVersion;
             DisplayMagician.Contracts.ProfileListResult profiles = await _controlServiceClient.ListProfilesAsync(cancellationToken,
                 detailedProfileId: selectedProfileId, includeActiveProfileDetail: !showCurrentLayout && string.IsNullOrWhiteSpace(selectedProfileId),
                 includeCurrentLayoutDetail: showCurrentLayout);
+            if (IsDisposed || Disposing || _lifetimeToken.IsCancellationRequested || refreshVersion != _profileRefreshVersion) return;
             _currentLayout = profiles.CurrentLayout;
-            DisplayProfileView selected = !string.IsNullOrWhiteSpace(selectedProfileId)
+            DisplayProfileView selected = showCurrentLayout ? _currentLayout : !string.IsNullOrWhiteSpace(selectedProfileId)
                 ? profiles.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase))
                 : profiles.SavedProfiles.FirstOrDefault(profile => profile.IsActive);
             ChangeSelectedProfile(selected ?? _currentLayout ?? profiles.SavedProfiles.FirstOrDefault());
@@ -100,8 +121,20 @@ namespace DisplayMagician.UIForms
 
         private void ChangeSelectedProfile(DisplayProfileView profile)
         {
-            if (profile == null) return;
             _selectedProfile = profile;
+            if (profile == null)
+            {
+                lbl_profile_shown.Text = "No display profile is available.";
+                txt_profile_save_name.Clear();
+                RenderProfileThumbnail(null);
+                p_profile_advisory.Visible = false;
+                lbl_profile_shown_subtitle.Visible = false;
+                lbl_hotkey_assigned.Visible = false;
+                btn_apply.Visible = false;
+                btn_update.Visible = false;
+                SetProfileActionsEnabled(true);
+                return;
+            }
             lbl_profile_shown.Text = profile.Name;
             txt_profile_save_name.Text = profile.Name;
             RenderProfileThumbnail(profile.DetailedLayoutPngBase64 ?? profile.ThumbnailPngBase64);
@@ -126,6 +159,7 @@ namespace DisplayMagician.UIForms
             lbl_profile_shown_subtitle.Visible = !saved || profile.IsActive || !profile.IsValid;
             lbl_profile_shown_subtitle.Text = !saved ? "The current Display configuration has not been saved as a Display Profile yet." : !profile.IsValid ? "This Display Profile contains errors." : profile.IsActive ? "This is the Display Profile currently in use." : string.Empty;
             UpdateHotkeyText();
+            SetProfileActionsEnabled(true);
         }
 
         private void RenderProfileThumbnail(string thumbnailPngBase64)
@@ -140,72 +174,120 @@ namespace DisplayMagician.UIForms
 
         private void SetProfileActionsEnabled(bool enabled)
         {
+            enabled = enabled && !_commandInProgress;
+            bool saved = _selectedProfile?.IsSaved == true;
             ilv_saved_profiles.Enabled = enabled;
             btn_view_current.Enabled = enabled;
-            btn_save_or_rename.Enabled = enabled;
-            btn_update.Enabled = enabled;
-            btn_delete.Enabled = enabled;
-            btn_apply.Enabled = enabled && btn_apply.Visible;
-            btn_save.Enabled = enabled;
-            btn_hotkey.Enabled = enabled;
-            btn_profile_settings.Enabled = enabled;
-            applyToolStripMenuItem.Enabled = enabled && btn_apply.Visible;
+            btn_save_or_rename.Enabled = enabled && _selectedProfile != null;
+            btn_update.Enabled = enabled && saved;
+            btn_delete.Enabled = enabled && saved;
+            btn_apply.Enabled = enabled && saved && _selectedProfile.IsValid && !_selectedProfile.IsActive;
+            btn_save.Enabled = enabled && saved;
+            btn_hotkey.Enabled = enabled && saved;
+            btn_profile_settings.Enabled = enabled && saved;
+            applyToolStripMenuItem.Enabled = btn_apply.Enabled;
+        }
+
+        private async Task RunProfileActionAsync(Func<Task> action)
+        {
+            if (_commandInProgress || IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+            _commandInProgress = true;
+            SetProfileActionsEnabled(false);
+            try { await action(); }
+            catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested) { /* The form closed while waiting. */ }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "DisplayProfileForm/RunProfileActionAsync: Could not complete the requested profile action.");
+                if (!IsDisposed && !_lifetimeToken.IsCancellationRequested) _showError("DisplayMagician could not complete the profile action through the Control Service. Please try again.", "Display Profile");
+            }
+            finally
+            {
+                _commandInProgress = false;
+                if (!IsDisposed && !_lifetimeToken.IsCancellationRequested) SetProfileActionsEnabled(true);
+            }
         }
 
         private async void Apply_Click(object sender, EventArgs e)
         {
-            if (_selectedProfile?.IsSaved != true || !_selectedProfile.IsValid) return;
-            ControlResponse response = await _controlServiceClient.ApplyProfileWhenAgentAvailableAsync(_selectedProfile.Id, CancellationToken.None);
-            if (!response.IsSuccessful) MessageBox.Show(this, response.Message, "Apply Profile", MessageBoxButtons.OK, MessageBoxIcon.Error); else await RefreshProfilesAsync(_selectedProfile.Id, CancellationToken.None);
+            await RunProfileActionAsync(async () =>
+            {
+                DisplayProfileView selected = _selectedProfile;
+                if (selected?.IsSaved != true || !selected.IsValid) return;
+                ControlResponse response = await _controlServiceClient.ApplyProfileWhenAgentAvailableAsync(selected.Id, _lifetimeToken);
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                if (!response.IsSuccessful) _showError(response.Message, "Apply Profile"); else await RefreshProfilesAsync(selected.Id, _lifetimeToken);
+            });
         }
 
         private async void btn_save_as_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txt_profile_save_name.Text) || !Program.IsValidFilename(txt_profile_save_name.Text)) { MessageBox.Show(this, "Please provide a valid display profile name.", "Invalid Display Profile Name", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
-            ControlResponse response = _selectedProfile?.IsSaved == true
-                ? await _controlServiceClient.RenameProfileAsync(_selectedProfile.Id, txt_profile_save_name.Text, CancellationToken.None)
-                : await _controlServiceClient.CreateProfileFromCurrentAsync(txt_profile_save_name.Text, CancellationToken.None);
-            if (!response.IsSuccessful) { MessageBox.Show(this, response.Message, "Save Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
-            await RefreshProfilesAsync(_selectedProfile?.IsSaved == true ? _selectedProfile.Id : null, CancellationToken.None);
-            RefreshInstalledProfileContextMenu();
+            await RunProfileActionAsync(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(txt_profile_save_name.Text) || !Program.IsValidFilename(txt_profile_save_name.Text)) { MessageBox.Show(this, "Please provide a valid display profile name.", "Invalid Display Profile Name", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
+                DisplayProfileView selected = _selectedProfile;
+                string profileName = txt_profile_save_name.Text;
+                ControlResponse response = selected?.IsSaved == true
+                    ? await _controlServiceClient.RenameProfileAsync(selected.Id, profileName, _lifetimeToken)
+                    : await _controlServiceClient.CreateProfileFromCurrentAsync(profileName, _lifetimeToken);
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                if (!response.IsSuccessful) { _showError(response.Message, "Save Display Profile"); return; }
+                await RefreshProfilesAsync(selected?.IsSaved == true ? selected.Id : null, _lifetimeToken);
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                RefreshInstalledProfileContextMenu();
+            });
         }
 
         private async void Delete_Click(object sender, EventArgs e)
         {
-            if (_selectedProfile?.IsSaved != true || MessageBox.Show(this, $"Are you sure you want to delete the '{_selectedProfile.Name}' Display Profile? This cannot be undone.", "Delete Display Profile", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
-            string deletedProfileId = _selectedProfile.Id;
-            ControlResponse response = await _controlServiceClient.DeleteProfileAsync(deletedProfileId, CancellationToken.None);
-            if (!response.IsSuccessful) { MessageBox.Show(this, response.Message, "Delete Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
-            bool iconCleanupFailed = false;
-            if (Guid.TryParse(deletedProfileId, out _))
+            await RunProfileActionAsync(async () =>
             {
-                string iconPath = Path.Combine(Program.AppIconPath, "ProfileCache", $"{deletedProfileId}.ico");
-                try
+                if (_selectedProfile?.IsSaved != true || MessageBox.Show(this, $"Are you sure you want to delete the '{_selectedProfile.Name}' Display Profile? This cannot be undone.", "Delete Display Profile", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+                string deletedProfileId = _selectedProfile.Id;
+                ControlResponse response = await _controlServiceClient.DeleteProfileAsync(deletedProfileId, _lifetimeToken);
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                if (!response.IsSuccessful) { _showError(response.Message, "Delete Display Profile"); return; }
+                bool iconCleanupFailed = false;
+                if (Guid.TryParse(deletedProfileId, out _))
                 {
-                    // The desktop shortcut icon is created by this client, not the User Agent.
-                    // Missing files are expected when the profile was never saved to the desktop.
-                    File.Delete(iconPath);
+                    string iconPath = Path.Combine(Program.AppIconPath, "ProfileCache", $"{deletedProfileId}.ico");
+                    try
+                    {
+                        // The desktop shortcut icon is created by this client, not the User Agent.
+                        // Missing files are expected when the profile was never saved to the desktop.
+                        File.Delete(iconPath);
+                    }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+                    {
+                        iconCleanupFailed = true;
+                        logger.Warn(ex, "DisplayProfileForm/Delete_Click: Deleted profile {0}, but could not remove its desktop shortcut icon at {1}.", deletedProfileId, iconPath);
+                    }
                 }
-                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
+                else
                 {
                     iconCleanupFailed = true;
-                    logger.Warn(ex, "DisplayProfileForm/Delete_Click: Deleted profile {0}, but could not remove its desktop shortcut icon at {1}.", deletedProfileId, iconPath);
+                    logger.Warn("DisplayProfileForm/Delete_Click: Deleted profile {0}, but its ID was not valid for desktop shortcut icon cleanup.", deletedProfileId);
                 }
-            }
-            else
-            {
-                iconCleanupFailed = true;
-                logger.Warn("DisplayProfileForm/Delete_Click: Deleted profile {0}, but its ID was not valid for desktop shortcut icon cleanup.", deletedProfileId);
-            }
-            Program.AppDirectInputManager.RemoveHotkeysByUUID(deletedProfileId);
-            await RefreshProfilesAsync(null, CancellationToken.None);
-            RefreshInstalledProfileContextMenu();
-            if (iconCleanupFailed)
-                MessageBox.Show(this, "The display profile was deleted, but its cached desktop shortcut icon could not be removed.", "Display Profile Deleted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Program.AppDirectInputManager.RemoveHotkeysByUUID(deletedProfileId);
+                await RefreshProfilesAsync(null, _lifetimeToken);
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                RefreshInstalledProfileContextMenu();
+                if (iconCleanupFailed)
+                    MessageBox.Show(this, "The display profile was deleted, but its cached desktop shortcut icon could not be removed.", "Display Profile Deleted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            });
         }
 
-        private async void btn_view_current_Click(object sender, EventArgs e) { await RefreshProfilesAsync(null, CancellationToken.None, showCurrentLayout: true); ChangeSelectedProfile(_currentLayout); }
-        public void RefreshCurrentView() => btn_view_current.PerformClick();
+        private async void btn_view_current_Click(object sender, EventArgs e) { await RunProfileActionAsync(() => RefreshProfilesAsync(null, _lifetimeToken, showCurrentLayout: true)); }
+        public void RefreshCurrentView()
+        {
+            if (IsDisposed || _lifetimeToken.IsCancellationRequested || !IsHandleCreated) return;
+            if (InvokeRequired)
+            {
+                try { BeginInvoke((MethodInvoker)RefreshCurrentView); }
+                catch (InvalidOperationException) { /* The window closed before the refresh could be queued. */ }
+                return;
+            }
+            _ = RunProfileActionAsync(() => RefreshProfilesAsync(null, _lifetimeToken, showCurrentLayout: true));
+        }
 
         private void RefreshInstalledProfileContextMenu()
         {
@@ -217,57 +299,71 @@ namespace DisplayMagician.UIForms
 
         private async void ilv_saved_profiles_ItemClick(object sender, ItemClickEventArgs e)
         {
+            if (_commandInProgress || IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+            int refreshVersion = _profileRefreshVersion + 1;
             if (e.Item.VirtualItemKey is DisplayProfileView profile)
             {
                 try
                 {
-                    await RefreshProfilesAsync(profile.Id, CancellationToken.None);
+                    await RefreshProfilesAsync(profile.Id, _lifetimeToken);
                 }
                 catch (Exception ex)
                 {
                     logger.Warn(ex, "DisplayProfileForm/ilv_saved_profiles_ItemClick: Could not load the detailed preview for profile '{0}'.", profile.Name);
-                    ChangeSelectedProfile(profile);
+                    if (!IsDisposed && !_lifetimeToken.IsCancellationRequested && refreshVersion == _profileRefreshVersion)
+                        _showError("DisplayMagician could not load the selected display profile. Please try again.", "Display Profile");
                 }
             }
+            if (IsDisposed || _lifetimeToken.IsCancellationRequested || refreshVersion != _profileRefreshVersion) return;
             if (e.Buttons == MouseButtons.Right) cms_profiles.Show(ilv_saved_profiles, e.Location);
         }
 
-        private void ilv_saved_profiles_ItemDoubleClick(object sender, ItemClickEventArgs e) { if (e.Item.VirtualItemKey is DisplayProfileView profile) { ChangeSelectedProfile(profile); btn_apply.PerformClick(); } }
+        private void ilv_saved_profiles_ItemDoubleClick(object sender, ItemClickEventArgs e) { if (!_commandInProgress && e.Item.VirtualItemKey is DisplayProfileView profile) { ++_profileRefreshVersion; ChangeSelectedProfile(profile); btn_apply.PerformClick(); } }
         private void ilv_saved_profiles_ItemHover(object sender, ItemHoverEventArgs e) { if (e.Item != null) tt_selected.SetToolTip(ilv_saved_profiles, e.Item.Text); else tt_selected.RemoveAll(); }
         private void txt_profile_save_name_KeyDown(object sender, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) btn_save_or_rename.PerformClick(); }
 
         private async void btn_update_Click(object sender, EventArgs e)
         {
-            if (_selectedProfile?.IsSaved != true || MessageBox.Show(this, $"Do you really want to overwrite the display settings in the '{_selectedProfile.Name}' Display Profile with the display settings currently in use? This cannot be undone.", "Update Display Profile settings?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
-            ControlResponse response = await _controlServiceClient.UpdateProfileFromCurrentAsync(_selectedProfile.Id, CancellationToken.None);
-            if (!response.IsSuccessful) { MessageBox.Show(this, response.Message, "Update Display Profile", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
-            await RefreshProfilesAsync(_selectedProfile.Id, CancellationToken.None);
+            await RunProfileActionAsync(async () =>
+            {
+                if (_selectedProfile?.IsSaved != true || MessageBox.Show(this, $"Do you really want to overwrite the display settings in the '{_selectedProfile.Name}' Display Profile with the display settings currently in use? This cannot be undone.", "Update Display Profile settings?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+                string selectedId = _selectedProfile.Id;
+                ControlResponse response = await _controlServiceClient.UpdateProfileFromCurrentAsync(selectedId, _lifetimeToken);
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                if (!response.IsSuccessful) { _showError(response.Message, "Update Display Profile"); return; }
+                await RefreshProfilesAsync(selectedId, _lifetimeToken);
+            });
         }
 
         private async void btn_profile_settings_Click(object sender, EventArgs e)
         {
-            if (_selectedProfile?.IsSaved != true) return;
-            DisplayProfileSettings settings = new DisplayProfileSettings
+            await RunProfileActionAsync(async () =>
             {
-                ApplyWallpaper = _selectedProfile.Settings.ApplyWallpaper,
-                BackgroundDescription = _selectedProfile.Settings.BackgroundDescription,
-                ApplyProfileCount = _selectedProfile.Settings.ApplyProfileCount,
-                ApplyProfileDelay = _selectedProfile.Settings.ApplyProfileDelay,
-                ForceExplorerRestart = _selectedProfile.Settings.ForceExplorerRestart
-            };
-            using (ProfileSettingsForm form = new ProfileSettingsForm { Settings = settings })
-            {
-                form.ShowDialog(this);
-                if (!form.ProfileSettingChanged) return;
-                ControlResponse response = await _controlServiceClient.UpdateDisplayProfileSettingsAsync(_selectedProfile.Id, form.Settings, CancellationToken.None);
-                if (!response.IsSuccessful) { MessageBox.Show(this, response.Message, "Profile Settings", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
-            }
-            await RefreshProfilesAsync(_selectedProfile.Id, CancellationToken.None);
+                if (_selectedProfile?.IsSaved != true) return;
+                string selectedId = _selectedProfile.Id;
+                DisplayProfileSettings settings = new DisplayProfileSettings
+                {
+                    ApplyWallpaper = _selectedProfile.Settings.ApplyWallpaper,
+                    BackgroundDescription = _selectedProfile.Settings.BackgroundDescription,
+                    ApplyProfileCount = _selectedProfile.Settings.ApplyProfileCount,
+                    ApplyProfileDelay = _selectedProfile.Settings.ApplyProfileDelay,
+                    ForceExplorerRestart = _selectedProfile.Settings.ForceExplorerRestart
+                };
+                using (ProfileSettingsForm form = new ProfileSettingsForm { Settings = settings })
+                {
+                    form.ShowDialog(this);
+                    if (!form.ProfileSettingChanged) return;
+                    ControlResponse response = await _controlServiceClient.UpdateDisplayProfileSettingsAsync(selectedId, form.Settings, _lifetimeToken);
+                    if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                    if (!response.IsSuccessful) { _showError(response.Message, "Profile Settings"); return; }
+                }
+                await RefreshProfilesAsync(selectedId, _lifetimeToken);
+            });
         }
 
         private void UpdateHotkeyText()
         {
-            if (_selectedProfile?.IsSaved != true) { lbl_hotkey_assigned.Visible = false; return; }
+            if (_selectedProfile?.IsSaved != true || Program.AppProgramSettings == null || Program.AppDirectInputManager == null) { lbl_hotkey_assigned.Visible = false; return; }
             List<string> keyboard = Program.AppProgramSettings.KeyboardHotkeys.Where(hotkey => hotkey.Task == HotkeyTask.ChangeDisplayProfile && hotkey.UUID == _selectedProfile.Id).Select(Program.AppDirectInputManager.GetNameOfKeyboardHotkey).ToList();
             List<string> joystick = Program.AppProgramSettings.JoystickHotkeys.Where(hotkey => hotkey.Task == HotkeyTask.ChangeDisplayProfile && hotkey.UUID == _selectedProfile.Id).Select(Program.AppDirectInputManager.GetNameOfJoystickHotkey).ToList();
             List<string> hotkeys = keyboard.Count > 0 ? keyboard : joystick;

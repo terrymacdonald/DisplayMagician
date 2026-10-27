@@ -22,7 +22,7 @@ internal class ControlServicePipeClient
         return await ApplyProfileAsync(profileId, Guid.NewGuid(), Guid.NewGuid(), cancellationToken).ConfigureAwait(false);
     }
 
-    private static Task<ControlResponse> ApplyProfileAsync(string profileId, Guid operationId, Guid requestId, CancellationToken cancellationToken)
+    private Task<ControlResponse> ApplyProfileAsync(string profileId, Guid operationId, Guid requestId, CancellationToken cancellationToken)
     {
         return SendAsync(new ControlEnvelope
         {
@@ -514,7 +514,7 @@ internal class ControlServicePipeClient
         }
     }
 
-    private static async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
+    protected virtual async Task<ControlResponse> SendAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         request.Hello = ControlProtocol.CreateHello(ControlClientKind.DesktopApplication, "DisplayMagician.WinForms", "DisplayMagician");
         using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ClientPipeName, PipeDirection.InOut, PipeOptions.Asynchronous);

@@ -36,6 +36,8 @@ The Display Profile and Game Shortcut forms request a detailed layout image for 
 
 For a complete installable build, use `build_displaymagician.ps1` from the repository root rather than treating this project output as an installer.
 
+Display/audio profile forms ignore superseded refresh replies, cancel pending waits when closed or disposed, and contain service failures at their asynchronous action boundary. Each form prevents overlapping actions and retains the original target ID while awaiting replies. Buttons reflect the selected profile and audio access state. Display-change refreshes marshal to the UI thread and also work when the window handle exists but its controls are hidden. Forms remain backed by the existing Designer files and use the shared Control Service contracts; the injectable internal client/error reporter support isolated UI tests.
+
 ## Related components
 
 - `DisplayMagician.ControlService` routes desktop requests and owns machine-wide coordination.

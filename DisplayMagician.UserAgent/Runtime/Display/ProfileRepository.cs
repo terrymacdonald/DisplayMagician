@@ -737,6 +737,12 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             lock (_repositoryLock)
             {
+                if (profile == null) return false;
+                string profileId = profile.UUID;
+                ProfileItem? currentProfile = _allProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
+                // Another client may have replaced or deleted the profile since it was selected.
+                if (currentProfile == null) return false;
+                profile = currentProfile;
                 if (!(profile is ProfileItem))
                 {
                     SharedLogger.logger.Error($"ProfileRepository/RenameProfile: Profile to rename was empty or only whitespace");
@@ -1125,6 +1131,12 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             lock (_repositoryLock)
             {
+                if (profile == null) return false;
+                string profileId = profile.UUID;
+                ProfileItem? currentProfile = _allProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
+                // Another client may have replaced or deleted the profile since it was selected.
+                if (currentProfile == null) return false;
+                profile = currentProfile;
 
                 SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
 
@@ -1149,6 +1161,12 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             lock (_repositoryLock)
             {
+                if (profile == null) return false;
+                string profileId = profile.UUID;
+                ProfileItem? currentProfile = _allProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
+                // Another client may have replaced or deleted the profile since it was selected.
+                if (currentProfile == null) return false;
+                profile = currentProfile;
                 Wallpaper.Mode previousMode = profile.WallpaperConfiguration.WallpaperMode;
                 int previousCount = profile.ApplyProfileCount;
                 int previousDelay = profile.ApplyProfileDelay;

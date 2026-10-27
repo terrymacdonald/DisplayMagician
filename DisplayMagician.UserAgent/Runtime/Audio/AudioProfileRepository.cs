@@ -584,6 +584,12 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             lock (_repositoryLock)
             {
+                if (audioProfile == null) return false;
+                string profileId = audioProfile.UUID;
+                AudioProfileItem? currentProfile = _allAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
+                // Another client may have replaced or deleted the profile since it was selected.
+                if (currentProfile == null) return false;
+                audioProfile = currentProfile;
                 if (!(audioProfile is AudioProfileItem))
                 {
                     SharedLogger.logger.Error($"AudioProfileRepository/RenameAudioProfile: AudioProfile to rename was empty or only whitespace");
@@ -628,6 +634,12 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             lock (_repositoryLock)
             {
+                if (profile == null) return false;
+                string profileId = profile.UUID;
+                AudioProfileItem? currentProfile = _allAudioProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
+                // Another client may have replaced or deleted the profile since it was selected.
+                if (currentProfile == null) return false;
+                profile = currentProfile;
                 AudioProfileItem previous = new AudioProfileItem();
                 profile.CopyTo(previous);
                 if (profile.CreateProfileFromCurrentAudioSettings() && SaveAudioProfiles()) return true;

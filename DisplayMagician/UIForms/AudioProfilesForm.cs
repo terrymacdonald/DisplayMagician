@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using DisplayMagician.Contracts;
@@ -15,12 +16,37 @@ namespace DisplayMagician.UIForms
         private AudioProfileView _selectedAudioProfile;
         private int _audioProfileAdvisoryRefreshVersion;
         private bool _canAccessAudioSettings;
+        private readonly ControlServicePipeClient _controlServiceClient;
+        private readonly Action<string, string> _showError;
+        private readonly CancellationTokenSource _lifetimeSource = new CancellationTokenSource();
+        private readonly CancellationToken _lifetimeToken;
+        private int _refreshVersion;
+        private bool _commandInProgress;
+        private bool _lifetimeDisposed;
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public AudioProfilesForm()
+        public AudioProfilesForm() : this(new ControlServicePipeClient()) { }
+
+        internal AudioProfilesForm(ControlServicePipeClient client, Action<string, string> showError = null)
         {
+            _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
+            _showError = showError ?? ((message, title) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error));
+            _lifetimeToken = _lifetimeSource.Token;
             InitializeComponent();
+            Disposed += (_, _) =>
+            {
+                if (_lifetimeDisposed) return;
+                _lifetimeDisposed = true;
+                _lifetimeSource.Cancel();
+                _lifetimeSource.Dispose();
+            };
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if (!e.Cancel && !_lifetimeDisposed) _lifetimeSource.Cancel();
         }
 
         protected override void OnActivated(EventArgs e)
@@ -31,25 +57,18 @@ namespace DisplayMagician.UIForms
 
         private async void AudioProfilesForm_Load(object sender, EventArgs e)
         {
-            try
+            await RunProfileActionAsync(async () =>
             {
                 await RefreshAudioProfilesAsync();
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "AudioProfilesForm/AudioProfilesForm_Load: Could not load service-authoritative audio profiles.");
-                MessageBox.Show(this, "DisplayMagician could not load your Audio Profiles through the User Agent.", "Audio Profiles", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            if (lb_audio_profiles.SelectedIndex < 0 && lb_audio_profiles.Items.Count > 0)
-            {
-                lb_audio_profiles.SelectedIndex = 0;
-            }
-            UpdateSelectionState();
+            });
         }
 
         private async Task RefreshAudioProfilesAsync(string selectedProfileId = null)
         {
-            AudioProfileListResult profileList = await new ControlServicePipeClient().ListAudioProfilesAsync(System.Threading.CancellationToken.None);
+            if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+            int refreshVersion = ++_refreshVersion;
+            AudioProfileListResult profileList = await _controlServiceClient.ListAudioProfilesAsync(_lifetimeToken);
+            if (IsDisposed || Disposing || _lifetimeToken.IsCancellationRequested || refreshVersion != _refreshVersion) return;
             _canAccessAudioSettings = profileList.CanAccessAudioSettings;
             lb_audio_profiles.Items.Clear();
             lb_audio_profiles.DisplayMember = nameof(AudioProfileView.Name);
@@ -58,16 +77,10 @@ namespace DisplayMagician.UIForms
                 lb_audio_profiles.Items.Add(audioProfile);
             }
 
-            if (!string.IsNullOrWhiteSpace(selectedProfileId))
-            {
-                _selectedAudioProfile = profileList.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase));
-                lb_audio_profiles.SelectedItem = _selectedAudioProfile;
-            }
-            else
-            {
-                _selectedAudioProfile = profileList.SavedProfiles.FirstOrDefault(profile => profile.IsActive);
-                lb_audio_profiles.SelectedItem = _selectedAudioProfile;
-            }
+            _selectedAudioProfile = profileList.SavedProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedProfileId, StringComparison.OrdinalIgnoreCase))
+                ?? profileList.SavedProfiles.FirstOrDefault(profile => profile.IsActive) ?? profileList.SavedProfiles.FirstOrDefault();
+            lb_audio_profiles.SelectedItem = _selectedAudioProfile;
+            UpdateSelectionState();
         }
 
         private void UpdateSelectionState()
@@ -77,9 +90,12 @@ namespace DisplayMagician.UIForms
             btn_delete_audio_profile.Visible = hasSelection;
             btn_rename_audio_profile.Visible = hasSelection;
             btn_apply_audio_profile.Visible = hasSelection;
-            btn_create_audio_profile.Enabled = _canAccessAudioSettings;
-            btn_update_audio_profile.Enabled = hasSelection && _canAccessAudioSettings;
-            btn_apply_audio_profile.Enabled = hasSelection && _canAccessAudioSettings;
+            lb_audio_profiles.Enabled = !_commandInProgress;
+            btn_create_audio_profile.Enabled = !_commandInProgress && _canAccessAudioSettings;
+            btn_update_audio_profile.Enabled = !_commandInProgress && hasSelection && _canAccessAudioSettings;
+            btn_apply_audio_profile.Enabled = !_commandInProgress && hasSelection && _canAccessAudioSettings;
+            btn_rename_audio_profile.Enabled = !_commandInProgress && hasSelection;
+            btn_delete_audio_profile.Enabled = !_commandInProgress && hasSelection;
             //gb_selected_audio_settings.Visible = hasSelection;
 
             if (hasSelection)
@@ -94,7 +110,7 @@ namespace DisplayMagician.UIForms
             RefreshAudioProfileAdvisory();
         }
 
-        private async void RefreshAudioProfileAdvisory()
+        private void RefreshAudioProfileAdvisory()
         {
             int refreshVersion = ++_audioProfileAdvisoryRefreshVersion;
             AudioProfileView selectedAudioProfile = _selectedAudioProfile;
@@ -127,6 +143,25 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private async Task RunProfileActionAsync(Func<Task> action)
+        {
+            if (_commandInProgress || IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+            _commandInProgress = true;
+            UpdateSelectionState();
+            try { await action(); }
+            catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested) { /* The form closed while waiting. */ }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "AudioProfilesForm/RunProfileActionAsync: Could not complete the requested audio profile action.");
+                if (!IsDisposed && !_lifetimeToken.IsCancellationRequested) _showError("DisplayMagician could not complete the audio profile action through the Control Service. Please try again.", "Audio Profile");
+            }
+            finally
+            {
+                _commandInProgress = false;
+                if (!IsDisposed && !_lifetimeToken.IsCancellationRequested) UpdateSelectionState();
+            }
+        }
+
         private void lb_audio_profiles_SelectedIndexChanged(object sender, EventArgs e)
         {
             _selectedAudioProfile = lb_audio_profiles.SelectedItem as AudioProfileView;
@@ -135,143 +170,159 @@ namespace DisplayMagician.UIForms
 
         private async void btn_create_audio_profile_Click(object sender, EventArgs e)
         {
-            using (AudioProfileNameForm nameForm = new AudioProfileNameForm(AudioProfileNameFormMode.Create, isNameAvailable: name => !lb_audio_profiles.Items.Cast<AudioProfileView>().Any(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase))))
+            await RunProfileActionAsync(async () =>
             {
-                nameForm.StartPosition = FormStartPosition.CenterParent;
-                if (nameForm.ShowDialog(this) != DialogResult.OK)
-                    return;
+                using (AudioProfileNameForm nameForm = new AudioProfileNameForm(AudioProfileNameFormMode.Create, isNameAvailable: name => !lb_audio_profiles.Items.Cast<AudioProfileView>().Any(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase))))
+                {
+                    nameForm.StartPosition = FormStartPosition.CenterParent;
+                    if (nameForm.ShowDialog(this) != DialogResult.OK)
+                        return;
 
-                ControlResponse response = await new ControlServicePipeClient().CreateAudioProfileFromCurrentAsync(nameForm.ProfileName, System.Threading.CancellationToken.None);
-                if (response.IsSuccessful)
-                {
-                    await RefreshAudioProfilesAsync();
-                    _selectedAudioProfile = lb_audio_profiles.Items.Cast<AudioProfileView>().FirstOrDefault(profile => string.Equals(profile.Name, nameForm.ProfileName, StringComparison.OrdinalIgnoreCase));
-                    lb_audio_profiles.SelectedItem = _selectedAudioProfile;
+                    ControlResponse response = await _controlServiceClient.CreateAudioProfileFromCurrentAsync(nameForm.ProfileName, _lifetimeToken);
+
+                    if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                    if (response.IsSuccessful)
+                    {
+                        await RefreshAudioProfilesAsync();
+                        if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                        _selectedAudioProfile = lb_audio_profiles.Items.Cast<AudioProfileView>().FirstOrDefault(profile => string.Equals(profile.Name, nameForm.ProfileName, StringComparison.OrdinalIgnoreCase));
+                        lb_audio_profiles.SelectedItem = _selectedAudioProfile;
+                    }
+                    else
+                    {
+                        _showError(response.Message, "Audio Profile");
+                    }
                 }
-                else
-                {
-                    MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
+            });
         }
 
         private async void btn_update_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
-            if (selected == null)
-                return;
-
-            if (MessageBox.Show(this,
-                $"Do you really want to overwrite the audio settings in the '{selected.Name}' Audio Profile with the audio settings currently in use? This cannot be undone.",
-                "Update Audio Profile settings?",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning) != DialogResult.Yes)
+            await RunProfileActionAsync(async () =>
             {
-                return;
-            }
-
-            ControlResponse response = await new ControlServicePipeClient().UpdateAudioProfileFromCurrentAsync(selected.Id, System.Threading.CancellationToken.None);
-            if (response.IsSuccessful)
-            {
-                await RefreshAudioProfilesAsync(selected.Id);
-            }
-            else
-            {
-                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private async void btn_rename_audio_profile_Click(object sender, EventArgs e)
-        {
-            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
-            if (selected == null)
-                return;
-
-            using (AudioProfileNameForm nameForm = new AudioProfileNameForm(AudioProfileNameFormMode.Rename, selected.Name, name => !lb_audio_profiles.Items.Cast<AudioProfileView>().Any(profile => !string.Equals(profile.Id, selected.Id, StringComparison.OrdinalIgnoreCase) && string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase))))
-            {
-                nameForm.StartPosition = FormStartPosition.CenterParent;
-                if (nameForm.ShowDialog(this) != DialogResult.OK)
+                AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
+                if (selected == null)
                     return;
 
-                ControlResponse response = await new ControlServicePipeClient().RenameAudioProfileAsync(selected.Id, nameForm.ProfileName, System.Threading.CancellationToken.None);
+                if (MessageBox.Show(this,
+                    $"Do you really want to overwrite the audio settings in the '{selected.Name}' Audio Profile with the audio settings currently in use? This cannot be undone.",
+                    "Update Audio Profile settings?",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes)
+                {
+                    return;
+                }
+
+                ControlResponse response = await _controlServiceClient.UpdateAudioProfileFromCurrentAsync(selected.Id, _lifetimeToken);
+
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
                 if (response.IsSuccessful)
                 {
                     await RefreshAudioProfilesAsync(selected.Id);
                 }
                 else
                 {
-                    MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    _showError(response.Message, "Audio Profile");
                 }
-            }
+            });
+        }
+
+        private async void btn_rename_audio_profile_Click(object sender, EventArgs e)
+        {
+            await RunProfileActionAsync(async () =>
+            {
+                AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
+                if (selected == null)
+                    return;
+
+                using (AudioProfileNameForm nameForm = new AudioProfileNameForm(AudioProfileNameFormMode.Rename, selected.Name, name => !lb_audio_profiles.Items.Cast<AudioProfileView>().Any(profile => !string.Equals(profile.Id, selected.Id, StringComparison.OrdinalIgnoreCase) && string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase))))
+                {
+                    nameForm.StartPosition = FormStartPosition.CenterParent;
+                    if (nameForm.ShowDialog(this) != DialogResult.OK)
+                        return;
+
+                    ControlResponse response = await _controlServiceClient.RenameAudioProfileAsync(selected.Id, nameForm.ProfileName, _lifetimeToken);
+
+                    if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                    if (response.IsSuccessful)
+                    {
+                        await RefreshAudioProfilesAsync(selected.Id);
+                    }
+                    else
+                    {
+                        _showError(response.Message, "Audio Profile");
+                    }
+                }
+            });
         }
 
         private async void btn_delete_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
-            if (selected == null)
-                return;
-
-            DialogResult result = MessageBox.Show(this,
-                $"Delete the Audio Profile '{selected.Name}'? This cannot be undone.",
-                "Delete Audio Profile",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
-
-            if (result != DialogResult.Yes)
-                return;
-
-            ControlResponse response = await new ControlServicePipeClient().DeleteAudioProfileAsync(selected.Id, System.Threading.CancellationToken.None);
-            if (response.IsSuccessful)
+            await RunProfileActionAsync(async () =>
             {
-                await RefreshAudioProfilesAsync();
-                if (lb_audio_profiles.SelectedIndex < 0 && lb_audio_profiles.Items.Count > 0)
+                AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
+                if (selected == null)
+                    return;
+
+                DialogResult result = MessageBox.Show(this,
+                    $"Delete the Audio Profile '{selected.Name}'? This cannot be undone.",
+                    "Delete Audio Profile",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result != DialogResult.Yes)
+                    return;
+
+                ControlResponse response = await _controlServiceClient.DeleteAudioProfileAsync(selected.Id, _lifetimeToken);
+
+                if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                if (response.IsSuccessful)
                 {
-                    lb_audio_profiles.SelectedIndex = 0;
-                    _selectedAudioProfile = lb_audio_profiles.SelectedItem as AudioProfileView;
+                    await RefreshAudioProfilesAsync();
+
                 }
                 else
                 {
-                    _selectedAudioProfile = null;
+                    _showError(response.Message, "Audio Profile");
                 }
-                UpdateSelectionState();
-            }
-            else
-            {
-                MessageBox.Show(this, response.Message, "Audio Profile", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            });
         }
 
         private async void btn_apply_audio_profile_Click(object sender, EventArgs e)
         {
-            AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
-            if (selected == null)
-                return;
-
-            btn_apply_audio_profile.Enabled = false;
-            try
+            await RunProfileActionAsync(async () =>
             {
-                int audioDeviceWaitMilliseconds = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
-                while (true)
-                {
-                    ControlResponse response = await new ControlServicePipeClient().ApplyAudioProfileAsync(selected.Id, audioDeviceWaitMilliseconds, System.Threading.CancellationToken.None);
-                    if (response.IsSuccessful)
-                    {
-                        logger.Trace($"AudioProfilesForm/btn_apply_audio_profile_Click: Applied '{selected.Name}' audio profile successfully.");
-                        return;
-                    }
+                AudioProfileView selected = lb_audio_profiles.SelectedItem as AudioProfileView;
+                if (selected == null)
+                    return;
 
-                    logger.Warn($"AudioProfilesForm/btn_apply_audio_profile_Click: {response.Message}");
-                    using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(selected.Name, new List<string> { response.Message }, AudioApplyFailureContext.AudioProfile))
+                btn_apply_audio_profile.Enabled = false;
+                try
+                {
+                    int audioDeviceWaitMilliseconds = Program.AppProgramSettings.AudioDeviceWaitSecs * 1000;
+                    while (true)
                     {
-                        if (failureForm.ShowDialog(this) != DialogResult.Retry || failureForm.SelectedAction != AudioApplyFailureAction.Retry)
+                        ControlResponse response = await _controlServiceClient.ApplyAudioProfileAsync(selected.Id, audioDeviceWaitMilliseconds, _lifetimeToken);
+                        if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
+                        if (response.IsSuccessful)
+                        {
+                            logger.Trace($"AudioProfilesForm/btn_apply_audio_profile_Click: Applied '{selected.Name}' audio profile successfully.");
                             return;
+                        }
+
+                        logger.Warn($"AudioProfilesForm/btn_apply_audio_profile_Click: {response.Message}");
+                        using (AudioApplyFailureForm failureForm = new AudioApplyFailureForm(selected.Name, new List<string> { response.Message }, AudioApplyFailureContext.AudioProfile))
+                        {
+                            if (failureForm.ShowDialog(this) != DialogResult.Retry || failureForm.SelectedAction != AudioApplyFailureAction.Retry)
+                                return;
+                        }
                     }
                 }
-            }
-            finally
-            {
-                btn_apply_audio_profile.Enabled = true;
-            }
+                finally
+                {
+                    if (!IsDisposed && !_lifetimeToken.IsCancellationRequested) UpdateSelectionState();
+                }
+            });
         }
 
         private void btn_open_microphone_settings_Click(object sender, EventArgs e)

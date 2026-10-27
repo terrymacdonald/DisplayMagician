@@ -434,6 +434,70 @@ public sealed class AgentReliabilityTests : IDisposable
         if (Directory.Exists(_root)) Directory.Delete(_root, true);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SettingsEditUsingAStaleProfileTargetsTheCurrentDefinitionAndPreservesReplacementData(bool failSave)
+    {
+        AgentProfile stale = new AgentProfile { UUID = Guid.NewGuid().ToString("D"), Name = "Old reference", ApplyProfileCount = 2 };
+        AgentProfileRepository.AllProfiles.Add(stale);
+        AgentProfile replacement = new AgentProfile { UUID = stale.UUID, Name = "Replacement", ApplyProfileCount = 3 };
+        string json = "{\"Profiles\":[" + UserProfileOperationService.SerializeDisplayRecoveryProfile(replacement) + "]}";
+        AgentProfileRepository.CommitSnapshot(new RepositoryCommitRequest { Repository = RepositoryKind.DisplayProfiles, Json = json });
+        string path = Path.Combine(_root, "Profiles", "DisplayProfiles.json");
+        using (FileStream? held = failSave ? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read) : null)
+        {
+            Assert.Equal(!failSave, AgentProfileRepository.UpdateProfileSettings(stale, new DisplayProfileSettings { ApplyProfileCount = 4, ApplyProfileDelay = 1 }));
+        }
+        using JsonDocument saved = JsonDocument.Parse(AgentProfileRepository.GetSnapshot().Json);
+        JsonElement actual = Assert.Single(saved.RootElement.GetProperty("Profiles").EnumerateArray());
+        Assert.Equal("Replacement", actual.GetProperty("Name").GetString());
+        Assert.Equal(failSave ? 3 : 4, actual.GetProperty("ApplyProfileCount").GetInt32());
+        Assert.Equal(2, stale.ApplyProfileCount);
+        Assert.Equal("Old reference", stale.Name);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DeletedProfilesAreRejectedBeforeMutatingStaleReferencesOrCapturingHardware(bool audio)
+    {
+        if (audio)
+        {
+            AgentAudioProfile stale = new AgentAudioProfile { UUID = Guid.NewGuid().ToString("D"), Name = "Deleted" };
+            AgentAudioRepository.AllAudioProfiles.Add(stale);
+            AgentAudioRepository.CommitSnapshot(new RepositoryCommitRequest { Repository = RepositoryKind.AudioProfiles, Json = "{\"AudioProfiles\":[]}" });
+            Assert.False(AgentAudioRepository.RenameAudioProfile(stale, "Changed"));
+            Assert.False(AgentAudioRepository.CopyCurrentLayoutToProfile(stale));
+            Assert.Equal("Deleted", stale.Name);
+        }
+        else
+        {
+            AgentProfile stale = new AgentProfile { UUID = Guid.NewGuid().ToString("D"), Name = "Deleted" };
+            AgentProfileRepository.AllProfiles.Add(stale);
+            AgentProfileRepository.CommitSnapshot(new RepositoryCommitRequest { Repository = RepositoryKind.DisplayProfiles, Json = "{\"Profiles\":[]}" });
+            Assert.False(AgentProfileRepository.RenameProfile(stale, "Changed"));
+            Assert.False(AgentProfileRepository.CopyCurrentLayoutToProfile(stale));
+            Assert.False(AgentProfileRepository.UpdateProfileSettings(stale, new DisplayProfileSettings()));
+            Assert.Equal("Deleted", stale.Name);
+        }
+    }
+
+    [Fact]
+    public void AudioRenameUsingAStaleReferenceRenamesTheCurrentDefinition()
+    {
+        AgentAudioProfile stale = new AgentAudioProfile { UUID = Guid.NewGuid().ToString("D"), Name = "Old reference" };
+        AgentAudioRepository.AllAudioProfiles.Add(stale);
+        AgentAudioRepository.CommitSnapshot(new RepositoryCommitRequest { Repository = RepositoryKind.AudioProfiles,
+            Json = $"{{\"AudioProfiles\":[{{\"UUID\":\"{stale.UUID}\",\"Name\":\"Replacement\",\"ApplyProfileDelay\":3,\"WindowsAudioConfig\":{{}}}}]}}" });
+        Assert.True(AgentAudioRepository.RenameAudioProfile(stale, "New name"));
+        using JsonDocument saved = JsonDocument.Parse(AgentAudioRepository.GetSnapshot().Json);
+        JsonElement profile = Assert.Single(saved.RootElement.GetProperty("AudioProfiles").EnumerateArray());
+        Assert.Equal("New name", profile.GetProperty("Name").GetString());
+        Assert.Equal(3, profile.GetProperty("ApplyProfileDelay").GetInt32());
+        Assert.Equal("Old reference", stale.Name);
+    }
+
     private sealed class FakeProfileOperations : UserProfileOperationService, IDisposable
     {
         public bool DisplayRestores { get; init; } = true;
