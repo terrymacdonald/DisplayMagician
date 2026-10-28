@@ -572,67 +572,8 @@ public sealed class ControlClientPipeServer
         List<string> machineCollectionWarnings = new List<string>();
         try
         {
-            Directory.CreateDirectory(machineLogsStagingPath);
-            if (Directory.Exists(_storagePaths.MachineLogsPath))
-            {
-                foreach (string sourcePath in Directory.EnumerateFiles(_storagePaths.MachineLogsPath, "*", SearchOption.AllDirectories))
-                {
-                    string destinationPath = Path.Combine(machineLogsStagingPath, Path.GetRelativePath(_storagePaths.MachineLogsPath, sourcePath));
-                    string? destinationDirectory = Path.GetDirectoryName(destinationPath);
-                    if (!string.IsNullOrWhiteSpace(destinationDirectory))
-                    {
-                        Directory.CreateDirectory(destinationDirectory);
-                    }
-
-                    CopyStagedFile(sourcePath, destinationPath);
-                }
-            }
-
+            MachineSupportBundleStager.Stage(_storagePaths, stagingRoot, machineCollectionWarnings);
             StageInstallerLog(machineLogsStagingPath, machineCollectionWarnings);
-            string auditLogPath = Path.Combine(_storagePaths.MachineDiagnosticsPath, "Audit.jsonl");
-            if (File.Exists(auditLogPath))
-            {
-                string auditStagingPath = Path.Combine(machineLogsStagingPath, "Diagnostics", "Audit.jsonl");
-                Directory.CreateDirectory(Path.GetDirectoryName(auditStagingPath)!);
-                CopyStagedFile(auditLogPath, auditStagingPath);
-            }
-
-            Directory.CreateDirectory(machineConfigurationStagingPath);
-            foreach (string sourcePath in new[]
-            {
-                Path.Combine(_storagePaths.MachinePath, "DisplayControlLease.json"),
-                Path.Combine(_storagePaths.MachinePath, "OperationDecisions.json"),
-                Path.Combine(_storagePaths.MachinePath, "OperationStatuses.json"),
-                Path.Combine(_storagePaths.MachinePath, "ScheduleState.json"),
-                Path.Combine(_storagePaths.MachinePath, "GatewaySettings.json"),
-                Path.Combine(_storagePaths.MachineDiagnosticsPath, "RecoveryAdministration.json"),
-                Path.Combine(_storagePaths.MachineDiagnosticsPath, "TemporaryDiagnosticLogLevel.json")
-            })
-            {
-                if (File.Exists(sourcePath))
-                {
-                    CopyStagedFile(sourcePath, Path.Combine(machineConfigurationStagingPath, Path.GetFileName(sourcePath)));
-                }
-
-                string backupPath = $"{sourcePath}.bak";
-                if (File.Exists(backupPath))
-                {
-                    CopyStagedFile(backupPath, Path.Combine(machineConfigurationStagingPath, Path.GetFileName(backupPath)));
-                }
-            }
-
-            string pairedClientsPath = Path.Combine(_storagePaths.MachinePath, "PairedClients.json");
-            if (File.Exists(pairedClientsPath))
-            {
-                PairedClient[] pairedClients = JsonSerializer.Deserialize<PairedClient[]>(File.ReadAllText(pairedClientsPath)) ?? Array.Empty<PairedClient>();
-                string redactedPath = Path.Combine(machineConfigurationStagingPath, "PairedClients.redacted.json");
-                File.WriteAllText(redactedPath, PairedClientSupportSnapshot.Serialize(pairedClients));
-                machineCollectionWarnings.Add("PairedClients.json was included as a redacted snapshot; credential hashes and key material were excluded.");
-            }
-            else
-            {
-                machineCollectionWarnings.Add("PairedClients.json was unavailable; no paired-device snapshot was included.");
-            }
 
             supportBundleRequest.MachineLogsStagingPath = machineLogsStagingPath;
             supportBundleRequest.MachineConfigurationStagingPath = machineConfigurationStagingPath;
@@ -657,6 +598,7 @@ public sealed class ControlClientPipeServer
         {
             if (Directory.Exists(stagingRoot))
             {
+                SupportBundleFileAccess.EnsureUnlinkedPath(stagingRoot);
                 Directory.Delete(stagingRoot, true);
             }
         }
@@ -664,13 +606,6 @@ public sealed class ControlClientPipeServer
         {
             _logger.Warn(ex, "ControlClientPipeServer/DeleteSupportStagingDirectory: Could not remove support ZIP staging directory {0}. It was left in place for later cleanup.", stagingRoot);
         }
-    }
-
-    private static void CopyStagedFile(string sourcePath, string destinationPath)
-    {
-        using FileStream source = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        using FileStream destination = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
-        source.CopyTo(destination);
     }
 
     private static void StageInstallerLog(string machineLogsStagingPath, List<string> warnings)
@@ -681,6 +616,7 @@ public sealed class ControlClientPipeServer
             string? installerLogPath = registryKey?.GetValue("LastInstallerLogPath") as string;
             if (string.IsNullOrWhiteSpace(installerLogPath))
             {
+                warnings.Add("The last installer transaction log path was not registered.");
                 return;
             }
 
@@ -690,7 +626,7 @@ public sealed class ControlClientPipeServer
                 return;
             }
 
-            CopyStagedFile(installerLogPath, Path.Combine(machineLogsStagingPath, "Installer-LastTransaction.log"));
+            MachineSupportBundleStager.CopyFile(installerLogPath, Path.Combine(machineLogsStagingPath, "Installer-LastTransaction.log"), warnings);
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException || ex is ArgumentException || ex is NotSupportedException)
         {

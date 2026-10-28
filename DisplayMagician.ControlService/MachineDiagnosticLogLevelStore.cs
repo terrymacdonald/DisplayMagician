@@ -47,8 +47,9 @@ public sealed class MachineDiagnosticLogLevelStore
 
         lock (_syncRoot)
         {
-            _state = new TemporaryDiagnosticLogLevelState { Level = level.Name, OwnerId = request.OwnerId, ExpiresUtc = utcNow.AddMinutes(request.DurationMinutes) };
-            Persist();
+            TemporaryDiagnosticLogLevelState candidate = new TemporaryDiagnosticLogLevelState { Level = level.Name, OwnerId = request.OwnerId, ExpiresUtc = utcNow.AddMinutes(request.DurationMinutes) };
+            Persist(candidate);
+            _state = candidate;
             return _state.Level;
         }
     }
@@ -59,8 +60,9 @@ public sealed class MachineDiagnosticLogLevelStore
         {
             if (ownerId != Guid.Empty && _state.OwnerId == ownerId)
             {
-                _state = new TemporaryDiagnosticLogLevelState();
-                Persist();
+                TemporaryDiagnosticLogLevelState candidate = new TemporaryDiagnosticLogLevelState();
+                Persist(candidate);
+                _state = candidate;
             }
 
             return GetActiveLevel(utcNow);
@@ -73,9 +75,9 @@ public sealed class MachineDiagnosticLogLevelStore
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException) { Logger.Warn(ex, "MachineDiagnosticLogLevelStore/Load: Could not load temporary diagnostic log level state from {0}.", _path); return new TemporaryDiagnosticLogLevelState(); }
     }
 
-    private void Persist()
+    private void Persist(TemporaryDiagnosticLogLevelState? state = null)
     {
-        try { AtomicFileStore.WriteAllText(_path, JsonSerializer.Serialize(_state), $"{_path}.bak"); }
+        try { AtomicFileStore.WriteAllText(_path, JsonSerializer.Serialize(state ?? _state), $"{_path}.bak"); }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException) { Logger.Error(ex, "MachineDiagnosticLogLevelStore/Persist: Could not persist temporary diagnostic log level state to {0}.", _path); throw; }
     }
 
