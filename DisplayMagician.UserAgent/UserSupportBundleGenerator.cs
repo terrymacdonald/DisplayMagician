@@ -50,31 +50,60 @@ public sealed class UserSupportBundleGenerator
             }
         }
 
-        List<SupportBundleEntry> includedEntries = new List<SupportBundleEntry>();
-        using FileStream output = new FileStream(fullDestinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
-        using ZipArchive archive = new ZipArchive(output, ZipArchiveMode.Create);
-        AddDirectory(archive, "Configuration/Profiles", Path.Combine(_userDataPath, "Profiles"), null, warnings, includedEntries);
-        AddDirectory(archive, "Configuration/AudioProfiles", Path.Combine(_userDataPath, "AudioProfiles"), null, warnings, includedEntries);
-        AddDirectory(archive, "Configuration/Shortcuts", Path.Combine(_userDataPath, "Shortcuts"), null, warnings, includedEntries);
-        AddDirectory(archive, "Configuration/Settings", Path.Combine(_userDataPath, "Settings"), null, warnings, includedEntries);
-        AddDirectory(archive, "Configuration/Backups", Path.Combine(_userDataPath, "Backups"), null, warnings, includedEntries, IsConfigurationBackup);
-        AddDirectory(archive, "Logs", Path.Combine(_userDataPath, "Logs"), null, warnings, includedEntries);
-        if (Directory.Exists(_legacyLogPath))
+        string temporaryPath = Path.Combine(destinationDirectory, $".{Path.GetFileName(fullDestinationPath)}.{Guid.NewGuid():N}.tmp");
+        try
         {
-            AddDirectory(archive, "Logs/Legacy", _legacyLogPath, null, warnings, includedEntries, IsRetainedLog);
+            CreateArchive(temporaryPath, fullDestinationPath, machineLogsStagingPath, machineConfigurationStagingPath, warnings);
+            // Publish only after the archive's central directory has been written and flushed.
+            if (File.Exists(fullDestinationPath))
+            {
+                File.Replace(temporaryPath, fullDestinationPath, null, ignoreMetadataErrors: true);
+            }
+            else
+            {
+                File.Move(temporaryPath, fullDestinationPath);
+            }
         }
-        AddDirectory(archive, "Logs/Backups", Path.Combine(_userDataPath, "Backups"), null, warnings, includedEntries, IsRetainedLog);
-
-        AddMachineLogs(archive, machineLogsStagingPath, warnings, includedEntries);
-        AddMachineConfiguration(archive, machineConfigurationStagingPath, warnings, includedEntries);
-        AddDirectory(archive, "Configuration/LegacyFiles", Path.Combine(_userDataPath, "LegacyFiles"), null, warnings, includedEntries, IsKnownLegacyConfiguration);
-        AddFile(archive, Path.Combine(_userDataPath, "Migration.json"), "Configuration/Migration.json", null, warnings, includedEntries);
-        AddManifest(archive, warnings, includedEntries);
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
+        }
 
         return new UserSupportBundleResult { DestinationPath = fullDestinationPath, Warnings = warnings.ToArray() };
     }
 
-    private void AddMachineLogs(ZipArchive archive, string machineLogsStagingPath, List<string> warnings, List<SupportBundleEntry> includedEntries)
+    private void CreateArchive(string temporaryPath, string destinationPath, string machineLogsStagingPath, string machineConfigurationStagingPath, List<string> warnings)
+    {
+        HashSet<string> excludedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { temporaryPath, destinationPath };
+        List<SupportBundleEntry> includedEntries = new List<SupportBundleEntry>();
+        using FileStream output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        using (ZipArchive archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            AddDirectory(archive, "Configuration/Profiles", Path.Combine(_userDataPath, "Profiles"), null, warnings, includedEntries, excludedPaths);
+            AddDirectory(archive, "Configuration/AudioProfiles", Path.Combine(_userDataPath, "AudioProfiles"), null, warnings, includedEntries, excludedPaths);
+            AddDirectory(archive, "Configuration/Shortcuts", Path.Combine(_userDataPath, "Shortcuts"), null, warnings, includedEntries, excludedPaths);
+            AddDirectory(archive, "Configuration/Settings", Path.Combine(_userDataPath, "Settings"), null, warnings, includedEntries, excludedPaths);
+            AddDirectory(archive, "Configuration/Backups", Path.Combine(_userDataPath, "Backups"), null, warnings, includedEntries, excludedPaths, IsConfigurationBackup);
+            AddDirectory(archive, "Logs", Path.Combine(_userDataPath, "Logs"), null, warnings, includedEntries, excludedPaths);
+            if (Directory.Exists(_legacyLogPath))
+            {
+                AddDirectory(archive, "Logs/Legacy", _legacyLogPath, null, warnings, includedEntries, excludedPaths, IsRetainedLog);
+            }
+            AddDirectory(archive, "Logs/Backups", Path.Combine(_userDataPath, "Backups"), null, warnings, includedEntries, excludedPaths, IsRetainedLog);
+
+            AddMachineLogs(archive, machineLogsStagingPath, warnings, includedEntries, excludedPaths);
+            AddMachineConfiguration(archive, machineConfigurationStagingPath, warnings, includedEntries, excludedPaths);
+            AddDirectory(archive, "Configuration/LegacyFiles", Path.Combine(_userDataPath, "LegacyFiles"), null, warnings, includedEntries, excludedPaths, IsKnownLegacyConfiguration);
+            AddFile(archive, Path.Combine(_userDataPath, "Migration.json"), "Configuration/Migration.json", null, warnings, includedEntries);
+            AddManifest(archive, warnings, includedEntries);
+        }
+        output.Flush(flushToDisk: true);
+    }
+
+    private void AddMachineLogs(ZipArchive archive, string machineLogsStagingPath, List<string> warnings, List<SupportBundleEntry> includedEntries, ISet<string> excludedPaths)
     {
         string stagingRoot = Path.GetFullPath(Path.Combine(_userDataPath, "Backups", "SupportStaging")) + Path.DirectorySeparatorChar;
         string fullMachineLogsPath = string.IsNullOrWhiteSpace(machineLogsStagingPath) ? string.Empty : Path.GetFullPath(machineLogsStagingPath);
@@ -84,10 +113,10 @@ public sealed class UserSupportBundleGenerator
             return;
         }
 
-        AddDirectory(archive, "MachineLogs", fullMachineLogsPath, null, warnings, includedEntries);
+        AddDirectory(archive, "MachineLogs", fullMachineLogsPath, null, warnings, includedEntries, excludedPaths);
     }
 
-    private void AddMachineConfiguration(ZipArchive archive, string machineConfigurationStagingPath, List<string> warnings, List<SupportBundleEntry> includedEntries)
+    private void AddMachineConfiguration(ZipArchive archive, string machineConfigurationStagingPath, List<string> warnings, List<SupportBundleEntry> includedEntries, ISet<string> excludedPaths)
     {
         string stagingRoot = Path.GetFullPath(Path.Combine(_userDataPath, "Backups", "SupportStaging")) + Path.DirectorySeparatorChar;
         string fullMachineConfigurationPath = string.IsNullOrWhiteSpace(machineConfigurationStagingPath) ? string.Empty : Path.GetFullPath(machineConfigurationStagingPath);
@@ -97,7 +126,7 @@ public sealed class UserSupportBundleGenerator
             return;
         }
 
-        AddDirectory(archive, "Configuration/Machine", fullMachineConfigurationPath, null, warnings, includedEntries);
+        AddDirectory(archive, "Configuration/Machine", fullMachineConfigurationPath, null, warnings, includedEntries, excludedPaths);
     }
 
     private void AddManifest(ZipArchive archive, List<string> warnings, List<SupportBundleEntry> includedEntries)
@@ -169,7 +198,7 @@ public sealed class UserSupportBundleGenerator
         }
     }
 
-    private static void AddDirectory(ZipArchive archive, string entryRoot, string directoryPath, long? maximumBytesPerFile, List<string> warnings, List<SupportBundleEntry> includedEntries, Func<string, bool>? includeFile = null)
+    private static void AddDirectory(ZipArchive archive, string entryRoot, string directoryPath, long? maximumBytesPerFile, List<string> warnings, List<SupportBundleEntry> includedEntries, ISet<string> excludedPaths, Func<string, bool>? includeFile = null)
     {
         if (!Directory.Exists(directoryPath))
         {
@@ -177,17 +206,95 @@ public sealed class UserSupportBundleGenerator
             return;
         }
 
-        foreach (string filePath in Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories))
+        try
         {
-            string relativePath = Path.GetRelativePath(directoryPath, filePath);
-            if (relativePath.StartsWith($"SupportStaging{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
-                || (includeFile != null && !includeFile(filePath)))
+            if (UsesFilesystemLink(directoryPath))
             {
+                warnings.Add($"{entryRoot} was skipped because its source uses a filesystem link.");
+                return;
+            }
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            warnings.Add($"{entryRoot} could not be inspected: {ex.Message}");
+            return;
+        }
+
+        Stack<string> pending = new Stack<string>();
+        pending.Push(directoryPath);
+        while (pending.Count > 0)
+        {
+            string currentDirectory = pending.Pop();
+            string[] children;
+            try
+            {
+                if (UsesFilesystemLink(currentDirectory))
+                {
+                    warnings.Add($"{entryRoot}/{Path.GetRelativePath(directoryPath, currentDirectory)} was skipped because its source uses a filesystem link.");
+                    continue;
+                }
+                children = Directory.GetFileSystemEntries(currentDirectory);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                warnings.Add($"{entryRoot}/{Path.GetRelativePath(directoryPath, currentDirectory)} could not be enumerated: {ex.Message}");
                 continue;
             }
 
-            AddFile(archive, filePath, Path.Combine(entryRoot, relativePath), maximumBytesPerFile, warnings, includedEntries);
+            foreach (string sourcePath in children)
+            {
+                string relativePath = Path.GetRelativePath(directoryPath, sourcePath);
+                if (excludedPaths.Contains(Path.GetFullPath(sourcePath))
+                    || string.Equals(relativePath, "SupportStaging", StringComparison.OrdinalIgnoreCase)
+                    || relativePath.StartsWith($"SupportStaging{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                FileAttributes attributes;
+                try
+                {
+                    attributes = File.GetAttributes(sourcePath);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    warnings.Add($"{entryRoot}/{relativePath} could not be inspected: {ex.Message}");
+                    continue;
+                }
+
+                if ((attributes & FileAttributes.ReparsePoint) != 0)
+                {
+                    warnings.Add($"{entryRoot}/{relativePath} was skipped because it is a filesystem link.");
+                }
+                else if ((attributes & FileAttributes.Directory) != 0)
+                {
+                    pending.Push(sourcePath);
+                }
+                else if (includeFile == null || includeFile(sourcePath))
+                {
+                    AddFile(archive, sourcePath, Path.Combine(entryRoot, relativePath), maximumBytesPerFile, warnings, includedEntries);
+                }
+            }
         }
+    }
+
+    // Lexical containment alone does not protect a source beneath a junction or symbolic link.
+    private static bool UsesFilesystemLink(string path)
+    {
+        if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+        {
+            return true;
+        }
+
+        for (DirectoryInfo? ancestor = Directory.GetParent(path); ancestor != null; ancestor = ancestor.Parent)
+        {
+            if ((ancestor.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsConfigurationBackup(string filePath)
@@ -227,16 +334,42 @@ public sealed class UserSupportBundleGenerator
             return;
         }
 
+        FileStream input;
         try
         {
-            using FileStream input = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            ZipArchiveEntry entry = archive.CreateEntry(entryName, CompressionLevel.Optimal);
+            if (UsesFilesystemLink(sourcePath))
+            {
+                warnings.Add($"{entryName} was skipped because it is a filesystem link.");
+                return;
+            }
+
+            input = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            warnings.Add($"{entryName} could not be added: {ex.Message}");
+            return;
+        }
+
+        using (input)
+        {
+            ZipArchiveEntry entry = archive.CreateEntry(entryName.Replace('\\', '/'), CompressionLevel.Optimal);
             using Stream output = entry.Open();
             long remainingBytes = maximumBytes ?? input.Length;
+            long copiedBytes = 0;
             byte[] buffer = new byte[81920];
             while (remainingBytes > 0)
             {
-                int read = input.Read(buffer, 0, (int)Math.Min(buffer.Length, remainingBytes));
+                int read;
+                try
+                {
+                    read = input.Read(buffer, 0, (int)Math.Min(buffer.Length, remainingBytes));
+                }
+                catch (IOException ex)
+                {
+                    warnings.Add($"{entryName} could only be partially collected: {ex.Message}");
+                    break;
+                }
                 if (read == 0)
                 {
                     break;
@@ -244,6 +377,7 @@ public sealed class UserSupportBundleGenerator
 
                 output.Write(buffer, 0, read);
                 remainingBytes -= read;
+                copiedBytes += read;
             }
 
             if (maximumBytes.HasValue && input.Length > maximumBytes.Value)
@@ -251,11 +385,13 @@ public sealed class UserSupportBundleGenerator
                 warnings.Add($"{entryName} was limited to {maximumBytes.Value} bytes.");
             }
 
-            includedEntries.Add(DescribeEntry(entryName.Replace('\\', '/'), input.Length));
-        }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-        {
-            warnings.Add($"{entryName} could not be added: {ex.Message}");
+            SupportBundleEntry description = DescribeEntry(entryName.Replace('\\', '/'), copiedBytes);
+            if (remainingBytes > 0)
+            {
+                description.CollectionResult = "Partial";
+                warnings.Add($"{entryName} ended before all expected bytes could be collected.");
+            }
+            includedEntries.Add(description);
         }
     }
 
