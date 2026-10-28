@@ -20,6 +20,9 @@ public sealed class OperationStatusStore
     private readonly Dictionary<Guid, OperationStatus> _operations = new Dictionary<Guid, OperationStatus>();
     private readonly Queue<OperationStatus> _notifications = new Queue<OperationStatus>();
     private bool _publishingNotifications;
+    private bool _writesEnabled = true;
+    private bool _persistenceDirty;
+    private readonly Dictionary<Guid, HashSet<Guid>> _acceptedUpdates = new Dictionary<Guid, HashSet<Guid>>();
 
     public OperationStatusStore(StoragePaths storagePaths)
     {
@@ -36,12 +39,15 @@ public sealed class OperationStatusStore
     }
 
     public OperationStatus Publish(string ownerUserSid, int ownerSessionId, OperationStatusUpdate update, DateTime utcNow)
+        => Publish(ownerUserSid, ownerSessionId, update, utcNow, out _);
+
+    public OperationStatus Publish(string ownerUserSid, int ownerSessionId, OperationStatusUpdate update, DateTime utcNow, out bool isPersisted)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
         ArgumentNullException.ThrowIfNull(update);
-        if (update.OperationId == Guid.Empty)
+        if (!OperationStatusValidation.IsValidUpdate(update) || ownerSessionId < 0 || utcNow == default)
         {
-            throw new ArgumentException("An operation ID is required.", nameof(update));
+            throw new ArgumentException("The operation status update is invalid.", nameof(update));
         }
 
         OperationStatus status;
@@ -54,13 +60,16 @@ public sealed class OperationStatusStore
                     throw new InvalidOperationException("An operation can only be updated by its owning User Agent session.");
                 }
 
-                if (update.UpdateId != Guid.Empty && existing.LastUpdateId == update.UpdateId)
+                if (update.UpdateId != Guid.Empty && (existing.LastUpdateId == update.UpdateId ||
+                    (_acceptedUpdates.TryGetValue(update.OperationId, out HashSet<Guid>? knownIds) && knownIds.Contains(update.UpdateId))))
                 {
+                    isPersisted = _writesEnabled && (!_persistenceDirty || TryPersist());
                     return Copy(existing);
                 }
 
                 if (existing.IsTerminal)
                 {
+                    isPersisted = _writesEnabled && (!_persistenceDirty || TryPersist());
                     return Copy(existing);
                 }
 
@@ -88,8 +97,14 @@ public sealed class OperationStatusStore
             status.ErrorCode = update.ErrorCode;
             status.LastUpdateId = update.UpdateId;
             _operations[status.OperationId] = status;
+            if (update.UpdateId != Guid.Empty)
+            {
+                if (!_acceptedUpdates.TryGetValue(update.OperationId, out HashSet<Guid>? accepted))
+                    _acceptedUpdates.Add(update.OperationId, accepted = new HashSet<Guid>());
+                accepted.Add(update.UpdateId);
+            }
             PruneCompletedOperationsUnsafe(utcNow);
-            Persist();
+            isPersisted = TryPersist();
             _notifications.Enqueue(Copy(status));
         }
 
@@ -101,7 +116,7 @@ public sealed class OperationStatusStore
     {
         lock (_syncRoot)
         {
-            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow) || _persistenceDirty) TryPersist();
             return _operations.TryGetValue(operationId, out OperationStatus? status) && string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase)
                 ? Copy(status)
                 : null;
@@ -112,7 +127,7 @@ public sealed class OperationStatusStore
     {
         lock (_syncRoot)
         {
-            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow) || _persistenceDirty) TryPersist();
             return _operations.Values
                 .Where(status => string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(status => status.UpdatedUtc)
@@ -125,7 +140,7 @@ public sealed class OperationStatusStore
     {
         lock (_syncRoot)
         {
-            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow) || _persistenceDirty) TryPersist();
             return _operations.Values
                 .Where(status => string.Equals(status.OwnerUserSid, ownerUserSid, StringComparison.OrdinalIgnoreCase) && status.UpdatedUtc >= changedSinceUtc.ToUniversalTime())
                 .OrderBy(status => status.UpdatedUtc)
@@ -176,9 +191,9 @@ public sealed class OperationStatusStore
                 status.Sequence++;
                 changedStatuses.Add(Copy(status));
             }
-            if (changedStatuses.Count > 0)
+            if (changedStatuses.Count > 0 || _persistenceDirty)
             {
-                Persist();
+                TryPersist();
                 foreach (OperationStatus status in changedStatuses) _notifications.Enqueue(status);
             }
         }
@@ -218,39 +233,70 @@ public sealed class OperationStatusStore
     {
         try
         {
-            if (!File.Exists(_storagePath))
+            string json = File.ReadAllText(_storagePath);
+            using JsonDocument document = JsonDocument.Parse(json);
+            OperationStatus[] statuses;
+            PersistedOperation[] records;
+            if (document.RootElement.ValueKind == JsonValueKind.Array)
             {
-                return;
+                // Legacy version 1 was a plain status array. First replacement backs
+                // it up through the existing atomic writer before writing version 2.
+                statuses = JsonSerializer.Deserialize<OperationStatus[]>(json) ?? throw new JsonException("The operation-status array is missing.");
+                records = Array.Empty<PersistedOperation>();
             }
-
-            OperationStatus[]? statuses = JsonSerializer.Deserialize<OperationStatus[]>(File.ReadAllText(_storagePath));
-            if (statuses == null)
+            else
             {
-                return;
+                if (document.RootElement.ValueKind != JsonValueKind.Object ||
+                    !document.RootElement.TryGetProperty("SchemaVersion", out JsonElement version) || version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out int schema) || schema != 2 ||
+                    !document.RootElement.TryGetProperty("Operations", out JsonElement operations) || operations.ValueKind != JsonValueKind.Array)
+                    throw new JsonException("The operation-status file is incomplete or uses an unsupported schema.");
+                PersistedStatuses stored = JsonSerializer.Deserialize<PersistedStatuses>(json) ?? throw new JsonException("The status document is missing.");
+                foreach (JsonElement record in operations.EnumerateArray())
+                    if (record.ValueKind != JsonValueKind.Object || !record.TryGetProperty("Status", out JsonElement status) || status.ValueKind != JsonValueKind.Object ||
+                        !record.TryGetProperty("AcceptedUpdateIds", out JsonElement ids) || ids.ValueKind != JsonValueKind.Array)
+                        throw new JsonException("The operation-status delivery record is incomplete.");
+                records = stored.Operations;
+                if (records.Any(record => record == null || record.Status == null || record.AcceptedUpdateIds == null ||
+                    record.AcceptedUpdateIds.Any(id => id == Guid.Empty) || record.AcceptedUpdateIds.Distinct().Count() != record.AcceptedUpdateIds.Length ||
+                    (record.Status.LastUpdateId != Guid.Empty && !record.AcceptedUpdateIds.Contains(record.Status.LastUpdateId))))
+                    throw new JsonException("The operation-status file contains invalid delivery records.");
+                statuses = records.Select(record => record.Status).ToArray();
             }
-
-            foreach (OperationStatus status in statuses.Where(status => status.OperationId != Guid.Empty && !string.IsNullOrWhiteSpace(status.OwnerUserSid)))
+            if (statuses.Any(status => !OperationStatusValidation.IsValidStatus(status)) || statuses.GroupBy(status => status.OperationId).Any(group => group.Count() != 1))
+                throw new JsonException("The operation-status file contains invalid or duplicate records.");
+            foreach (OperationStatus status in statuses)
             {
                 _operations[status.OperationId] = status;
+                _acceptedUpdates[status.OperationId] = status.LastUpdateId == Guid.Empty ? new HashSet<Guid>() : new HashSet<Guid> { status.LastUpdateId };
             }
-            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) Persist();
+            foreach (PersistedOperation record in records) _acceptedUpdates[record.Status.OperationId] = new HashSet<Guid>(record.AcceptedUpdateIds);
+            if (PruneCompletedOperationsUnsafe(DateTime.UtcNow)) TryPersist();
         }
+        catch (FileNotFoundException) when (!File.Exists(_storagePath + ".bak") && !Directory.Exists(_storagePath + ".bak")) { /* No prior status history exists. */ }
+        catch (DirectoryNotFoundException) when (!File.Exists(_storagePath + ".bak") && !Directory.Exists(_storagePath + ".bak")) { /* New installation; the writer creates the directory. */ }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
         {
-            _logger.Error(ex, "OperationStatusStore/Load: Could not load persisted operation statuses from {0}.", _storagePath);
+            _writesEnabled = false;
+            _logger.Error(ex, "OperationStatusStore/Load: Could not load {0}. Preserving the status files until repair/restart; operations continue with in-memory status tracking.", _storagePath);
         }
     }
 
-    private void Persist()
+    private bool TryPersist()
     {
+        _persistenceDirty = true;
+        if (!_writesEnabled) return false;
         try
         {
-            string json = JsonSerializer.Serialize(_operations.Values.OrderBy(status => status.UpdatedUtc).ToArray());
+            string json = JsonSerializer.Serialize(new PersistedStatuses { Operations = _operations.Values.OrderBy(status => status.UpdatedUtc)
+                .Select(status => new PersistedOperation { Status = status, AcceptedUpdateIds = _acceptedUpdates.TryGetValue(status.OperationId, out HashSet<Guid>? ids) ? ids.ToArray() : Array.Empty<Guid>() }).ToArray() });
             AtomicFileStore.WriteAllText(_storagePath, json, $"{_storagePath}.bak");
+            _persistenceDirty = false;
+            return true;
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
         {
-            _logger.Error(ex, "OperationStatusStore/Persist: Could not persist operation statuses to {0}.", _storagePath);
+            _logger.Error(ex, "OperationStatusStore/TryPersist: Could not persist operation statuses to {0}; keeping them in memory for retry.", _storagePath);
+            return false;
         }
     }
 
@@ -270,8 +316,21 @@ public sealed class OperationStatusStore
         foreach (Guid operationId in expiredOperationIds.Concat(excessOperationIds))
         {
             _operations.Remove(operationId);
+            _acceptedUpdates.Remove(operationId);
         }
         return expiredOperationIds.Length + excessOperationIds.Length > 0;
+    }
+
+    private sealed class PersistedStatuses
+    {
+        public int SchemaVersion { get; set; } = 2;
+        public PersistedOperation[] Operations { get; set; } = Array.Empty<PersistedOperation>();
+    }
+
+    private sealed class PersistedOperation
+    {
+        public OperationStatus Status { get; set; } = new OperationStatus();
+        public Guid[] AcceptedUpdateIds { get; set; } = Array.Empty<Guid>();
     }
 
     private static OperationStatus Copy(OperationStatus status)

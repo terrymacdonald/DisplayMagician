@@ -151,7 +151,9 @@ public class ControlServiceClient
             MessageType = update.IsTerminal ? ControlMessageType.OperationCompleted : ControlMessageType.OperationProgress,
             Payload = JsonSerializer.Serialize(update)
         }, cancellationToken).ConfigureAwait(false);
-        if (!statusResponse.IsSuccessful || statusResponse.OperationStatus == null)
+        if (!statusResponse.IsSuccessful && statusResponse.ErrorCode == ControlErrorCode.ExecutionFailed && statusResponse.OperationStatus?.OperationId == update.OperationId)
+            throw new OperationStatusPersistenceException(statusResponse.Message);
+        if (!statusResponse.IsSuccessful || statusResponse.OperationStatus?.OperationId != update.OperationId)
         {
             throw new InvalidOperationException(statusResponse.Message);
         }
@@ -214,7 +216,7 @@ public class ControlServiceClient
         return decision;
     }
 
-    private async Task<ControlResponse> SendPersistentAsync(ControlEnvelope request, CancellationToken cancellationToken)
+    protected virtual async Task<ControlResponse> SendPersistentAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         await _requestLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try

@@ -316,7 +316,7 @@ public sealed class NamedPipeControlServer
         if (request.MessageType == ControlMessageType.OperationProgress || request.MessageType == ControlMessageType.OperationCompleted)
         {
             OperationStatusUpdate? update = JsonSerializer.Deserialize<OperationStatusUpdate>(request.Payload);
-            if (update == null || update.OperationId == Guid.Empty)
+            if (!OperationStatusValidation.IsValidUpdate(update))
             {
                 await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The operation status update was invalid.", cancellationToken).ConfigureAwait(false);
                 return;
@@ -330,9 +330,11 @@ public sealed class NamedPipeControlServer
             using IDisposable operationScope = SupportLogScope.BeginOperation(update.OperationId);
             try
             {
-                OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
+                OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update!, DateTime.UtcNow, out bool isPersisted);
                 _coordinator.RecordOperationStatus(status, DateTime.UtcNow);
-                await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Operation status recorded.", cancellationToken, operationStatus: status).ConfigureAwait(false);
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, isPersisted,
+                    isPersisted ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed,
+                    isPersisted ? "Operation status recorded." : "Operation status is tracked in memory but could not be saved. Retry the update.", cancellationToken, operationStatus: status).ConfigureAwait(false);
             }
             catch (InvalidOperationException ex)
             {
@@ -345,18 +347,30 @@ public sealed class NamedPipeControlServer
         if (request.MessageType == ControlMessageType.ReconcileOperationStatuses)
         {
             OperationStatusReconciliationRequest? reconciliation = JsonSerializer.Deserialize<OperationStatusReconciliationRequest>(request.Payload);
-            if (reconciliation == null || reconciliation.ActiveUpdates == null || Array.Exists(reconciliation.ActiveUpdates, update => update == null || update.OperationId == Guid.Empty))
+            if (reconciliation == null || reconciliation.ActiveUpdates == null || Array.Exists(reconciliation.ActiveUpdates, update => !OperationStatusValidation.IsValidUpdate(update) || update.IsTerminal))
             {
                 await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.InvalidRequest, "The active operation reconciliation was invalid.", cancellationToken).ConfigureAwait(false);
                 return;
             }
 
+            bool allPersisted = true;
             foreach (OperationStatusUpdate update in reconciliation.ActiveUpdates!)
             {
-                OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow);
-                _coordinator.RecordOperationStatus(status, DateTime.UtcNow);
+                try
+                {
+                    OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow, out bool isPersisted);
+                    allPersisted &= isPersisted;
+                    _coordinator.RecordOperationStatus(status, DateTime.UtcNow);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.CallerIdentityMismatch, ex.Message, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
             }
-            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Active operation statuses reconciled.", cancellationToken).ConfigureAwait(false);
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, allPersisted,
+                allPersisted ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed,
+                allPersisted ? "Active operation statuses reconciled." : "Active statuses are tracked in memory but could not be saved. Retry reconciliation.", cancellationToken).ConfigureAwait(false);
             return;
         }
 

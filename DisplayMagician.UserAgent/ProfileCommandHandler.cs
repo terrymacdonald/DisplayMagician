@@ -1013,13 +1013,23 @@ public sealed class ProfileCommandHandler
 
     private async Task<bool> FlushPendingStatusUpdatesCoreAsync(CancellationToken cancellationToken)
     {
+        bool prefixAcknowledged = true;
         foreach (OperationStatusUpdate update in _operationStatusOutbox.GetPending())
         {
             using IDisposable operationScope = SupportLogScope.BeginOperation(update.OperationId);
             try
             {
                 await _controlServiceClient.PublishOperationStatusAsync(_registration, update, cancellationToken).ConfigureAwait(false);
-                _operationStatusOutbox.Acknowledge(update.UpdateId);
+                if (prefixAcknowledged && !_operationStatusOutbox.TryAcknowledge(update.UpdateId))
+                {
+                    _logger.Warn("ProfileCommandHandler/FlushPendingStatusUpdatesCoreAsync: The service saved update {0}, but its local acknowledgement could not be saved. Retaining the ordered queue for retry.", update.UpdateId);
+                    prefixAcknowledged = false;
+                }
+            }
+            catch (OperationStatusPersistenceException ex)
+            {
+                prefixAcknowledged = false;
+                _logger.Warn(ex, "ProfileCommandHandler/FlushPendingStatusUpdatesCoreAsync: The service tracks operation {0} phase {1} in memory only. Retaining the update for durable retry.", update.OperationId, update.Phase);
             }
             catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)
             {
@@ -1027,7 +1037,7 @@ public sealed class ProfileCommandHandler
                 return false;
             }
         }
-        return true;
+        return prefixAcknowledged;
     }
 
     /// <summary>Restores the current Agent view of active operations after ControlService has restarted.</summary>

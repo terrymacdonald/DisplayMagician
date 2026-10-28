@@ -37,3 +37,5 @@ dotnet build .\DisplayMagician.Contracts\DisplayMagician.Contracts.csproj
 ListGames accepts the shared optional GameListRequest. Refresh defaults to false; true requests a fresh UserAgent-owned library scan. Empty legacy payloads and {} remain cached reads. The version-1 envelope and GameListResult are unchanged; no persisted configuration schema changes. REST catalogue reads retain their existing behaviour.
 
 Completed-operation retention is shared through ControlProtocol.MaximumCompletedOperationsPerUser (100) and CompletedOperationLifetime (seven days). These retain the existing service policy and let desktop event guards use the same limits. Wire DTOs, protocol versions and persisted schemas are unchanged.
+
+OperationStatusValidation provides shared structural validation for status updates and persisted status snapshots (identifiers, counters, timestamps and defined enum values). Legacy empty UpdateId values remain supported at the service boundary; the Agent outbox requires stable delivery IDs. These helpers do not perform file or runtime work and do not alter transport DTOs.
