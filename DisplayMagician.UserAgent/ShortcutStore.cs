@@ -21,7 +21,7 @@ public sealed class ShortcutStore
     {
         _shortcutFilePath = Path.Combine(userDataPath, "Shortcuts", "Shortcuts.json");
         MigrateLegacyApplicationObjects();
-        MigrateWindowPlacementSchema();
+        MigrateShortcutSchema();
     }
 
     public RepositorySnapshot GetSnapshot()
@@ -181,21 +181,43 @@ public sealed class ShortcutStore
         }
     }
 
-    private void MigrateWindowPlacementSchema()
+    private void MigrateShortcutSchema()
     {
         if (!File.Exists(_shortcutFilePath)) return;
         try
         {
-            JsonObject? root = JsonNode.Parse(GetSnapshot().Json) as JsonObject;
-            if (root?["Shortcuts"] is not JsonArray shortcuts) return;
+            JsonNode? parsed = JsonNode.Parse(GetSnapshot().Json);
+            JsonObject root = parsed is JsonArray legacyShortcuts
+                ? new JsonObject { ["Shortcuts"] = legacyShortcuts.DeepClone() }
+                : parsed as JsonObject ?? throw new JsonException("The shortcut file must contain a shortcut collection.");
             string? storedVersion = root["ShortcutFileVersion"]?.GetValue<string>();
             bool knownVersion = int.TryParse(storedVersion, out int versionNumber);
-            if (knownVersion && versionNumber > 8) return;
+            if (knownVersion && versionNumber > 9) return;
+            if (!string.IsNullOrWhiteSpace(storedVersion) && (!knownVersion || versionNumber < 1))
+                throw new JsonException($"Unsupported shortcut file version '{storedVersion}'.");
+            if (root["Shortcuts"] is JsonObject wrappedShortcuts && wrappedShortcuts["$values"] is JsonArray values)
+                root["Shortcuts"] = values.DeepClone();
+            JsonArray shortcuts = root["Shortcuts"] as JsonArray ?? throw new JsonException("The shortcut file must contain a Shortcuts array.");
             bool hasLegacyMonitorName = shortcuts.OfType<JsonObject>().Any(shortcut =>
                 shortcut.ContainsKey("ProcessNameToMonitorUsesExecutable") || shortcut.ContainsKey("MonitorExecutablePath"));
-            if (knownVersion && versionNumber == 8 && !hasLegacyMonitorName) return;
-            foreach (JsonObject shortcut in shortcuts.OfType<JsonObject>())
+            if (knownVersion && versionNumber == 9 && !hasLegacyMonitorName) return;
+            foreach (JsonNode? shortcutNode in shortcuts)
             {
+                JsonObject shortcut = shortcutNode as JsonObject ?? throw new JsonException("The shortcut file contains an invalid shortcut entry.");
+                foreach (string collectionName in new[] { "StartPrograms", "StopPrograms", "AfterPrograms" })
+                {
+                    if (shortcut[collectionName] == null) continue;
+                    if (shortcut[collectionName] is JsonObject wrappedPrograms && wrappedPrograms["$values"] is JsonArray programValues)
+                        shortcut[collectionName] = programValues.DeepClone();
+                    JsonArray programsToMigrate = shortcut[collectionName] as JsonArray
+                        ?? throw new JsonException($"The shortcut contains an invalid {collectionName} collection.");
+                    string delayName = collectionName == "StopPrograms" ? "WaitAfterStopSecs" : "WaitAfterStartSecs";
+                    foreach (JsonNode? programNode in programsToMigrate)
+                    {
+                        JsonObject program = programNode as JsonObject ?? throw new JsonException($"The shortcut contains an invalid {collectionName} entry.");
+                        if (!program.ContainsKey(delayName)) program[delayName] = 0;
+                    }
+                }
                 shortcut["MonitorLaunchedExecutable"] ??= shortcut["ProcessNameToMonitorUsesExecutable"]?.DeepClone()
                     ?? shortcut["MonitorExecutablePath"]?.DeepClone() ?? JsonValue.Create(true);
                 shortcut.Remove("ProcessNameToMonitorUsesExecutable");
@@ -210,15 +232,16 @@ public sealed class ShortcutStore
             }
             string previousVersion = int.TryParse(storedVersion, out versionNumber) && versionNumber >= 0
                 ? versionNumber.ToString() : "unknown";
-            root["ShortcutFileVersion"] = "8";
+            root["ShortcutFileVersion"] = "9";
+            root["LastUpdated"] = DateTime.UtcNow;
             string backupPath = $"{_shortcutFilePath}.v{previousVersion}.{DateTime.UtcNow:yyyyMMddHHmmss}.{Guid.NewGuid():N}.bak";
             File.Copy(_shortcutFilePath, backupPath, overwrite: false);
             Runtime.AtomicFile.WriteAllText(_shortcutFilePath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), Encoding.Unicode);
-            Logger.Info("ShortcutStore/MigrateWindowPlacementSchema: Upgraded {0} with backup {1}.", _shortcutFilePath, backupPath);
+            Logger.Info("ShortcutStore/MigrateShortcutSchema: Upgraded {0} with backup {1}.", _shortcutFilePath, backupPath);
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is InvalidOperationException)
         {
-            Logger.Error(ex, "ShortcutStore/MigrateWindowPlacementSchema: Could not migrate {0}.", _shortcutFilePath);
+            Logger.Error(ex, "ShortcutStore/MigrateShortcutSchema: Could not migrate {0}.", _shortcutFilePath);
             // Loading the old false-valued flag as a missing new flag would silently
             // select the wrong executable. Do not expose an unmigrated snapshot.
             throw new InvalidDataException("The shortcut configuration could not be migrated safely. Existing settings were preserved.", ex);
@@ -242,7 +265,7 @@ public sealed class ShortcutStore
             }
 
             if (rootObject["ShortcutFileVersion"] is JsonValue versionValue && versionValue.TryGetValue<string>(out string? version) &&
-                int.TryParse(version, out int versionNumber) && versionNumber > 8)
+                int.TryParse(version, out int versionNumber) && versionNumber > 9)
                 return;
 
             bool changed = false;
@@ -291,6 +314,13 @@ public sealed class ShortcutStore
             : defaultValue;
     }
 
+    private static int GetProgramDelay(JsonElement program, string propertyName)
+    {
+        if (!program.TryGetProperty(propertyName, out JsonElement delay)) return 0;
+        if (delay.ValueKind == JsonValueKind.Number && delay.TryGetInt32(out int seconds)) return seconds;
+        throw new JsonException($"{propertyName} must be an integer number of seconds.");
+    }
+
     private static TEnum GetEnum<TEnum>(JsonElement element, string propertyName, TEnum defaultValue) where TEnum : struct, Enum
     {
         int value = GetInt32(element, propertyName, Convert.ToInt32(defaultValue));
@@ -320,7 +350,8 @@ public sealed class ShortcutStore
                 ArgumentsRequired = GetBoolean(program, "ExecutableArgumentsRequired"),
                 CloseOnFinish = GetBoolean(program, "CloseOnFinish"),
                 DoNotStartIfAlreadyRunning = GetBoolean(program, "DontStartIfAlreadyRunning"),
-                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator")
+                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator"),
+                WaitAfterStartSecs = GetProgramDelay(program, "WaitAfterStartSecs")
             });
         }
 
@@ -361,7 +392,8 @@ public sealed class ShortcutStore
                 Arguments = GetString(program, "Arguments"),
                 ArgumentsRequired = GetBoolean(program, "ExecutableArgumentsRequired"),
                 DoNotStartIfAlreadyRunning = GetBoolean(program, "DontStartIfAlreadyRunning"),
-                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator")
+                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator"),
+                WaitAfterStartSecs = GetProgramDelay(program, "WaitAfterStartSecs")
             });
         }
 
@@ -385,7 +417,8 @@ public sealed class ShortcutStore
                 ExecutablePath = GetString(program, "Executable"),
                 RestartAfterwards = GetBoolean(program, "RestartAfterwards"),
                 RestartProcessPriority = GetEnum(program, "RestartProcessPriority", ShortcutDefinitionProcessPriority.Normal),
-                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator")
+                RunAsAdministrator = GetBoolean(program, "RunAsAdministrator"),
+                WaitAfterStopSecs = GetProgramDelay(program, "WaitAfterStopSecs")
             });
         }
 

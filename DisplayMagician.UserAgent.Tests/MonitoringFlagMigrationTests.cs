@@ -39,7 +39,7 @@ public sealed class MonitoringFlagMigrationTests
     [InlineData("MonitorExecutablePath", "7", true)]
     [InlineData("MonitorExecutablePath", "8", false)]
     [InlineData("MonitorExecutablePath", "8", true)]
-    public void ExistingVersionEightMigrationRenamesOldFieldsAndPreservesTheSelection(string oldName, string version, bool selection)
+    public void ShortcutMigrationRenamesOldFieldsAndPreservesTheSelection(string oldName, string version, bool selection)
     {
         string root = Path.Combine(Path.GetTempPath(), "DisplayMagicianMonitorMigration", Guid.NewGuid().ToString("N"));
         string directory = Path.Combine(root, "Shortcuts");
@@ -60,7 +60,7 @@ public sealed class MonitoringFlagMigrationTests
             ShortcutStore store = new ShortcutStore(root);
             using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
             JsonElement saved = document.RootElement.GetProperty("Shortcuts")[0];
-            Assert.Equal("8", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal("9", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
             Assert.Equal(selection, saved.GetProperty("MonitorLaunchedExecutable").GetBoolean());
             Assert.False(saved.TryGetProperty("ProcessNameToMonitorUsesExecutable", out _));
             Assert.False(saved.TryGetProperty("MonitorExecutablePath", out _));

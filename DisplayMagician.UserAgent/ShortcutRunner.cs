@@ -130,6 +130,13 @@ public sealed class ShortcutRunner
         WindowPlacementRun windowRun = new WindowPlacementRun(preparedRun.OperationId, shortcut);
         ProcessTreeMonitor? detectedGameMonitor = null;
         await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.Validating, "Validating shortcut.", cancellationToken).ConfigureAwait(false);
+        if (shortcut.StartPrograms.Any(program => !program.Disabled && (program.WaitAfterStartSecs < 0 || program.WaitAfterStartSecs > 999)) ||
+            shortcut.StopPrograms.Any(program => !program.Disabled && (program.WaitAfterStopSecs < 0 || program.WaitAfterStopSecs > 999)))
+        {
+            const string message = "Start/Stop Program delays must be between 0 and 999 seconds. Edit the shortcut to correct its saved delays.";
+            _logger.Error("ShortcutRunner/RunShortcutCoreAsync: Shortcut '{0}' ({1}) has an invalid program delay.", shortcut.Name, shortcut.Id);
+            return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut) { Message = message };
+        }
         if (!IsShortcutRunnable(shortcut))
         {
             return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
@@ -238,7 +245,7 @@ public sealed class ShortcutRunner
             }
 
             await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingPrograms, "Starting shortcut programs.", cancellationToken).ConfigureAwait(false);
-            if (!await RunPreGameProgramsAsync(shortcut, startedPrograms, stoppedProgramsToRestart, windowRun, requestDecisionAsync, preparedRun.OperationId, cancellationToken).ConfigureAwait(false))
+            if (!await RunPreGameProgramsAsync(shortcut, startedPrograms, stoppedProgramsToRestart, windowRun, requestDecisionAsync, preparedRun.OperationId, cancellationToken, publishStatusAsync).ConfigureAwait(false))
             {
                 return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
             }
@@ -469,7 +476,7 @@ public sealed class ShortcutRunner
             (!program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments));
     }
 
-    private static async Task<bool> RunPreGameProgramsAsync(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<StoppedProgram> stoppedProgramsToRestart, WindowPlacementRun windowRun, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, Guid operationId, CancellationToken cancellationToken)
+    private static async Task<bool> RunPreGameProgramsAsync(ShortcutDefinition shortcut, List<StartedProgram> startedPrograms, List<StoppedProgram> stoppedProgramsToRestart, WindowPlacementRun windowRun, Func<RequestOperationDecisionRequest, CancellationToken, Task<OperationDecision>>? requestDecisionAsync, Guid operationId, CancellationToken cancellationToken, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync)
     {
         IReadOnlyList<PreGameProgramAction> actions = BuildPreGameProgramActions(shortcut);
 
@@ -478,16 +485,20 @@ public sealed class ShortcutRunner
         {
             cancellationToken.ThrowIfCancellationRequested();
             string? failure = null;
+            ProgramActionOutcome outcome;
             if (action.StopProgram != null)
             {
-                if (!StopProgram(action.StopProgram, executionOrder, stoppedProgramsToRestart))
+                outcome = StopProgram(action.StopProgram, executionOrder, stoppedProgramsToRestart);
+                if (outcome == ProgramActionOutcome.Failed)
                 {
                     failure = $"Could not stop '{action.StopProgram.ExecutablePath}'.";
                 }
             }
-            else if (action.StartProgram == null || !StartProgram(action.StartProgram, executionOrder, startedPrograms, windowRun))
+            else
             {
-                failure = $"Could not start '{action.StartProgram?.ExecutablePath ?? action.StartProgram?.ApplicationId ?? "the configured program"}'.";
+                outcome = action.StartProgram == null ? ProgramActionOutcome.Failed : StartProgram(action.StartProgram, executionOrder, startedPrograms, windowRun);
+                if (outcome == ProgramActionOutcome.Failed)
+                    failure = $"Could not start '{action.StartProgram?.ExecutablePath ?? action.StartProgram?.ApplicationId ?? "the configured program"}'.";
             }
 
             if (failure != null && !await ShouldContinueAfterFailureAsync(requestDecisionAsync, operationId, "Shortcut program step failed", failure, cancellationToken).ConfigureAwait(false))
@@ -495,9 +506,23 @@ public sealed class ShortcutRunner
                 return false;
             }
 
+            int waitSeconds = action.StopProgram?.WaitAfterStopSecs ?? action.StartProgram?.WaitAfterStartSecs ?? 0;
+            if (outcome == ProgramActionOutcome.Succeeded && waitSeconds > 0)
+            {
+                string actionName = action.StopProgram != null ? "stop" : "start";
+                string programName = action.StopProgram?.ExecutablePath ??
+                    (!string.IsNullOrWhiteSpace(action.StartProgram?.ApplicationId) ? action.StartProgram.ApplicationName : action.StartProgram?.ExecutablePath) ?? string.Empty;
+                _logger.Info("ShortcutRunner/RunPreGameProgramsAsync: Shortcut '{0}' waiting {1} seconds after {2} of '{3}'.", shortcut.Name, waitSeconds, actionName, programName);
+                await PublishStatusAsync(publishStatusAsync, operationId, OperationPhase.StartingPrograms,
+                    $"Waiting {waitSeconds}s after {actionName} of '{programName}'.", cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(waitSeconds), cancellationToken).ConfigureAwait(false);
+                await PublishStatusAsync(publishStatusAsync, operationId, OperationPhase.StartingPrograms, "Preparing shortcut programs.", cancellationToken).ConfigureAwait(false);
+            }
+
             executionOrder++;
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         return true;
     }
 
@@ -543,20 +568,20 @@ public sealed class ShortcutRunner
         }
     }
 
-    private static bool StartProgram(ShortcutStartProgramDefinition program, int sequence, List<StartedProgram> startedPrograms, WindowPlacementRun windowRun)
+    private static ProgramActionOutcome StartProgram(ShortcutStartProgramDefinition program, int sequence, List<StartedProgram> startedPrograms, WindowPlacementRun windowRun)
     {
         if (!string.IsNullOrWhiteSpace(program.ApplicationId))
         {
             if ((program.ArgumentsRequired && string.IsNullOrWhiteSpace(program.Arguments)) ||
                 (program.DoNotStartIfAlreadyRunning && UwpApplicationLauncher.IsRunning(program.ApplicationId)))
             {
-                return !program.ArgumentsRequired || !string.IsNullOrWhiteSpace(program.Arguments);
+                return program.ArgumentsRequired && string.IsNullOrWhiteSpace(program.Arguments) ? ProgramActionOutcome.Failed : ProgramActionOutcome.Skipped;
             }
 
             Process? uwpProcess = UwpApplicationLauncher.Start(program.ApplicationId, program.Arguments);
             if (uwpProcess == null)
             {
-                return false;
+                return ProgramActionOutcome.Failed;
             }
 
             if (program.CloseOnFinish)
@@ -568,16 +593,16 @@ public sealed class ShortcutRunner
                 uwpProcess.Dispose();
             }
 
-            return true;
+            return ProgramActionOutcome.Succeeded;
         }
 
         if (string.IsNullOrWhiteSpace(program.ExecutablePath) || !File.Exists(program.ExecutablePath) || (program.ArgumentsRequired && string.IsNullOrWhiteSpace(program.Arguments)))
         {
-            return false;
+            return ProgramActionOutcome.Failed;
         }
 
         if (program.DoNotStartIfAlreadyRunning && ProcessTreeMonitor.IsExecutableRunning(program.ExecutablePath))
-            return true;
+            return ProgramActionOutcome.Skipped;
 
         ProcessTreeMonitor? monitor = ProcessTreeMonitor.BeginWatching(program.ExecutablePath, 10, continueTrackingDescendants: true);
         List<Process> startedProcesses = ProcessUtils.StartProcess(program.ExecutablePath, program.Arguments, (ProcessPriority)(int)program.ProcessPriority, 10, program.RunAsAdministrator);
@@ -585,7 +610,7 @@ public sealed class ShortcutRunner
         if (startedProcesses.Count == 0)
         {
             monitor?.Dispose();
-            return false;
+            return ProgramActionOutcome.Failed;
         }
         if (monitor != null)
         {
@@ -602,21 +627,21 @@ public sealed class ShortcutRunner
             ProcessUtils.DisposeProcesses(startedProcesses);
         }
 
-        return true;
+        return ProgramActionOutcome.Succeeded;
     }
 
-    private static bool StopProgram(ShortcutStopProgramDefinition program, int sequence, List<StoppedProgram> stoppedProgramsToRestart)
+    private static ProgramActionOutcome StopProgram(ShortcutStopProgramDefinition program, int sequence, List<StoppedProgram> stoppedProgramsToRestart)
     {
         if (string.IsNullOrWhiteSpace(program.ExecutablePath))
         {
-            return false;
+            return ProgramActionOutcome.Failed;
         }
 
         ProcessTreeMonitor.ProcessScan scan = ProcessTreeMonitor.FindRunningProcesses(program.ExecutablePath);
         if (!scan.IsComplete)
         {
             _logger.Warn("ShortcutRunner/StopProgram: Could not safely identify all processes for {0}; no processes were stopped.", program.ExecutablePath);
-            return false;
+            return ProgramActionOutcome.Failed;
         }
         List<Process> runningProcesses = new List<Process>();
         try
@@ -640,24 +665,24 @@ public sealed class ShortcutRunner
             }
             if (runningProcesses.Count == 0)
             {
-                return true;
+                return ProgramActionOutcome.Skipped;
             }
 
             if (!ProcessUtils.StopProcess(runningProcesses))
             {
-                return false;
+                return ProgramActionOutcome.Failed;
             }
             if (program.RestartAfterwards)
             {
                 stoppedProgramsToRestart.Add(new StoppedProgram(program, sequence));
             }
 
-            return true;
+            return ProgramActionOutcome.Succeeded;
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             _logger.Warn(ex, "ShortcutRunner/StopProgram: Could not verify selected process identities for {0}.", program.ExecutablePath);
-            return false;
+            return ProgramActionOutcome.Failed;
         }
         finally
         {
@@ -865,6 +890,8 @@ public sealed class ShortcutRunner
 }
 
 internal sealed record PreGameProgramAction(int Priority, int Sequence, ShortcutStartProgramDefinition? StartProgram, ShortcutStopProgramDefinition? StopProgram);
+
+internal enum ProgramActionOutcome { Failed, Skipped, Succeeded }
 
 public sealed record ShortcutRunResult(Guid OperationId, ShortcutRunOutcome Outcome, ShortcutDefinition? Shortcut = null)
 {

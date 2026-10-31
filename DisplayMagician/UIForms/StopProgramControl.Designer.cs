@@ -16,6 +16,7 @@ namespace DisplayMagician.UIForms
 
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             lbl_priority = new System.Windows.Forms.Label();
             pb_up_arrow = new System.Windows.Forms.PictureBox();
             pb_down_arrow = new System.Windows.Forms.PictureBox();
@@ -28,8 +29,13 @@ namespace DisplayMagician.UIForms
             cbx_restart_priority = new System.Windows.Forms.ComboBox();
             chk_run_as_admin = new System.Windows.Forms.CheckBox();
             btn_delete = new System.Windows.Forms.Button();
+            lbl_wait_after_stop = new System.Windows.Forms.Label();
+            nud_wait_after_stop = new System.Windows.Forms.NumericUpDown();
+            error_provider = new System.Windows.Forms.ErrorProvider(components);
             ((System.ComponentModel.ISupportInitialize)pb_up_arrow).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nud_wait_after_stop).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)error_provider).BeginInit();
             SuspendLayout();
             // 
             // lbl_priority
@@ -187,13 +193,38 @@ namespace DisplayMagician.UIForms
             btn_delete.Text = "X";
             btn_delete.UseVisualStyleBackColor = true;
             btn_delete.Click += btn_delete_Click;
+            //
+            // lbl_wait_after_stop
+            //
+            lbl_wait_after_stop.AutoSize = true;
+            lbl_wait_after_stop.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            lbl_wait_after_stop.ForeColor = System.Drawing.Color.White;
+            lbl_wait_after_stop.Location = new System.Drawing.Point(161, 151);
+            lbl_wait_after_stop.Name = "lbl_wait_after_stop";
+            lbl_wait_after_stop.TabIndex = 8;
+            lbl_wait_after_stop.Text = "Wait after Stop (seconds):";
+            //
+            // nud_wait_after_stop
+            //
+            nud_wait_after_stop.BackColor = System.Drawing.Color.White;
+            nud_wait_after_stop.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            nud_wait_after_stop.ForeColor = System.Drawing.Color.Black;
+            nud_wait_after_stop.Location = new System.Drawing.Point(375, 148);
+            nud_wait_after_stop.Maximum = new decimal(new int[] { 999, 0, 0, 0 });
+            nud_wait_after_stop.Name = "nud_wait_after_stop";
+            nud_wait_after_stop.Size = new System.Drawing.Size(80, 26);
+            nud_wait_after_stop.TabIndex = 9;
+            nud_wait_after_stop.ValueChanged += nud_wait_after_stop_ValueChanged;
             // 
             // StopProgramControl
             // 
+            error_provider.ContainerControl = this;
             AllowDrop = true;
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             AutoSize = true;
             BackColor = System.Drawing.Color.Black;
+            Controls.Add(lbl_wait_after_stop);
+            Controls.Add(nud_wait_after_stop);
             Controls.Add(btn_delete);
             Controls.Add(chk_run_as_admin);
             Controls.Add(cbx_restart_priority);
@@ -208,11 +239,13 @@ namespace DisplayMagician.UIForms
             Controls.Add(lbl_priority);
             ForeColor = System.Drawing.Color.White;
             Margin = new System.Windows.Forms.Padding(10);
-            MinimumSize = new System.Drawing.Size(800, 155);
+            MinimumSize = new System.Drawing.Size(800, 190);
             Name = "StopProgramControl";
-            Size = new System.Drawing.Size(900, 155);
+            Size = new System.Drawing.Size(900, 190);
             ((System.ComponentModel.ISupportInitialize)pb_up_arrow).EndInit();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nud_wait_after_stop).EndInit();
+            ((System.ComponentModel.ISupportInitialize)error_provider).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -231,6 +264,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ComboBox cbx_restart_priority;
         private System.Windows.Forms.CheckBox chk_run_as_admin;
         private System.Windows.Forms.Button btn_delete;
+        private System.Windows.Forms.Label lbl_wait_after_stop;
+        private System.Windows.Forms.NumericUpDown nud_wait_after_stop;
+        private System.Windows.Forms.ErrorProvider error_provider;
     }
 }
-

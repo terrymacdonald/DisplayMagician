@@ -55,7 +55,7 @@ public sealed class GatewaySettingsStore
         }
     }
 
-    private static GatewaySettings Normalize(GatewaySettings settings)
+    internal static GatewaySettings Normalize(GatewaySettings settings)
     {
         if (settings.LanPort is < 1 or > 65535 || settings.RemotePort is < 1 or > 65535)
         {

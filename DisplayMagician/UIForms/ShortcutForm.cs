@@ -368,8 +368,10 @@ namespace DisplayMagician.UIForms
             // Store the single stop program if it's set (but wth lots of defaults)
             if (!String.IsNullOrWhiteSpace(txt_run_cmd_afterwards.Text) && File.Exists(txt_run_cmd_afterwards.Text))
             {
+                int waitAfterStartSecs = _afterPrograms != null && _afterPrograms.Count > 0 ? _afterPrograms[0].WaitAfterStartSecs : 0;
                 _afterPrograms = new List<AfterProgram>();
                 AfterProgram stopProgram = new AfterProgram();
+                stopProgram.WaitAfterStartSecs = waitAfterStartSecs;
                 stopProgram.Executable = txt_run_cmd_afterwards.Text;
                 stopProgram.Priority = 0;
                 stopProgram.DontStartIfAlreadyRunning = false;
@@ -922,6 +924,11 @@ namespace DisplayMagician.UIForms
             {
                 if (ctrl is StartProgramControl spControl)
                 {
+                    if (spControl.StartProgram.WaitAfterStartSecs < 0 || spControl.StartProgram.WaitAfterStartSecs > 999)
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: Start program #{spControl.ProgramNumber} has invalid WaitAfterStartSecs {spControl.StartProgram.WaitAfterStartSecs}.");
+                        errors.Add($"Start program #{spControl.ProgramNumber} must have a Wait after Start between 0 and 999 seconds.");
+                    }
                     if (String.IsNullOrWhiteSpace(spControl.StartProgram.Executable))
                     {
                         int priority = flp_start_programs.Controls.GetChildIndex(spControl) + 1;
@@ -931,6 +938,11 @@ namespace DisplayMagician.UIForms
                 }
                 else if (ctrl is StopProgramControl stpControl)
                 {
+                    if (stpControl.StopProgram.WaitAfterStopSecs < 0 || stpControl.StopProgram.WaitAfterStopSecs > 999)
+                    {
+                        logger.Error($"ShortcutForm/AllowedToSave: Stop program #{stpControl.ProgramNumber} has invalid WaitAfterStopSecs {stpControl.StopProgram.WaitAfterStopSecs}.");
+                        errors.Add($"Stop program #{stpControl.ProgramNumber} must have a Wait after Stop between 0 and 999 seconds.");
+                    }
                     if (String.IsNullOrWhiteSpace(stpControl.StopProgram.Executable))
                     {
                         int priority = flp_start_programs.Controls.GetChildIndex(stpControl) + 1;
@@ -1845,6 +1857,7 @@ namespace DisplayMagician.UIForms
                 // Setup the single stop program we're beginning with
                 if (_shortcutToEdit.AfterPrograms is List<AfterProgram> && _shortcutToEdit.AfterPrograms.Count > 0)
                 {
+                    _afterPrograms = new List<AfterProgram>(_shortcutToEdit.AfterPrograms);
                     if (_shortcutToEdit.AfterPrograms[0].Disabled == false)
                     {
                         txt_run_cmd_afterwards.Enabled = true;
@@ -2945,6 +2958,11 @@ namespace DisplayMagician.UIForms
                         MessageBoxIcon.Exclamation);
                 }
             }
+        }
+
+        internal void MarkAsUnsaved()
+        {
+            if (_loadedShortcut) _isUnsaved = true;
         }
 
         public void RedrawStartPrograms()

@@ -18,6 +18,7 @@ namespace DisplayMagician.UIForms
 
         private StartProgram myStartProgram = new StartProgram() { };
         private bool _updatingSelectedProgram;
+        private bool _updatingWaitAfterStart;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ProgramNumber
@@ -150,6 +151,29 @@ namespace DisplayMagician.UIForms
             cb_dont_start_if_running.Checked = myStartProgram.DontStartIfAlreadyRunning;
             cbx_start_program_priority.SelectedValue = myStartProgram.ProcessPriority;
             cb_run_as_administrator.Checked = myStartProgram.RunAsAdministrator;
+            _updatingWaitAfterStart = true;
+            try
+            {
+                nud_wait_after_start.Value = Math.Clamp(myStartProgram.WaitAfterStartSecs, 0, 999);
+            }
+            finally
+            {
+                _updatingWaitAfterStart = false;
+            }
+            nud_wait_after_start.Enabled = !myStartProgram.Disabled;
+            lbl_wait_after_start.Enabled = !myStartProgram.Disabled;
+            error_provider.SetError(nud_wait_after_start,
+                myStartProgram.WaitAfterStartSecs < 0 || myStartProgram.WaitAfterStartSecs > 999
+                    ? $"Saved delay {myStartProgram.WaitAfterStartSecs} is outside 0 to 999 seconds. Change this value before saving."
+                    : "");
+        }
+
+        private void nud_wait_after_start_ValueChanged(object sender, EventArgs e)
+        {
+            if (_updatingWaitAfterStart) return;
+            myStartProgram.WaitAfterStartSecs = (int)nud_wait_after_start.Value;
+            error_provider.SetError(nud_wait_after_start, "");
+            if (FindForm() is ShortcutForm shortcutForm) shortcutForm.MarkAsUnsaved();
         }
 
         public void ChangePriority(int priority)
@@ -229,6 +253,8 @@ namespace DisplayMagician.UIForms
 
         private void cb_start_program_CheckedChanged(object sender, EventArgs e)
         {
+            nud_wait_after_start.Enabled = !cb_disable_start_program.Checked;
+            lbl_wait_after_start.Enabled = !cb_disable_start_program.Checked;
             // Disable the start program fields
             if (cb_disable_start_program.Checked)
             {

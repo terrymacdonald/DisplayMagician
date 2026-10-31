@@ -42,7 +42,7 @@ namespace DisplayMagician
         private static List<ShortcutItem> _allShortcuts = new List<ShortcutItem>();
         private static bool _shortcutsLoaded = false;
         //private static bool _cancelWait = false;
-        private static string _shortcutFileVersion = "8";
+        private static string _shortcutFileVersion = "9";
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private static IUserAgentRepositoryConnection _userAgentRepositoryConnection;
@@ -730,4 +730,3 @@ namespace DisplayMagician
     }
 
 }
-

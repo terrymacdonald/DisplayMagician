@@ -16,7 +16,8 @@ namespace DisplayMagician
             new SettingsV3ToV4LegacyDataMigration(),
             new SettingsV4ToV5DonationSplitMigration(),
             new SettingsV5ToV6ClientSyncMigration(),
-            new SettingsV6ToV7DisplayProfileWaitMigration()
+            new SettingsV6ToV7DisplayProfileWaitMigration(),
+            new SettingsV7ToV8PreferencesConsolidationMigration()
         };
 
         public enum MigrationStatus
@@ -66,7 +67,7 @@ namespace DisplayMagician
         {
             string settingsFileName = ProgramSettings.ProgramSettingsStorageJsonFullFileName;
 
-            if (!File.Exists(settingsFileName))
+            if (!File.Exists(settingsFileName) && !File.Exists(DonationSettings.DonationSettingsStorageJsonFullFileName))
             {
                 logger.Trace($"ConfigMigrationRunner/RunMigrations: No {settingsFileName} file exists, so no settings migration is needed.");
                 return new MigrationResult(MigrationStatus.NoSettingsFile);
@@ -74,7 +75,9 @@ namespace DisplayMagician
 
             try
             {
-                JObject settingsFile = ReadJsonObject(settingsFileName);
+                JObject settingsFile = File.Exists(settingsFileName) ? ReadJsonObject(settingsFileName)
+                    : JObject.FromObject(new SettingsFile { SettingsFileVersion = "7", LastUpdated = DateTime.UtcNow, Settings = new ProgramSettings() });
+                if (!File.Exists(settingsFileName)) (settingsFile["Settings"] as JObject)?.Remove("Donation");
                 MigrationContext context = new MigrationContext(settingsFileName, DonationSettings.DonationSettingsStorageJsonFullFileName, settingsFile);
 
                 bool ranRule;
@@ -557,6 +560,39 @@ namespace DisplayMagician
             }
         }
 
+        private sealed class SettingsV7ToV8PreferencesConsolidationMigration : IConfigMigrationRule
+        {
+            public string Name => "Settings v7 to v8 preferences consolidation";
+            public bool Applies(MigrationContext context) => context.GetSettingsFileVersion() == "7";
+            public bool Apply(MigrationContext context)
+            {
+                try
+                {
+                    JObject settings = context.GetSettingsObject() ?? throw new InvalidDataException("The settings object is missing.");
+                    if (settings["Donation"] == null && File.Exists(context.DonationSettingsFileName))
+                    {
+                        JObject legacy = ReadJsonObject(context.DonationSettingsFileName);
+                        if (legacy["DonationSettingsFileVersion"]?.Value<string>() != "1" || legacy["DonationSettings"] is not JObject donation)
+                            throw new InvalidDataException("The donation settings are invalid or unsupported.");
+                        // Validate values without processing JSON.NET runtime type metadata.
+                        donation.ToObject<DonationSettings>(JsonSerializer.Create(new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None }));
+                        CreateBackup(context.DonationSettingsFileName, "preferences-consolidation");
+                        donation.Remove("$type");
+                        settings["Donation"] = donation.DeepClone();
+                    }
+                    if (File.Exists(context.SettingsFileName)) CreateBackup(context.SettingsFileName, "v7-to-v8");
+                    context.SettingsFile["SettingsFileVersion"] = "8";
+                    context.SettingsFile["LastUpdated"] = DateTime.UtcNow;
+                    context.MarkSettingsFileChanged();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, "ConfigMigrationRunner/SettingsV7ToV8PreferencesConsolidationMigration: Could not consolidate preferences; legacy files are preserved.");
+                    return false;
+                }
+            }
+        }
         private sealed class SettingsV6ToV7DisplayProfileWaitMigration : IConfigMigrationRule
         {
             public string Name => "Settings v6 to v7 display profile wait";

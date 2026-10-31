@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -43,7 +44,7 @@ namespace DisplayMagician
     {
         #region Class Variables
         // Other constants that are useful
-        public const string CurrentProgramSettingsFileVersion = "7";
+        public const string CurrentProgramSettingsFileVersion = "8";
         public const string ProgramSettingsStorageJsonFileName = "Settings.json";
         public static string ProgramSettingsStorageJsonFullFileName = Path.Combine(Program.AppDataPath, ProgramSettingsStorageJsonFileName);
         public static string _programSettingsStorageJsonFullFileName = ProgramSettingsStorageJsonFullFileName;
@@ -564,6 +565,19 @@ namespace DisplayMagician
 
         #endregion
 
+        [JsonIgnore]
+        internal object PersistenceLock { get; } = new object();
+        private DonationSettings _donation = new DonationSettings();
+        public DonationSettings Donation
+        {
+            get => _donation;
+            set => _donation = value ?? new DonationSettings();
+        }
+        public string SkippedUpdateVersion { get; set; }
+        public DateTime? UpdateReminderUtc { get; set; }
+        public bool UpdaterPreferencesImported { get; set; }
+        [JsonExtensionData]
+        public IDictionary<string, JToken> AdditionalPreferences { get; set; }
         #region Class Methods
 
         public bool EnsureInstallIdentity(bool resetInstallDate)
@@ -719,6 +733,8 @@ namespace DisplayMagician
 
         public bool SaveSettings()
         {
+            lock (PersistenceLock)
+            {
 
             logger.Debug($"ProgramSettings/SaveSettings: Attempting to save the program settings to the {_programSettingsStorageJsonFullFileName}.");
 
@@ -774,6 +790,7 @@ namespace DisplayMagician
             }
 
             return false;
+            }
         }
 
         #endregion

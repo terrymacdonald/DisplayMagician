@@ -70,6 +70,7 @@ public sealed class ShortcutStartProgramDefinition
     public bool CloseOnFinish { get; init; }
     public bool DoNotStartIfAlreadyRunning { get; init; }
     public bool RunAsAdministrator { get; init; }
+    public int WaitAfterStartSecs { get; init; }
 }
 
 public sealed class ShortcutWindowPlacementDefinition
@@ -99,6 +100,7 @@ public sealed class ShortcutAfterProgramDefinition
     public bool ArgumentsRequired { get; init; }
     public bool DoNotStartIfAlreadyRunning { get; init; }
     public bool RunAsAdministrator { get; init; }
+    public int WaitAfterStartSecs { get; init; }
 }
 
 public sealed class ShortcutStopProgramDefinition
@@ -109,6 +111,7 @@ public sealed class ShortcutStopProgramDefinition
     public bool RestartAfterwards { get; init; }
     public ShortcutDefinitionProcessPriority RestartProcessPriority { get; init; } = ShortcutDefinitionProcessPriority.Normal;
     public bool RunAsAdministrator { get; init; }
+    public int WaitAfterStopSecs { get; init; }
 }
 
 /// <summary>Matches the persisted values of the existing ShortcutCategory.</summary>

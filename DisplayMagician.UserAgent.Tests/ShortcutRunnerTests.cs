@@ -55,9 +55,9 @@ public sealed class ShortcutRunnerTests
         {
             MethodInfo stop = typeof(ShortcutRunner).GetMethod("StopProgram", BindingFlags.NonPublic | BindingFlags.Static)!;
             object cleanup = Activator.CreateInstance(stop.GetParameters()[2].ParameterType)!;
-            bool result = (bool)stop.Invoke(null, new object[] { new ShortcutStopProgramDefinition { ExecutablePath = firstPath }, 0, cleanup })!;
+            ProgramActionOutcome result = (ProgramActionOutcome)stop.Invoke(null, new object[] { new ShortcutStopProgramDefinition { ExecutablePath = firstPath }, 0, cleanup })!;
 
-            Assert.True(result);
+            Assert.Equal(ProgramActionOutcome.Succeeded, result);
             Assert.True(first.HasExited);
             Assert.False(second.HasExited);
             Assert.False(ProcessTreeMonitor.IsExecutableRunning(firstPath));

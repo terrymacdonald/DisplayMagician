@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -30,6 +31,8 @@ namespace DisplayMagician
         }
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        [JsonExtensionData]
+        public IDictionary<string, JToken> AdditionalPreferences { get; set; }
 
         private DateTime _lastDonationDate = new DateTime(1980, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private DateTime _lastDonateButtonAnimationDate = DateTime.UtcNow;
@@ -129,116 +132,22 @@ namespace DisplayMagician
 
         public static DonationSettings LoadSettings()
         {
-            DonationSettings donationSettings = null;
-
-            if (File.Exists(DonationSettingsStorageJsonFullFileName))
-            {
-                string json = "";
-                List<string> jsonErrors = new List<string>();
-
-                try
-                {
-                    json = File.ReadAllText(DonationSettingsStorageJsonFullFileName, Encoding.Unicode);
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"DonationSettings/LoadSettings: Tried to read the JSON file {DonationSettingsStorageJsonFullFileName} to memory from disk but File.ReadAllText threw an exception.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    try
-                    {
-                        JsonSerializerSettings serializerSettings = new JsonSerializerSettings
-                        {
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                            NullValueHandling = NullValueHandling.Ignore,
-                            DefaultValueHandling = DefaultValueHandling.Populate,
-                            TypeNameHandling = TypeNameHandling.Auto,
-                            ObjectCreationHandling = ObjectCreationHandling.Replace,
-                            Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                            {
-                                jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                                args.ErrorContext.Handled = true;
-                            },
-                        };
-
-                        DonationSettingsFile donationSettingsFile = JsonConvert.DeserializeObject<DonationSettingsFile>(json, serializerSettings);
-                        donationSettings = donationSettingsFile.DonationSettings;
-                    }
-                    catch (JsonReaderException ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"DonationSettings/LoadSettings: JSONReaderException while trying to process the Donation Settings file {DonationSettingsStorageJsonFullFileName}.");
-                        MessageBox.Show($"The Donation Settings file {DonationSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Donation Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    catch (Exception ex)
-                    {
-                        SharedLogger.logger.Error(ex, $"DonationSettings/LoadSettings: Tried to parse the JSON in the Donation Settings file {DonationSettingsStorageJsonFullFileName} but JsonConvert threw an exception.");
-                        MessageBox.Show($"The Donation Settings file {DonationSettingsStorageJsonFullFileName} contains a syntax error. Please check the file for correctness with a JSON validator.", "Error loading the Donation Settings", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-
-                    foreach (string jsonError in jsonErrors)
-                    {
-                        SharedLogger.logger.Error($"DonationSettings/LoadSettings: {jsonError}");
-                    }
-                }
-            }
-
-            if (donationSettings == null)
-            {
-                donationSettings = new DonationSettings();
-                donationSettings.SaveSettings();
-            }
-
-            return donationSettings;
+            return Program.AppProgramSettings?.Donation ?? new DonationSettings();
         }
 
         public bool SaveSettings()
         {
-            logger.Debug($"DonationSettings/SaveSettings: Attempting to save the donation settings to {DonationSettingsStorageJsonFullFileName}.");
-
-            List<string> jsonErrors = new List<string>();
-            try
+            ProgramSettings owner = Program.AppProgramSettings;
+            if (owner == null)
             {
-                JsonSerializerSettings serializerSettings = new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Include,
-                    TypeNameHandling = TypeNameHandling.Auto,
-                    MissingMemberHandling = MissingMemberHandling.Error,
-                    ObjectCreationHandling = ObjectCreationHandling.Replace,
-                    Error = delegate (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
-                    {
-                        jsonErrors.Add($"JSON.net Error: {args.ErrorContext.Error.Source}:{args.ErrorContext.Error.StackTrace} - {args.ErrorContext.Error.Message} | InnerException:{args.ErrorContext.Error.InnerException?.Source}:{args.ErrorContext.Error.InnerException?.StackTrace} - {args.ErrorContext.Error.InnerException?.Message}");
-                        args.ErrorContext.Handled = true;
-                    },
-                };
-
-                DonationSettingsFile donationSettingsFile = new DonationSettingsFile
-                {
-                    DonationSettingsFileVersion = CurrentDonationSettingsFileVersion,
-                    LastUpdated = DateTime.UtcNow,
-                    DonationSettings = this
-                };
-
-                string json = JsonConvert.SerializeObject(donationSettingsFile, Formatting.Indented, serializerSettings);
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    AtomicFile.WriteAllText(DonationSettingsStorageJsonFullFileName, json, Encoding.Unicode);
-                    return true;
-                }
+                logger.Error("DonationSettings/SaveSettings: The primary program settings have not been loaded.");
+                return false;
             }
-            catch (Exception ex)
+            lock (owner.PersistenceLock)
             {
-                logger.Error(ex, $"DonationSettings/SaveSettings: Exception attempting to save the donation settings to {DonationSettingsStorageJsonFullFileName}.");
+                owner.Donation = this;
+                return owner.SaveSettings();
             }
-
-            foreach (string jsonError in jsonErrors)
-            {
-                logger.Error($"DonationSettings/SaveSettings: {jsonError}");
-            }
-
-            return false;
         }
     }
 }

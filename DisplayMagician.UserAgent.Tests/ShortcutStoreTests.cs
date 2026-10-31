@@ -70,7 +70,7 @@ public sealed class ShortcutStoreTests
             ShortcutStore store = new ShortcutStore(root);
             using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
             JsonElement shortcut = document.RootElement.GetProperty("Shortcuts")[0];
-            Assert.Equal("8", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal("9", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
             Assert.Equal("Original", shortcut.GetProperty("Name").GetString());
             Assert.True(Guid.TryParse(shortcut.GetProperty("StartPrograms")[0].GetProperty("Id").GetString(), out _));
             Assert.Equal(20, shortcut.GetProperty("WindowPlacementTimeoutSeconds").GetInt32());
@@ -97,7 +97,7 @@ public sealed class ShortcutStoreTests
             ShortcutStore store = new ShortcutStore(root);
             using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
             JsonElement placement = document.RootElement.GetProperty("Shortcuts")[0].GetProperty("WindowPlacements")[0];
-            Assert.Equal("8", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal("9", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
             Assert.Equal(3, placement.GetProperty("ShowCommand").GetInt32());
             Assert.False(placement.TryGetProperty("MaximizedLeft", out _));
             Assert.Single(Directory.GetFiles(directory, "Shortcuts.json.v7.*.bak"));

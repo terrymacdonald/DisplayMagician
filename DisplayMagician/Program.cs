@@ -467,6 +467,7 @@ namespace DisplayMagician {
 
             // Load the Donation Settings and update the number of times run and number of starts since last donation form and button animation, and save the settings back to the file
             logger.Trace($"Program/Main: Loading Donation Settings.");
+            AutoUpdater.PersistenceProvider = new SettingsUpdatePersistenceProvider(AppProgramSettings);
             AppDonationSettings = DonationSettings.LoadSettings();
             logger.Trace($"Program/Main: Updating Donation Settings counters.");
             AppDonationSettings.NumberOfStartsSinceLastDonationForm++;
@@ -2539,7 +2540,6 @@ namespace DisplayMagician {
                     {
                         // The user wants us to remind them in 7 days
                         // We need to set up a timer to do so (code adapted from AutoUpdater.net internal code)
-                        AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
 
                         DateTime remindLaterDateTime = DateTime.UtcNow;
                         switch (AutoUpdater.RemindLaterTimeSpan)
@@ -2555,7 +2555,22 @@ namespace DisplayMagician {
                                 break;
                         }
 
-                        AutoUpdater.PersistenceProvider.SetRemindLater(remindLaterDateTime);
+                        try
+                        {
+                            if (AutoUpdater.PersistenceProvider is SettingsUpdatePersistenceProvider preferences)
+                                preferences.SetReminderAndClearSkippedVersion(remindLaterDateTime);
+                            else
+                            {
+                                AutoUpdater.PersistenceProvider.SetSkippedVersion(null);
+                                AutoUpdater.PersistenceProvider.SetRemindLater(remindLaterDateTime);
+                            }
+                        }
+                        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
+                        {
+                            logger.Error(ex, "Program/AutoUpdaterOnCheckForUpdateEvent: Could not save the update reminder.");
+                            MessageBox.Show(AppMainForm, "The update reminder could not be saved. Please try again.", "Update reminder", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
                         
                         TimeSpan timeSpan = remindLaterDateTime - DateTime.UtcNow;
 
