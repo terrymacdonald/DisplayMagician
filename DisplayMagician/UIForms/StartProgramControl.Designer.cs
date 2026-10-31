@@ -245,30 +245,34 @@ namespace DisplayMagician.UIForms
             cb_run_as_administrator.CheckedChanged += cb_run_as_administrator_CheckedChanged;
             // 
             // lbl_wait_after_start
-            //
+            // 
             lbl_wait_after_start.AutoSize = true;
             lbl_wait_after_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_wait_after_start.ForeColor = System.Drawing.Color.White;
             lbl_wait_after_start.Location = new System.Drawing.Point(160, 180);
             lbl_wait_after_start.Name = "lbl_wait_after_start";
+            lbl_wait_after_start.Size = new System.Drawing.Size(195, 20);
             lbl_wait_after_start.TabIndex = 10;
             lbl_wait_after_start.Text = "Wait after Start (seconds):";
-            //
+            // 
             // nud_wait_after_start
-            //
+            // 
             nud_wait_after_start.BackColor = System.Drawing.Color.White;
             nud_wait_after_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             nud_wait_after_start.ForeColor = System.Drawing.Color.Black;
-            nud_wait_after_start.Location = new System.Drawing.Point(375, 177);
+            nud_wait_after_start.Location = new System.Drawing.Point(366, 177);
             nud_wait_after_start.Maximum = new decimal(new int[] { 999, 0, 0, 0 });
             nud_wait_after_start.Name = "nud_wait_after_start";
             nud_wait_after_start.Size = new System.Drawing.Size(80, 26);
             nud_wait_after_start.TabIndex = 11;
             nud_wait_after_start.ValueChanged += nud_wait_after_start_ValueChanged;
-            //
-            // StartProgramControl
+            // 
+            // error_provider
             // 
             error_provider.ContainerControl = this;
+            // 
+            // StartProgramControl
+            // 
             AllowDrop = true;
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             AutoSize = true;

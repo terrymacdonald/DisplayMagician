@@ -195,30 +195,34 @@ namespace DisplayMagician.UIForms
             btn_delete.Click += btn_delete_Click;
             // 
             // lbl_wait_after_stop
-            //
+            // 
             lbl_wait_after_stop.AutoSize = true;
             lbl_wait_after_stop.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             lbl_wait_after_stop.ForeColor = System.Drawing.Color.White;
             lbl_wait_after_stop.Location = new System.Drawing.Point(161, 151);
             lbl_wait_after_stop.Name = "lbl_wait_after_stop";
+            lbl_wait_after_stop.Size = new System.Drawing.Size(194, 20);
             lbl_wait_after_stop.TabIndex = 8;
             lbl_wait_after_stop.Text = "Wait after Stop (seconds):";
-            //
+            // 
             // nud_wait_after_stop
-            //
+            // 
             nud_wait_after_stop.BackColor = System.Drawing.Color.White;
             nud_wait_after_stop.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             nud_wait_after_stop.ForeColor = System.Drawing.Color.Black;
-            nud_wait_after_stop.Location = new System.Drawing.Point(375, 148);
+            nud_wait_after_stop.Location = new System.Drawing.Point(364, 148);
             nud_wait_after_stop.Maximum = new decimal(new int[] { 999, 0, 0, 0 });
             nud_wait_after_stop.Name = "nud_wait_after_stop";
             nud_wait_after_stop.Size = new System.Drawing.Size(80, 26);
             nud_wait_after_stop.TabIndex = 9;
             nud_wait_after_stop.ValueChanged += nud_wait_after_stop_ValueChanged;
-            //
-            // StopProgramControl
+            // 
+            // error_provider
             // 
             error_provider.ContainerControl = this;
+            // 
+            // StopProgramControl
+            // 
             AllowDrop = true;
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             AutoSize = true;
