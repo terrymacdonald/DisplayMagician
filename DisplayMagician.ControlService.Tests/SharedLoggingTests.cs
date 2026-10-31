@@ -14,7 +14,7 @@ public sealed class SharedLoggingTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-SharedLogging-{Guid.NewGuid():N}");
     private StoragePaths Paths => new StoragePaths(_root);
-    private string StatePath => Path.Combine(Paths.MachineDiagnosticsPath, "LoggingSettings.json");
+    private string StatePath => Path.Combine(Paths.MachineDiagnosticsPath, "DiagnosticLoggingSessions.json");
     private static readonly DateTime Now = new DateTime(2026, 10, 28, 0, 0, 0, DateTimeKind.Utc);
 
     [Theory]
@@ -115,29 +115,30 @@ public sealed class SharedLoggingTests : IDisposable
     public void InvalidStatePreservesEvidenceAndRejectsWritesWhileDefaultRemainsAvailable(string json)
     {
         Directory.CreateDirectory(Paths.MachineDiagnosticsPath);
-        File.WriteAllText(StatePath, json);
-        File.WriteAllText(StatePath + ".bak", "preserve backup");
+        string legacyPath = Path.Combine(Paths.MachineDiagnosticsPath, "LoggingSettings.json");
+        File.WriteAllText(legacyPath, json);
+        File.WriteAllText(legacyPath + ".bak", "preserve backup");
         MachineDiagnosticLogLevelStore store = new MachineDiagnosticLogLevelStore(Paths);
         Assert.Equal("Warn", store.GetActiveLevel(Now));
         Assert.Throws<IOException>(() => store.SetSavedLevel(new SetSharedLogLevelRequest { Level = "Debug" }));
         Assert.Throws<IOException>(() => store.Set(Request(Guid.NewGuid(), "Debug"), Now));
-        Assert.Equal(json, File.ReadAllText(StatePath));
-        Assert.Equal("preserve backup", File.ReadAllText(StatePath + ".bak"));
+        Assert.Equal(json, File.ReadAllText(legacyPath));
+        Assert.Equal("preserve backup", File.ReadAllText(legacyPath + ".bak"));
     }
 
     [Fact]
-    public void FailedSavedLevelAndRenewalRetainPriorBaselineAndExpiry()
+    public void BlockedRenewalDoesNotBlockBaselineAndRetainsPriorExpiry()
     {
         MachineDiagnosticLogLevelStore store = new MachineDiagnosticLogLevelStore(Paths);
         Guid owner = Guid.NewGuid();
         store.Set(Request(owner, "Debug"), Now);
         using (FileStream locked = new FileStream(StatePath, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            Assert.ThrowsAny<IOException>(() => store.SetSavedLevel(new SetSharedLogLevelRequest { Level = "Fatal" }));
+            store.SetSavedLevel(new SetSharedLogLevelRequest { Level = "Fatal" });
             Assert.ThrowsAny<IOException>(() => store.Set(Request(owner, "Debug"), Now.AddSeconds(30)));
         }
-        Assert.Equal("Warn", store.GetSettings().SavedLevel);
-        Assert.Equal("Warn", store.GetActiveLevel(Now.AddSeconds(60)));
+        Assert.Equal("Fatal", store.GetSettings().SavedLevel);
+        Assert.Equal("Fatal", store.GetActiveLevel(Now.AddSeconds(60)));
     }
 
     [Fact]

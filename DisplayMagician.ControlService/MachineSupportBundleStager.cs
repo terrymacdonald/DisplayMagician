@@ -69,9 +69,11 @@ internal static class MachineSupportBundleStager
             Path.Combine(paths.MachinePath, "OperationDecisions.json"),
             Path.Combine(paths.MachinePath, "OperationStatuses.json"),
             Path.Combine(paths.MachinePath, "ScheduleState.json"),
+            Path.Combine(paths.MachinePath, "ControlServiceSettings.json"),
             Path.Combine(paths.MachinePath, "GatewaySettings.json"),
             Path.Combine(paths.MachineDiagnosticsPath, "RecoveryAdministration.json"),
             Path.Combine(paths.MachineDiagnosticsPath, "TemporaryDiagnosticLogLevel.json"),
+            Path.Combine(paths.MachineDiagnosticsPath, "DiagnosticLoggingSessions.json"),
             Path.Combine(paths.MachineDiagnosticsPath, "LoggingSettings.json")
         })
         {

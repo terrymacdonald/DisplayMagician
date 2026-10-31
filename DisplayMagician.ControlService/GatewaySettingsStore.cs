@@ -1,58 +1,26 @@
 using System;
-using System.IO;
 using System.Net;
-using System.Text.Json;
 using DisplayMagician.Contracts;
-using NLog;
 
 namespace DisplayMagician.ControlService;
 
 /// <summary>Persists the administrator-approved Gateway bind and QR advertisement settings.</summary>
 public sealed class GatewaySettingsStore
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-    private readonly object _syncRoot = new object();
-    private readonly string _storagePath;
-    private GatewaySettings _settings;
+    private readonly ControlServiceSettingsStore _preferences;
 
-    public GatewaySettingsStore(StoragePaths storagePaths)
+    public GatewaySettingsStore(StoragePaths storagePaths, ControlServiceSettingsStore? preferences = null)
     {
-        ArgumentNullException.ThrowIfNull(storagePaths);
-        _storagePath = Path.Combine(storagePaths.MachinePath, "GatewaySettings.json");
-        _settings = Load();
+        _preferences = preferences ?? new ControlServiceSettingsStore(storagePaths);
     }
 
-    public GatewaySettings Get()
-    {
-        lock (_syncRoot)
-        {
-            return Copy(_settings);
-        }
-    }
+    public GatewaySettings Get() => _preferences.Get().Gateway;
 
     public GatewaySettings Update(GatewaySettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
         GatewaySettings normalized = Normalize(settings);
-        lock (_syncRoot)
-        {
-            AtomicFileStore.WriteAllText(_storagePath, JsonSerializer.Serialize(normalized), $"{_storagePath}.bak");
-            _settings = normalized;
-            return Copy(_settings);
-        }
-    }
-
-    private GatewaySettings Load()
-    {
-        try
-        {
-            return File.Exists(_storagePath) ? Normalize(JsonSerializer.Deserialize<GatewaySettings>(File.ReadAllText(_storagePath)) ?? new GatewaySettings()) : new GatewaySettings();
-        }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
-        {
-            Logger.Error(ex, "GatewaySettingsStore/Load: Could not load Gateway settings from {0}.", _storagePath);
-            return new GatewaySettings();
-        }
+        return _preferences.Update(document => document.Gateway = normalized).Gateway;
     }
 
     internal static GatewaySettings Normalize(GatewaySettings settings)
@@ -81,5 +49,4 @@ public sealed class GatewaySettingsStore
 
     private static bool IsDnsOrIpAddress(string host) => IPAddress.TryParse(host, out _) || Uri.CheckHostName(host) == UriHostNameType.Dns;
 
-    private static GatewaySettings Copy(GatewaySettings settings) => new GatewaySettings { LanBindAddress = settings.LanBindAddress, LanAdvertisedHost = settings.LanAdvertisedHost, LanPort = settings.LanPort, AllowPublicNetworks = settings.AllowPublicNetworks, RemoteHost = settings.RemoteHost, RemotePort = settings.RemotePort };
 }

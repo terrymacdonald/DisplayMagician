@@ -272,6 +272,9 @@ public sealed class ProgramDelayTests
             using CancellationTokenSource cancellation = new(TimeSpan.FromSeconds(15));
             Stopwatch? wait = null;
             TimeSpan? waited = null;
+            // Task.Delay uses the Windows timer clock; Stopwatch can observe a completion
+            // just under the requested duration. Allow one timer tick without hiding a skipped wait.
+            TimeSpan minimumObservedWait = TimeSpan.FromMilliseconds(980);
             bool mainStarted = false;
             Guid operationId = Guid.NewGuid();
             ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("run", 0, cancellation.Token, (status, _) =>
@@ -281,7 +284,7 @@ public sealed class ProgramDelayTests
                 {
                     mainStarted = true;
                     Assert.NotNull(wait);
-                    Assert.True(wait.Elapsed >= TimeSpan.FromSeconds(1));
+                    Assert.True(wait.Elapsed >= minimumObservedWait);
                 }
                 if (status.Phase == OperationPhase.StartingPrograms && status.Message.StartsWith("Waiting ", StringComparison.Ordinal))
                 {
@@ -295,7 +298,7 @@ public sealed class ProgramDelayTests
             Assert.NotNull(wait);
             Assert.Equal(cancel ? ShortcutRunOutcome.Cancelled : ShortcutRunOutcome.Completed, result.Outcome);
             Assert.Equal(!cancel, mainStarted);
-            if (!cancel) Assert.True(waited >= TimeSpan.FromSeconds(1), $"Wait ended after {waited}.");
+            if (!cancel) Assert.True(waited >= minimumObservedWait, $"Wait ended after {waited}.");
             Assert.False(ProcessTreeMonitor.IsExecutableRunning(executable));
             Assert.False(ProcessTreeMonitor.IsExecutableRunning(mainExecutable));
             Assert.False(runner.IsRecoveryRequired);

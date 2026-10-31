@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using NLog;
 
 namespace DisplayMagician.ControlService;
@@ -12,10 +13,12 @@ public sealed class MachineScheduleStore
     private readonly object _syncRoot = new object();
     private readonly string _storagePath;
     private MachineScheduleState _state;
+    private readonly ControlServiceSettingsStore _preferences;
 
-    public MachineScheduleStore(StoragePaths storagePaths)
+    public MachineScheduleStore(StoragePaths storagePaths, ControlServiceSettingsStore? preferences = null)
     {
         ArgumentNullException.ThrowIfNull(storagePaths);
+        _preferences = preferences ?? new ControlServiceSettingsStore(storagePaths);
         _storagePath = Path.Combine(storagePaths.MachinePath, "ScheduleState.json");
         _state = Load();
     }
@@ -24,7 +27,9 @@ public sealed class MachineScheduleStore
     {
         lock (_syncRoot)
         {
-            return Copy(_state);
+            MachineScheduleState snapshot = Copy(_state);
+            snapshot.ShareAnonymousUsageMetrics = _preferences.Get().ShareAnonymousUsageMetrics;
+            return snapshot;
         }
     }
 
@@ -36,10 +41,21 @@ public sealed class MachineScheduleStore
             MachineScheduleState updated = Copy(_state);
             update(updated);
             Normalize(updated);
-            Persist(updated);
+            if (JsonSerializer.Serialize(updated) != JsonSerializer.Serialize(_state)) Persist(updated);
             _state = updated;
-            return Copy(updated);
+            return Get();
         }
+    }
+
+    public MachineScheduleState SetAnonymousMetricsPreference(bool enabled, bool initializeOnly = false)
+    {
+        _preferences.Update(document =>
+        {
+            if (initializeOnly && document.HasAnonymousMetricsChoice) return;
+            document.ShareAnonymousUsageMetrics = enabled;
+            document.HasAnonymousMetricsChoice = true;
+        });
+        return Get();
     }
 
     private MachineScheduleState Load()
@@ -118,6 +134,7 @@ public sealed class MachineScheduleState
     public int ConsecutiveClientSyncFailures { get; set; }
     public DateTime? NextMetricsHeartbeatUtc { get; set; }
     public string LastMetricsReportedVersion { get; set; } = string.Empty;
+    [JsonIgnore]
     public bool ShareAnonymousUsageMetrics { get; set; } = true;
     public long TotalAnonymousMetricLaunches { get; set; }
     public long TotalAnonymousMetricActiveMinutes { get; set; }

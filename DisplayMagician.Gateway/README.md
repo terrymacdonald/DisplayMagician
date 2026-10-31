@@ -30,3 +30,6 @@ dotnet build .\DisplayMagician.Gateway\DisplayMagician.Gateway.csproj
 Run `verify_rest_p2_routes.ps1` from the repository root to compare every mapped method/path with the implemented OpenAPI document and check its protocol, idempotency, response, and security declarations. This checks route declarations; the Gateway and ControlService test projects cover behavior.
 
 Do not run this host directly on a production machine until it has been installed by the DisplayMagician package: the installer provisions the `LocalService` account, firewall rule, and machine data access.
+
+
+Gateway bind and advertisement preferences now come from the Gateway section of the protected Machine/ControlServiceSettings.json schema-1 document owned by ControlService. The startup reader validates the shared document and uses existing defaults with a warning when it is missing, unreadable or unsupported; it never rewrites evidence or reads stale GatewaySettings.json after consolidation. Upgrade Gateway together with ControlService. Bind changes retain the existing restart requirement.

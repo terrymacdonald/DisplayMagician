@@ -7,3 +7,6 @@ Run `dotnet test DisplayMagician.Gateway.Tests/DisplayMagician.Gateway.Tests.csp
 These isolated tests cover HTTP protocol/authentication middleware, idempotency, response limits, paging, ETags, and SSE snapshot/replay, grant omission, concurrent streams, credential revocation, and stalled reads. `MobileContractFixtureTests` verifies that the shared Swift/Kotlin operation fixture matches the actual Gateway mapper, including a 64-bit sequence.
 
 They do not install Windows services or validate a phone's native TLS/secure-store behavior. Use `test_rest_p3.ps1 -PrepareSandbox` and [the installed P3 plan](../Sandbox/REST_P3_TEST_PLAN.md), plus [native client acceptance](../Clients/README.md#acceptance-checklist), for those checks.
+
+
+GatewaySettingsProviderTests checks the consolidated machine-preference reader, stale-legacy exclusion, schema/value validation and default fallback without rewriting corrupt primaries or backups. All paths are isolated temporary directories.

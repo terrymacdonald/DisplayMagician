@@ -45,3 +45,6 @@ SupportBundleExportSafetyTests covers interrupted collection/publication, preser
 SharedLoggingClientTests verifies common desktop/Agent requests, snapshot validation and cached expiry. SharedLoggingSettingsFormTests uses injected pipe replies and hidden STA controls to verify failed saves retain the draft, repeated close attempts issue one request and disposed forms ignore late replies. The old independent per-user logging reader/tests are replaced by the authoritative shared mechanism.
 
 PreferencesConsolidationTests covers Settings v7-to-v8 donation migration/backups/idempotency, missing-primary and invalid-source cases, primary-only donation writes, one-time injected updater import, concurrent updater changes, failed-save rollback, atomic reminder/skip updates and preservation of unknown settings. Tests isolate static desktop paths/owners and do not read actual registry preferences.
+
+
+ProgramDelayTests allows 20 ms Windows timer precision when observing a requested one-second Task.Delay with Stopwatch; skipped waits, step ordering, cancellation and cleanup remain asserted. Runtime delay behaviour is unchanged.

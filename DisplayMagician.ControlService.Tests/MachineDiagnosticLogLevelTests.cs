@@ -9,7 +9,7 @@ public sealed class MachineDiagnosticLogLevelTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-Diagnostics-{Guid.NewGuid():N}");
     private StoragePaths Paths => new StoragePaths(_root);
-    private string StatePath => Path.Combine(Paths.MachineDiagnosticsPath, "LoggingSettings.json");
+    private string StatePath => Path.Combine(Paths.MachineDiagnosticsPath, "DiagnosticLoggingSessions.json");
 
     [Fact]
     public void FailedSet_DoesNotReplaceCurrentLeaseOrReleaseOwner()

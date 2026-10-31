@@ -24,6 +24,9 @@ public sealed class MachineSupportBundleStagerTests : IDisposable
         File.WriteAllText(Path.Combine(Paths.MachineDiagnosticsPath, "Audit.jsonl"), "audit");
         File.WriteAllText(Path.Combine(Paths.MachinePath, "OperationStatuses.json"), "status");
         File.WriteAllText(Path.Combine(Paths.MachinePath, "OperationStatuses.json.bak"), "backup");
+        File.WriteAllText(Path.Combine(Paths.MachinePath, "ControlServiceSettings.json"), "preferences");
+        File.WriteAllText(Path.Combine(Paths.MachinePath, "ControlServiceSettings.json.bak"), "preferences backup");
+        File.WriteAllText(Path.Combine(Paths.MachineDiagnosticsPath, "DiagnosticLoggingSessions.json"), "sessions");
         File.WriteAllText(Path.Combine(Paths.MachinePath, "Replay.json"), "must exclude");
         File.WriteAllText(Path.Combine(Paths.MachinePath, "PairedClients.json"), JsonSerializer.Serialize(new[]
         {
@@ -38,6 +41,9 @@ public sealed class MachineSupportBundleStagerTests : IDisposable
         Assert.Equal("audit", File.ReadAllText(Path.Combine(StagePath, "MachineLogs", "Diagnostics", "Audit.jsonl")));
         string configurationPath = Path.Combine(StagePath, "Configuration", "Machine");
         Assert.Equal("backup", File.ReadAllText(Path.Combine(configurationPath, "OperationStatuses.json.bak")));
+        Assert.Equal("preferences", File.ReadAllText(Path.Combine(configurationPath, "ControlServiceSettings.json")));
+        Assert.Equal("preferences backup", File.ReadAllText(Path.Combine(configurationPath, "ControlServiceSettings.json.bak")));
+        Assert.Equal("sessions", File.ReadAllText(Path.Combine(configurationPath, "DiagnosticLoggingSessions.json")));
         Assert.False(File.Exists(Path.Combine(configurationPath, "Replay.json")));
         Assert.False(File.Exists(Path.Combine(configurationPath, "PairedClients.json")));
         string redacted = File.ReadAllText(Path.Combine(configurationPath, "PairedClients.redacted.json"));

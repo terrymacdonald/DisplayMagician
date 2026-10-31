@@ -72,6 +72,7 @@ public sealed class MachineScheduleCoordinator
     public MachineScheduleState InitializeAnonymousMetrics(InitializeAnonymousMetricsRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _store.SetAnonymousMetricsPreference(request.ShareAnonymousUsageMetrics, initializeOnly: true);
         return _store.Update(state =>
         {
             if (state.MetricsStateMigrated)
@@ -88,7 +89,6 @@ public sealed class MachineScheduleCoordinator
                 EnsureInstallId(state);
             }
 
-            state.ShareAnonymousUsageMetrics = request.ShareAnonymousUsageMetrics;
             state.TotalAnonymousMetricLaunches = Math.Max(0, request.Launches);
             state.TotalAnonymousMetricActiveMinutes = Math.Max(0, request.ActiveMinutes);
             state.NextMetricsHeartbeatUtc = request.NextHeartbeatUtc?.ToUniversalTime();
@@ -100,7 +100,7 @@ public sealed class MachineScheduleCoordinator
     public MachineScheduleState UpdateAnonymousMetricsSettings(AnonymousMetricsSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        return _store.Update(state => state.ShareAnonymousUsageMetrics = settings.ShareAnonymousUsageMetrics);
+        return _store.SetAnonymousMetricsPreference(settings.ShareAnonymousUsageMetrics);
     }
 
     public MachineScheduleState RecordAnonymousMetricsUsage(AnonymousMetricsUsageReport report)

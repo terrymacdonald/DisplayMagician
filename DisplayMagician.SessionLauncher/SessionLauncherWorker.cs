@@ -38,28 +38,49 @@ public sealed class SessionLauncherWorker : BackgroundService
     }
     private static async Task RunLoggingAsync(CancellationToken cancellationToken)
     {
-        string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Machine", "Diagnostics", "LoggingSettings.json");
+        string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Machine");
         SharedLoggingSettings settings = new SharedLoggingSettings();
         string? previous = null;
         while (!cancellationToken.IsCancellationRequested)
         {
-            try
-            {
-                SharedLoggingSettings candidate = JsonSerializer.Deserialize<SharedLoggingSettings>(File.ReadAllText(path)) ?? throw new JsonException("Missing logging settings.");
-                if (!candidate.IsValid()) throw new JsonException("Invalid or unsupported logging settings.");
-                settings = candidate;
-            }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
-            {
-                if (ex is JsonException) settings = new SharedLoggingSettings();
-                _logger.Debug(ex, "SessionLauncherWorker/RunLoggingAsync: Shared logging settings are unavailable; cached diagnostic sessions still expire.");
-            }
+            RefreshLoggingSettings(root, settings);
             string level = settings.GetEffectiveLevel(DateTime.UtcNow);
             if (level != previous) { Program.ApplyDiagnosticLogLevel(level); previous = level; }
             try { await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false); }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
         }
     }
+
+    internal static void RefreshLoggingSettings(string root, SharedLoggingSettings settings)
+    {
+        string[] paths = { Path.Combine(root, "ControlServiceSettings.json"), Path.Combine(root, "Diagnostics", "DiagnosticLoggingSessions.json") };
+        foreach (string path in paths)
+        {
+            try
+            {
+                string json = File.ReadAllText(path);
+                if (path == paths[0])
+                {
+                    ControlServiceSettingsDocument candidate = JsonSerializer.Deserialize<ControlServiceSettingsDocument>(json) ?? throw new JsonException("Missing service preferences.");
+                    if (!candidate.IsValid()) throw new JsonException("Invalid or unsupported service preferences.");
+                    settings.SavedLevel = candidate.Logging.SavedLevel;
+                    settings.HasSavedLevel = candidate.Logging.HasSavedLevel;
+                }
+                else
+                {
+                    DiagnosticLoggingState candidate = JsonSerializer.Deserialize<DiagnosticLoggingState>(json) ?? throw new JsonException("Missing diagnostic sessions.");
+                    if (!candidate.IsValid()) throw new JsonException("Invalid or unsupported diagnostic sessions.");
+                    settings.Sessions = candidate.Sessions;
+                }
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+            {
+                // Retain the last valid snapshot; diagnostic sessions still expire during read failures.
+                _logger.Debug(ex, "SessionLauncherWorker/RefreshLoggingSettings: Settings at {0} are unavailable; using cached settings or defaults.", path);
+            }
+        }
+    }
+
 }
 
 public sealed class SessionLauncherPipeServer

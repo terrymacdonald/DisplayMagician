@@ -13,41 +13,67 @@ public sealed class MachineDiagnosticLogLevelStore
     private readonly object _syncRoot = new object();
     private readonly string _path;
     private SharedLoggingSettings _state = new SharedLoggingSettings();
+    private readonly ControlServiceSettingsStore _preferences;
     private bool _writesEnabled = true;
 
-    public MachineDiagnosticLogLevelStore(StoragePaths storagePaths)
+    public MachineDiagnosticLogLevelStore(StoragePaths storagePaths, ControlServiceSettingsStore? preferences = null)
     {
-        _path = Path.Combine(storagePaths.MachineDiagnosticsPath, "LoggingSettings.json");
+        _preferences = preferences ?? new ControlServiceSettingsStore(storagePaths);
+        _path = Path.Combine(storagePaths.MachineDiagnosticsPath, "DiagnosticLoggingSessions.json");
         try
         {
-            string json = File.ReadAllText(_path);
-            using JsonDocument document = JsonDocument.Parse(json);
-            if (document.RootElement.ValueKind != JsonValueKind.Object
-                || !document.RootElement.TryGetProperty("SchemaVersion", out _)
-                || !document.RootElement.TryGetProperty("SavedLevel", out _)
-                || !document.RootElement.TryGetProperty("HasSavedLevel", out _)
-                || !document.RootElement.TryGetProperty("Sessions", out _)) throw new JsonException("Incomplete logging settings.");
-            _state = JsonSerializer.Deserialize<SharedLoggingSettings>(json) ?? throw new JsonException("Missing logging settings.");
-            if (!_state.IsValid()) throw new JsonException("Invalid or unsupported logging settings.");
+            try
+            {
+                DiagnosticLoggingState state = JsonSerializer.Deserialize<DiagnosticLoggingState>(File.ReadAllText(_path))
+                    ?? throw new JsonException("Missing diagnostic sessions.");
+                if (!state.IsValid()) throw new JsonException("Invalid or unsupported diagnostic sessions.");
+                _state.Sessions = state.Sessions;
+            }
+            catch (FileNotFoundException) when (!File.Exists(_path + ".bak") && !Directory.Exists(_path + ".bak")) { ImportLegacy(storagePaths); }
+            catch (DirectoryNotFoundException) when (!File.Exists(_path + ".bak") && !Directory.Exists(_path + ".bak")) { ImportLegacy(storagePaths); }
         }
-        catch (FileNotFoundException) when (!File.Exists(_path + ".bak") && !Directory.Exists(_path + ".bak")) { }
-        catch (DirectoryNotFoundException) when (!File.Exists(_path + ".bak") && !Directory.Exists(_path + ".bak")) { }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
         {
             _state = new SharedLoggingSettings();
             _writesEnabled = false;
-            Logger.Error(ex, "MachineDiagnosticLogLevelStore/MachineDiagnosticLogLevelStore: Logging settings at {0} are unavailable; preserving files and rejecting changes until repair/restart.", _path);
+            Logger.Error(ex, "MachineDiagnosticLogLevelStore/MachineDiagnosticLogLevelStore: Diagnostic sessions at {0} are unavailable; preserving files and rejecting session changes until repair/restart.", _path);
         }
+    }
+
+    private void ImportLegacy(StoragePaths paths)
+    {
+        string legacyPath = Path.Combine(paths.MachineDiagnosticsPath, "LoggingSettings.json");
+        string json;
+        try { json = File.ReadAllText(legacyPath); }
+        catch (FileNotFoundException) when (!File.Exists(legacyPath + ".bak") && !Directory.Exists(legacyPath + ".bak")) { return; }
+        catch (DirectoryNotFoundException) when (!File.Exists(legacyPath + ".bak") && !Directory.Exists(legacyPath + ".bak")) { return; }
+        using JsonDocument document = JsonDocument.Parse(json);
+        SharedLoggingSettings legacy = JsonSerializer.Deserialize<SharedLoggingSettings>(json) ?? throw new JsonException("Missing legacy logging settings.");
+        if (document.RootElement.ValueKind != JsonValueKind.Object
+            || !document.RootElement.TryGetProperty("SchemaVersion", out _)
+            || !document.RootElement.TryGetProperty("SavedLevel", out _)
+            || !document.RootElement.TryGetProperty("HasSavedLevel", out _)
+            || !document.RootElement.TryGetProperty("Sessions", out _) || !legacy.IsValid())
+            throw new JsonException("Invalid legacy logging settings.");
+        AtomicFileStore.WriteAllText(_path, JsonSerializer.Serialize(new DiagnosticLoggingState { Sessions = legacy.Sessions }));
+        _state.Sessions = legacy.Sessions;
     }
 
     public SharedLoggingSettings GetSettings()
     {
-        lock (_syncRoot) return JsonSerializer.Deserialize<SharedLoggingSettings>(JsonSerializer.Serialize(_state))!;
+        lock (_syncRoot)
+        {
+            SharedLoggingSettings snapshot = JsonSerializer.Deserialize<SharedLoggingSettings>(JsonSerializer.Serialize(_state))!;
+            SharedLoggingPreferences logging = _preferences.Get().Logging;
+            snapshot.SavedLevel = logging.SavedLevel;
+            snapshot.HasSavedLevel = logging.HasSavedLevel;
+            return snapshot;
+        }
     }
 
     public string GetActiveLevel(DateTime utcNow)
     {
-        lock (_syncRoot) return _state.GetEffectiveLevel(utcNow);
+        lock (_syncRoot) return GetSettings().GetEffectiveLevel(utcNow);
     }
 
     public SharedLoggingSettings SetSavedLevel(SetSharedLogLevelRequest request)
@@ -55,11 +81,12 @@ public sealed class MachineDiagnosticLogLevelStore
         if (request == null || !SharedLoggingSettings.IsLevel(request.Level)) throw new ArgumentException("The shared logging level is invalid.");
         lock (_syncRoot)
         {
-            if (request.InitializeOnly && _state.HasSavedLevel) return GetSettings();
-            SharedLoggingSettings candidate = GetSettings();
-            candidate.SavedLevel = request.Level;
-            candidate.HasSavedLevel = true;
-            Persist(candidate);
+            _preferences.Update(document =>
+            {
+                if (request.InitializeOnly && document.Logging.HasSavedLevel) return;
+                document.Logging.SavedLevel = request.Level;
+                document.Logging.HasSavedLevel = true;
+            });
             return GetSettings();
         }
     }
@@ -80,7 +107,7 @@ public sealed class MachineDiagnosticLogLevelStore
             candidate.Sessions = candidate.Sessions.Where(session => session.ExpiresUtc > utcNow && session.OwnerId != request.OwnerId)
                 .Append(new DiagnosticLoggingSession { OwnerId = request.OwnerId, UserSid = userSid, SessionId = sessionId, Level = request.Level, ExpiresUtc = utcNow.AddMinutes(1) }).ToArray();
             Persist(candidate);
-            return _state.GetEffectiveLevel(utcNow);
+            return GetSettings().GetEffectiveLevel(utcNow);
         }
     }
 
@@ -99,14 +126,14 @@ public sealed class MachineDiagnosticLogLevelStore
                 candidate.Sessions = candidate.Sessions.Where(session => session.OwnerId != ownerId && session.ExpiresUtc > utcNow).ToArray();
                 Persist(candidate);
             }
-            return _state.GetEffectiveLevel(utcNow);
+            return GetSettings().GetEffectiveLevel(utcNow);
         }
     }
 
     private void Persist(SharedLoggingSettings candidate)
     {
         if (!_writesEnabled) throw new IOException("Logging settings require repair and service restart before changes can be saved.");
-        AtomicFileStore.WriteAllText(_path, JsonSerializer.Serialize(candidate), _path + ".bak");
+        AtomicFileStore.WriteAllText(_path, JsonSerializer.Serialize(new DiagnosticLoggingState { Sessions = candidate.Sessions }), _path + ".bak");
         _state = candidate;
     }
 }
