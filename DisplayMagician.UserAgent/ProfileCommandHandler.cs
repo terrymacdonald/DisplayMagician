@@ -46,6 +46,7 @@ public sealed class ProfileCommandHandler
     private readonly object _operationsLock = new object();
     private readonly Dictionary<Guid, (CancellationTokenSource Source, DisplayOperationType Type)> _operations = new Dictionary<Guid, (CancellationTokenSource, DisplayOperationType)>();
     private bool _stopRequested;
+    private bool _resetRequested;
 
     public bool StopRequested => _stopRequested;
     public AutomaticGameDetectionRegistry AutomaticGameDetectionRegistry => _automaticGameDetectionRegistry;
@@ -154,6 +155,40 @@ public sealed class ProfileCommandHandler
 
     public async Task<ControlResponse> HandleAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
+        if (request.MessageType == ControlMessageType.PrepareUserAgentForReset)
+        {
+            CancellationTokenSource[] active;
+            lock (_operationsLock)
+            {
+                _resetRequested = true;
+                active = _operations.Values.Select(operation => operation.Source).ToArray();
+            }
+            try
+            {
+                foreach (CancellationTokenSource source in active)
+                {
+                    try { source.Cancel(); }
+                    catch (ObjectDisposedException) { } // The operation completed between capture and cancellation.
+                }
+                DateTime deadline = DateTime.UtcNow.AddSeconds(20);
+                while (true)
+                {
+                    lock (_operationsLock)
+                    {
+                        if (_operations.Count == 0 && _registration.OperationState == AgentOperationState.Idle && !_registration.IsRecoveryRequired)
+                        {
+                            _stopRequested = true;
+                            return new ControlResponse { IsSuccessful = true, Message = "The User Agent restored its state and is stopping for reset." };
+                        }
+                    }
+                    if (DateTime.UtcNow >= deadline)
+                        return new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "A shortcut or display/audio recovery has not finished. Complete recovery before resetting DisplayMagician." };
+                    await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            finally { if (!_stopRequested) _resetRequested = false; }
+        }
+        if (_resetRequested) return new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "DisplayMagician is preparing to reset." };
         if (request.MessageType == ControlMessageType.CreateUserSupportBundle)
         {
             CreateUserSupportBundleRequest? supportBundleRequest = JsonSerializer.Deserialize<CreateUserSupportBundleRequest>(request.Payload);
@@ -949,7 +984,7 @@ public sealed class ProfileCommandHandler
     {
         lock (_operationsLock)
         {
-            if (_stopRequested || _operations.Count > 0 || _registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
+            if (_stopRequested || _resetRequested || _operations.Count > 0 || _registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
                 return false;
             _operations.Add(operationId, (operationCancellationSource, operationType));
             _registration.OperationState = AgentOperationState.Running;

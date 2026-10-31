@@ -88,7 +88,7 @@ public sealed class ClientSyncCoordinator
             Logger.Warn(ex, "ClientSyncCoordinator/SyncAsync: Combined client sync timed out.");
             return new ClientSyncResult();
         }
-        catch (Exception ex) when (ex is HttpRequestException || ex is JsonException || ex is InvalidOperationException || ex is IOException || ex is TimeoutException)
+        catch (Exception ex) when (ex is HttpRequestException || ex is JsonException || ex is InvalidOperationException || ex is IOException || ex is UnauthorizedAccessException || ex is TimeoutException || ex is FormatException)
         {
             RecordClientSyncFailure(now);
             Logger.Warn(ex, "ClientSyncCoordinator/SyncAsync: Combined client sync failed.");
@@ -153,20 +153,32 @@ public sealed class ClientSyncCoordinator
 
     private async Task<ClientSyncSnapshot?> DownloadAndValidateAsync(CancellationToken cancellationToken)
     {
+        // ResponseHeadersRead releases HttpClient's timeout after headers. Bound body reads too.
+        using CancellationTokenSource downloadTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        downloadTimeout.CancelAfter(_httpClient.Timeout);
+        CancellationToken downloadToken = downloadTimeout.Token;
         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, SyncUri);
-        using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, downloadToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode || response.Content.Headers.ContentLength > MaximumDocumentBytes)
         {
             return null;
         }
 
-        byte[] content = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        if (content.Length == 0 || content.Length > MaximumDocumentBytes)
+        using Stream stream = await response.Content.ReadAsStreamAsync(downloadToken).ConfigureAwait(false);
+        using MemoryStream buffer = new MemoryStream();
+        byte[] chunk = new byte[8192];
+        while (buffer.Length <= MaximumDocumentBytes)
+        {
+            int read = await stream.ReadAsync(chunk.AsMemory(0, (int)Math.Min(chunk.Length, MaximumDocumentBytes + 1L - buffer.Length)), downloadToken).ConfigureAwait(false);
+            if (read == 0) break;
+            buffer.Write(chunk, 0, read);
+        }
+        if (buffer.Length == 0 || buffer.Length > MaximumDocumentBytes)
         {
             return null;
         }
 
-        using JsonDocument document = JsonDocument.Parse(content);
+        using JsonDocument document = JsonDocument.Parse(buffer.ToArray());
         JsonElement root = document.RootElement;
         if (!root.TryGetProperty("schemaVersion", out JsonElement schemaVersion) || schemaVersion.GetInt32() != 1 ||
             !root.TryGetProperty("updates", out JsonElement updates) ||

@@ -71,6 +71,7 @@ namespace DisplayMagician.UIForms
             label2 = new System.Windows.Forms.Label();
             cb_upgrade_prerelease = new System.Windows.Forms.CheckBox();
             gb_support = new System.Windows.Forms.GroupBox();
+            btn_reset_installation = new System.Windows.Forms.Button();
             btn_service_recovery = new System.Windows.Forms.Button();
             btn_create_support_package = new System.Windows.Forms.Button();
             label3 = new System.Windows.Forms.Label();
@@ -658,6 +659,7 @@ namespace DisplayMagician.UIForms
             // gb_support
             // 
             gb_support.Anchor = System.Windows.Forms.AnchorStyles.None;
+            gb_support.Controls.Add(btn_reset_installation);
             gb_support.Controls.Add(label10);
             gb_support.Controls.Add(btn_service_recovery);
             gb_support.Controls.Add(btn_create_support_package);
@@ -673,6 +675,17 @@ namespace DisplayMagician.UIForms
             gb_support.TabStop = false;
             gb_support.Text = "Support Settings";
             // 
+            // btn_reset_installation
+            //
+            btn_reset_installation.Location = new System.Drawing.Point(550, 88);
+            btn_reset_installation.Size = new System.Drawing.Size(214, 38);
+            btn_reset_installation.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn_reset_installation.ForeColor = System.Drawing.Color.White;
+            btn_reset_installation.Name = "btn_reset_installation";
+            btn_reset_installation.TabIndex = 24;
+            btn_reset_installation.Text = "Reset DisplayMagician...";
+            btn_reset_installation.Click += btn_reset_installation_Click;
+            //
             // btn_service_recovery
             // 
             btn_service_recovery.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
@@ -724,9 +737,9 @@ namespace DisplayMagician.UIForms
             label10.Location = new System.Drawing.Point(273, 88);
             label10.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label10.Name = "label10";
-            label10.Size = new System.Drawing.Size(488, 37);
+            label10.Size = new System.Drawing.Size(260, 37);
             label10.TabIndex = 0;
-            label10.Text = "Configure DisplayMagician Gateway LAN and remote access, or recover Control Service after a failed display change.";
+            label10.Text = "Configure remote access or recover the Control Service.";
             label10.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SettingsForm
@@ -783,6 +796,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.CheckBox cb_upgrade_prerelease;
         private System.Windows.Forms.GroupBox gb_support;
+        private System.Windows.Forms.Button btn_reset_installation;
         private System.Windows.Forms.Button btn_service_recovery;
         private System.Windows.Forms.Button btn_create_support_package;
         private System.Windows.Forms.Label label3;

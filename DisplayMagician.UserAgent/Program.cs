@@ -14,6 +14,9 @@ internal static class Program
 {
     private static async Task Main(string[] args)
     {
+        try { using Semaphore resetting = Semaphore.OpenExisting(InstallationResetProtocol.MaintenanceLockName); return; }
+        catch (WaitHandleCannotBeOpenedException) { } // No installation reset is running.
+        catch (UnauthorizedAccessException) { return; } // Another user's administrator reset is running.
         // The current WinForms application still owns desktop work. This executable becomes its interactive-session host
         // once the existing profile and shortcut lifecycle is moved behind the Agent boundary.
         AgentRegistration registration = AgentIdentity.CreateRegistration(AgentBuildVersion.Current, "manual");

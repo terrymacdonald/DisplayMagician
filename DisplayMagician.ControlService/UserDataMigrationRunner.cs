@@ -12,10 +12,12 @@ public sealed class UserDataMigrationRunner
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly LegacyFileMigration _legacyFileMigration;
     private readonly object _migrationLock = new object();
+    private readonly ControlServiceSettingsStore? _preferences;
 
-    public UserDataMigrationRunner(LegacyFileMigration legacyFileMigration)
+    public UserDataMigrationRunner(LegacyFileMigration legacyFileMigration, ControlServiceSettingsStore? preferences = null)
     {
         _legacyFileMigration = legacyFileMigration ?? throw new ArgumentNullException(nameof(legacyFileMigration));
+        _preferences = preferences;
     }
 
     public UserDataMigrationResult Migrate(string legacyAppDataPath, UserStoragePaths userPaths)
@@ -47,6 +49,12 @@ public sealed class UserDataMigrationRunner
                 }
             }
 
+            if (_preferences?.Get().SuppressLegacyUserImport == true)
+            {
+                AtomicFileStore.WriteAllText(userPaths.MigrationMarkerPath, JsonSerializer.Serialize(new MigrationMarker
+                { SchemaVersion = 1, MigratedUtc = DateTime.UtcNow, LegacyAppDataPath = legacyAppDataPath, WasInstallationReset = true }));
+                return new UserDataMigrationResult(true, true, "Legacy import is disabled after installation reset.", Array.Empty<LegacyFileMigrationResult>());
+            }
             List<LegacyFileMigrationResult> results = new List<LegacyFileMigrationResult>();
             foreach (MigrationFile file in GetMigrationFiles(legacyAppDataPath, userPaths))
             {
@@ -230,6 +238,7 @@ public sealed class UserDataMigrationResult
 
 public sealed class MigrationMarker
 {
+    public bool WasInstallationReset { get; set; }
     public int SchemaVersion { get; set; }
 
     public DateTime MigratedUtc { get; set; }

@@ -237,6 +237,11 @@ I’m so very thankful for the help of the following people, who make DisplayMag
 
 Also big thanks to [the amazing list of people who have donated and helped shown here](Docs/CREDITS.md).
 
+## Reset DisplayMagician
+
+To start again, select **Settings > Support Settings > Reset DisplayMagician...**. Administrator approval and an explicit confirmation are required. Reset deletes settings, display/audio profiles, shortcuts, paired devices, caches and configuration backups for **all Windows users**, while retaining logs. No reset archive is created. Export a Support ZIP first if the old configuration is needed for troubleshooting. After reset, close recovery and launch DisplayMagician again.
+
+If damaged settings prevent normal startup, run `DisplayMagician.exe --reset-installation` to open the same recovery window. Active shortcuts must complete display/audio restoration before deletion can proceed. This feature requires an installed deployment with the ControlService recovery executable.
 ## Codebase regression checks
 
 Run `.\test_displaymagician.ps1` from the repository root to restore, build and run all test projects with Visual Studio MSBuild. A failed test run returns its nonzero exit code after printing its diagnostics, including when output is captured in Windows PowerShell.

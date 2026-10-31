@@ -23,6 +23,7 @@ public sealed class GatewayEventJournal
     private readonly object _syncRoot = new object();
     private readonly string _storagePath;
     private readonly string _pendingPath;
+    private bool _available = true;
     private readonly Dictionary<Guid, string> _pendingEdits = new Dictionary<Guid, string>();
     private readonly HashSet<string> _uncertainUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, UserEvents> _users = new Dictionary<string, UserEvents>(StringComparer.OrdinalIgnoreCase);
@@ -32,22 +33,23 @@ public sealed class GatewayEventJournal
         ArgumentNullException.ThrowIfNull(paths);
         _storagePath = Path.Combine(paths.MachinePath, "GatewayEventJournal.json");
         _pendingPath = Path.Combine(paths.MachinePath, "GatewayEventJournal.pending.json");
-        Load();
-        if (File.Exists(_pendingPath))
+        try
         {
             // A crash or failed event write can leave an authoritative edit without its event.
             // Retire its replay generation before accepting any old cursor.
-            try
-            {
-                string[] owners = JsonSerializer.Deserialize<string[]>(File.ReadAllText(_pendingPath)) ?? Array.Empty<string>();
-                foreach (string owner in owners.Where(owner => !string.IsNullOrWhiteSpace(owner))) _uncertainUsers.Add(owner);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-            {
-                foreach (string owner in _users.Keys) _uncertainUsers.Add(owner);
-                Logger.Error(ex, "GatewayEventJournal/GatewayEventJournal: Could not read pending edit recovery at {0}; replay will reset.", _pendingPath);
-            }
+            string[] owners = JsonSerializer.Deserialize<string[]>(File.ReadAllText(_pendingPath)) ?? throw new JsonException("Missing pending edit owners.");
+            if (owners.Any(string.IsNullOrWhiteSpace)) throw new JsonException("Invalid pending edit owner.");
+            foreach (string owner in owners) _uncertainUsers.Add(owner);
         }
+        catch (FileNotFoundException) { } // No pending edit is the normal completed state.
+        catch (DirectoryNotFoundException) { } // A new installation has no pending edit directory yet.
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _available = false;
+            Logger.Error(ex, "GatewayEventJournal/GatewayEventJournal: Pending edit recovery at {0} is invalid; preserving history and rejecting replay/edits until repair/restart.", _pendingPath);
+        }
+        // Validate recovery metadata before Load can prune and rewrite otherwise valid history.
+        if (_available) Load();
     }
 
     public SavedResourceEdit BeginSavedResourceEdit(string ownerUserSid)
@@ -55,6 +57,7 @@ public sealed class GatewayEventJournal
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
         lock (_syncRoot)
         {
+            EnsureAvailable();
             RecoverUnsafe(ownerUserSid);
             Guid id = Guid.NewGuid();
             _pendingEdits.Add(id, ownerUserSid);
@@ -73,6 +76,7 @@ public sealed class GatewayEventJournal
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerUserSid);
         lock (_syncRoot)
         {
+            EnsureAvailable();
             _uncertainUsers.Add(ownerUserSid);
             PersistPendingUnsafe();
             RecoverUnsafe(ownerUserSid);
@@ -160,6 +164,7 @@ public sealed class GatewayEventJournal
 
     private void PersistPendingUnsafe()
     {
+        EnsureAvailable();
         string[] owners = _pendingEdits.Values.Concat(_uncertainUsers).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         if (owners.Length == 0)
         {
@@ -287,18 +292,25 @@ public sealed class GatewayEventJournal
             OperationDecision = decision,
             ResourceChange = resourceChange
         };
-        user.Events.Add(record);
-        user.RetainedBytes += JsonSerializer.SerializeToUtf8Bytes(record).Length + 1;
+        byte[] snapshot = JsonSerializer.SerializeToUtf8Bytes(record);
+        user.Events.Add(JsonSerializer.Deserialize<GatewayEventRecord>(snapshot)!);
+        user.RetainedBytes += snapshot.Length + 1;
     }
 
     private UserEvents GetOrCreateUserUnsafe(string ownerUserSid)
     {
+        EnsureAvailable();
         if (_uncertainUsers.Contains(ownerUserSid)) RecoverUnsafe(ownerUserSid);
         if (_users.TryGetValue(ownerUserSid, out UserEvents? user)) return user;
         user = new UserEvents { OwnerUserSid = ownerUserSid, CursorSecret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)) };
         user.AnchorId = CreateCursor(user, 0);
         _users.Add(ownerUserSid, user);
-        PersistUnsafe();
+        try { PersistUnsafe(); }
+        catch
+        {
+            _users.Remove(ownerUserSid);
+            throw;
+        }
         return user;
     }
 
@@ -311,7 +323,7 @@ public sealed class GatewayEventJournal
             GatewayEventRecord record = user.Events[index];
             int recordBytes = JsonSerializer.SerializeToUtf8Bytes(record).Length + 1;
             if (events.Count > 0 && bytes + recordBytes > MaximumReplayBytes) break;
-            events.Add(record);
+            events.Add(JsonSerializer.Deserialize<GatewayEventRecord>(JsonSerializer.Serialize(record))!);
             bytes += recordBytes;
         }
 
@@ -378,36 +390,69 @@ public sealed class GatewayEventJournal
     {
         try
         {
-            if (!File.Exists(_storagePath)) return;
-            UserEvents[]? persisted = JsonSerializer.Deserialize<UserEvents[]>(File.ReadAllText(_storagePath));
-            bool pruned = false;
-            foreach (UserEvents user in persisted ?? Array.Empty<UserEvents>())
+            UserEvents[] persisted = JsonSerializer.Deserialize<UserEvents[]>(File.ReadAllText(_storagePath))
+                ?? throw new JsonException("Missing replay history.");
+            HashSet<string> owners = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (UserEvents user in persisted)
             {
-                if (user == null || string.IsNullOrWhiteSpace(user.OwnerUserSid) || !TryParseSequence(user.AnchorId, out long anchorSequence) || anchorSequence != 0 || string.IsNullOrEmpty(user.CursorSecret)) continue;
-                if (Convert.FromBase64String(user.CursorSecret).Length != 32) continue;
-                if (!IsValidCursor(user, user.AnchorId, 0)) continue;
-                user.Events ??= new List<GatewayEventRecord>();
-                user.Events = user.Events.Where(item => item != null && string.Equals(item.OwnerUserSid, user.OwnerUserSid, StringComparison.OrdinalIgnoreCase) && TryParseSequence(item.Id, out long sequence) && sequence > 0 && IsValidCursor(user, item.Id, sequence))
-                    .OrderBy(item => ParseSequence(item.Id)).ToList();
+                if (user == null || string.IsNullOrWhiteSpace(user.OwnerUserSid) || !owners.Add(user.OwnerUserSid)
+                    || !TryParseSequence(user.AnchorId, out long anchorSequence) || anchorSequence != 0 || string.IsNullOrEmpty(user.CursorSecret)
+                    || Convert.FromBase64String(user.CursorSecret).Length != 32 || !IsValidCursor(user, user.AnchorId, 0)
+                    || user.Events == null || user.NextSequence < 1 || user.FirstSequence < 1)
+                    throw new JsonException("Invalid replay owner or cursor metadata.");
+                long previousSequence = 0;
                 foreach (GatewayEventRecord item in user.Events)
                 {
+                    if (item == null || !string.Equals(item.OwnerUserSid, user.OwnerUserSid, StringComparison.OrdinalIgnoreCase)
+                        || !TryParseSequence(item.Id, out long sequence) || sequence <= previousSequence || sequence >= user.NextSequence
+                        || !IsValidCursor(user, item.Id, sequence)) throw new JsonException("Invalid replay event or sequence.");
+                    bool validPayload = item.EventType switch
+                    {
+                        ControlClientEventType.OperationStatusUpdated => item.OperationStatus != null && item.OperationDecision == null && item.ResourceChange == null
+                            && string.Equals(item.OperationStatus.OwnerUserSid, user.OwnerUserSid, StringComparison.OrdinalIgnoreCase),
+                        ControlClientEventType.OperationDecisionUpdated => item.OperationDecision != null && item.OperationStatus == null && item.ResourceChange == null
+                            && string.Equals(item.OperationDecision.OwnerUserSid, user.OwnerUserSid, StringComparison.OrdinalIgnoreCase),
+                        ControlClientEventType.DisplayProfileChanged or ControlClientEventType.AudioProfileChanged or ControlClientEventType.ShortcutChanged =>
+                            item.OperationStatus == null && item.OperationDecision == null && item.ResourceChange != null
+                            && !string.IsNullOrWhiteSpace(item.ResourceChange.Id) && item.ResourceChange.Action is "upsert" or "deleted"
+                            && item.ResourceChange.ResourceType == (item.EventType == ControlClientEventType.DisplayProfileChanged ? "display-profile"
+                                : item.EventType == ControlClientEventType.AudioProfileChanged ? "audio-profile" : "shortcut"),
+                        _ => false
+                    };
+                    if (!validPayload || item.PublishedUtc == default) throw new JsonException("Invalid or unsupported replay event payload.");
+                    previousSequence = sequence;
                     if (item.OwnerSessionId == 0) item.OwnerSessionId = item.OperationStatus?.OwnerSessionId ?? item.OperationDecision?.OwnerSessionId ?? 0;
                 }
+                if (user.FirstSequence != (user.Events.Count == 0 ? user.NextSequence : ParseSequence(user.Events[0].Id)))
+                    throw new JsonException("Invalid replay boundary.");
+            }
+            // Validate the complete file before publishing or pruning any owner's history.
+            bool pruned = false;
+            foreach (UserEvents user in persisted)
+            {
                 user.RetainedBytes = user.Events.Sum(item => (long)JsonSerializer.SerializeToUtf8Bytes(item).Length + 1);
-                user.NextSequence = Math.Max(user.NextSequence, user.Events.Count == 0 ? 1 : ParseSequence(user.Events[^1].Id) + 1);
                 pruned |= PruneUnsafe(user, DateTime.UtcNow);
-                _users[user.OwnerUserSid] = user;
+                _users.Add(user.OwnerUserSid, user);
             }
             if (pruned) PersistUnsafe();
         }
+        catch (FileNotFoundException) when (!File.Exists(_storagePath + ".bak") && !Directory.Exists(_storagePath + ".bak")) { } // New journal.
+        catch (DirectoryNotFoundException) when (!File.Exists(_storagePath + ".bak") && !Directory.Exists(_storagePath + ".bak")) { } // New installation.
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or FormatException)
         {
-            Logger.Error(ex, "GatewayEventJournal/Load: Could not read replay history at {0}.", _storagePath);
+            _available = false;
+            Logger.Error(ex, "GatewayEventJournal/Load: Replay history at {0} is unavailable; preserving files and rejecting replay/edits until repair/restart.", _storagePath);
         }
+    }
+
+    private void EnsureAvailable()
+    {
+        if (!_available) throw new IOException("Gateway replay history requires repair and service restart before replay or saved-resource edits are available.");
     }
 
     private void PersistUnsafe()
     {
+        EnsureAvailable();
         try
         {
             AtomicFileStore.WriteAllText(_storagePath, JsonSerializer.Serialize(_users.Values.ToArray()), _storagePath + ".bak");

@@ -23,3 +23,6 @@ Use [REST_P2_TEST_PLAN.md](REST_P2_TEST_PLAN.md) to validate the installed Gatew
 Use [REST_P3_TEST_PLAN.md](REST_P3_TEST_PLAN.md) for paging, ETags, SSE, replay recovery, revocation, TLS renewal, and installer lifecycle. Run `test_rest_p3.ps1 -PrepareSandbox` on the host to stage its developer-only HTTPS test harness under the existing `Sandbox/Local` mapping.
 
 `Generated` is machine-specific and intentionally excluded from source control.
+
+
+Use [INSTALLATION_RESET_TEST_PLAN.md](INSTALLATION_RESET_TEST_PLAN.md) for full-app reset, retained logs, offline recovery, all-user deletion and Gateway identity replacement. Run these destructive checks only inside the disposable installed Sandbox.

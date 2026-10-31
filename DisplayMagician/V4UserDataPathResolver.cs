@@ -7,9 +7,11 @@ namespace DisplayMagician;
 
 public static class V4UserDataPathResolver
 {
+    public static bool WasInstallationReset { get; private set; }
     public static bool TryGetMigratedUserDataPath(out string userDataPath)
     {
         userDataPath = string.Empty;
+        WasInstallationReset = false;
 
         try
         {
@@ -34,6 +36,7 @@ public static class V4UserDataPathResolver
             }
 
             userDataPath = rootPath;
+            WasInstallationReset = marker.RootElement.TryGetProperty("WasInstallationReset", out JsonElement reset) && reset.ValueKind == JsonValueKind.True;
             return true;
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException || ex is PlatformNotSupportedException)

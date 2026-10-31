@@ -19,6 +19,7 @@ public sealed class ControlServiceSettingsDocument
     public bool ShareAnonymousUsageMetrics { get; set; } = true;
     [JsonRequired]
     public bool HasAnonymousMetricsChoice { get; set; }
+    public bool SuppressLegacyUserImport { get; set; }
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalSettings { get; set; }
 

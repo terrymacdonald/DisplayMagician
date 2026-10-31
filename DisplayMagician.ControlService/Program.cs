@@ -10,10 +10,16 @@ namespace DisplayMagician.ControlService;
 
 internal static class Program
 {
-    private static async Task Main()
+    private static async Task Main(string[] args)
     {
         StoragePaths storagePaths = new StoragePaths();
         ConfigureLogging(storagePaths);
+        if (args.Length == 2 && args[0] == InstallationResetProtocol.MaintenanceCommandLineOption)
+        {
+            await InstallationResetHost.RunAsync(args[1]).ConfigureAwait(false);
+            LogManager.Shutdown();
+            return;
+        }
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Services.AddWindowsService(options => options.ServiceName = "DisplayMagician Control Service");
         builder.Services.AddSingleton(storagePaths);

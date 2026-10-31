@@ -606,6 +606,21 @@ namespace DisplayMagician.UIForms
             }
         }
 
+        private void btn_reset_installation_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Recovery runs in a separate window because reset must close this process before deleting its settings.
+                Process.Start(new ProcessStartInfo(Application.ExecutablePath, InstallationResetProtocol.CommandLineOption)
+                { UseShellExecute = true, Verb = "runas" });
+            }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223) { } // Administrator approval was cancelled.
+            catch (Exception ex)
+            {
+                logger.Error(ex, "SettingsForm/btn_reset_installation_Click: Could not open installation reset recovery.");
+                MessageBox.Show(this, "Reset recovery could not be opened. " + ex.Message, "Reset DisplayMagician", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
         private async void btn_create_support_package_Click(object sender, EventArgs e)
         {
             using SaveFileDialog saveFileDialog = new SaveFileDialog

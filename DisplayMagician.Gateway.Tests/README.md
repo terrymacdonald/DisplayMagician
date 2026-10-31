@@ -10,3 +10,6 @@ They do not install Windows services or validate a phone's native TLS/secure-sto
 
 
 GatewaySettingsProviderTests checks the consolidated machine-preference reader, stale-legacy exclusion, schema/value validation and default fallback without rewriting corrupt primaries or backups. All paths are isolated temporary directories.
+
+
+InstallationResetIdentityTests substitutes identity deletion to verify confirmed one-shot consumption, retry after failure and rejection of invalid requests. It never deletes actual CNG keys or certificates; installed LocalService identity reset is validated through the Sandbox checklist.

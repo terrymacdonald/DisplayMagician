@@ -21,11 +21,39 @@ public sealed class GatewayIdentityProvider
     public GatewayIdentity GetOrCreate(GatewaySettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
+        ApplyInstallationReset(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Machine", "GatewayIdentityReset.json"), DeleteInstallationIdentity);
         using CngKey hostKey = OpenOrCreateKey(HostKeyName);
         string publicKeyJwk = CreatePublicJwk(hostKey);
         X509Certificate2 certificate = GetOrCreateTlsCertificate(settings);
         string hostId = CalculateHostId(publicKeyJwk);
         return new GatewayIdentity(hostId, publicKeyJwk, certificate);
+    }
+
+    internal static void ApplyInstallationReset(string path, Action deleteIdentity)
+    {
+        string json;
+        try { json = System.IO.File.ReadAllText(path); }
+        catch (System.IO.FileNotFoundException) { return; } // Ordinary startup has no pending reset.
+        catch (System.IO.DirectoryNotFoundException) { return; }
+        using JsonDocument request = JsonDocument.Parse(json);
+        if (!request.RootElement.TryGetProperty("InstallationReset", out JsonElement confirmed) || confirmed.ValueKind != JsonValueKind.True)
+            throw new JsonException("Invalid installation identity reset request.");
+        deleteIdentity();
+        System.IO.File.Delete(path);
+    }
+
+    private static void DeleteInstallationIdentity()
+    {
+        using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+        store.Open(OpenFlags.ReadWrite);
+        foreach (X509Certificate2 certificate in store.Certificates.Cast<X509Certificate2>().Where(item => item.FriendlyName == TlsCertificateFriendlyName && item.Subject == TlsCertificateSubject).ToArray())
+            store.Remove(certificate);
+        foreach (string name in new[] { HostKeyName, TlsKeyName })
+            if (CngKey.Exists(name, CngProvider.MicrosoftSoftwareKeyStorageProvider))
+            {
+                using CngKey key = CngKey.Open(name, CngProvider.MicrosoftSoftwareKeyStorageProvider);
+                key.Delete();
+            }
     }
 
     internal static string CalculateHostId(string publicKeyJwk)

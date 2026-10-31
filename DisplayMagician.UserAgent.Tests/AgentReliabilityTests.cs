@@ -30,6 +30,42 @@ public sealed class AgentReliabilityTests : IDisposable
     private readonly List<(FieldInfo Field, object? Value)> _originalState = new List<(FieldInfo, object?)>();
 
     [Fact]
+    public async Task InstallationResetCancelsWorkAndWaitsForCompletionBeforeStopping()
+    {
+        using FakeProfileOperations profiles = new();
+        AgentRegistration registration = new() { UserSid = "test-user", SessionId = 1, OperationState = AgentOperationState.Idle };
+        ProfileCommandHandler handler = new(registration, new FakeServiceClient(), null, _root, profiles);
+        using CancellationTokenSource operation = new();
+        Guid id = Guid.NewGuid();
+        MethodInfo begin = typeof(ProfileCommandHandler).GetMethod("TryBeginOperation", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        Assert.True((bool)begin.Invoke(handler, new object[] { id, operation, DisplayOperationType.StartShortcut })!);
+        Task<ControlResponse> preparation = handler.HandleAsync(new ControlEnvelope { MessageType = ControlMessageType.PrepareUserAgentForReset }, CancellationToken.None);
+        Assert.True(operation.IsCancellationRequested);
+        Assert.False(preparation.IsCompleted);
+        Assert.False(handler.StopRequested);
+        using CancellationTokenSource overlapping = new();
+        Assert.False((bool)begin.Invoke(handler, new object[] { Guid.NewGuid(), overlapping, DisplayOperationType.StartShortcut })!);
+        typeof(ProfileCommandHandler).GetMethod("CompleteOperation", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(handler, new object[] { id, operation });
+        ControlResponse result = await preparation.WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.True(result.IsSuccessful);
+        Assert.True(handler.StopRequested);
+    }
+
+    [Fact]
+    public async Task CancelledResetPreparationDoesNotDiscardPendingRecoveryOrStopAgent()
+    {
+        using FakeProfileOperations profiles = new();
+        AgentRegistration registration = new() { UserSid = "test-user", SessionId = 1 };
+        ProfileCommandHandler handler = new(registration, new FakeServiceClient(), null, _root, profiles);
+        registration.IsRecoveryRequired = true;
+        using CancellationTokenSource cancellation = new(TimeSpan.FromMilliseconds(30));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => handler.HandleAsync(
+            new ControlEnvelope { MessageType = ControlMessageType.PrepareUserAgentForReset }, cancellation.Token));
+        Assert.False(handler.StopRequested);
+        Assert.True(registration.IsRecoveryRequired);
+        Assert.False((bool)typeof(ProfileCommandHandler).GetField("_resetRequested", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(handler)!);
+    }
+    [Fact]
     public void FailedLaunchDoesNotPutArgumentsInSupportLogs()
     {
         NLog.Config.LoggingConfiguration? original = NLog.LogManager.Configuration;

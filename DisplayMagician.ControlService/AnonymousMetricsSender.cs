@@ -30,6 +30,7 @@ public sealed class AnonymousMetricsSender
 
     public async Task TrySendAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         MachineScheduleState state = _machineScheduleCoordinator.GetState();
         if (!state.ShareAnonymousUsageMetrics || string.IsNullOrWhiteSpace(state.CurrentAppVersion) || !_machineScheduleCoordinator.IsMetricsHeartbeatDue(DateTime.UtcNow, state.CurrentAppVersion))
         {
@@ -61,6 +62,7 @@ public sealed class AnonymousMetricsSender
 
             Logger.Warn("AnonymousMetricsSender/TrySendAsync: Heartbeat was not accepted (statusCode={0}).", (int)response.StatusCode);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException || ex is InvalidOperationException)
         {
             Logger.Warn(ex, "AnonymousMetricsSender/TrySendAsync: Anonymous metrics heartbeat failed.");

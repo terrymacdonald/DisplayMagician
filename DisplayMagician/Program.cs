@@ -1,3 +1,4 @@
+using System.Security.Principal;
 using System;
 using McMaster.Extensions.CommandLineUtils;
 using System.IO;
@@ -238,6 +239,17 @@ namespace DisplayMagician {
         [STAThread]
         private static int Main(string[] args)
         {
+            if (!args.Contains(InstallationResetProtocol.CommandLineOption))
+            {
+                try
+                {
+                    using (Semaphore resetting = Semaphore.OpenExisting(InstallationResetProtocol.MaintenanceLockName)) { }
+                    MessageBox.Show("DisplayMagician is being reset. Start it again after reset finishes.", "DisplayMagician reset", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return (int)ERRORLEVEL.OK;
+                }
+                catch (WaitHandleCannotBeOpenedException) { } // No reset is running.
+                catch (UnauthorizedAccessException) { return (int)ERRORLEVEL.ERROR_EXCEPTION; } // Another user's administrator reset is running.
+            }
             // BOOTSTRAP AND INITIALIZATION LOGIC
             Application.ApplicationExit += (sender, eventArgs) =>
             {
@@ -313,6 +325,25 @@ namespace DisplayMagician {
 
             // Start the Log file
             logger.Info($"Program/Main: Starting {Application.ProductName} v{Application.ProductVersion}");
+
+            if (args.Any(argument => string.Equals(argument, InstallationResetProtocol.CommandLineOption, StringComparison.OrdinalIgnoreCase)))
+            {
+                _isElevatedRecoveryAction = true;
+                using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                if (!new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator))
+                {
+                    try { Process.Start(new ProcessStartInfo(Application.ExecutablePath, InstallationResetProtocol.CommandLineOption) { UseShellExecute = true, Verb = "runas" }); }
+                    catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223) { } // Administrator approval was cancelled.
+                    return (int)ERRORLEVEL.OK;
+                }
+                // This is a standalone recovery window: the normal desktop must exit before deletion,
+                // and configuration/package-identity/single-instance startup must not block recovery.
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new InstallationResetForm());
+                NLog.LogManager.Shutdown();
+                return (int)ERRORLEVEL.OK;
+            }
 
             if (args.Any(argument => string.Equals(argument, ForceReleaseDisplayControlCommandLineOption, StringComparison.OrdinalIgnoreCase)))
             {
@@ -459,6 +490,11 @@ namespace DisplayMagician {
             }
 
             bool settingsChanged = AppProgramSettings.EnsureInstallIdentity(false);
+            if (V4UserDataPathResolver.WasInstallationReset && !AppProgramSettings.UpdaterPreferencesImported)
+            {
+                AppProgramSettings.UpdaterPreferencesImported = true;
+                settingsChanged = true;
+            }
             if (settingsChanged)
             {
                 AppProgramSettings.SaveSettings();

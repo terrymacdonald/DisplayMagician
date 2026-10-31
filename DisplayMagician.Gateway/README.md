@@ -33,3 +33,6 @@ Do not run this host directly on a production machine until it has been installe
 
 
 Gateway bind and advertisement preferences now come from the Gateway section of the protected Machine/ControlServiceSettings.json schema-1 document owned by ControlService. The startup reader validates the shared document and uses existing defaults with a warning when it is missing, unreadable or unsupported; it never rewrites evidence or reads stale GatewaySettings.json after consolidation. Upgrade Gateway together with ControlService. Bind changes retain the existing restart requirement.
+
+
+After an administrator-confirmed installation reset, Gateway consumes Machine/GatewayIdentityReset.json before opening identity keys. Under its own LocalService account it deletes only the named DM host/TLS CNG keys and matching DM TLS certificate, then creates fresh identities. The request is removed only after successful key deletion, allowing retry on failure. Invalid requests fail without deleting keys. Reset itself has no remote route or paired-device capability; all prior pairings are deleted and must be recreated.

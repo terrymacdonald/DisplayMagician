@@ -169,7 +169,11 @@ public sealed class ControlClientPipeServer
                 else
                 {
                     PipeClientIdentity identity = GetClientIdentity(pipe);
-                    response = await _requestReplayStore.ExecuteAsync(identity.UserSid, request, async () =>
+                    // Maintenance must remain available when the ordinary replay ledger is damaged.
+                    // Preparation only cancels/stops Agents; destructive reset uses the separate admin-only endpoint.
+                    response = request.MessageType == ControlMessageType.PrepareInstallationReset
+                        ? await PrepareInstallationResetAsync(identity, request.RequestId, cancellationToken).ConfigureAwait(false)
+                        : await _requestReplayStore.ExecuteAsync(identity.UserSid, request, async () =>
                     {
                         try
                         {
@@ -431,6 +435,18 @@ public sealed class ControlClientPipeServer
         return new ControlResponse { IsSuccessful = true, Message = "Control Service status returned.", ServiceStatus = status };
     }
 
+    private async Task<ControlResponse> PrepareInstallationResetAsync(PipeClientIdentity identity, Guid requestId, CancellationToken cancellationToken)
+    {
+        if (!identity.IsAdministrator)
+            return new ControlResponse { ErrorCode = ControlErrorCode.AdministratorRequired, Message = "Administrator approval is required to reset DisplayMagician." };
+        foreach (AgentRegistration agent in _stateCoordinator.GetAgentRegistrations())
+        {
+            ControlResponse response = await new AgentCommandClient().SendAsync(agent,
+                new ControlEnvelope { MessageType = ControlMessageType.PrepareUserAgentForReset, RequestId = requestId }, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessful) return response;
+        }
+        return new ControlResponse { IsSuccessful = true, Message = "User Agents are stopping for installation reset." };
+    }
     private ControlResponse GetGatewaySettings()
     {
         return new ControlResponse { IsSuccessful = true, Message = "Gateway settings returned.", GatewaySettings = _gatewaySettingsStore.Get() };

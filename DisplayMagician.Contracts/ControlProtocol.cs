@@ -30,7 +30,7 @@ public static class ControlProtocol
     public static readonly TimeSpan EventKeepAliveInterval = TimeSpan.FromSeconds(20);
 
     public static readonly string EndpointInstanceId = Guid.NewGuid().ToString("N");
-    public static readonly string[] ControlServiceCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.ClientEvents, ControlCapabilities.ClientSync, ControlCapabilities.Diagnostics };
+    public static readonly string[] ControlServiceCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.ClientEvents, ControlCapabilities.ClientSync, ControlCapabilities.Diagnostics, InstallationResetProtocol.Capability };
     public static readonly string[] UserAgentCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.OperationStatus, ControlCapabilities.OperationDecisions, ControlCapabilities.Profiles, ControlCapabilities.AudioProfiles, ControlCapabilities.Shortcuts, ControlCapabilities.Messages };
     public static readonly string[] SessionLauncherCapabilities = new[] { ControlCapabilities.ProtocolNegotiation, ControlCapabilities.SessionLauncher };
 
@@ -236,7 +236,10 @@ public enum ControlMessageType
     SaveWindowPlacements = 98,
     ClearWindowPlacements = 99,
     GetLoggingSettings = 100,
-    SetSharedLogLevel = 101
+    SetSharedLogLevel = 101,
+    PrepareInstallationReset = 102,
+    ResetInstallation = 103,
+    PrepareUserAgentForReset = 104
 }
 
 public enum ControlErrorCode

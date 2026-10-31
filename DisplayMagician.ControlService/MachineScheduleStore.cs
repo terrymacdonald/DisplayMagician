@@ -60,27 +60,39 @@ public sealed class MachineScheduleStore
 
     private MachineScheduleState Load()
     {
-        try
+        bool hadFailure = false;
+        foreach (string path in new[] { _storagePath, _storagePath + ".bak" })
         {
-            if (!File.Exists(_storagePath))
+            try
             {
-                return new MachineScheduleState();
+                MachineScheduleState loaded = JsonSerializer.Deserialize<MachineScheduleState>(File.ReadAllText(path))
+                    ?? throw new JsonException("The schedule state was null.");
+                Normalize(loaded);
+                if (path != _storagePath)
+                {
+                    Logger.Warn("MachineScheduleStore/Load: Recovered schedule state from {0}; continuing automatically.", path);
+                    try
+                    {
+                        // Restore the primary without replacing the usable backup with corrupt data.
+                        AtomicFileStore.WriteAllText(_storagePath, JsonSerializer.Serialize(loaded));
+                    }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        Logger.Warn(ex, "MachineScheduleStore/Load: Could not restore {0}; using recovered state in memory and allowing normal saves to retry.", _storagePath);
+                    }
+                }
+                return loaded;
             }
-
-            MachineScheduleState? loaded = JsonSerializer.Deserialize<MachineScheduleState>(File.ReadAllText(_storagePath));
-            if (loaded == null)
+            catch (FileNotFoundException) { } // A new installation need not have a primary or backup.
+            catch (DirectoryNotFoundException) { } // Its storage directory may not exist yet.
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
             {
-                return new MachineScheduleState();
+                hadFailure = true;
+                Logger.Warn(ex, "MachineScheduleStore/Load: Could not read schedule state from {0}; trying the backup or resetting the temporary state.", path);
             }
-
-            Normalize(loaded);
-            return loaded;
         }
-        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
-        {
-            Logger.Error(ex, "MachineScheduleStore/Load: Could not load schedule state from {0}.", _storagePath);
-            return new MachineScheduleState();
-        }
+        if (hadFailure) Logger.Warn("MachineScheduleStore/Load: No usable schedule state remains at {0}; resetting counters and schedules and continuing automatically.", _storagePath);
+        return new MachineScheduleState();
     }
 
     private void Persist(MachineScheduleState state)

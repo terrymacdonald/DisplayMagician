@@ -112,12 +112,13 @@ public sealed class MachineScheduleCoordinator
             EnsureInstallId(state);
             state.CurrentAppVersion = report.AppVersion;
             state.UpdateChannel = string.Equals(report.UpdateChannel, "prerelease", StringComparison.OrdinalIgnoreCase) ? "prerelease" : "stable";
-            if (report.IsLaunch)
+            if (report.IsLaunch && state.TotalAnonymousMetricLaunches < long.MaxValue)
             {
                 state.TotalAnonymousMetricLaunches++;
             }
 
-            state.TotalAnonymousMetricActiveMinutes += Math.Max(0, report.ActiveMinutes);
+            long activeMinutes = Math.Max(0, report.ActiveMinutes);
+            state.TotalAnonymousMetricActiveMinutes += Math.Min(activeMinutes, long.MaxValue - state.TotalAnonymousMetricActiveMinutes);
         });
     }
 
@@ -164,9 +165,9 @@ public sealed class MachineScheduleCoordinator
                 hash = (hash * 31) + character;
             }
 
-            int positiveHash = Math.Abs(hash);
-            int daySlot = positiveHash % 7;
-            int hourOffset = Math.Abs((positiveHash / 7) % 7);
+            long positiveHash = Math.Abs((long)hash);
+            int daySlot = (int)(positiveHash % 7);
+            int hourOffset = (int)((positiveHash / 7) % 7);
             DateTime earliestUtc = utcNow.AddDays(7);
             DateTime weekStartUtc = earliestUtc.Date.AddDays(-(int)earliestUtc.DayOfWeek);
             DateTime scheduledUtc = weekStartUtc.AddDays(daySlot).AddHours(hourOffset);

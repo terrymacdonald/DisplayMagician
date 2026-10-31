@@ -48,3 +48,6 @@ PreferencesConsolidationTests covers Settings v7-to-v8 donation migration/backup
 
 
 ProgramDelayTests allows 20 ms Windows timer precision when observing a requested one-second Task.Delay with Stopwatch; skipped waits, step ordering, cancellation and cleanup remain asserted. Runtime delay behaviour is unchanged.
+
+
+InstallationResetFormTests exercises duplicate submission, pending-close prevention, failure/retry state and success UI using substituted reset calls. AgentReliabilityTests checks reset cancellation, exclusion of overlapping operations, waiting for completion before stopping and preservation of pending recovery when preparation is cancelled. No tests issue a real reset or stop installed processes.

@@ -1,9 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DisplayMagician.Contracts;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using NLog;
 
 namespace DisplayMagician.ControlService;
@@ -77,14 +79,37 @@ public sealed class ControlServiceWorker : BackgroundService
         {
             _logger.Error(ex, "ControlServiceWorker/ExecuteAsync: Could not reconcile the installed Gateway firewall rules with saved settings.");
         }
-        Task agentServer = _pipeServer.RunAsync(stoppingToken);
-        Task clientServer = _clientPipeServer.RunAsync(stoppingToken);
-        Task clientEventServer = _clientEventPipeServer.RunAsync(stoppingToken);
-        Task gatewayPairingServer = _gatewayPairingPipeServer.RunAsync(stoppingToken);
-        Task clientSync = RunClientSyncAsync(stoppingToken);
-        Task firewallRetry = firewallReady ? Task.CompletedTask : RetryGatewayFirewallAsync(stoppingToken);
-        await Task.WhenAll(agentServer, clientServer, clientEventServer, gatewayPairingServer, clientSync, firewallRetry, RunLoggingAsync(stoppingToken)).ConfigureAwait(false);
+        using CancellationTokenSource lifetime = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        Task[] required =
+        {
+            _pipeServer.RunAsync(lifetime.Token), _clientPipeServer.RunAsync(lifetime.Token),
+            _clientEventPipeServer.RunAsync(lifetime.Token), _gatewayPairingPipeServer.RunAsync(lifetime.Token),
+            RunClientSyncAsync(lifetime.Token), RunLoggingAsync(lifetime.Token)
+        };
+        Task firewallRetry = firewallReady ? Task.CompletedTask : RetryGatewayFirewallAsync(lifetime.Token);
+        try { await SuperviseAsync(required, new[] { firewallRetry }, lifetime).ConfigureAwait(false); }
+        catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.Error(ex, "ControlServiceWorker/ExecuteAsync: A required service loop stopped; stopping the service and its remaining listeners.");
+            Environment.ExitCode = 1;
+            // The loops have been cancelled and observed. StopHost alone reports a clean
+            // service stop, which does not trigger Windows' configured failure recovery.
+            LogManager.Flush(TimeSpan.FromSeconds(3));
+            if (WindowsServiceHelpers.IsWindowsService()) Environment.Exit(1);
+            throw;
+        }
         _logger.Info("ControlServiceWorker/ExecuteAsync: Control Service pipe listener has stopped.");
+    }
+
+    internal static async Task SuperviseAsync(Task[] required, Task[] background, CancellationTokenSource lifetime)
+    {
+        await Task.WhenAny(required).ConfigureAwait(false);
+        bool stopping = lifetime.IsCancellationRequested;
+        lifetime.Cancel();
+        try { await Task.WhenAll(required.Concat(background)).ConfigureAwait(false); }
+        catch (OperationCanceledException) when (stopping) { return; }
+        catch (OperationCanceledException ex) { throw new InvalidOperationException("A required service loop stopped unexpectedly.", ex); }
+        if (!stopping) throw new InvalidOperationException("A required service loop stopped unexpectedly.");
     }
 
     private async Task RunLoggingAsync(CancellationToken cancellationToken)

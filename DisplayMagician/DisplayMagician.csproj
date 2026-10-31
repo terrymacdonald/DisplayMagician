@@ -96,6 +96,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Update="UIForms\InstallationResetForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="UIForms\AudioProfileNameForm.cs">
       <SubType>Form</SubType>
     </Compile>
