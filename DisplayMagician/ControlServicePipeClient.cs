@@ -292,9 +292,15 @@ internal class ControlServicePipeClient
         return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.RestartUserAgent }, cancellationToken);
     }
 
+    public Task<ControlResponse> GetLoggingSettingsAsync(CancellationToken cancellationToken)
+        => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.GetLoggingSettings }, cancellationToken);
+
+    public Task<ControlResponse> SetSharedLogLevelAsync(string level, bool initializeOnly, CancellationToken cancellationToken)
+        => SendAsync(new ControlEnvelope { MessageType = ControlMessageType.SetSharedLogLevel,
+            Payload = JsonSerializer.Serialize(new SetSharedLogLevelRequest { Level = level, InitializeOnly = initializeOnly }) }, cancellationToken);
     public Task<ControlResponse> SetTemporaryDiagnosticLogLevelAsync(string level, Guid ownerId, CancellationToken cancellationToken)
     {
-        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.SetTemporaryDiagnosticLogLevel, Payload = JsonSerializer.Serialize(new TemporaryDiagnosticLogLevelRequest { Level = level, OwnerId = ownerId, DurationMinutes = 30 }) }, cancellationToken);
+        return SendAsync(new ControlEnvelope { MessageType = ControlMessageType.SetTemporaryDiagnosticLogLevel, Payload = JsonSerializer.Serialize(new TemporaryDiagnosticLogLevelRequest { Level = level, OwnerId = ownerId, DurationMinutes = 1 }) }, cancellationToken);
     }
 
     public Task<ControlResponse> ReleaseTemporaryDiagnosticLogLevelAsync(Guid ownerId, CancellationToken cancellationToken)

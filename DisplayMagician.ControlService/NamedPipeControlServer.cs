@@ -21,16 +21,18 @@ public sealed class NamedPipeControlServer
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly ControlStateCoordinator _coordinator;
     private readonly StoragePaths _storagePaths;
+    private readonly MachineDiagnosticLogLevelStore _loggingSettings;
     private readonly UserDataMigrationRunner _userDataMigrationRunner;
     private readonly OperationStatusStore _operationStatusStore;
     private readonly ClientSyncCoordinator _clientSyncCoordinator;
     private readonly OperationDecisionStore _operationDecisionStore;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedClients, MaximumConnectedClients);
 
-    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, OperationDecisionStore operationDecisionStore)
+    public NamedPipeControlServer(ControlStateCoordinator coordinator, StoragePaths storagePaths, UserDataMigrationRunner userDataMigrationRunner, OperationStatusStore operationStatusStore, ClientSyncCoordinator clientSyncCoordinator, OperationDecisionStore operationDecisionStore, MachineDiagnosticLogLevelStore? loggingSettings = null)
     {
         _coordinator = coordinator ?? throw new ArgumentNullException(nameof(coordinator));
         _storagePaths = storagePaths ?? throw new ArgumentNullException(nameof(storagePaths));
+        _loggingSettings = loggingSettings ?? new MachineDiagnosticLogLevelStore(storagePaths);
         _userDataMigrationRunner = userDataMigrationRunner ?? throw new ArgumentNullException(nameof(userDataMigrationRunner));
         _operationStatusStore = operationStatusStore ?? throw new ArgumentNullException(nameof(operationStatusStore));
         _clientSyncCoordinator = clientSyncCoordinator ?? throw new ArgumentNullException(nameof(clientSyncCoordinator));
@@ -432,6 +434,11 @@ public sealed class NamedPipeControlServer
             return;
         }
 
+        if (request.MessageType == ControlMessageType.GetLoggingSettings)
+        {
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Shared logging settings returned.", cancellationToken, loggingSettings: _loggingSettings.GetSettings()).ConfigureAwait(false);
+            return;
+        }
         if (request.MessageType == ControlMessageType.GetServiceStatus)
         {
             await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Service status returned.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
@@ -517,7 +524,7 @@ public sealed class NamedPipeControlServer
         }
     }
 
-    private static Task SendResultAsync(NamedPipeServerStream pipe, ControlMessageType messageType, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null, OperationDecision? operationDecision = null, ProtocolWelcome? protocolWelcome = null)
+    private static Task SendResultAsync(NamedPipeServerStream pipe, ControlMessageType messageType, Guid requestId, bool isSuccessful, ControlErrorCode errorCode, string message, CancellationToken cancellationToken, ControlServiceStatus? serviceStatus = null, LeaseDecision? leaseDecision = null, OperationStatus? operationStatus = null, OperationDecision? operationDecision = null, ProtocolWelcome? protocolWelcome = null, SharedLoggingSettings? loggingSettings = null)
     {
         ControlEnvelope response = new ControlEnvelope
         {
@@ -529,6 +536,7 @@ public sealed class NamedPipeControlServer
                 ErrorCode = errorCode,
                 Message = message,
                 ServiceStatus = serviceStatus,
+                LoggingSettings = loggingSettings,
                 LeaseDecision = leaseDecision,
                 OperationStatus = operationStatus,
                 OperationDecision = operationDecision,

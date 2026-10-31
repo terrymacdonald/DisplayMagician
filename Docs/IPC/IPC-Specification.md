@@ -271,8 +271,10 @@ Decision choices are `Unknown=0`, `Continue=1`, and `StopAndRestore=2`. Expired 
 | 52 | `RestartUserAgent` | Local | Application/service management. |
 | 47 | `ForceReleaseDisplayControl` | Administrator | Recovery administration. |
 | 54 | `RecordRecoveryAdministration` | Administrator | Records recovery action/outcome. |
-| 78 | `SetTemporaryDiagnosticLogLevel` | Local | Temporary diagnostics. |
-| 79 | `ReleaseTemporaryDiagnosticLogLevel` | Local | Releases a temporary override. |
+| 78 | `SetTemporaryDiagnosticLogLevel` | Local | Starts/renews a caller-owned Trace/Debug diagnostic session with a one-minute lease; renew every 15 seconds. |
+| 79 | `ReleaseTemporaryDiagnosticLogLevel` | Local | Releases only the matching caller SID/session-owned override. |
+| 100 | `GetLoggingSettings` | Local / registered Agent | Returns the shared saved baseline and diagnostic deadlines in `ControlResponse.LoggingSettings`. |
+| 101 | `SetSharedLogLevel` | Local | Saves Trace through Fatal machine-wide. `InitializeOnly` imports the first existing desktop choice without replacing an established baseline. |
 
 Other `ControlMessageType` values are internal and MUST NOT be sent to the public client pipe.
 
@@ -390,3 +392,5 @@ Internal endpoints use the same framing and shared contracts where applicable, b
 - [Capability matrix](API-Capability-Matrix.md)
 - [Gap analysis](API-Gap-Analysis.md)
 - [REST OpenAPI description](../REST/openapi.yaml)
+
+Shared logging uses the version-1 envelope and additive SharedLoggingSettings DTO. ControlService owns Diagnostics/LoggingSettings.json schema 1 and atomic backups. The effective level is the most verbose of the saved baseline and unexpired sessions. DurationMinutes remains in the legacy diagnostic request DTO, but the service bounds each renewal to one minute. OwnerId reuse/release is bound to the authenticated Windows SID and session; other callers cannot renew/release it. Requests 100/101 are local IPC APIs, not new REST routes. SessionLauncher reads the service-owned document and does not gain a logging broker command. Deploy all four components together for renewable-session semantics.

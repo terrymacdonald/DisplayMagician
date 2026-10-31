@@ -215,8 +215,10 @@ public sealed class ControlClientPipeServer
                                 ControlMessageType.RevokePairedClient => RevokePairedClient(identity, request),
                                 ControlMessageType.ForceReleaseDisplayControl => ForceReleaseDisplayControl(identity, request),
                                 ControlMessageType.RecordRecoveryAdministration => RecordRecoveryAdministration(identity, request),
-                                ControlMessageType.SetTemporaryDiagnosticLogLevel => SetTemporaryDiagnosticLogLevel(request),
-                                ControlMessageType.ReleaseTemporaryDiagnosticLogLevel => ReleaseTemporaryDiagnosticLogLevel(request),
+                                ControlMessageType.GetLoggingSettings => new ControlResponse { IsSuccessful = true, LoggingSettings = _machineDiagnosticLogLevelStore.GetSettings() },
+                                ControlMessageType.SetSharedLogLevel => SetSharedLogLevel(request),
+                                ControlMessageType.SetTemporaryDiagnosticLogLevel => SetTemporaryDiagnosticLogLevel(identity, request),
+                                ControlMessageType.ReleaseTemporaryDiagnosticLogLevel => ReleaseTemporaryDiagnosticLogLevel(identity, request),
                                 _ => new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The requested client operation is not supported." }
                             };
                         }
@@ -272,7 +274,14 @@ public sealed class ControlClientPipeServer
         }
     }
 
-    private ControlResponse SetTemporaryDiagnosticLogLevel(ControlEnvelope request)
+    private ControlResponse SetSharedLogLevel(ControlEnvelope request)
+    {
+        SetSharedLogLevelRequest settings = JsonSerializer.Deserialize<SetSharedLogLevelRequest>(request.Payload) ?? throw new ArgumentException("A logging level is required.");
+        SharedLoggingSettings result = _machineDiagnosticLogLevelStore.SetSavedLevel(settings);
+        Program.ApplyDiagnosticLogLevel(result.GetEffectiveLevel(DateTime.UtcNow));
+        return new ControlResponse { IsSuccessful = true, LoggingSettings = result, Message = "Shared logging level saved." };
+    }
+    private ControlResponse SetTemporaryDiagnosticLogLevel(PipeClientIdentity identity, ControlEnvelope request)
     {
         TemporaryDiagnosticLogLevelRequest? diagnosticRequest = JsonSerializer.Deserialize<TemporaryDiagnosticLogLevelRequest>(request.Payload);
         if (diagnosticRequest == null)
@@ -282,7 +291,7 @@ public sealed class ControlClientPipeServer
 
         try
         {
-            string level = _machineDiagnosticLogLevelStore.Set(diagnosticRequest, DateTime.UtcNow);
+            string level = _machineDiagnosticLogLevelStore.Set(diagnosticRequest, DateTime.UtcNow, identity.UserSid, identity.SessionId);
             Program.ApplyDiagnosticLogLevel(level);
             _logger.Info("ControlClientPipeServer/SetTemporaryDiagnosticLogLevel: Enabled temporary {0} diagnostic logging until the lease expires.", level);
             return new ControlResponse { IsSuccessful = true, Message = $"Temporary {level} diagnostic logging is active." };
@@ -293,7 +302,7 @@ public sealed class ControlClientPipeServer
         }
     }
 
-    private ControlResponse ReleaseTemporaryDiagnosticLogLevel(ControlEnvelope request)
+    private ControlResponse ReleaseTemporaryDiagnosticLogLevel(PipeClientIdentity identity, ControlEnvelope request)
     {
         ReleaseTemporaryDiagnosticLogLevelRequest? releaseRequest = JsonSerializer.Deserialize<ReleaseTemporaryDiagnosticLogLevelRequest>(request.Payload);
         if (releaseRequest == null || releaseRequest.OwnerId == Guid.Empty)
@@ -301,7 +310,7 @@ public sealed class ControlClientPipeServer
             return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The temporary diagnostic log level release request was invalid." };
         }
 
-        string level = _machineDiagnosticLogLevelStore.Release(releaseRequest.OwnerId, DateTime.UtcNow);
+        string level = _machineDiagnosticLogLevelStore.Release(releaseRequest.OwnerId, DateTime.UtcNow, identity.UserSid, identity.SessionId);
         Program.ApplyDiagnosticLogLevel(level);
         _logger.Info("ControlClientPipeServer/ReleaseTemporaryDiagnosticLogLevel: Temporary diagnostic logging is now {0}.", level);
         return new ControlResponse { IsSuccessful = true, Message = "Temporary diagnostic logging was released." };

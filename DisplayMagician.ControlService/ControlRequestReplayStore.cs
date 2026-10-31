@@ -186,7 +186,7 @@ public sealed class ControlRequestReplayStore
 
     internal static bool IsReadOnlyRequest(ControlMessageType type) => type is
         ControlMessageType.ListProfiles or ControlMessageType.ListGames or ControlMessageType.ListApps or ControlMessageType.ListShortcuts or
-        ControlMessageType.ListMessages or ControlMessageType.GetAnonymousMetricsSettings or ControlMessageType.GetActiveWindowPlacementSession or
+        ControlMessageType.GetLoggingSettings or ControlMessageType.ListMessages or ControlMessageType.GetAnonymousMetricsSettings or ControlMessageType.GetActiveWindowPlacementSession or
         ControlMessageType.ListAudioProfiles or ControlMessageType.GetRepositorySnapshot or ControlMessageType.ListOperationDecisions or
         ControlMessageType.GetOperationStatus or ControlMessageType.ListOperationStatuses or ControlMessageType.GetServiceStatus or
         ControlMessageType.GetGatewaySettings or ControlMessageType.GetGatewayIdentity or ControlMessageType.ListDevicePairingRequests or ControlMessageType.ListPairedClients;
@@ -198,7 +198,7 @@ public sealed class ControlRequestReplayStore
             ControlMessageType.ApplyAudioProfile or ControlMessageType.CreateAudioProfileFromCurrent or ControlMessageType.RenameAudioProfile or ControlMessageType.DeleteAudioProfile or ControlMessageType.UpdateAudioProfileFromCurrent or
             ControlMessageType.CommitRepositorySnapshot or ControlMessageType.SetMessageReadState or ControlMessageType.ResolveOperationDecision or ControlMessageType.UpdateAnonymousMetricsSettings or
             ControlMessageType.InitializeAnonymousMetrics or ControlMessageType.ForceReleaseDisplayControl or ControlMessageType.RecordRecoveryAdministration or ControlMessageType.RestartUserAgent or
-            ControlMessageType.CreateUserSupportBundle;
+            ControlMessageType.CreateUserSupportBundle or ControlMessageType.SetSharedLogLevel;
     }
 
     private void Load()

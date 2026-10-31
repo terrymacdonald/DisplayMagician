@@ -234,7 +234,9 @@ public enum ControlMessageType
     ReadRemoteEvents = 96,
     GetActiveWindowPlacementSession = 97,
     SaveWindowPlacements = 98,
-    ClearWindowPlacements = 99
+    ClearWindowPlacements = 99,
+    GetLoggingSettings = 100,
+    SetSharedLogLevel = 101
 }
 
 public enum ControlErrorCode
@@ -1298,6 +1300,8 @@ public sealed class RecoveryAdministrationHistory
 
 public sealed class ControlResponse
 {
+    public SharedLoggingSettings? LoggingSettings { get; set; }
+
     public bool IsSuccessful { get; set; }
 
     public ControlErrorCode ErrorCode { get; set; }

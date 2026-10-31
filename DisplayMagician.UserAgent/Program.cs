@@ -19,9 +19,6 @@ internal static class Program
         AgentRegistration registration = AgentIdentity.CreateRegistration(AgentBuildVersion.Current, "manual");
         UserAgentStartupRequest startupRequest = UserAgentCommandLine.Parse(args);
         ConfigureLogging(registration.UserSid, startupRequest.DiagnosticLogLevel);
-        UserLogLevelSettings loggingSettings = new UserLogLevelSettings(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Users", registration.UserSid, "Settings", "Settings.json"),
-            ApplyLoggingLevel, startupRequest.DiagnosticLogLevel);
         ControlServiceClient serviceClient = new ControlServiceClient();
         using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         if (startupRequest.Action == UserAgentStartupAction.RegisterOnce)
@@ -53,7 +50,7 @@ internal static class Program
             throw new InvalidOperationException(migrationResponse.Message);
         }
 
-        loggingSettings.Refresh();
+        Task logging = RunLoggingAsync(serviceClient, cancellationTokenSource.Token);
         await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
         registration.IsReady = true;
         ControlResponse readyResponse = await serviceClient.UpdateRegistrationAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
@@ -64,22 +61,49 @@ internal static class Program
         }
 
         await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
-        Task statusReconciliation = RunOperationStatusReconciliationAsync(profileCommandHandler, loggingSettings, cancellationTokenSource.Token);
+        Task statusReconciliation = RunOperationStatusReconciliationAsync(profileCommandHandler, cancellationTokenSource.Token);
         AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.RunDetectedShortcutAsync);
         Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(cancellationTokenSource.Token);
 
-        await Task.WhenAny(commandConnection, automaticGameDetection, statusReconciliation).ConfigureAwait(false);
+
+        await Task.WhenAny(commandConnection, automaticGameDetection, statusReconciliation, logging).ConfigureAwait(false);
         cancellationTokenSource.Cancel();
-        await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection, statusReconciliation).ConfigureAwait(false);
+        await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection, statusReconciliation, logging).ConfigureAwait(false);
     }
 
-    private static async Task RunOperationStatusReconciliationAsync(ProfileCommandHandler profileCommandHandler, UserLogLevelSettings loggingSettings, CancellationToken cancellationToken)
+    private static async Task RunLoggingAsync(ControlServiceClient client, CancellationToken cancellationToken)
+    {
+        SharedLoggingSettings settings = new SharedLoggingSettings();
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                Task<SharedLoggingSettings> read = client.GetLoggingSettingsAsync(cancellationToken);
+                while (!read.IsCompleted)
+                {
+                    ApplyLoggingLevel(settings.GetEffectiveLevel(DateTime.UtcNow));
+                    await Task.WhenAny(read, Task.Delay(TimeSpan.FromSeconds(1), cancellationToken)).ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+                settings = await read.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
+            {
+                LogManager.GetCurrentClassLogger().Debug(ex, "Program/RunLoggingAsync: Shared logging settings are temporarily unavailable; retaining the saved baseline and expiring cached diagnostic sessions.");
+            }
+            string level = settings.GetEffectiveLevel(DateTime.UtcNow);
+            ApplyLoggingLevel(level);
+            try { await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+        }
+    }
+    private static async Task RunOperationStatusReconciliationAsync(ProfileCommandHandler profileCommandHandler, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                loggingSettings.Refresh();
                 await profileCommandHandler.ReconcileOperationStatusesAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException || ex is OperationCanceledException)
@@ -160,16 +184,7 @@ internal static class Program
 
     private static void ApplyLoggingLevel(string level)
     {
-        LoggingConfiguration? configuration = LogManager.Configuration;
-        if (configuration == null) return;
-        Target? target = configuration.FindTargetByName("userAgentLog");
-        if (target == null) return;
-        foreach (LoggingRule rule in configuration.LoggingRules)
-        {
-            if (rule.Targets.Contains(target))
-                rule.SetLoggingLevels(LogLevel.FromString(level), LogLevel.Fatal);
-        }
-        LogManager.ReconfigExistingLoggers();
+        SharedLoggingSettings.ApplyToTarget(LogManager.LogFactory, "userAgentLog", level);
     }
 
     private static bool TryPrepareLogPath(string preferredLogPath, string legacyLogPath)

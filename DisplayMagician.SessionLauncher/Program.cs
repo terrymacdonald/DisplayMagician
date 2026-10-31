@@ -55,11 +55,6 @@ internal static class Program
 
     internal static void ApplyDiagnosticLogLevel(string? level)
     {
-        LogLevel logLevel = string.Equals(level, "Trace", StringComparison.OrdinalIgnoreCase) ? LogLevel.Trace : string.Equals(level, "Debug", StringComparison.OrdinalIgnoreCase) ? LogLevel.Debug : LogLevel.Info;
-        if (LogManager.Configuration?.FindRuleByName("SessionLauncherFileLog") is LoggingRule loggingRule)
-        {
-            loggingRule.SetLoggingLevels(logLevel, LogLevel.Fatal);
-            LogManager.ReconfigExistingLoggers();
-        }
+        SharedLoggingSettings.ApplyToTarget(LogManager.LogFactory, "session-launcher-log", level ?? "Warn");
     }
 }

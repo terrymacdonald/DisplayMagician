@@ -216,6 +216,12 @@ public class ControlServiceClient
         return decision;
     }
 
+    public async Task<SharedLoggingSettings> GetLoggingSettingsAsync(CancellationToken cancellationToken)
+    {
+        ControlResponse response = await SendPersistentAsync(new ControlEnvelope { MessageType = ControlMessageType.GetLoggingSettings }, cancellationToken).ConfigureAwait(false);
+        return response.IsSuccessful && response.LoggingSettings?.IsValid() == true ? response.LoggingSettings
+            : throw new InvalidDataException("The Control Service did not return valid shared logging settings.");
+    }
     protected virtual async Task<ControlResponse> SendPersistentAsync(ControlEnvelope request, CancellationToken cancellationToken)
     {
         await _requestLock.WaitAsync(cancellationToken).ConfigureAwait(false);

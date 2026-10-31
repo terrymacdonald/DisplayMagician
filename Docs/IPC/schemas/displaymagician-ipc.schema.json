@@ -23,7 +23,7 @@
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
         38, 39, 40, 41, 42, 43, 44, 45, 47, 48, 49, 50, 51, 52, 53, 54, 55,
         56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72,
-        73, 74, 75, 76, 77, 78, 79
+        73, 74, 75, 76, 77, 78, 79, 100, 101
       ]
     },
     "ControlErrorCode": {
@@ -398,6 +398,35 @@
         }
       }
     },
+    "SharedLoggingSettings": {
+      "type": "object",
+      "required": ["SchemaVersion", "SavedLevel", "HasSavedLevel", "Sessions"],
+      "properties": {
+        "SchemaVersion": { "const": 1 },
+        "SavedLevel": { "enum": ["Trace", "Debug", "Info", "Warn", "Error", "Fatal"] },
+        "HasSavedLevel": { "type": "boolean" },
+        "Sessions": { "type": "array", "items": { "$ref": "#/$defs/DiagnosticLoggingSession" } }
+      }
+    },
+    "DiagnosticLoggingSession": {
+      "type": "object",
+      "required": ["OwnerId", "UserSid", "SessionId", "Level", "ExpiresUtc"],
+      "properties": {
+        "OwnerId": { "$ref": "#/$defs/Guid" },
+        "UserSid": { "type": "string", "minLength": 1 },
+        "SessionId": { "type": "integer", "minimum": 0 },
+        "Level": { "enum": ["Trace", "Debug"] },
+        "ExpiresUtc": { "$ref": "#/$defs/DateTime" }
+      }
+    },
+    "SetSharedLogLevelRequest": {
+      "type": "object",
+      "required": ["Level"],
+      "properties": {
+        "Level": { "enum": ["Trace", "Debug", "Info", "Warn", "Error", "Fatal"] },
+        "InitializeOnly": { "type": "boolean", "default": false }
+      }
+    },
     "ControlResponse": {
       "type": "object",
       "required": [
@@ -407,6 +436,7 @@
         "ProtocolWelcome"
       ],
       "properties": {
+        "LoggingSettings": { "oneOf": [{ "$ref": "#/$defs/SharedLoggingSettings" }, { "type": "null" }] },
         "IsSuccessful": {
           "type": "boolean"
         },

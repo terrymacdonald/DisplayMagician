@@ -9,7 +9,7 @@ public sealed class MachineDiagnosticLogLevelTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"DisplayMagician-Diagnostics-{Guid.NewGuid():N}");
     private StoragePaths Paths => new StoragePaths(_root);
-    private string StatePath => Path.Combine(Paths.MachineDiagnosticsPath, "TemporaryDiagnosticLogLevel.json");
+    private string StatePath => Path.Combine(Paths.MachineDiagnosticsPath, "LoggingSettings.json");
 
     [Fact]
     public void FailedSet_DoesNotReplaceCurrentLeaseOrReleaseOwner()
@@ -20,12 +20,12 @@ public sealed class MachineDiagnosticLogLevelTests : IDisposable
         store.Set(Request(owner), now);
         using (FileStream locked = new FileStream(StatePath, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            Assert.ThrowsAny<IOException>(() => store.Set(Request(Guid.NewGuid(), "Warn"), now.AddSeconds(1)));
+            Assert.ThrowsAny<IOException>(() => store.Set(Request(Guid.NewGuid(), "Trace"), now.AddSeconds(1)));
             Assert.Equal("Debug", store.GetActiveLevel(now.AddSeconds(2)));
         }
 
-        Assert.Equal("Info", store.Release(owner, now.AddSeconds(3)));
-        Assert.Equal("Info", new MachineDiagnosticLogLevelStore(Paths).GetActiveLevel(now.AddSeconds(3)));
+        Assert.Equal("Warn", store.Release(owner, now.AddSeconds(3)));
+        Assert.Equal("Warn", new MachineDiagnosticLogLevelStore(Paths).GetActiveLevel(now.AddSeconds(3)));
     }
 
     [Fact]
@@ -41,8 +41,8 @@ public sealed class MachineDiagnosticLogLevelTests : IDisposable
             Assert.Equal("Debug", store.GetActiveLevel(now.AddSeconds(2)));
         }
 
-        Assert.Equal("Info", store.Release(owner, now.AddSeconds(3)));
-        Assert.Equal("Info", new MachineDiagnosticLogLevelStore(Paths).GetActiveLevel(now.AddSeconds(3)));
+        Assert.Equal("Warn", store.Release(owner, now.AddSeconds(3)));
+        Assert.Equal("Warn", new MachineDiagnosticLogLevelStore(Paths).GetActiveLevel(now.AddSeconds(3)));
     }
 
     [Fact]

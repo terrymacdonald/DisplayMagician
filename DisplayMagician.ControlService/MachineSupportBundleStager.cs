@@ -71,7 +71,8 @@ internal static class MachineSupportBundleStager
             Path.Combine(paths.MachinePath, "ScheduleState.json"),
             Path.Combine(paths.MachinePath, "GatewaySettings.json"),
             Path.Combine(paths.MachineDiagnosticsPath, "RecoveryAdministration.json"),
-            Path.Combine(paths.MachineDiagnosticsPath, "TemporaryDiagnosticLogLevel.json")
+            Path.Combine(paths.MachineDiagnosticsPath, "TemporaryDiagnosticLogLevel.json"),
+            Path.Combine(paths.MachineDiagnosticsPath, "LoggingSettings.json")
         })
         {
             CopyFile(sourcePath, Path.Combine(configurationPath, Path.GetFileName(sourcePath)), warnings);

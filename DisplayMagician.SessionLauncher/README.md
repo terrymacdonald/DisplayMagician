@@ -17,3 +17,5 @@ dotnet build .\DisplayMagician.SessionLauncher\DisplayMagician.SessionLauncher.c
 The installer configures its LocalSystem identity and pipe ACL. Do not run it as a general-purpose launcher or widen its IPC permissions.
 
 See the [Control Service README](../DisplayMagician.ControlService/README.md) and [architecture plan](../DISPLAYMAGICIAN_V4_CONTROL_SERVICE_PLAN.md) for its security boundary.
+
+SessionLauncher reads the protected ControlService-owned Machine/Diagnostics/LoggingSettings.json document every second. It applies the shared saved level and the most verbose unexpired diagnostic session, including while no launch request is arriving. Cached sessions expire during transient read failures; invalid JSON/unsupported data uses the Warn fallback. A process launch no longer independently changes the broker logging threshold. No new broker command, caller permission or process-launch capability was added.

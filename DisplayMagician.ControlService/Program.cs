@@ -55,11 +55,7 @@ internal static class Program
 
     internal static void ApplyDiagnosticLogLevel(string level)
     {
-        if (LogLevel.FromString(level) is LogLevel logLevel && LogManager.Configuration?.FindRuleByName("ControlServiceFileLog") is LoggingRule loggingRule)
-        {
-            loggingRule.SetLoggingLevels(logLevel, LogLevel.Fatal);
-            LogManager.ReconfigExistingLoggers();
-        }
+        SharedLoggingSettings.ApplyToTarget(LogManager.LogFactory, "control-service-log", level);
     }
 
     private static void ConfigureLogging(StoragePaths storagePaths)

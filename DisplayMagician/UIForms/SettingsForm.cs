@@ -20,10 +20,19 @@ namespace DisplayMagician.UIForms
 
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private string _loadedLogLevel;
+        private bool _loggingSavePending;
+        private bool _loggingSaveFinished;
+        private readonly ControlServicePipeClient _loggingClient;
+        private readonly Action<string> _showLoggingError;
         private Dictionary<string, string> logLevelText = new Dictionary<string, string>();
 
-        public SettingsForm()
+        public SettingsForm() : this(new ControlServicePipeClient()) { }
+
+        internal SettingsForm(ControlServicePipeClient loggingClient, Action<string> showLoggingError = null)
         {
+            _loggingClient = loggingClient;
+            _showLoggingError = showLoggingError ?? (message => MessageBox.Show(this, message, "Logging settings", MessageBoxButtons.OK, MessageBoxIcon.Error));
             logger.Info($"SettingsForm/SettingsForm: Creating a SettingsForm UI Form");
 
             InitializeComponent();
@@ -175,7 +184,8 @@ namespace DisplayMagician.UIForms
             nud_display_profile_wait.Value = Program.AppProgramSettings.DisplayProfileWaitSecs;
 
             // setup loglevel on start
-            switch (Program.AppProgramSettings.LogLevel)
+            _loadedLogLevel = Program.AppProgramSettings.LogLevel;
+            switch (_loadedLogLevel)
             {
                 case "Trace":
                     cmb_loglevel.SelectedIndex = cmb_loglevel.FindStringExact(logLevelText["Trace"]);
@@ -278,8 +288,37 @@ namespace DisplayMagician.UIForms
             }
         }
 
-        private void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
+        private async void SettingsForm_FormClosing(object sender, FormClosingEventArgs e)
+        {            if (_loggingSavePending) { e.Cancel = true; return; }
+            string selectedLevel = logLevelText.FirstOrDefault(pair => Equals(pair.Value, cmb_loglevel.SelectedItem)).Key;
+            if (!_loggingSaveFinished && selectedLevel != null && selectedLevel != _loadedLogLevel && e.CloseReason != CloseReason.WindowsShutDown)
+            {
+                e.Cancel = true;
+                _loggingSavePending = true;
+                Enabled = false;
+                try
+                {
+                    ControlResponse response = await _loggingClient.SetSharedLogLevelAsync(selectedLevel, false, System.Threading.CancellationToken.None);
+                    if (IsDisposed || Disposing) return;
+                    if (!response.IsSuccessful || response.LoggingSettings?.IsValid() != true) throw new InvalidOperationException(response.Message);
+                    Program.AppProgramSettings.LogLevel = response.LoggingSettings.SavedLevel;
+                    SharedLoggingSettings.ApplyToTarget(NLog.LogManager.LogFactory, "logfile", response.LoggingSettings.GetEffectiveLevel(DateTime.UtcNow));
+                    _loggingSaveFinished = true;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, "SettingsForm/SettingsForm_FormClosing: Could not save the shared logging level.");
+                    if (!IsDisposed && !Disposing) _showLoggingError("The shared logging level could not be confirmed. Please check the current level or try again.");
+                }
+                finally
+                {
+                    _loggingSavePending = false;
+                    if (!IsDisposed && !Disposing) Enabled = true;
+                }
+                if (_loggingSaveFinished && !IsDisposed && !Disposing) Close();
+                return;
+            }
+
 
             logger.Info($"SettingsForm/SettingsForm_Load: Setting BootMeUp to {cb_start_on_boot.Checked}");
             SetBootMeUp(cb_start_on_boot.Checked);
@@ -343,53 +382,7 @@ namespace DisplayMagician.UIForms
             Program.AppProgramSettings.AudioDeviceWaitSecs = (int)nud_audio_device_wait.Value;
             Program.AppProgramSettings.DisplayProfileWaitSecs = (int)nud_display_profile_wait.Value;
 
-            // save loglevel on close
-            // and make that log level live in NLog straight away
-            var config = NLog.LogManager.Configuration;
-            if (cmb_loglevel.SelectedItem.Equals(logLevelText["Trace"]))
-            {
-                Program.AppProgramSettings.LogLevel = "Trace";
-                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Trace, NLog.LogLevel.Fatal);
-            }
-
-            else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Debug"]))
-            {
-                Program.AppProgramSettings.LogLevel = "Debug";
-                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Debug, NLog.LogLevel.Fatal);
-            }
-
-            else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Info"]))
-            {
-                Program.AppProgramSettings.LogLevel = "Info";
-                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
-            }
-
-            else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Warn"]))
-            {
-                Program.AppProgramSettings.LogLevel = "Warn";
-                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Warn, NLog.LogLevel.Fatal);
-            }
-            else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Error"]))
-            {
-                Program.AppProgramSettings.LogLevel = "Error";
-                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Error, NLog.LogLevel.Fatal);
-            }
-            else if (cmb_loglevel.SelectedItem.Equals(logLevelText["Fatal"]))
-            {
-                Program.AppProgramSettings.LogLevel = "Fatal";
-                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Fatal, NLog.LogLevel.Fatal);
-            }
-            else
-            {
-                Program.AppProgramSettings.LogLevel = "Info";
-                config.FindRuleByName("LogToFile").SetLoggingLevels(NLog.LogLevel.Info, NLog.LogLevel.Fatal);
-            }
-            // Use the NLog configuration with the LogLevel we just changed.
-            NLog.LogManager.Configuration = config;
-
-            NLog.LogManager.ReconfigExistingLoggers();
-
-            logger.Info($"SettingsForm/SettingsForm_FormClosing: Successfully saved LogLevel as {Program.AppProgramSettings.LogLevel}");
+            // Shared logging is saved through ControlService before closing; diagnostic overrides remain effective.
 
             // save upgrade in prereleases setting
             if (cb_upgrade_prerelease.Checked)

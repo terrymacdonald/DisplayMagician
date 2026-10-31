@@ -28,8 +28,37 @@ public sealed class SessionLauncherWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.Info("SessionLauncherWorker/ExecuteAsync: Session Launcher pipe listener is starting.");
-        await _pipeServer.RunAsync(stoppingToken).ConfigureAwait(false);
+        using CancellationTokenSource lifetime = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        Task listener = _pipeServer.RunAsync(lifetime.Token);
+        Task logging = RunLoggingAsync(lifetime.Token);
+        await Task.WhenAny(listener, logging).ConfigureAwait(false);
+        lifetime.Cancel();
+        await Task.WhenAll(listener, logging).ConfigureAwait(false);
         _logger.Info("SessionLauncherWorker/ExecuteAsync: Session Launcher pipe listener has stopped.");
+    }
+    private static async Task RunLoggingAsync(CancellationToken cancellationToken)
+    {
+        string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DisplayMagician", "Machine", "Diagnostics", "LoggingSettings.json");
+        SharedLoggingSettings settings = new SharedLoggingSettings();
+        string? previous = null;
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                SharedLoggingSettings candidate = JsonSerializer.Deserialize<SharedLoggingSettings>(File.ReadAllText(path)) ?? throw new JsonException("Missing logging settings.");
+                if (!candidate.IsValid()) throw new JsonException("Invalid or unsupported logging settings.");
+                settings = candidate;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
+            {
+                if (ex is JsonException) settings = new SharedLoggingSettings();
+                _logger.Debug(ex, "SessionLauncherWorker/RunLoggingAsync: Shared logging settings are unavailable; cached diagnostic sessions still expire.");
+            }
+            string level = settings.GetEffectiveLevel(DateTime.UtcNow);
+            if (level != previous) { Program.ApplyDiagnosticLogLevel(level); previous = level; }
+            try { await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+        }
     }
 }
 
@@ -188,7 +217,6 @@ public sealed class InteractiveUserProcessLauncher
 
     public UserAgentLaunchResult Launch(UserAgentLaunchRequest request)
     {
-        Program.ApplyDiagnosticLogLevel(request.DiagnosticLogLevel);
         if (string.IsNullOrWhiteSpace(request.UserSid) || request.SessionId < 0)
         {
             _logger.Warn("InteractiveUserProcessLauncher/Launch: Rejected an invalid User Agent launch request for SID {0}, session {1}.", request.UserSid, request.SessionId);

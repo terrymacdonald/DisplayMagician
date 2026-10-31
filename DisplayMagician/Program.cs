@@ -513,56 +513,8 @@ namespace DisplayMagician {
             }
 
 
-            // UPDATE LOGGING LEVEL BASED ON USER SETTINGS
-            // Now we are at the point that the user settings are loaded, we can set the logging level based on the stored user settings
-            // but only if the user hasn't already overridden the log level via command line options
-
-            if (!_userOverrodeLogLevel)
-            {
-                // If the user has set a log level in the settings, then use that, otherwise use the default of Info
-                if (AppProgramSettings.LogLevel != null && AppProgramSettings.LogLevel != "")
-                {
-                    // Set the log level to the user wanted log level
-                    _userWantedLogLevel = NLog.LogLevel.FromString(AppProgramSettings.LogLevel);
-                    logger.Info($"Program/Main: User has set the log level to {_userWantedLogLevel} in the settings file.");
-                    // Also  update the logging level in logger
-                    logger.Trace($"Program/Main: Setting the log level to {_userWantedLogLevel} as it was loaded from the settings file.");
-                    config.FindRuleByName("LogToFile").SetLoggingLevels(_userWantedLogLevel, NLog.LogLevel.Fatal);
-                    // apply the new logging configuration
-                    logger.Trace($"Program/Main: Reconfiguring the updated logging configuration.");
-                    NLog.LogManager.ReconfigExistingLoggers();
-
-                }
-            }
-            else
-            {
-                logger.Trace($"Program/Main: User has set the log level to {_userWantedLogLevel} via command line options so no need to use the log level from program settings.");
-            }
-
-            if (_userOverrodeLogLevel)
-            {
-                try
-                {
-                    _temporaryDiagnosticLogLevelOwnerId = Guid.NewGuid();
-                    ControlResponse response = new ControlServicePipeClient().SetTemporaryDiagnosticLogLevelAsync(_userWantedLogLevel.Name, _temporaryDiagnosticLogLevelOwnerId, CancellationToken.None).GetAwaiter().GetResult();
-                    if (!response.IsSuccessful)
-                    {
-                        logger.Warn("Program/Main: Could not enable temporary machine diagnostic logging. ErrorCode={0}; Message={1}", response.ErrorCode, response.Message);
-                        _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
-                    }
-                    else
-                    {
-                        logger.Info("Program/Main: Enabled temporary {0} machine diagnostic logging for this command-line session.", _userWantedLogLevel.Name);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Warn(ex, "Program/Main: Could not enable temporary machine diagnostic logging.");
-                    _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
-                }
-            }
-
-
+            if (_userOverrodeLogLevel) _temporaryDiagnosticLogLevelOwnerId = Guid.NewGuid();
+            _ = RunSharedLoggingAsync(_clientEventListenerCancellationSource.Token);
             // STARTUP UI AND OTHER INITIALIZATION
             logger.Trace($"Program/Main: Checking if we should show the loading splashscreen...");
             if (AppProgramSettings.ShowSplashScreen)
@@ -1433,6 +1385,61 @@ namespace DisplayMagician {
             }
         }
 
+        private static readonly SemaphoreSlim _diagnosticRenewalLock = new SemaphoreSlim(1, 1);
+
+        private static async Task RunSharedLoggingAsync(CancellationToken cancellationToken)
+        {
+            ControlServicePipeClient client = new ControlServicePipeClient();
+            SharedLoggingSettings cached = new SharedLoggingSettings();
+            bool initialized = false;
+            DateTime nextRenewal = DateTime.MinValue;
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    ControlResponse response;
+                    if (!initialized)
+                    {
+                        response = await AwaitSharedLoggingResponseAsync(client.SetSharedLogLevelAsync(AppProgramSettings.LogLevel, true, cancellationToken), cached, cancellationToken).ConfigureAwait(false);
+                        if (!response.IsSuccessful) throw new InvalidOperationException(response.Message);
+                        initialized = true;
+                    }
+                    await _diagnosticRenewalLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        if (_temporaryDiagnosticLogLevelOwnerId != Guid.Empty && DateTime.UtcNow >= nextRenewal)
+                        {
+                            response = await AwaitSharedLoggingResponseAsync(client.SetTemporaryDiagnosticLogLevelAsync(_userWantedLogLevel.Name, _temporaryDiagnosticLogLevelOwnerId, cancellationToken), cached, cancellationToken).ConfigureAwait(false);
+                            if (!response.IsSuccessful) throw new InvalidOperationException(response.Message);
+                            nextRenewal = DateTime.UtcNow.AddSeconds(15);
+                        }
+                    }
+                    finally { _diagnosticRenewalLock.Release(); }
+                    response = await AwaitSharedLoggingResponseAsync(client.GetLoggingSettingsAsync(cancellationToken), cached, cancellationToken).ConfigureAwait(false);
+                    if (!response.IsSuccessful || response.LoggingSettings?.IsValid() != true) throw new InvalidDataException("Invalid shared logging settings response.");
+                    cached = response.LoggingSettings;
+                    AppProgramSettings.LogLevel = cached.SavedLevel;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+                catch (Exception ex)
+                {
+                    logger.Debug(ex, "Program/RunSharedLoggingAsync: Shared logging synchronization is unavailable; cached diagnostic sessions still expire.");
+                }
+                SharedLoggingSettings.ApplyToTarget(NLog.LogManager.LogFactory, "logfile", cached.GetEffectiveLevel(DateTime.UtcNow));
+                try { await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            }
+        }
+        private static async Task<ControlResponse> AwaitSharedLoggingResponseAsync(Task<ControlResponse> request, SharedLoggingSettings cached, CancellationToken cancellationToken)
+        {
+            while (!request.IsCompleted)
+            {
+                SharedLoggingSettings.ApplyToTarget(NLog.LogManager.LogFactory, "logfile", cached.GetEffectiveLevel(DateTime.UtcNow));
+                await Task.WhenAny(request, Task.Delay(TimeSpan.FromSeconds(1), cancellationToken)).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            return await request.ConfigureAwait(false);
+        }
         private static void ReleaseTemporaryDiagnosticLogLevel()
         {
             if (_temporaryDiagnosticLogLevelOwnerId == Guid.Empty)
@@ -1440,9 +1447,11 @@ namespace DisplayMagician {
                 return;
             }
 
+            _diagnosticRenewalLock.Wait();
             try
             {
-                new ControlServicePipeClient().ReleaseTemporaryDiagnosticLogLevelAsync(_temporaryDiagnosticLogLevelOwnerId, CancellationToken.None).GetAwaiter().GetResult();
+                using CancellationTokenSource releaseTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                new ControlServicePipeClient().ReleaseTemporaryDiagnosticLogLevelAsync(_temporaryDiagnosticLogLevelOwnerId, releaseTimeout.Token).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -1451,6 +1460,7 @@ namespace DisplayMagician {
             finally
             {
                 _temporaryDiagnosticLogLevelOwnerId = Guid.Empty;
+                _diagnosticRenewalLock.Release();
             }
         }
 

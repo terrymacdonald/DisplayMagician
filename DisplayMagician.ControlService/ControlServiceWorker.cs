@@ -12,6 +12,7 @@ public sealed class ControlServiceWorker : BackgroundService
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly NamedPipeControlServer _pipeServer;
+    private readonly MachineDiagnosticLogLevelStore _loggingSettings;
     private readonly ControlClientPipeServer _clientPipeServer;
     private readonly ControlClientEventPipeServer _clientEventPipeServer;
     private readonly GatewayPairingPipeServer _gatewayPairingPipeServer;
@@ -26,9 +27,10 @@ public sealed class ControlServiceWorker : BackgroundService
     private readonly ControlStateCoordinator _controlStateCoordinator;
     private readonly GatewayFirewallManager _gatewayFirewallManager;
 
-    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, GatewayPairingPipeServer gatewayPairingPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, GatewayEventJournal gatewayEventJournal, ControlStateCoordinator controlStateCoordinator, GatewayFirewallManager gatewayFirewallManager)
+    public ControlServiceWorker(NamedPipeControlServer pipeServer, ControlClientPipeServer clientPipeServer, ControlClientEventPipeServer clientEventPipeServer, GatewayPairingPipeServer gatewayPairingPipeServer, StoragePaths storagePaths, MachineScheduleCoordinator machineScheduleCoordinator, ClientSyncCoordinator clientSyncCoordinator, AnonymousMetricsSender anonymousMetricsSender, ControlClientEventHub eventHub, OperationStatusStore operationStatusStore, OperationDecisionStore operationDecisionStore, GatewayEventJournal gatewayEventJournal, ControlStateCoordinator controlStateCoordinator, GatewayFirewallManager gatewayFirewallManager, MachineDiagnosticLogLevelStore loggingSettings)
     {
         _pipeServer = pipeServer;
+        _loggingSettings = loggingSettings;
         _clientPipeServer = clientPipeServer;
         _clientEventPipeServer = clientEventPipeServer;
         _gatewayPairingPipeServer = gatewayPairingPipeServer;
@@ -81,10 +83,23 @@ public sealed class ControlServiceWorker : BackgroundService
         Task gatewayPairingServer = _gatewayPairingPipeServer.RunAsync(stoppingToken);
         Task clientSync = RunClientSyncAsync(stoppingToken);
         Task firewallRetry = firewallReady ? Task.CompletedTask : RetryGatewayFirewallAsync(stoppingToken);
-        await Task.WhenAll(agentServer, clientServer, clientEventServer, gatewayPairingServer, clientSync, firewallRetry).ConfigureAwait(false);
+        await Task.WhenAll(agentServer, clientServer, clientEventServer, gatewayPairingServer, clientSync, firewallRetry, RunLoggingAsync(stoppingToken)).ConfigureAwait(false);
         _logger.Info("ControlServiceWorker/ExecuteAsync: Control Service pipe listener has stopped.");
     }
 
+    private async Task RunLoggingAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                string level = _loggingSettings.GetActiveLevel(DateTime.UtcNow);
+                Program.ApplyDiagnosticLogLevel(level);
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
     private async Task RetryGatewayFirewallAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
