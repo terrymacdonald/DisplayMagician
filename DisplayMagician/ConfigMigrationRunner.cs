@@ -71,7 +71,8 @@ namespace DisplayMagician
             if (!File.Exists(settingsFileName))
             {
                 logger.Trace($"ConfigMigrationRunner/RunMigrations: No {settingsFileName} file exists, so no settings migration is needed.");
-                return new MigrationResult(MigrationStatus.NoSettingsFile);
+                MigrationResult shortcutResult = MigrateShortcutProgramDelays(Path.Combine(Program.AppDataPath, "Shortcuts", "Shortcuts.json"));
+                return shortcutResult.Success ? new MigrationResult(MigrationStatus.NoSettingsFile) : shortcutResult;
             }
 
             try
@@ -107,7 +108,7 @@ namespace DisplayMagician
                     if (string.IsNullOrWhiteSpace(currentVersion) && context.GetSettingsObject() == null)
                     {
                         logger.Info($"ConfigMigrationRunner/RunMigrations: Settings.json appears to use the legacy unwrapped settings format. ProgramSettings.LoadSettings will convert it.");
-                        return new MigrationResult(MigrationStatus.Success);
+                        return MigrateShortcutProgramDelays(Path.Combine(Program.AppDataPath, "Shortcuts", "Shortcuts.json"));
                     }
 
                     logger.Error($"ConfigMigrationRunner/RunMigrations: Unsupported Settings.json file version '{currentVersion}'. Expected '{ProgramSettings.CurrentProgramSettingsFileVersion}'.");
@@ -125,7 +126,10 @@ namespace DisplayMagician
                     WriteJsonObject(context.SettingsFileName, context.SettingsFile);
                 }
 
-                return new MigrationResult(MigrationStatus.Success, notices: context.Notices);
+                MigrationResult shortcutMigration = MigrateShortcutProgramDelays(Path.Combine(Program.AppDataPath, "Shortcuts", "Shortcuts.json"));
+                return shortcutMigration.Success
+                    ? new MigrationResult(MigrationStatus.Success, notices: context.Notices)
+                    : shortcutMigration;
             }
             catch (JsonReaderException ex)
             {
@@ -136,6 +140,96 @@ namespace DisplayMagician
             {
                 logger.Error(ex, $"ConfigMigrationRunner/RunMigrations: Settings migration failed unexpectedly while processing {settingsFileName}.");
                 return new MigrationResult(MigrationStatus.UnexpectedError, $"Settings migration failed unexpectedly while processing {settingsFileName}.");
+            }
+        }
+
+        internal static MigrationResult MigrateShortcutProgramDelays(string fileName)
+        {
+            if (!File.Exists(fileName))
+            {
+                logger.Trace($"ConfigMigrationRunner/MigrateShortcutProgramDelays: No {fileName} exists, so no shortcut migration is needed.");
+                return new MigrationResult(MigrationStatus.Success);
+            }
+
+            try
+            {
+                JToken root = JToken.Parse(File.ReadAllText(fileName, Encoding.Unicode));
+                JObject shortcutFile;
+                JArray shortcuts;
+                if (root is JObject wrappedFile)
+                {
+                    string version = wrappedFile["ShortcutFileVersion"]?.ToString();
+                    if (version == ShortcutRepository.CurrentShortcutFileVersion)
+                        return new MigrationResult(MigrationStatus.Success);
+
+                    if (!string.IsNullOrWhiteSpace(version) &&
+                        (!int.TryParse(version, out int versionNumber) || versionNumber < 1 || versionNumber > 5))
+                    {
+                        logger.Error($"ConfigMigrationRunner/MigrateShortcutProgramDelays: Unsupported shortcut file version '{version}' in {fileName}.");
+                        return new MigrationResult(MigrationStatus.UnsupportedVersion, $"Unsupported shortcut file version '{version}' in {fileName}.");
+                    }
+
+                    shortcutFile = wrappedFile;
+                    JToken collection = wrappedFile["Shortcuts"];
+                    shortcuts = collection as JArray ?? (collection as JObject)?["$values"] as JArray;
+                }
+                else if (root is JArray legacyShortcuts)
+                {
+                    shortcuts = legacyShortcuts;
+                    shortcutFile = new JObject { ["Shortcuts"] = shortcuts };
+                }
+                else
+                {
+                    throw new InvalidDataException("The shortcut file did not contain a shortcut collection.");
+                }
+
+                if (shortcuts == null)
+                    throw new InvalidDataException("The shortcut file did not contain a valid Shortcuts array.");
+
+                foreach (JToken shortcutToken in shortcuts)
+                {
+                    if (!(shortcutToken is JObject shortcut))
+                        throw new InvalidDataException("The shortcut file contained an invalid shortcut entry.");
+
+                    foreach (string collectionName in new[] { "StartPrograms", "StopPrograms", "AfterPrograms" })
+                    {
+                        JToken collection = shortcut[collectionName];
+                        if (collection == null || collection.Type == JTokenType.Null)
+                            continue;
+
+                        JArray programs = collection as JArray ?? (collection as JObject)?["$values"] as JArray;
+                        if (programs == null)
+                            throw new InvalidDataException($"The shortcut contained an invalid {collectionName} collection.");
+
+                        string fieldName = collectionName == "StopPrograms" ? "WaitAfterStopSecs" : "WaitAfterStartSecs";
+                        foreach (JToken programToken in programs)
+                        {
+                            if (!(programToken is JObject program))
+                                throw new InvalidDataException($"The shortcut contained an invalid {collectionName} entry.");
+
+                            if (program.Property(fieldName) == null)
+                                program[fieldName] = 0;
+                        }
+                    }
+                }
+
+                string backupFileName = CreateBackup(fileName, "shortcuts-v5-to-v6");
+                logger.Info($"ConfigMigrationRunner/MigrateShortcutProgramDelays: Created shortcut backup at {backupFileName}.");
+                shortcutFile["ShortcutFileVersion"] = ShortcutRepository.CurrentShortcutFileVersion;
+                shortcutFile["LastUpdated"] = DateTime.UtcNow;
+                WriteJsonObject(fileName, shortcutFile);
+                logger.Info($"ConfigMigrationRunner/MigrateShortcutProgramDelays: Migrated {fileName} with zero-default program delays.");
+                return new MigrationResult(MigrationStatus.Success);
+            }
+            catch (JsonReaderException ex)
+            {
+                logger.Error(ex, $"ConfigMigrationRunner/MigrateShortcutProgramDelays: Invalid JSON in {fileName}.");
+                return new MigrationResult(MigrationStatus.InvalidJson, $"The shortcut file {fileName} contains invalid JSON.");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"ConfigMigrationRunner/MigrateShortcutProgramDelays: Could not migrate {fileName}.");
+                return new MigrationResult(MigrationStatus.MigrationFailed, $"Could not migrate the shortcut file {fileName}: {ex.Message}");
             }
         }
 

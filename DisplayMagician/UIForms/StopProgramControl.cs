@@ -11,6 +11,7 @@ namespace DisplayMagician.UIForms
     public partial class StopProgramControl : UserControl, IProgramControl
     {
         private StopProgram myStopProgram = new StopProgram();
+        private bool _updatingWaitAfterStop;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ProgramNumber
@@ -77,6 +78,32 @@ namespace DisplayMagician.UIForms
             cbx_restart_priority.SelectedValue = myStopProgram.RestartProcessPriority;
             chk_run_as_admin.Checked = myStopProgram.RunAsAdministrator;
             UpdateRestartDependentControls();
+            _updatingWaitAfterStop = true;
+            try
+            {
+                nud_wait_after_stop.Value = Math.Clamp(myStopProgram.WaitAfterStopSecs, 0, 999);
+            }
+            finally
+            {
+                _updatingWaitAfterStop = false;
+            }
+            nud_wait_after_stop.Enabled = !myStopProgram.Disabled;
+            lbl_wait_after_stop.Enabled = !myStopProgram.Disabled;
+            error_provider.SetError(nud_wait_after_stop,
+                myStopProgram.WaitAfterStopSecs < 0 || myStopProgram.WaitAfterStopSecs > 999
+                    ? $"Saved delay {myStopProgram.WaitAfterStopSecs} is outside 0 to 999 seconds. Change this value before saving."
+                    : "");
+        }
+
+        private void nud_wait_after_stop_ValueChanged(object sender, EventArgs e)
+        {
+            if (!_updatingWaitAfterStop)
+            {
+                myStopProgram.WaitAfterStopSecs = (int)nud_wait_after_stop.Value;
+                error_provider.SetError(nud_wait_after_stop, "");
+                if (FindForm() is ShortcutForm shortcutForm)
+                    shortcutForm.MarkAsUnsaved();
+            }
         }
 
         public void ChangePriority(int priority)
@@ -117,6 +144,8 @@ namespace DisplayMagician.UIForms
         {
             myStopProgram.Disabled = chk_disabled.Checked;
             bool enabled = !chk_disabled.Checked;
+            nud_wait_after_stop.Enabled = enabled;
+            lbl_wait_after_stop.Enabled = enabled;
             txt_stop_program.Enabled = enabled;
             btn_stop_program.Enabled = enabled;
             chk_restart_afterwards.Enabled = enabled;

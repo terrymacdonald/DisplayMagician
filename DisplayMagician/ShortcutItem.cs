@@ -64,6 +64,7 @@ namespace DisplayMagician
         public bool CloseOnFinish;
         public bool DontStartIfAlreadyRunning;
         public bool RunAsAdministrator;
+        public int WaitAfterStartSecs;
     }
 
     public struct AfterProgram
@@ -76,6 +77,7 @@ namespace DisplayMagician
         public bool ExecutableArgumentsRequired;
         public bool DontStartIfAlreadyRunning;
         public bool RunAsAdministrator;
+        public int WaitAfterStartSecs;
     }
 
     public struct StopProgram
@@ -86,6 +88,7 @@ namespace DisplayMagician
         public bool RestartAfterwards;
         public ProcessPriority RestartProcessPriority;
         public bool RunAsAdministrator;
+        public int WaitAfterStopSecs;
     }
 
     public struct ExecutableShortcutData
@@ -1344,6 +1347,7 @@ namespace DisplayMagician
                 copiedStartProgram.Priority = sp.Priority;
                 copiedStartProgram.ProcessPriority = sp.ProcessPriority;
                 copiedStartProgram.RunAsAdministrator = sp.RunAsAdministrator;
+                copiedStartProgram.WaitAfterStartSecs = sp.WaitAfterStartSecs;
                 shortcut.StartPrograms.Add(copiedStartProgram);
             }
 
@@ -1359,6 +1363,7 @@ namespace DisplayMagician
                 copiedStopProgram.ExecutableArgumentsRequired = sp.ExecutableArgumentsRequired;
                 copiedStopProgram.Priority = sp.Priority;
                 copiedStopProgram.ProcessPriority = sp.ProcessPriority;
+                copiedStopProgram.WaitAfterStartSecs = sp.WaitAfterStartSecs;
                 shortcut.AfterPrograms.Add(copiedStopProgram);
             }
 
@@ -1373,6 +1378,7 @@ namespace DisplayMagician
                 copiedEntry.RestartAfterwards = sp.RestartAfterwards;
                 copiedEntry.RestartProcessPriority = sp.RestartProcessPriority;
                 copiedEntry.RunAsAdministrator = sp.RunAsAdministrator;
+                copiedEntry.WaitAfterStopSecs = sp.WaitAfterStopSecs;
                 shortcut.StopPrograms.Add(copiedEntry);
             }
 
@@ -1616,6 +1622,18 @@ namespace DisplayMagician
                 if (sp.Disabled)
                     continue;
 
+                if (sp.WaitAfterStartSecs < 0 || sp.WaitAfterStartSecs > 999)
+                {
+                    logger.Error($"ShortcutItem/RefreshValidity: Shortcut '{Name}' start program #{sp.Priority} has invalid WaitAfterStartSecs {sp.WaitAfterStartSecs}.");
+                    _shortcutErrors.Add(new ShortcutError
+                    {
+                        Name = "InvalidWaitAfterStart",
+                        Validity = ShortcutValidity.Error,
+                        Message = $"Start program #{sp.Priority} must have a Wait after Start between 0 and 999 seconds."
+                    });
+                    worstError = ShortcutValidity.Error;
+                }
+
                 if (!String.IsNullOrWhiteSpace(sp.ApplicationId))
                 {
                     App applicationToValidate = null;
@@ -1655,6 +1673,18 @@ namespace DisplayMagician
             {
                 if (!sp.Disabled && !string.IsNullOrWhiteSpace(sp.Executable))
                 {
+                    if (sp.WaitAfterStopSecs < 0 || sp.WaitAfterStopSecs > 999)
+                    {
+                        logger.Error($"ShortcutItem/RefreshValidity: Shortcut '{Name}' stop program #{sp.Priority} has invalid WaitAfterStopSecs {sp.WaitAfterStopSecs}.");
+                        _shortcutErrors.Add(new ShortcutError
+                        {
+                            Name = "InvalidWaitAfterStop",
+                            Validity = ShortcutValidity.Error,
+                            Message = $"Stop program #{sp.Priority} must have a Wait after Stop between 0 and 999 seconds."
+                        });
+                        worstError = ShortcutValidity.Error;
+                    }
+
                     if (!System.IO.File.Exists(sp.Executable))
                     {
                         logger.Warn($"ShortcutItem/RefreshValidity: The stop program executable '{sp.Executable}' does not exist");

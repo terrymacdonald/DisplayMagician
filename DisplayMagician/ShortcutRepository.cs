@@ -63,7 +63,8 @@ namespace DisplayMagician
         //private static bool _cancelWait = false;
         // Other constants that are useful
         private static string AppShortcutStoragePath = Path.Combine(Program.AppDataPath, $"Shortcuts");
-        private static string _shortcutFileVersion = "5";
+        internal const string CurrentShortcutFileVersion = "6";
+        private static string _shortcutFileVersion = CurrentShortcutFileVersion;
         private static string _shortcutStorageJsonFileName = "Shortcuts.json";
         private static string _shortcutStorageJsonFullFileName = Path.Combine(AppShortcutStoragePath, _shortcutStorageJsonFileName);
         private static string uuidV4Regex = @"(?im)^[{(]?[0-9A-F]{8}[-]?(?:[0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$";
@@ -493,6 +494,14 @@ namespace DisplayMagician
 
             if (File.Exists(_shortcutStorageJsonFullFileName))
             {
+                ConfigMigrationRunner.MigrationResult migrationResult = ConfigMigrationRunner.MigrateShortcutProgramDelays(_shortcutStorageJsonFullFileName);
+                if (!migrationResult.Success)
+                {
+                    logger.Error($"ShortcutRepository/LoadShortcuts: {migrationResult.Message}");
+                    MessageBox.Show(Program.AppMainForm, migrationResult.Message, "Error migrating the Game Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
                 string json = "";
                 try
                 {
@@ -1455,6 +1464,23 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: Shortcut does not require changing the audio profile.");
             }
 
+            bool WaitAfterProgramAction(int waitSecs, string programName, string action)
+            {
+                if (cancelToken.IsCancellationRequested)
+                    return false;
+                if (waitSecs == 0)
+                    return true;
+
+                logger.Info($"ShortcutRepository/RunShortcut: Shortcut '{shortcutToUse.Name}' waiting {waitSecs} seconds after {action} of '{programName}'.");
+                SetTrayText(myMainForm, $"DisplayMagician: Waiting {waitSecs}s after {action}...");
+                bool cancelled = cancelToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(waitSecs));
+                if (cancelled)
+                    logger.Info($"ShortcutRepository/RunShortcut: Cancelled while waiting after {action} of '{programName}'.");
+                else
+                    SetTrayText(myMainForm, $"DisplayMagician: Preparing {shortcutToUse.Name}...");
+                return !cancelled;
+            }
+
             var programsInOrder = new List<(int Priority, bool IsStop, StartProgram StartProg, StopProgram StopProg)>();
             foreach (StartProgram sp in shortcutToUse.StartPrograms.Where(p => !p.Disabled && (!String.IsNullOrWhiteSpace(p.Executable) || !String.IsNullOrWhiteSpace(p.ApplicationId))))
                 programsInOrder.Add((sp.Priority, false, sp, default));
@@ -1467,9 +1493,16 @@ namespace DisplayMagician
                 logger.Info($"ShortcutRepository/RunShortcut: Processing {programsInOrder.Count} pre-game program action(s) in UI order");
                 foreach (var item in programsInOrder)
                 {
+                    if (cancelToken.IsCancellationRequested)
+                    {
+                        RevertAndCleanup();
+                        return RunShortcutResult.Cancelled;
+                    }
+
                     if (item.IsStop)
                     {
                         StopProgram stopProgramEntry = item.StopProg;
+                        bool stopSucceeded = false;
                         try
                         {
                             string processName = Path.GetFileNameWithoutExtension(stopProgramEntry.Executable);
@@ -1480,7 +1513,8 @@ namespace DisplayMagician
                                 continue;
                             }
                             logger.Info($"ShortcutRepository/RunShortcut: Stopping {runningProcesses.Length} instance(s) of '{processName}'.");
-                            if (!ProcessUtils.StopProcess(runningProcesses.ToList()))
+                            stopSucceeded = ProcessUtils.StopProcess(runningProcesses.ToList());
+                            if (!stopSucceeded)
                             {
                                 logger.Warn($"ShortcutRepository/RunShortcut: One or more instances of '{processName}' could not be stopped.");
                                 bool continueAnyway = AskToContinue(
@@ -1501,6 +1535,7 @@ namespace DisplayMagician
                         }
                         catch (Exception ex)
                         {
+                            stopSucceeded = false;
                             logger.Warn(ex, $"ShortcutRepository/RunShortcut: Exception while stopping program '{stopProgramEntry.Executable}'.");
                             bool continueAnyway = AskToContinue(
                                 $"An exception occurred while trying to stop the program '{stopProgramEntry.Executable}': {ex.Message}\n\nDo you want to continue running the shortcut?",
@@ -1511,6 +1546,11 @@ namespace DisplayMagician
                                 RevertAndCleanup();
                                 return RunShortcutResult.Cancelled;
                             }
+                        }
+                        if (stopSucceeded && !WaitAfterProgramAction(stopProgramEntry.WaitAfterStopSecs, stopProgramEntry.Executable, "stop"))
+                        {
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
                         }
                     }
                     else
@@ -1546,6 +1586,11 @@ namespace DisplayMagician
                                     processToStart.RunAsAdministrator)
                                 {
                                     logger.Warn($"ShortcutRepository/RunShortcut: UWP start program '{uwpApp.Name}' was launched, but its arguments, priority, and Run as administrator settings are not supported by the UWP launch API.");
+                                }
+                                if (!WaitAfterProgramAction(processToStart.WaitAfterStartSecs, uwpApp.Name, "start"))
+                                {
+                                    RevertAndCleanup();
+                                    return RunShortcutResult.Cancelled;
                                 }
                             }
                             continue;
@@ -1676,12 +1721,23 @@ namespace DisplayMagician
                                 return RunShortcutResult.Cancelled;
                             }
                         }
+                        if (!startFailed && !WaitAfterProgramAction(processToStart.WaitAfterStartSecs, processToStart.Executable, "start"))
+                        {
+                            RevertAndCleanup();
+                            return RunShortcutResult.Cancelled;
+                        }
                     }
                 }
             }
             else
             {
                 logger.Info($"ShortcutRepository/RunShortcut: No pre-game programs to start or stop");
+            }
+
+            if (cancelToken.IsCancellationRequested)
+            {
+                RevertAndCleanup();
+                return RunShortcutResult.Cancelled;
             }
 
             // Now start the main game/exe, and wait if we have to
@@ -3132,4 +3188,3 @@ namespace DisplayMagician
     }
 
 }
-

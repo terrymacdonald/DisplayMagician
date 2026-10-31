@@ -29,6 +29,7 @@ namespace DisplayMagician.UIForms
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             cb_dont_start_if_running = new System.Windows.Forms.CheckBox();
             txt_start_program = new System.Windows.Forms.TextBox();
             cb_start_program_close = new System.Windows.Forms.CheckBox();
@@ -44,8 +45,13 @@ namespace DisplayMagician.UIForms
             cbx_start_program_priority = new System.Windows.Forms.ComboBox();
             lbl_start_program_priority = new System.Windows.Forms.Label();
             cb_run_as_administrator = new System.Windows.Forms.CheckBox();
+            lbl_wait_after_start = new System.Windows.Forms.Label();
+            nud_wait_after_start = new System.Windows.Forms.NumericUpDown();
+            error_provider = new System.Windows.Forms.ErrorProvider(components);
             ((System.ComponentModel.ISupportInitialize)pb_up_arrow).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nud_wait_after_start).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)error_provider).BeginInit();
             SuspendLayout();
             // 
             // cb_dont_start_if_running
@@ -238,12 +244,37 @@ namespace DisplayMagician.UIForms
             cb_run_as_administrator.UseVisualStyleBackColor = true;
             cb_run_as_administrator.CheckedChanged += cb_run_as_administrator_CheckedChanged;
             // 
+            // lbl_wait_after_start
+            //
+            lbl_wait_after_start.AutoSize = true;
+            lbl_wait_after_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            lbl_wait_after_start.ForeColor = System.Drawing.Color.White;
+            lbl_wait_after_start.Location = new System.Drawing.Point(160, 180);
+            lbl_wait_after_start.Name = "lbl_wait_after_start";
+            lbl_wait_after_start.TabIndex = 10;
+            lbl_wait_after_start.Text = "Wait after Start (seconds):";
+            //
+            // nud_wait_after_start
+            //
+            nud_wait_after_start.BackColor = System.Drawing.Color.White;
+            nud_wait_after_start.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            nud_wait_after_start.ForeColor = System.Drawing.Color.Black;
+            nud_wait_after_start.Location = new System.Drawing.Point(375, 177);
+            nud_wait_after_start.Maximum = new decimal(new int[] { 999, 0, 0, 0 });
+            nud_wait_after_start.Name = "nud_wait_after_start";
+            nud_wait_after_start.Size = new System.Drawing.Size(80, 26);
+            nud_wait_after_start.TabIndex = 11;
+            nud_wait_after_start.ValueChanged += nud_wait_after_start_ValueChanged;
+            //
             // StartProgramControl
             // 
+            error_provider.ContainerControl = this;
             AllowDrop = true;
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             AutoSize = true;
             BackColor = System.Drawing.Color.Black;
+            Controls.Add(lbl_wait_after_start);
+            Controls.Add(nud_wait_after_start);
             Controls.Add(cb_run_as_administrator);
             Controls.Add(cbx_start_program_priority);
             Controls.Add(lbl_start_program_priority);
@@ -261,11 +292,13 @@ namespace DisplayMagician.UIForms
             Controls.Add(cb_start_program_pass_args);
             ForeColor = System.Drawing.Color.White;
             Margin = new System.Windows.Forms.Padding(10);
-            MinimumSize = new System.Drawing.Size(900, 185);
+            MinimumSize = new System.Drawing.Size(900, 220);
             Name = "StartProgramControl";
-            Size = new System.Drawing.Size(900, 185);
+            Size = new System.Drawing.Size(900, 220);
             ((System.ComponentModel.ISupportInitialize)pb_up_arrow).EndInit();
             ((System.ComponentModel.ISupportInitialize)pb_down_arrow).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nud_wait_after_start).EndInit();
+            ((System.ComponentModel.ISupportInitialize)error_provider).EndInit();
             ResumeLayout(false);
             PerformLayout();
 
@@ -288,6 +321,8 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.ComboBox cbx_start_program_priority;
         private System.Windows.Forms.Label lbl_start_program_priority;
         private System.Windows.Forms.CheckBox cb_run_as_administrator;
+        private System.Windows.Forms.Label lbl_wait_after_start;
+        private System.Windows.Forms.NumericUpDown nud_wait_after_start;
+        private System.Windows.Forms.ErrorProvider error_provider;
     }
 }
-

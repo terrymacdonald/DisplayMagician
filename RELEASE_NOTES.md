@@ -54,6 +54,7 @@ Game shortcuts have been substantially improved:
 
 - More reliable process-tree monitoring means DisplayMagician is better at recognising when a launched game or application has really finished, including launcher, child-process, local executable, and UWP scenarios.
 - Shortcuts can start helper programs before a game and stop selected programs when required, with optional restoration after the game closes.
+- Start and Stop Programs have individual "Wait after Start" and "Wait after Stop" delays from 0 to 999 seconds. Delays default to 0 for new and migrated shortcuts, run after successful actions (including the last action before the game starts), and can be cancelled. Disabled or skipped entries and failed actions do not add a delay. After Programs retain a future-use delay field but do not apply it yet.
 - Rollback profiles are only applied after a successful display-profile change, and stalled shortcuts can be restarted manually instead of leaving the user blocked.
 - Steam, Epic, GOG, EA/Origin, Ubisoft Connect, Xbox, installed Windows apps, UWP apps, and direct executables received compatibility and launch-argument improvements.
 
