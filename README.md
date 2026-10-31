@@ -205,7 +205,7 @@ Official Windows releases of DisplayMagician are digitally signed.
 
 Free code signing is provided by SignPath.io, with the certificate provided by SignPath Foundation.
 
-See the [DisplayMagician Code signing policy](CODE_SIGNING_POLICY.md) for information about the build, signing, approval and privacy processes.
+See the [DisplayMagician Code signing policy](Docs/CODE_SIGNING_POLICY.md) for information about the build, signing, approval and privacy processes.
 
 ## License
 
@@ -235,7 +235,7 @@ I’m so very thankful for the help of the following people, who make DisplayMag
 * Domenic (Thanks for the solid month of troubleshooting help and the monthly sponsorship!)
 * Markus Ewert 'dinex86' (Thanks for letting my use your FOV logic)
 
-Also big thanks to [the amazing list of people who have donated and helped shown here](CREDITS.md).
+Also big thanks to [the amazing list of people who have donated and helped shown here](Docs/CREDITS.md).
 
 ## Codebase regression checks
 
