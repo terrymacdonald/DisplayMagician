@@ -44,7 +44,7 @@ public sealed class ProfileCommandHandler
     private readonly OperationStatusOutbox _operationStatusOutbox;
     private readonly SemaphoreSlim _statusDeliveryLock = new SemaphoreSlim(1, 1);
     private readonly object _operationsLock = new object();
-    private readonly Dictionary<Guid, (CancellationTokenSource Source, DisplayOperationType Type)> _operations = new Dictionary<Guid, (CancellationTokenSource, DisplayOperationType)>();
+    private readonly Dictionary<Guid, (CancellationTokenSource Source, DisplayOperationType Type, TaskCompletionSource<bool> Completion)> _operations = new();
     private bool _stopRequested;
     private bool _resetRequested;
 
@@ -120,8 +120,7 @@ public sealed class ProfileCommandHandler
             if (!leaseResponse.IsSuccessful)
             {
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, leaseResponse.Message, leaseResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
-                CompleteOperation(operationId, operationCancellationSource);
-                await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
+                await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
                 return false;
             }
 
@@ -129,26 +128,23 @@ public sealed class ProfileCommandHandler
             if (!stateResponse.IsSuccessful)
             {
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, stateResponse.Message, stateResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
-                CompleteOperation(operationId, operationCancellationSource);
-                await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
+                await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
                 return false;
             }
 
             await RunShortcutOperationAsync(operationId, shortcutId, operationCancellationSource, isAutomaticallyDetected: true, detectedProcess: detectedProcess).ConfigureAwait(false);
-            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
             return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            CompleteOperation(operationId, operationCancellationSource);
-            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
+            await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
             return false;
         }
         catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
         {
             _logger.Warn(ex, "ProfileCommandHandler/RunDetectedShortcutAsync: Could not start automatically detected shortcut {0}.", shortcutId);
             await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, "The automatic shortcut could not start because the Control Service is unavailable.", ControlErrorCode.AgentUnavailable), CancellationToken.None).ConfigureAwait(false);
-            CompleteOperation(operationId, operationCancellationSource);
+            await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
             return false;
         }
     }
@@ -507,15 +503,32 @@ public sealed class ProfileCommandHandler
                 if (!stateResponse.IsSuccessful)
                 {
                     await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, stateResponse.Message, stateResponse.ErrorCode), CancellationToken.None).ConfigureAwait(false);
-                    CompleteOperation(operationId, operationCancellationSource);
+                    await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
                     return new ControlResponse { IsSuccessful = false, ErrorCode = stateResponse.ErrorCode, Message = stateResponse.Message };
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await PublishShortcutStatusAsync(new OperationStatusUpdate
+                    {
+                        OperationId = operationId, OperationType = DisplayOperationType.StartShortcut,
+                        Phase = OperationPhase.Cancelled, IsTerminal = true,
+                        Message = "Shortcut request was cancelled before execution."
+                    }, CancellationToken.None).ConfigureAwait(false);
+                }
+                finally
+                {
+                    await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
+                }
+                throw;
             }
             catch (Exception ex) when (ex is IOException || ex is InvalidOperationException || ex is TimeoutException)
             {
                 _logger.Warn(ex, "ProfileCommandHandler/HandleAsync: Could not report the manual shortcut operation {0} as running.", operationId);
                 await PublishShortcutStatusAsync(CreateFailedShortcutStatus(operationId, "The shortcut could not start because the Control Service is unavailable.", ControlErrorCode.AgentUnavailable), CancellationToken.None).ConfigureAwait(false);
-                CompleteOperation(operationId, operationCancellationSource);
+                await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AgentUnavailable, Message = "The Control Service is unavailable." };
             }
 
@@ -670,8 +683,7 @@ public sealed class ProfileCommandHandler
                 }
                 finally
                 {
-                    CompleteOperation(operationId, operationCancellationSource);
-                    await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
+                    await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
                 }
             });
             return new ControlResponse { IsSuccessful = true, Message = "Audio profile operation accepted.", OperationStatus = new OperationStatus { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = OperationPhase.Requested } };
@@ -914,8 +926,7 @@ public sealed class ProfileCommandHandler
         }
         finally
         {
-            CompleteOperation(profileOperationId, operationCancellationSource);
-            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
+            await CompleteOperationAsync(profileOperationId, operationCancellationSource).ConfigureAwait(false);
         }
     }
 
@@ -962,8 +973,7 @@ public sealed class ProfileCommandHandler
         }
         finally
         {
-            CompleteOperation(operationId, operationCancellationSource);
-            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
+            await CompleteOperationAsync(operationId, operationCancellationSource).ConfigureAwait(false);
         }
     }
 
@@ -986,24 +996,53 @@ public sealed class ProfileCommandHandler
         {
             if (_stopRequested || _resetRequested || _operations.Count > 0 || _registration.OperationState != AgentOperationState.Idle || _registration.IsRecoveryRequired)
                 return false;
-            _operations.Add(operationId, (operationCancellationSource, operationType));
+            _operations.Add(operationId, (operationCancellationSource, operationType, new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously)));
             _registration.OperationState = AgentOperationState.Running;
             return true;
         }
     }
 
-    private void CompleteOperation(Guid operationId, CancellationTokenSource operationCancellationSource)
+    internal async Task StopAndRestoreAsync()
     {
+        (CancellationTokenSource Source, DisplayOperationType Type, TaskCompletionSource<bool> Completion)[] active;
         lock (_operationsLock)
         {
-            if (_operations.Remove(operationId))
-            {
-                _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
-                _registration.OperationState = _operations.Count == 0 ? AgentOperationState.Idle : AgentOperationState.Running;
-            }
+            _stopRequested = true;
+            active = _operations.Values.ToArray();
         }
 
-        operationCancellationSource.Dispose();
+        foreach (var operation in active)
+        {
+            try { operation.Source.Cancel(); }
+            catch (ObjectDisposedException) { } // Completion can win the cancellation race.
+        }
+        await Task.WhenAll(active.Select(operation => operation.Completion.Task)).ConfigureAwait(false);
+    }
+
+    private async Task CompleteOperationAsync(Guid operationId, CancellationTokenSource operationCancellationSource)
+    {
+        TaskCompletionSource<bool> completion;
+        lock (_operationsLock)
+        {
+            if (!_operations.TryGetValue(operationId, out var operation)) return;
+            completion = operation.Completion;
+            _registration.IsRecoveryRequired = _shortcutRunner.IsRecoveryRequired;
+            _registration.OperationState = AgentOperationState.Idle;
+        }
+
+        try
+        {
+            await ReportIdleAfterShortcutAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (_operationsLock)
+            {
+                _operations.Remove(operationId);
+                operationCancellationSource.Dispose();
+                completion.TrySetResult(true);
+            }
+        }
     }
 
     private async Task ReportIdleAfterShortcutAsync()

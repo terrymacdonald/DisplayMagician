@@ -11,7 +11,15 @@ namespace DisplayMagician.UserAgent;
 public class ControlServiceClient
 {
     private readonly SemaphoreSlim _requestLock = new SemaphoreSlim(1, 1);
+    private readonly string _pipeName;
     private NamedPipeClientStream? _pipe;
+
+    public ControlServiceClient() : this(ControlProtocol.ServicePipeName) { }
+
+    internal ControlServiceClient(string pipeName)
+    {
+        _pipeName = pipeName;
+    }
 
     public async Task RunAsync(AgentRegistration registration, TimeSpan heartbeatInterval, bool acquireDisplayControl, bool migrateUserData, TaskCompletionSource<ControlResponse>? migrationCompletion, CancellationToken cancellationToken)
     {
@@ -19,12 +27,11 @@ public class ControlServiceClient
 
         using NamedPipeClientStream pipe = new NamedPipeClientStream(
             ".",
-            ControlProtocol.ServicePipeName,
+            _pipeName,
             PipeDirection.InOut,
             PipeOptions.Asynchronous);
 
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
-        _pipe = pipe;
 
         try
         {
@@ -33,7 +40,18 @@ public class ControlServiceClient
                 MessageType = ControlMessageType.AgentRegistration,
                 Payload = JsonSerializer.Serialize(registration)
             };
-            ControlResponse registrationResponse = await SendPersistentAsync(request, cancellationToken).ConfigureAwait(false);
+            ControlResponse registrationResponse;
+            await _requestLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                // Other callers must not use a reconnecting pipe before its registration.
+                registrationResponse = await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
+                if (registrationResponse.IsSuccessful) _pipe = pipe;
+            }
+            finally
+            {
+                _requestLock.Release();
+            }
             if (!registrationResponse.IsSuccessful)
             {
                 migrationCompletion?.TrySetResult(registrationResponse);
@@ -95,7 +113,7 @@ public class ControlServiceClient
 
     public async Task<ControlResponse> RegisterOnceAsync(AgentRegistration registration, CancellationToken cancellationToken)
     {
-        using NamedPipeClientStream pipe = new NamedPipeClientStream(".", ControlProtocol.ServicePipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        using NamedPipeClientStream pipe = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
         await pipe.ConnectAsync(ControlProtocol.ConnectionTimeout, cancellationToken).ConfigureAwait(false);
         return await SendAndReceiveAsync(pipe, new ControlEnvelope
         {
@@ -234,7 +252,18 @@ public class ControlServiceClient
                 throw new IOException("The persistent Control Service connection is not connected.");
             }
 
-            return await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return await SendAndReceiveAsync(pipe, request, cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                // A partial exchange can leave a late reply on the stream. Reconnect rather
+                // than allowing the next command to consume another command's response.
+                if (ReferenceEquals(_pipe, pipe)) _pipe = null;
+                pipe.Dispose();
+                throw;
+            }
         }
         finally
         {
@@ -242,7 +271,7 @@ public class ControlServiceClient
         }
     }
 
-    private static async Task<ControlResponse> SendAndReceiveAsync(NamedPipeClientStream pipe, ControlEnvelope request, CancellationToken cancellationToken)
+    internal static async Task<ControlResponse> SendAndReceiveAsync(Stream pipe, ControlEnvelope request, CancellationToken cancellationToken)
     {
         request.Hello = ControlProtocol.CreateHello(ControlClientKind.UserAgent, "DisplayMagician.UserAgent", "DisplayMagician User Agent");
         using CancellationTokenSource responseTimeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -251,19 +280,24 @@ public class ControlServiceClient
         {
             await ControlEnvelopeSerializer.WriteAsync(pipe, request, responseTimeoutSource.Token).ConfigureAwait(false);
             ControlEnvelope? response = await ControlEnvelopeSerializer.ReadAsync(pipe, responseTimeoutSource.Token).ConfigureAwait(false);
-            if (response == null || response.RequestId != request.RequestId || response.MessageType != request.MessageType)
+            if (response == null || response.ProtocolVersion != ControlProtocol.CurrentVersion || response.RequestId != request.RequestId || response.MessageType != request.MessageType)
             {
                 throw new InvalidDataException("The Control Service returned an invalid response.");
             }
 
             ControlResponse controlResponse = JsonSerializer.Deserialize<ControlResponse>(response.Payload)
                 ?? throw new InvalidDataException("The Control Service returned an unreadable registration response.");
-            if (controlResponse.IsSuccessful && !ControlProtocol.IsCompatibleWelcome(request.Hello, controlResponse.ProtocolWelcome))
+            if (controlResponse.IsSuccessful && (!ControlProtocol.IsCompatibleWelcome(request.Hello, controlResponse.ProtocolWelcome) ||
+                controlResponse.ProtocolWelcome?.EndpointKind != "ControlService"))
             {
                 throw new InvalidDataException("The Control Service did not complete a compatible protocol negotiation.");
             }
 
             return controlResponse;
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException("The Control Service returned an unreadable response.", ex);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {

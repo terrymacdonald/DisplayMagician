@@ -395,32 +395,25 @@ public sealed class ShortcutRunner
             {
                 if (ReferenceEquals(_activeWindowPlacementRun, windowRun)) _activeWindowPlacementRun = null;
             }
-            foreach (ProcessTreeMonitor helperMonitor in windowRun.OwnedHelperMonitors) helperMonitor.Dispose();
-            RunPostGameProgramCleanup(startedPrograms, stoppedProgramsToRestart);
-            bool recoveryRestored = true;
-            if (recoveryRecord?.RequiresDisplayRestore == true)
+            try
             {
-                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.RestoringDisplayProfile, "Restoring display profile.", CancellationToken.None).ConfigureAwait(false);
-                recoveryRestored = (await _profileOperationService.ApplyDisplayProfileAsync(recoveryRecord.DisplayProfileId, CancellationToken.None, recoveryRecord.DisplayProfileSnapshotJson).ConfigureAwait(false)).IsSuccessful;
+                try
+                {
+                    foreach (ProcessTreeMonitor helperMonitor in windowRun.OwnedHelperMonitors) helperMonitor.Dispose();
+                    RunPostGameProgramCleanup(startedPrograms, stoppedProgramsToRestart);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex, "ShortcutRunner/RunShortcutCoreAsync: Program cleanup failed for shortcut {0}; continuing profile restoration.", shortcut.Id);
+                }
+                if (recoveryRecord != null)
+                    await RestoreRecoveryAsync(recoveryRecord, audioDeviceWaitMilliseconds, CancellationToken.None, publishStatusAsync, preparedRun.OperationId).ConfigureAwait(false);
+                RunAfterPrograms(shortcut);
             }
-            if (recoveryRecord?.RequiresAudioRestore == true)
+            finally
             {
-                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.RestoringAudioProfile, "Restoring audio profile.", CancellationToken.None).ConfigureAwait(false);
-                recoveryRestored = _profileOperationService.ApplyAudioProfile(recoveryRecord.AudioProfileId, audioDeviceWaitMilliseconds, recoveryRecord.AudioProfileSnapshotJson).IsSuccessful && recoveryRestored;
-            }
-            if (recoveryRecord?.RequiresAudioVolumeRestore == true)
-            {
-                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.RestoringAudioProfile, "Restoring audio volume overrides.", CancellationToken.None).ConfigureAwait(false);
-                recoveryRestored = _audioVolumeOverrideService.Restore(recoveryRecord.AudioVolumeOverrides) && recoveryRestored;
-            }
-            if (recoveryRecord != null && recoveryRestored)
-            {
-                _recoveryStore.Clear();
-            }
-            RunAfterPrograms(shortcut);
-            if (automaticDetectionWasSuspended)
-            {
-                _automaticGameDetectionRegistry.RestoreAutomaticDetectionAfterManualRun(shortcut.Id);
+                if (automaticDetectionWasSuspended)
+                    _automaticGameDetectionRegistry.RestoreAutomaticDetectionAfterManualRun(shortcut.Id);
             }
         }
     }
@@ -772,25 +765,72 @@ public sealed class ShortcutRunner
             return !_recoveryStore.HasPendingRecovery();
         }
 
+        return await RestoreRecoveryAsync(recoveryRecord, audioDeviceWaitMilliseconds, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> RestoreRecoveryAsync(ShortcutRecoveryRecord recoveryRecord, int audioDeviceWaitMilliseconds, CancellationToken cancellationToken,
+        Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null, Guid operationId = default)
+    {
         bool recoveryRestored = true;
         if (recoveryRecord.RequiresDisplayRestore)
         {
-            recoveryRestored = (await _profileOperationService.ApplyDisplayProfileAsync(recoveryRecord.DisplayProfileId, cancellationToken, recoveryRecord.DisplayProfileSnapshotJson).ConfigureAwait(false)).IsSuccessful;
+            await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringDisplayProfile, "Restoring display profile.", cancellationToken).ConfigureAwait(false);
+            try
+            {
+                recoveryRestored = (await _profileOperationService.ApplyDisplayProfileAsync(recoveryRecord.DisplayProfileId, cancellationToken, recoveryRecord.DisplayProfileSnapshotJson).ConfigureAwait(false)).IsSuccessful;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+            {
+                recoveryRestored = false;
+                _logger.Error(ex, "ShortcutRunner/RestoreRecoveryAsync: Could not restore display profile {0}; continuing other restoration steps.", recoveryRecord.DisplayProfileId);
+            }
         }
         if (recoveryRecord.RequiresAudioRestore)
         {
-            recoveryRestored = _profileOperationService.ApplyAudioProfile(recoveryRecord.AudioProfileId, audioDeviceWaitMilliseconds, recoveryRecord.AudioProfileSnapshotJson).IsSuccessful && recoveryRestored;
+            await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringAudioProfile, "Restoring audio profile.", cancellationToken).ConfigureAwait(false);
+            try
+            {
+                recoveryRestored = _profileOperationService.ApplyAudioProfile(recoveryRecord.AudioProfileId, audioDeviceWaitMilliseconds, recoveryRecord.AudioProfileSnapshotJson).IsSuccessful && recoveryRestored;
+            }
+            catch (Exception ex)
+            {
+                recoveryRestored = false;
+                _logger.Error(ex, "ShortcutRunner/RestoreRecoveryAsync: Could not restore audio profile {0}; continuing other restoration steps.", recoveryRecord.AudioProfileId);
+            }
         }
         if (recoveryRecord.RequiresAudioVolumeRestore)
         {
-            recoveryRestored = _audioVolumeOverrideService.Restore(recoveryRecord.AudioVolumeOverrides) && recoveryRestored;
+            await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringAudioProfile, "Restoring audio volume overrides.", cancellationToken).ConfigureAwait(false);
+            try
+            {
+                recoveryRestored = _audioVolumeOverrideService.Restore(recoveryRecord.AudioVolumeOverrides) && recoveryRestored;
+            }
+            catch (Exception ex)
+            {
+                recoveryRestored = false;
+                _logger.Error(ex, "ShortcutRunner/RestoreRecoveryAsync: Could not restore audio volume overrides.");
+            }
         }
         if (recoveryRestored)
         {
-            _recoveryStore.Clear();
+            try { _recoveryStore.Clear(); }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                recoveryRestored = false;
+                _logger.Error(ex, "ShortcutRunner/RestoreRecoveryAsync: Settings were restored but pending recovery could not be cleared.");
+            }
         }
-
         return recoveryRestored;
+    }
+
+    private static async Task PublishRecoveryStatusAsync(Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid operationId,
+        OperationPhase phase, string message, CancellationToken cancellationToken)
+    {
+        try { await PublishStatusAsync(publishStatusAsync, operationId, phase, message, cancellationToken).ConfigureAwait(false); }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            _logger.Warn(ex, "ShortcutRunner/PublishRecoveryStatusAsync: Could not publish restoration progress for operation {0}; continuing restoration.", operationId);
+        }
     }
 
     private static async Task RestoreWindowPlacementsAsync(WindowPlacementRun run, Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, CancellationToken cancellationToken)

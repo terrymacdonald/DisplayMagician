@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading;
@@ -17,8 +18,6 @@ internal static class Program
         try { using Semaphore resetting = Semaphore.OpenExisting(InstallationResetProtocol.MaintenanceLockName); return; }
         catch (WaitHandleCannotBeOpenedException) { } // No installation reset is running.
         catch (UnauthorizedAccessException) { return; } // Another user's administrator reset is running.
-        // The current WinForms application still owns desktop work. This executable becomes its interactive-session host
-        // once the existing profile and shortcut lifecycle is moved behind the Agent boundary.
         AgentRegistration registration = AgentIdentity.CreateRegistration(AgentBuildVersion.Current, "manual");
         UserAgentStartupRequest startupRequest = UserAgentCommandLine.Parse(args);
         ConfigureLogging(registration.UserSid, startupRequest.DiagnosticLogLevel);
@@ -45,45 +44,73 @@ internal static class Program
         // Control Service can deliver its saved client-sync manifest as soon as it accepts the
         // registration. Start this listener before awaiting migration so that delivery cannot
         // block the persistent registration pipe that carries the migration response.
-        Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, cancellationTokenSource.Token);
-        ControlResponse migrationResponse = await migrationCompletion.Task.ConfigureAwait(false);
-        if (!migrationResponse.IsSuccessful)
+        using CancellationTokenSource workCancellation = new CancellationTokenSource();
+        Task commandConnection = commandServer.RunAsync(profileCommandHandler.HandleAsync, () => profileCommandHandler.StopRequested, workCancellation.Token);
+        List<Task> backgroundTasks = new List<Task> { serviceConnection, commandConnection };
+        try
         {
-            cancellationTokenSource.Cancel();
-            throw new InvalidOperationException(migrationResponse.Message);
-        }
+            ControlResponse migrationResponse = await AwaitMigrationAsync(migrationCompletion.Task, commandConnection).ConfigureAwait(false);
+            if (!migrationResponse.IsSuccessful)
+            {
+                throw new InvalidOperationException(migrationResponse.Message);
+            }
 
-        Task logging = RunLoggingAsync(serviceClient, cancellationTokenSource.Token);
-        await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-        registration.IsReady = true;
-        ControlResponse readyResponse = await serviceClient.UpdateRegistrationAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
-        if (!readyResponse.IsSuccessful)
-        {
-            cancellationTokenSource.Cancel();
-            throw new InvalidOperationException(readyResponse.Message);
-        }
+            Task logging = RunLoggingAsync(serviceClient, cancellationTokenSource.Token);
+            backgroundTasks.Add(logging);
+            await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            registration.IsReady = true;
+            ControlResponse readyResponse = await serviceClient.UpdateRegistrationAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
+            if (!readyResponse.IsSuccessful)
+            {
+                throw new InvalidOperationException(readyResponse.Message);
+            }
 
-        // Explicit acquisition follows startup restoration and its ready confirmation.
-        // Otherwise the debug/CLI acquire mode can deadlock before it reaches recovery.
-        if (acquireDisplayControl)
+            // Explicit acquisition follows startup restoration and its ready confirmation.
+            // Otherwise the debug/CLI acquire mode can deadlock before it reaches recovery.
+            if (acquireDisplayControl)
+            {
+                ControlResponse leaseResponse = await serviceClient.AcquireDisplayControlAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
+                if (!leaseResponse.IsSuccessful)
+                {
+                    throw new InvalidOperationException(leaseResponse.Message);
+                }
+            }
+
+            await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
+            Task statusReconciliation = RunOperationStatusReconciliationAsync(profileCommandHandler, cancellationTokenSource.Token);
+            backgroundTasks.Add(statusReconciliation);
+            AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.RunDetectedShortcutAsync);
+            Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(workCancellation.Token);
+            backgroundTasks.Add(automaticGameDetection);
+
+
+            await Task.WhenAny(commandConnection, automaticGameDetection, statusReconciliation, logging).ConfigureAwait(false);
+        }
+        finally
         {
-            ControlResponse leaseResponse = await serviceClient.AcquireDisplayControlAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
-            if (!leaseResponse.IsSuccessful)
+            workCancellation.Cancel();
+            try
+            {
+                // Keep the service connection available for restoration and terminal reports.
+                await profileCommandHandler.StopAndRestoreAsync().ConfigureAwait(false);
+            }
+            finally
             {
                 cancellationTokenSource.Cancel();
-                throw new InvalidOperationException(leaseResponse.Message);
+                try { await Task.WhenAll(backgroundTasks).ConfigureAwait(false); }
+                catch (OperationCanceledException) { } // All background work is being stopped.
             }
         }
+    }
 
-        await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);
-        Task statusReconciliation = RunOperationStatusReconciliationAsync(profileCommandHandler, cancellationTokenSource.Token);
-        AutomaticGameDetectionWorker automaticGameDetectionWorker = new AutomaticGameDetectionWorker(profileCommandHandler.AutomaticGameDetectionRegistry, profileCommandHandler.RunDetectedShortcutAsync);
-        Task automaticGameDetection = automaticGameDetectionWorker.RunAsync(cancellationTokenSource.Token);
-
-
-        await Task.WhenAny(commandConnection, automaticGameDetection, statusReconciliation, logging).ConfigureAwait(false);
-        cancellationTokenSource.Cancel();
-        await Task.WhenAll(serviceConnection, commandConnection, automaticGameDetection, statusReconciliation, logging).ConfigureAwait(false);
+    internal static async Task<ControlResponse> AwaitMigrationAsync(Task<ControlResponse> migration, Task commandServer)
+    {
+        if (await Task.WhenAny(migration, commandServer).ConfigureAwait(false) == commandServer)
+        {
+            await commandServer.ConfigureAwait(false);
+            throw new IOException("The User Agent command listener stopped before migration completed.");
+        }
+        return await migration.ConfigureAwait(false);
     }
 
     private static async Task RunLoggingAsync(ControlServiceClient client, CancellationToken cancellationToken)

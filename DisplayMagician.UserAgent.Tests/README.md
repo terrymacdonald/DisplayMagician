@@ -4,6 +4,8 @@ This xUnit test project verifies User Agent behaviour and the shared contracts i
 
 Agent reliability regressions cover stale cached profile identities, failed restoration results, recovery-file preservation, profile write rollback, audio operation admission and idle-stop protection, interrupted-operation reconciliation, and read/unread edits during message downloads. Failure and concurrency tests use temporary storage, controlled HTTP responses, and substituted execution services without changing actual display or audio settings.
 
+Connection/lifecycle regressions use isolated named pipes and substituted execution services to check registration ordering, cancelled exchanges, invalid replies, command-handler draining, lost stop replies, listener/migration failure, detached-operation cleanup and restoration exceptions. Production LocalSystem pipe permissions are unchanged; tests do not contact the installed service or change hardware settings.
+
 ## Run
 
 Additional regression cases cover locked message-index writes, omission of launch arguments from logs, and the desktop Messages form's disconnected-service, timeout, and rejected-request paths. Form tests use an injected client and do not connect to installed services or initialize WebView2.

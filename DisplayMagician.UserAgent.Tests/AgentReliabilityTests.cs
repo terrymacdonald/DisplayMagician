@@ -45,7 +45,7 @@ public sealed class AgentReliabilityTests : IDisposable
         Assert.False(handler.StopRequested);
         using CancellationTokenSource overlapping = new();
         Assert.False((bool)begin.Invoke(handler, new object[] { Guid.NewGuid(), overlapping, DisplayOperationType.StartShortcut })!);
-        typeof(ProfileCommandHandler).GetMethod("CompleteOperation", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(handler, new object[] { id, operation });
+        await (Task)typeof(ProfileCommandHandler).GetMethod("CompleteOperationAsync", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(handler, new object[] { id, operation })!;
         ControlResponse result = await preparation.WaitAsync(TimeSpan.FromSeconds(3));
         Assert.True(result.IsSuccessful);
         Assert.True(handler.StopRequested);
@@ -65,6 +65,133 @@ public sealed class AgentReliabilityTests : IDisposable
         Assert.True(registration.IsRecoveryRequired);
         Assert.False((bool)typeof(ProfileCommandHandler).GetField("_resetRequested", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(handler)!);
     }
+    [Fact]
+    public async Task ShutdownWaitsForAcceptedWorkToFinishAndRejectsNewOperations()
+    {
+        using FakeProfileOperations profiles = new();
+        AgentRegistration registration = new() { UserSid = "test-user", SessionId = 1, OperationState = AgentOperationState.Idle };
+        ProfileCommandHandler handler = new(registration, new FakeServiceClient(), null, _root, profiles);
+        using CancellationTokenSource operation = new();
+        Guid id = Guid.NewGuid();
+        MethodInfo begin = typeof(ProfileCommandHandler).GetMethod("TryBeginOperation", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        Assert.True((bool)begin.Invoke(handler, new object[] { id, operation, DisplayOperationType.StartShortcut })!);
+        Task shutdown = handler.StopAndRestoreAsync();
+        Assert.True(operation.IsCancellationRequested);
+        Assert.False(shutdown.IsCompleted);
+        using CancellationTokenSource overlapping = new();
+        Assert.False((bool)begin.Invoke(handler, new object[] { Guid.NewGuid(), overlapping, DisplayOperationType.StartShortcut })!);
+        await (Task)typeof(ProfileCommandHandler).GetMethod("CompleteOperationAsync", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(handler, new object[] { id, operation })!;
+        await shutdown.WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.Equal(AgentOperationState.Idle, registration.OperationState);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ThrowingDisplayRestorationStillAttemptsAudioAndRetainsRecovery(bool startupRecovery)
+    {
+        ShortcutStore store = new(_root);
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = 0,
+            Json = "{\"Shortcuts\":[{\"UUID\":\"test\",\"Category\":2,\"ProfileUUID\":\"target-display\",\"AudioProfileUUID\":\"target-audio\"}]}" });
+        using FakeProfileOperations profiles = new() { ThrowOnDisplayRestore = true };
+        ShortcutRecoveryStore recovery = new(_root);
+        ShortcutRunner runner = new(store, new AutomaticGameDetectionRegistry(), profiles, recovery);
+        if (startupRecovery)
+        {
+            recovery.Save(new ShortcutRecoveryRecord { RequiresDisplayRestore = true, RequiresAudioRestore = true,
+                DisplayProfileId = "original-display", AudioProfileId = "original-audio", DisplayProfileSnapshotJson = "{}", AudioProfileSnapshotJson = "{}" });
+            Assert.False(await runner.RestorePendingRecoveryAsync(0, CancellationToken.None));
+        }
+        else
+        {
+            ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("test", 0, CancellationToken.None);
+            Assert.True(result.RequiresRecovery);
+            Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
+        }
+        Assert.Equal(2, profiles.RestoreCalls);
+        Assert.True(recovery.HasPendingRecovery());
+    }
+
+    [Fact]
+    public async Task RestorationContinuesWhenProgressPublicationFails()
+    {
+        ShortcutStore store = new(_root);
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = 0,
+            Json = "{\"Shortcuts\":[{\"UUID\":\"test\",\"Category\":2,\"ProfileUUID\":\"target-display\",\"AudioProfileUUID\":\"target-audio\"}]}" });
+        using FakeProfileOperations profiles = new();
+        ShortcutRecoveryStore recovery = new(_root);
+        ShortcutRunner runner = new(store, new AutomaticGameDetectionRegistry(), profiles, recovery);
+        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("test", 0, CancellationToken.None, (update, _) =>
+            update.Phase is OperationPhase.RestoringDisplayProfile or OperationPhase.RestoringAudioProfile
+                ? Task.FromException(new IOException("Progress unavailable.")) : Task.CompletedTask);
+        Assert.Equal(2, profiles.RestoreCalls);
+        Assert.Equal(ShortcutRunOutcome.Completed, result.Outcome);
+        Assert.False(recovery.HasPendingRecovery());
+    }
+
+    [Fact]
+    public async Task LockedRecoveryFileReportsIncompleteRecoveryWithoutThrowing()
+    {
+        using FakeProfileOperations profiles = new();
+        ShortcutRecoveryStore recovery = new(_root);
+        recovery.Save(new ShortcutRecoveryRecord { RequiresDisplayRestore = true, RequiresAudioRestore = true,
+            DisplayProfileId = "original-display", AudioProfileId = "original-audio", DisplayProfileSnapshotJson = "{}", AudioProfileSnapshotJson = "{}" });
+        using FileStream locked = new(Path.Combine(_root, "Settings", "ShortcutRecovery.json"), FileMode.Open, FileAccess.Read, FileShare.Read);
+        ShortcutRunner runner = new(new ShortcutStore(_root), new AutomaticGameDetectionRegistry(), profiles, recovery);
+        Assert.False(await runner.RestorePendingRecoveryAsync(0, CancellationToken.None));
+        Assert.Equal(2, profiles.RestoreCalls);
+        Assert.True(recovery.HasPendingRecovery());
+    }
+
+    [Fact]
+    public async Task ShutdownDrainsAnAcceptedDetachedAudioOperation()
+    {
+        AgentRegistration registration = new() { UserSid = "test-user", SessionId = 1, IsReady = true };
+        using FakeProfileOperations profiles = new() { BlockAudio = true };
+        FakeServiceClient client = new();
+        ProfileCommandHandler handler = new(registration, client, new UnlockedSession(), _root, profiles);
+        AgentAudioProfile audio = new() { Name = "Audio target" };
+        AgentAudioRepository.AudioProfilesLoaded = true;
+        AgentAudioRepository.AllAudioProfiles.Add(audio);
+        Task? shutdown = null;
+        try
+        {
+            Assert.True((await handler.HandleAsync(new ControlEnvelope { MessageType = ControlMessageType.ApplyAudioProfile,
+                Payload = JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = audio.UUID }) }, CancellationToken.None)).IsSuccessful);
+            await profiles.AudioStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            shutdown = handler.StopAndRestoreAsync();
+            Assert.False(shutdown.IsCompleted);
+        }
+        finally
+        {
+            profiles.ReleaseAudio.Set();
+            await (shutdown ?? handler.StopAndRestoreAsync()).WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        Assert.True(client.IdleReported.Task.IsCompletedSuccessfully);
+        Assert.Equal(AgentOperationState.Idle, registration.OperationState);
+        Assert.Single(new OperationStatusOutbox(_root).GetPending(), update => update.IsTerminal);
+    }
+
+    [Fact]
+    public async Task CancelledRunningReportDoesNotStrandManualShortcutDuringShutdown()
+    {
+        using FakeProfileOperations profiles = new();
+        AgentRegistration registration = new() { UserSid = "test-user", SessionId = 1, IsReady = true };
+        FakeServiceClient client = new() { CancelRunningReport = true };
+        ProfileCommandHandler handler = new(registration, client, new UnlockedSession(), _root, profiles);
+        using CancellationTokenSource cancellation = new();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => handler.HandleAsync(new ControlEnvelope
+        {
+            MessageType = ControlMessageType.StartShortcut,
+            Payload = JsonSerializer.Serialize(new StartShortcutRequest { ShortcutId = "test" })
+        }, cancellation.Token));
+        await handler.StopAndRestoreAsync().WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.Equal(AgentOperationState.Idle, registration.OperationState);
+        OperationStatusUpdate terminal = Assert.Single(new OperationStatusOutbox(_root).GetPending(), update => update.IsTerminal);
+        Assert.Equal(OperationPhase.Cancelled, terminal.Phase);
+    }
+
     [Fact]
     public void FailedLaunchDoesNotPutArgumentsInSupportLogs()
     {
@@ -536,6 +663,7 @@ public sealed class AgentReliabilityTests : IDisposable
 
     private sealed class FakeProfileOperations : UserProfileOperationService, IDisposable
     {
+        public bool ThrowOnDisplayRestore { get; init; }
         public bool DisplayRestores { get; init; } = true;
         public bool AudioRestores { get; init; } = true;
         public bool BlockAudio { get; init; }
@@ -549,6 +677,7 @@ public sealed class AgentReliabilityTests : IDisposable
         internal override Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string profileId, CancellationToken cancellationToken, string? snapshotJson)
         {
             if (snapshotJson != null) RestoreCalls++;
+            if (snapshotJson != null && ThrowOnDisplayRestore) throw new InvalidOperationException("Simulated display restoration failure.");
             return Task.FromResult(new ApplyDisplayProfileOperationResult(snapshotJson == null || DisplayRestores, false));
         }
         internal override ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, string? snapshotJson)
@@ -563,9 +692,11 @@ public sealed class AgentReliabilityTests : IDisposable
 
     private sealed class FakeServiceClient : ControlServiceClient
     {
+        public bool CancelRunningReport { get; init; }
         public TaskCompletionSource<bool> IdleReported { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         public override Task<ControlResponse> ReportAgentOperationStateAsync(AgentRegistration registration, AgentOperationState operationState, CancellationToken cancellationToken)
         {
+            if (CancelRunningReport && operationState == AgentOperationState.Running) cancellationToken.ThrowIfCancellationRequested();
             if (operationState == AgentOperationState.Idle) IdleReported.TrySetResult(true);
             return Task.FromResult(new ControlResponse { IsSuccessful = true });
         }

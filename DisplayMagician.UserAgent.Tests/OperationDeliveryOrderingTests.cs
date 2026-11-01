@@ -103,7 +103,7 @@ public sealed class OperationDeliveryOrderingTests : IDisposable
         using CancellationTokenSource previous = new();
         Guid previousId = Guid.NewGuid();
         Assert.True((bool)Call(handler, "TryBeginOperation", previousId, previous, DisplayOperationType.StartShortcut)!);
-        Call(handler, "CompleteOperation", previousId, previous);
+        await (Task)Call(handler, "CompleteOperationAsync", previousId, previous)!;
         using CancellationTokenSource current = new();
         Guid currentId = Guid.NewGuid();
         Assert.True((bool)Call(handler, "TryBeginOperation", currentId, current, DisplayOperationType.StartShortcut)!);
@@ -115,7 +115,7 @@ public sealed class OperationDeliveryOrderingTests : IDisposable
             Payload = System.Text.Json.JsonSerializer.Serialize(new CancelOperationRequest { OperationId = currentId }) }, CancellationToken.None);
         Assert.True(matching.IsSuccessful);
         Assert.True(current.IsCancellationRequested);
-        Call(handler, "CompleteOperation", currentId, current);
+        await (Task)Call(handler, "CompleteOperationAsync", currentId, current)!;
     }
 
     [Theory]

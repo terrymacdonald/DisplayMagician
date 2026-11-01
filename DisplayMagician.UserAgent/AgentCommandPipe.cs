@@ -32,6 +32,7 @@ public sealed class AgentCommandServer
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private const int MaximumConnectedCommandClients = 4;
     private readonly string _pipeName;
+    private readonly Func<NamedPipeServerStream> _createPipe;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedCommandClients, MaximumConnectedCommandClients);
     private readonly Dictionary<Guid, (ControlMessageType MessageType, string Payload, ControlResponse Response, DateTime CompletedUtc)> _successfulResponses = new Dictionary<Guid, (ControlMessageType, string, ControlResponse, DateTime)>();
     private readonly Dictionary<Guid, (ControlMessageType MessageType, string Payload, TaskCompletionSource<ControlResponse> Completion)> _pendingResponses = new Dictionary<Guid, (ControlMessageType, string, TaskCompletionSource<ControlResponse>)>();
@@ -39,6 +40,12 @@ public sealed class AgentCommandServer
     public AgentCommandServer(string pipeName)
     {
         _pipeName = string.IsNullOrWhiteSpace(pipeName) ? throw new ArgumentException("An Agent command pipe name is required.", nameof(pipeName)) : pipeName;
+        _createPipe = CreatePipe;
+    }
+
+    internal AgentCommandServer(string pipeName, Func<NamedPipeServerStream> createPipe) : this(pipeName)
+    {
+        _createPipe = createPipe;
     }
 
     public async Task RunAsync(Func<ControlEnvelope, CancellationToken, Task<ControlResponse>> commandHandler, Func<bool> shouldStop, CancellationToken cancellationToken)
@@ -47,40 +54,55 @@ public sealed class AgentCommandServer
         ArgumentNullException.ThrowIfNull(shouldStop);
         TaskCompletionSource<bool> stopRequested = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        while (!cancellationToken.IsCancellationRequested)
+        using CancellationTokenSource lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        List<Task> clients = new List<Task>();
+        try
         {
-            NamedPipeServerStream? pipe = null;
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                pipe = CreatePipe();
-                Task connectionTask = pipe.WaitForConnectionAsync(cancellationToken);
-                if (await Task.WhenAny(connectionTask, stopRequested.Task).ConfigureAwait(false) == stopRequested.Task)
+                NamedPipeServerStream? pipe = null;
+                try
                 {
-                    pipe.Dispose();
+                    pipe = _createPipe();
+                    Task connectionTask = pipe.WaitForConnectionAsync(lifetime.Token);
+                    if (await Task.WhenAny(connectionTask, stopRequested.Task).ConfigureAwait(false) == stopRequested.Task)
+                    {
+                        lifetime.Cancel();
+                        try { await connectionTask.ConfigureAwait(false); }
+                        catch (OperationCanceledException) { } // The pending listener is being stopped.
+                        pipe.Dispose();
+                        return;
+                    }
+
+                    await connectionTask.ConfigureAwait(false);
+                    if (!await _connectedClientSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                    {
+                        Logger.Warn("AgentCommandServer/RunAsync: Rejected a Control Service command because the connected-command limit of {0} was reached.", MaximumConnectedCommandClients);
+                        pipe.Dispose();
+                        continue;
+                    }
+
+                    clients.RemoveAll(client => client.IsCompletedSuccessfully);
+                    clients.Add(HandleClientWithSlotAsync(pipe, commandHandler, shouldStop, stopRequested, lifetime.Token));
+                    pipe = null;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    pipe?.Dispose();
                     return;
                 }
-
-                await connectionTask.ConfigureAwait(false);
-                if (!await _connectedClientSlots.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+                catch (Exception ex)
                 {
-                    Logger.Warn("AgentCommandServer/RunAsync: Rejected a Control Service command because the connected-command limit of {0} was reached.", MaximumConnectedCommandClients);
-                    pipe.Dispose();
-                    continue;
+                    pipe?.Dispose();
+                    Logger.Error(ex, "AgentCommandServer/RunAsync: Unable to accept a Control Service command.");
+                    throw;
                 }
-
-                _ = HandleClientWithSlotAsync(pipe, commandHandler, shouldStop, stopRequested, cancellationToken);
-                pipe = null;
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                pipe?.Dispose();
-                return;
-            }
-            catch (Exception ex)
-            {
-                pipe?.Dispose();
-                Logger.Error(ex, "AgentCommandServer/RunAsync: Unable to accept a Control Service command.");
-            }
+        }
+        finally
+        {
+            lifetime.Cancel();
+            await Task.WhenAll(clients).ConfigureAwait(false);
         }
     }
 
@@ -105,11 +127,10 @@ public sealed class AgentCommandServer
                     RequestId = request.RequestId,
                     Payload = JsonSerializer.Serialize(response)
                 }, cancellationToken).ConfigureAwait(false);
-
-                if (shouldStop())
-                {
-                    stopRequested.TrySetResult(true);
-                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // The listener is draining accepted commands during shutdown.
             }
             catch (EndOfStreamException ex)
             {
@@ -134,6 +155,8 @@ public sealed class AgentCommandServer
             finally
             {
                 _connectedClientSlots.Release();
+                // A committed stop must still take effect if its reply pipe disconnects.
+                if (shouldStop()) stopRequested.TrySetResult(true);
             }
         }
     }
