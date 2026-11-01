@@ -50,7 +50,7 @@ public sealed class ProgramDelayTests
             File.WriteAllText(path, original, Encoding.Unicode);
             ShortcutStore store = new(root);
             using JsonDocument saved = JsonDocument.Parse(store.GetSnapshot().Json);
-            Assert.Equal("9", saved.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal("10", saved.RootElement.GetProperty("ShortcutFileVersion").GetString());
             Assert.Equal("keep", saved.RootElement.GetProperty("CustomSetting").GetString());
             ShortcutDefinition definition = Assert.Single(store.GetShortcutDefinitions());
             Assert.False(definition.MonitorLaunchedExecutable);

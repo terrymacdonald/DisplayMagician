@@ -11,6 +11,7 @@ namespace DisplayMagician.UIForms
     {
         private StopProgram myStopProgram = new StopProgram();
         private bool _updatingWaitAfterStop;
+        private bool _updatingStopAllInstances;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ProgramNumber
@@ -70,6 +71,10 @@ namespace DisplayMagician.UIForms
 
         public void UpdateUI()
         {
+            _updatingStopAllInstances = true;
+            try { chk_stop_all_instances.Checked = myStopProgram.StopAllInstances; }
+            finally { _updatingStopAllInstances = false; }
+            chk_stop_all_instances.Enabled = !myStopProgram.Disabled;
             lbl_priority.Text = myStopProgram.Priority.ToString();
             txt_stop_program.Text = myStopProgram.Executable;
             chk_disabled.Checked = myStopProgram.Disabled;
@@ -99,6 +104,13 @@ namespace DisplayMagician.UIForms
             if (_updatingWaitAfterStop) return;
             myStopProgram.WaitAfterStopSecs = (int)nud_wait_after_stop.Value;
             error_provider.SetError(nud_wait_after_stop, "");
+            if (FindForm() is ShortcutForm shortcutForm) shortcutForm.MarkAsUnsaved();
+        }
+
+        private void chk_stop_all_instances_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_updatingStopAllInstances) return;
+            myStopProgram.StopAllInstances = chk_stop_all_instances.Checked;
             if (FindForm() is ShortcutForm shortcutForm) shortcutForm.MarkAsUnsaved();
         }
 
@@ -140,6 +152,7 @@ namespace DisplayMagician.UIForms
         {
             myStopProgram.Disabled = chk_disabled.Checked;
             bool enabled = !chk_disabled.Checked;
+            chk_stop_all_instances.Enabled = enabled;
             nud_wait_after_stop.Enabled = enabled;
             lbl_wait_after_stop.Enabled = enabled;
             txt_stop_program.Enabled = enabled;

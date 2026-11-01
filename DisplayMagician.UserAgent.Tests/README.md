@@ -6,6 +6,8 @@ Agent reliability regressions cover stale cached profile identities, failed rest
 
 Connection/lifecycle regressions use isolated named pipes and substituted execution services to check registration ordering, cancelled exchanges, invalid replies, command-handler draining, lost stop replies, listener/migration failure, detached-operation cleanup and restoration exceptions. Production LocalSystem pipe permissions are unchanged; tests do not contact the installed service or change hardware settings.
 
+Stop Program regressions cover newest-only versus all-instance selection, successive entries, mixed stop results, retained restarts, reverse cleanup after exceptions, shell dispatch without a process handle, version-9-to-10 migration, malformed flag rejection, desktop copies/portable conversion and the Designer-backed checkbox. Process tests launch only temporary copies of a Windows utility and clean up those test processes; failure tests substitute bounded callbacks rather than changing installed applications.
+
 ## Run
 
 Additional regression cases cover locked message-index writes, omission of launch arguments from logs, and the desktop Messages form's disconnected-service, timeout, and rejected-request paths. Form tests use an injected client and do not connect to installed services or initialize WebView2.

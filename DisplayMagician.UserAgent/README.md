@@ -49,6 +49,10 @@ Direct audio, display, and shortcut execution share Agent admission checks. Acti
 
 MessageSyncService owns message-index writes. Sync downloads are serialized, while final metadata commits merge the latest read/unread states under the same lock used for read-state edits. Downloads do not block a user from marking messages read or unread. Existing persisted schemas and transport contracts are unchanged.
 
+Shortcut schema 10 adds the per-entry `StopAllInstances` boolean, defaulting to false for new and migrated entries. Stop Programs select the newest matching PID/start-time identity by full executable path unless the user opts into all instances. Repeated entries select the next newest remaining instance. Successful stops immediately retain one restart action per configured entry, even if another selected instance fails; a surviving instance does not suppress that restart. Cleanup runs in reverse action order, logs failures, releases process/monitor resources and continues with remaining entries. Expected helper preparation failures use the existing Continue/StopAndRestore decision flow.
+
+Shell dispatch is distinguished from receiving a process handle: successfully handing work to an existing shell application does not cause an invalid PID read. Start-and-forget reports dispatch success; monitored launches still require their existing process-selection checks. Existing provider log argument contents remain unchanged by user choice.
+
 ## Development
 
 Message read-state changes and synchronization report index-write failures instead of reporting an unsaved change as successful. Process launch logs include the executable and process ID, with raw command arguments omitted from support logs.

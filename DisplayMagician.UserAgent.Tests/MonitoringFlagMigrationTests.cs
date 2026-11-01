@@ -60,7 +60,7 @@ public sealed class MonitoringFlagMigrationTests
             ShortcutStore store = new ShortcutStore(root);
             using JsonDocument document = JsonDocument.Parse(store.GetSnapshot().Json);
             JsonElement saved = document.RootElement.GetProperty("Shortcuts")[0];
-            Assert.Equal("9", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
+            Assert.Equal("10", document.RootElement.GetProperty("ShortcutFileVersion").GetString());
             Assert.Equal(selection, saved.GetProperty("MonitorLaunchedExecutable").GetBoolean());
             Assert.False(saved.TryGetProperty("ProcessNameToMonitorUsesExecutable", out _));
             Assert.False(saved.TryGetProperty("MonitorExecutablePath", out _));

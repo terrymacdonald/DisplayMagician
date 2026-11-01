@@ -12,6 +12,8 @@ Shortcut window placements are optional portable definitions. They store stable 
 
 Shortcut schema 9 adds `WaitAfterStartSecs` to Start/After Programs and `WaitAfterStopSecs` to Stop Programs, defaulting missing values to zero. Start/Stop delays must be integers from 0 to 999 seconds; repository validation rejects invalid values without changing the stored file. After Program delays are preserved for future use but are not executed.
 
+Shortcut schema 10 adds optional `StopAllInstances` to Stop Programs. Missing values mean false (newest matching instance only); true explicitly requests every matching instance. Repository validation requires a JSON boolean when present. UserAgent owns the backed-up migration and runtime selection/restart behaviour; these definitions remain independent of process and UI APIs.
+
 ## Build
 
 ```powershell

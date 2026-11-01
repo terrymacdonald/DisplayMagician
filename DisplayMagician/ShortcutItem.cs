@@ -57,6 +57,7 @@ namespace DisplayMagician
 
     public struct StopProgram
     {
+        public bool StopAllInstances;
         public int Priority;
         public bool Disabled;
         public string Executable;
@@ -953,6 +954,7 @@ namespace DisplayMagician
                 }).ToArray() ?? Array.Empty<ShortcutAfterProgramDefinition>(),
                 StopPrograms = StopPrograms?.Select(program => new ShortcutStopProgramDefinition
                 {
+                    StopAllInstances = program.StopAllInstances,
                     Priority = program.Priority,
                     Disabled = program.Disabled,
                     ExecutablePath = program.Executable,
@@ -1378,6 +1380,7 @@ namespace DisplayMagician
                 copiedEntry.RestartProcessPriority = sp.RestartProcessPriority;
                 copiedEntry.RunAsAdministrator = sp.RunAsAdministrator;
                 copiedEntry.WaitAfterStopSecs = sp.WaitAfterStopSecs;
+                copiedEntry.StopAllInstances = sp.StopAllInstances;
                 shortcut.StopPrograms.Add(copiedEntry);
             }
 

@@ -12,13 +12,15 @@ Executable and unpackaged application shortcuts wait for whichever executable th
 
 The desktop shortcut model and saved JSON use `MonitorLaunchedExecutable`. The existing legacy configuration migration converts the older flag name, and UserAgent's shortcut migration completes normalization.
 
-Start/Stop Program controls offer individual Wait after Start/Stop values from 0 to 999 seconds. New and migrated shortcuts default to zero. Invalid saved delays remain visible as validation errors rather than being silently overwritten. Editing a delay marks the shortcut unsaved; copies and portable definitions retain all delay fields. Shortcut JSON is version 9. UserAgent owns migration, wait progress, cancellation, and restoration; After Program delays remain future-use data.
+Start/Stop Program controls offer individual Wait after Start/Stop values from 0 to 999 seconds. New and migrated shortcuts default to zero. Invalid saved delays remain visible as validation errors rather than being silently overwritten. Editing a delay marks the shortcut unsaved; copies and portable definitions retain all delay fields. Shortcut JSON is version 10. UserAgent owns migration, wait progress, cancellation, and restoration; After Program delays remain future-use data.
 
 Shortcut editors work on a separate draft and close successfully only after the service accepts the save. A failed save keeps the editor open with its proposed changes and restores the library cache to its authoritative snapshot. Revision conflicts refresh the library and tell the user to retry. Creation, copying, and deletion propagate commit failures, and local icon/hotkey cleanup occurs only after a successful commit. Retrying an edit preserves window snapshots captured or cleared through their separate actions.
 
 The pairing and server-settings forms show the local/routed-network workflow for the first REST release. Their Remote Network controls remain in the Designer and code but are hidden until user-enabled Internet access is supported.
 Server Settings can also allow paired devices on Windows Public networks after administrator approval and a confirmation. This changes the Gateway firewall rule for Public networks; it does not configure router port forwarding.
 Server Settings also has an administrator-confirmed TLS key replacement action for identity recovery. The Gateway restarts and all paired devices must pair again after its TLS pin changes.
+
+Stop Program entries stop the newest running instance matching the configured executable path by default. The Designer-backed **Stop all instances** checkbox opts an individual entry into stopping every matching instance. Repeated entries select the next newest remaining instance. Restart afterwards starts one replacement per entry that successfully stopped at least one instance, including partial stop-all failures and when another instance is still running. The choice is retained through editing, copying and saving; schema 10 migration defaults older entries to newest-only and backs up the original file.
 
 ## Development
 

@@ -24,6 +24,7 @@ namespace DisplayMagician.UIForms
             txt_stop_program = new System.Windows.Forms.TextBox();
             btn_stop_program = new System.Windows.Forms.Button();
             chk_disabled = new System.Windows.Forms.CheckBox();
+            chk_stop_all_instances = new System.Windows.Forms.CheckBox();
             chk_restart_afterwards = new System.Windows.Forms.CheckBox();
             lbl_restart_priority = new System.Windows.Forms.Label();
             cbx_restart_priority = new System.Windows.Forms.ComboBox();
@@ -137,6 +138,19 @@ namespace DisplayMagician.UIForms
             chk_restart_afterwards.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             chk_restart_afterwards.UseVisualStyleBackColor = true;
             chk_restart_afterwards.CheckedChanged += chk_restart_afterwards_CheckedChanged;
+            //
+            // chk_stop_all_instances
+            //
+            chk_stop_all_instances.AutoSize = true;
+            chk_stop_all_instances.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            chk_stop_all_instances.ForeColor = System.Drawing.Color.White;
+            chk_stop_all_instances.Location = new System.Drawing.Point(161, 116);
+            chk_stop_all_instances.Name = "chk_stop_all_instances";
+            chk_stop_all_instances.Size = new System.Drawing.Size(160, 24);
+            chk_stop_all_instances.TabIndex = 6;
+            chk_stop_all_instances.Text = "Stop all instances";
+            chk_stop_all_instances.UseVisualStyleBackColor = true;
+            chk_stop_all_instances.CheckedChanged += chk_stop_all_instances_CheckedChanged;
             // 
             // lbl_restart_priority
             // 
@@ -230,6 +244,7 @@ namespace DisplayMagician.UIForms
             Controls.Add(cbx_restart_priority);
             Controls.Add(lbl_restart_priority);
             Controls.Add(chk_restart_afterwards);
+            Controls.Add(chk_stop_all_instances);
             Controls.Add(chk_disabled);
             Controls.Add(btn_stop_program);
             Controls.Add(txt_stop_program);
@@ -259,6 +274,7 @@ namespace DisplayMagician.UIForms
         private System.Windows.Forms.TextBox txt_stop_program;
         private System.Windows.Forms.Button btn_stop_program;
         private System.Windows.Forms.CheckBox chk_disabled;
+        private System.Windows.Forms.CheckBox chk_stop_all_instances;
         private System.Windows.Forms.CheckBox chk_restart_afterwards;
         private System.Windows.Forms.Label lbl_restart_priority;
         private System.Windows.Forms.ComboBox cbx_restart_priority;

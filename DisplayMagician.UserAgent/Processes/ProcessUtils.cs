@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -51,9 +51,15 @@ namespace DisplayMagician.Processes
 
         public static List<Process> StartProcess(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
         {
+            return StartProcessCore(executable, arguments, processPriority, startTimeout, runAsAdministrator, out _);
+        }
+
+        internal static List<Process> StartProcessCore(string executable, string arguments, ProcessPriority processPriority, int startTimeout,
+            bool runAsAdministrator, out bool dispatched, Func<Process, bool>? startProcess = null)
+        {
             List<Process> returnedProcesses = new List<Process>();
             ProcessPriorityClass wantedPriority = TranslatePriorityToClass(processPriority);
-            Process? processCreated = TryExecute(executable, arguments, runAsAdministrator, wantedPriority);
+            Process? processCreated = TryExecute(executable, arguments, out dispatched, runAsAdministrator, wantedPriority, startProcess);
 
             if (processCreated != null)
             {
@@ -64,25 +70,25 @@ namespace DisplayMagician.Processes
                     return returnedProcesses;
                 }
 
-                logger.Info($"ProcessUtils/StartProcess: {executable} has successfully been started by Process.Start (Process ID: {processCreated.Id})");
+                logger.Info($"ProcessUtils/StartProcessCore: {executable} has successfully been started by Process.Start (Process ID: {processCreated.Id})");
                 try
                 {
                     if (!processCreated.HasExited && processCreated.PriorityClass != wantedPriority)
                     {
                         processCreated.PriorityClass = wantedPriority;
-                        logger.Trace($"ProcessUtils/StartProcess: Successfully set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
+                        logger.Trace($"ProcessUtils/StartProcessCore: Successfully set the Priority Class to {wantedPriority.ToString("G")} for {executable}.");
                     }
                     returnedProcesses.Add(processCreated);
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn(ex, $"ProcessUtils/StartProcess: Could not set the priority for {executable}; retaining its process handle for the caller.");
+                    logger.Warn(ex, $"ProcessUtils/StartProcessCore: Could not set the priority for {executable}; retaining its process handle for the caller.");
                     returnedProcesses.Add(processCreated);
                 }
             }
-            else
+            else if (!dispatched)
             {
-                logger.Warn($"ProcessUtils/StartProcess: DisplayMagician was unable to start {executable}.");
+                logger.Warn($"ProcessUtils/StartProcessCore: DisplayMagician was unable to start {executable}.");
             }
 
             return returnedProcesses;
@@ -90,10 +96,10 @@ namespace DisplayMagician.Processes
 
         public static bool StartProcessAndForget(string executable, string arguments, ProcessPriority processPriority, int startTimeout = 1, bool runAsAdministrator = false)
         {
-            List<Process> startedProcesses = StartProcess(executable, arguments, processPriority, startTimeout, runAsAdministrator);
+            List<Process> startedProcesses = StartProcessCore(executable, arguments, processPriority, startTimeout, runAsAdministrator, out bool dispatched);
             try
             {
-                return startedProcesses.Count > 0;
+                return dispatched;
             }
             finally
             {
@@ -336,8 +342,9 @@ namespace DisplayMagician.Processes
         /// <param name="runAsAdministrator">Launch with elevated rights.</param>
         /// <param name="priorityClass">Process priority class to request.</param>
         /// <returns>The started <see cref="Process"/>, or <c>null</c> on failure.</returns>
-        private static Process? TryExecute(string executable, string arguments, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal)
+        private static Process? TryExecute(string executable, string arguments, out bool dispatched, bool runAsAdministrator = false, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, Func<Process, bool>? startProcess = null)
         {
+            dispatched = false;
             ProcessStartInfo psi;
             if (File.Exists(executable) && IsExecutableFileType(executable))
             {
@@ -379,13 +386,17 @@ namespace DisplayMagician.Processes
 
             try
             {
-                if (processCreated.Start())
+                bool hasProcess = startProcess != null ? startProcess(processCreated) : processCreated.Start();
+                dispatched = true;
+                if (hasProcess)
                 {
                     logger.Trace($"ProcessUtils/TryExecute: {executable} was started successfully.");
                 }
                 else
                 {
-                    logger.Trace($"ProcessUtils/TryExecute: {executable} was reused successfully.");
+                    logger.Trace($"ProcessUtils/TryExecute: {executable} was reused successfully without a new process handle.");
+                    processCreated.Dispose();
+                    return null;
                 }
                 return processCreated;
             }
@@ -421,8 +432,8 @@ namespace DisplayMagician.Processes
 
                     logger.Error(ex, $"ProcessUtils/TryExecute: Exception while trying to start {executable}. The process requires elevation. Attempting again with admin rights.");
                     processCreated.Dispose();
-                    processCreated = TryExecute(executable, arguments, true, priorityClass);
-                    if (processCreated != null)
+                    processCreated = TryExecute(executable, arguments, out dispatched, true, priorityClass, startProcess);
+                    if (processCreated != null || dispatched)
                     {
                         logger.Trace($"ProcessUtils/TryExecute: Running the {executable} a second time with administrative rights worked!");
                         return processCreated;

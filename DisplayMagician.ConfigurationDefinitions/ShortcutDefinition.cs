@@ -105,6 +105,7 @@ public sealed class ShortcutAfterProgramDefinition
 
 public sealed class ShortcutStopProgramDefinition
 {
+    public bool StopAllInstances { get; init; }
     public int Priority { get; init; }
     public bool Disabled { get; init; }
     public string ExecutablePath { get; init; } = string.Empty;

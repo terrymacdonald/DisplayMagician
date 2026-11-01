@@ -39,6 +39,9 @@ public static class RepositoryDocumentValidation
                     foreach (JsonElement program in programs.EnumerateArray())
                     {
                         if (program.ValueKind != JsonValueKind.Object) throw new JsonException($"{programCollectionName} entries must be objects.");
+                        if (programCollectionName == "StopPrograms" && program.TryGetProperty("StopAllInstances", out JsonElement allInstances) &&
+                            allInstances.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                            throw new JsonException("StopAllInstances must be a boolean.");
                         if (!program.TryGetProperty(delayName, out JsonElement delay)) continue;
                         if (delay.ValueKind != JsonValueKind.Number || !delay.TryGetInt32(out int seconds) || seconds < 0 || seconds > 999)
                             throw new JsonException($"{delayName} must be an integer between 0 and 999 seconds.");

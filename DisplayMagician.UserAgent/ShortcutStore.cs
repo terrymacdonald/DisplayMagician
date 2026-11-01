@@ -169,7 +169,7 @@ public sealed class ShortcutStore
             int previousCount = (shortcut["WindowPlacements"] as JsonArray)?.Count ?? 0;
             shortcut["WindowPlacements"] = JsonSerializer.SerializeToNode(placements);
             shortcut["WindowPlacementTimeoutSeconds"] ??= 20;
-            root["ShortcutFileVersion"] = "8";
+            root["ShortcutFileVersion"] = "10";
             RepositoryCommitResult result = Commit(new RepositoryCommitRequest
             {
                 Repository = RepositoryKind.Shortcuts,
@@ -192,7 +192,7 @@ public sealed class ShortcutStore
                 : parsed as JsonObject ?? throw new JsonException("The shortcut file must contain a shortcut collection.");
             string? storedVersion = root["ShortcutFileVersion"]?.GetValue<string>();
             bool knownVersion = int.TryParse(storedVersion, out int versionNumber);
-            if (knownVersion && versionNumber > 9) return;
+            if (knownVersion && versionNumber > 10) return;
             if (!string.IsNullOrWhiteSpace(storedVersion) && (!knownVersion || versionNumber < 1))
                 throw new JsonException($"Unsupported shortcut file version '{storedVersion}'.");
             if (root["Shortcuts"] is JsonObject wrappedShortcuts && wrappedShortcuts["$values"] is JsonArray values)
@@ -200,7 +200,7 @@ public sealed class ShortcutStore
             JsonArray shortcuts = root["Shortcuts"] as JsonArray ?? throw new JsonException("The shortcut file must contain a Shortcuts array.");
             bool hasLegacyMonitorName = shortcuts.OfType<JsonObject>().Any(shortcut =>
                 shortcut.ContainsKey("ProcessNameToMonitorUsesExecutable") || shortcut.ContainsKey("MonitorExecutablePath"));
-            if (knownVersion && versionNumber == 9 && !hasLegacyMonitorName) return;
+            if (knownVersion && versionNumber == 10 && !hasLegacyMonitorName) return;
             foreach (JsonNode? shortcutNode in shortcuts)
             {
                 JsonObject shortcut = shortcutNode as JsonObject ?? throw new JsonException("The shortcut file contains an invalid shortcut entry.");
@@ -216,6 +216,7 @@ public sealed class ShortcutStore
                     {
                         JsonObject program = programNode as JsonObject ?? throw new JsonException($"The shortcut contains an invalid {collectionName} entry.");
                         if (!program.ContainsKey(delayName)) program[delayName] = 0;
+                        if (collectionName == "StopPrograms" && !program.ContainsKey("StopAllInstances")) program["StopAllInstances"] = false;
                     }
                 }
                 shortcut["MonitorLaunchedExecutable"] ??= shortcut["ProcessNameToMonitorUsesExecutable"]?.DeepClone()
@@ -232,7 +233,7 @@ public sealed class ShortcutStore
             }
             string previousVersion = int.TryParse(storedVersion, out versionNumber) && versionNumber >= 0
                 ? versionNumber.ToString() : "unknown";
-            root["ShortcutFileVersion"] = "9";
+            root["ShortcutFileVersion"] = "10";
             root["LastUpdated"] = DateTime.UtcNow;
             string backupPath = $"{_shortcutFilePath}.v{previousVersion}.{DateTime.UtcNow:yyyyMMddHHmmss}.{Guid.NewGuid():N}.bak";
             File.Copy(_shortcutFilePath, backupPath, overwrite: false);
@@ -416,6 +417,9 @@ public sealed class ShortcutStore
                 Disabled = GetBoolean(program, "Disabled"),
                 ExecutablePath = GetString(program, "Executable"),
                 RestartAfterwards = GetBoolean(program, "RestartAfterwards"),
+                StopAllInstances = !program.TryGetProperty("StopAllInstances", out JsonElement allInstances) ? false
+                    : allInstances.ValueKind is JsonValueKind.True or JsonValueKind.False ? allInstances.GetBoolean()
+                    : throw new JsonException("StopAllInstances must be a boolean."),
                 RestartProcessPriority = GetEnum(program, "RestartProcessPriority", ShortcutDefinitionProcessPriority.Normal),
                 RunAsAdministrator = GetBoolean(program, "RunAsAdministrator"),
                 WaitAfterStopSecs = GetProgramDelay(program, "WaitAfterStopSecs")
