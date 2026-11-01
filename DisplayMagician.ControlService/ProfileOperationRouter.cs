@@ -111,7 +111,7 @@ public sealed class ProfileOperationRouter
                     return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The User Agent did not stop in time and could not be safely replaced." };
                 }
 
-                _coordinator.UnregisterAgent(userSid, sessionId, existingAgent.ProcessId);
+                _coordinator.UnregisterStoppedAgent(userSid, sessionId, existingAgent.ProcessId);
             }
         }
 
@@ -444,10 +444,7 @@ public sealed class ProfileOperationRouter
                 return agent;
             }
 
-            if (_coordinator.GetAgentRegistration(userSid, sessionId) == null)
-            {
-                return null;
-            }
+            // A successful broker launch can precede the new process's first registration. Keep the existing bounded readiness wait.
         }
 
         return null;

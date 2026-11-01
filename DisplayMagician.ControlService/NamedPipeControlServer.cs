@@ -233,7 +233,11 @@ public sealed class NamedPipeControlServer
             {
                 if (registeredIdentity != null)
                 {
-                    _coordinator.UnregisterAgent(registeredIdentity.UserSid, registeredIdentity.SessionId, registeredIdentity.ProcessId);
+                    try { _coordinator.UnregisterAgent(registeredIdentity.UserSid, registeredIdentity.SessionId, registeredIdentity.ProcessId); }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        _logger.Warn(ex, "NamedPipeControlServer/HandleClientAsync: Could not persist lease cleanup for disconnected Agent SID {0}, session {1}, process {2}; observed in-memory recovery state is retained.", registeredIdentity.UserSid, registeredIdentity.SessionId, registeredIdentity.ProcessId);
+                    }
                     _logger.Info("NamedPipeControlServer/HandleClientAsync: User Agent disconnected for SID {0}, session {1}, process {2}.", registeredIdentity.UserSid, registeredIdentity.SessionId, registeredIdentity.ProcessId);
                 }
             }
@@ -256,6 +260,13 @@ public sealed class NamedPipeControlServer
 
     private async Task HandleAgentMessageAsync(NamedPipeServerStream pipe, PipeClientIdentity identity, ControlEnvelope request, CancellationToken cancellationToken)
     {
+        AgentRegistration? owner = _coordinator.GetAgentRegistration(identity.UserSid, identity.SessionId);
+        if (owner == null || owner.ProcessId != identity.ProcessId)
+        {
+            await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.AgentUnavailable,
+                "The User Agent no longer owns this registered session.", cancellationToken).ConfigureAwait(false);
+            return;
+        }
         if (request.MessageType == ControlMessageType.AgentRegistration)
         {
             AgentRegistration? registration = JsonSerializer.Deserialize<AgentRegistration>(request.Payload);
@@ -310,7 +321,12 @@ public sealed class NamedPipeControlServer
                 return;
             }
 
-            _coordinator.RecordHeartbeat(identity.UserSid, identity.SessionId, heartbeat.OperationState, heartbeat.IsRecoveryRequired, DateTime.UtcNow);
+            if (!_coordinator.RecordHeartbeat(identity.UserSid, identity.SessionId, identity.ProcessId, heartbeat.OperationState, heartbeat.IsRecoveryRequired, DateTime.UtcNow))
+            {
+                await SendResultAsync(pipe, request.MessageType, request.RequestId, false, ControlErrorCode.AgentUnavailable,
+                    "The User Agent no longer owns this registered session.", cancellationToken).ConfigureAwait(false);
+                return;
+            }
             await SendResultAsync(pipe, request.MessageType, request.RequestId, true, ControlErrorCode.None, "Agent heartbeat recorded.", cancellationToken, _coordinator.GetStatus(DateTime.UtcNow)).ConfigureAwait(false);
             return;
         }
@@ -333,7 +349,7 @@ public sealed class NamedPipeControlServer
             try
             {
                 OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update!, DateTime.UtcNow, out bool isPersisted);
-                _coordinator.RecordOperationStatus(status, DateTime.UtcNow);
+                _coordinator.RecordOperationStatus(status, DateTime.UtcNow, identity.ProcessId);
                 await SendResultAsync(pipe, request.MessageType, request.RequestId, isPersisted,
                     isPersisted ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed,
                     isPersisted ? "Operation status recorded." : "Operation status is tracked in memory but could not be saved. Retry the update.", cancellationToken, operationStatus: status).ConfigureAwait(false);
@@ -362,7 +378,7 @@ public sealed class NamedPipeControlServer
                 {
                     OperationStatus status = _operationStatusStore.Publish(identity.UserSid, identity.SessionId, update, DateTime.UtcNow, out bool isPersisted);
                     allPersisted &= isPersisted;
-                    _coordinator.RecordOperationStatus(status, DateTime.UtcNow);
+                _coordinator.RecordOperationStatus(status, DateTime.UtcNow, identity.ProcessId);
                 }
                 catch (InvalidOperationException ex)
                 {

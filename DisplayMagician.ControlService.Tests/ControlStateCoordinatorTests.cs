@@ -203,6 +203,7 @@ public sealed class ControlStateCoordinatorTests
             Assert.Equal(ControlErrorCode.DisplayControlBusy, denied.ErrorCode);
 
             AgentRegistration recoveredOwner = CreateAgent(owner.UserSid, owner.SessionId, owner.ProcessId);
+            recoveredOwner.IsReady = true;
             restartedCoordinator.RegisterAgent(recoveredOwner, now.AddSeconds(3));
             LeaseDecision granted = restartedCoordinator.TryAcquireDisplayControl(recoveredOwner.UserSid, recoveredOwner.SessionId, recoveredOwner.SessionId, now.AddSeconds(3));
             Assert.True(granted.IsGranted, granted.Message);

@@ -182,8 +182,25 @@ public sealed class OperationStatusPersistenceTests : IDisposable
         Assert.Equal(1, store.Get("another-owner", update.OperationId)!.Sequence);
     }
 
+    [Theory]
+    [InlineData(ControlMessageType.AgentHeartbeat)]
+    [InlineData(ControlMessageType.OperationProgress)]
+    public async Task OldAgentPipeCannotChangeAReplacementRegistration(ControlMessageType message)
+    {
+        ControlStateCoordinator coordinator = new();
+        coordinator.RegisterAgent(new AgentRegistration { UserSid = "owner", SessionId = 1, ProcessId = 200, IsReady = true }, DateTime.UtcNow);
+        OperationStatusStore store = new(Paths);
+        ControlResponse response = await SendAgentRequestAsync(coordinator, store, new ControlEnvelope { MessageType = message, Payload = "{}" });
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.AgentUnavailable, response.ErrorCode);
+        Assert.Empty(store.GetReplayState());
+        Assert.Equal(200, coordinator.GetAgentRegistration("owner", 1)!.ProcessId);
+    }
+
     private async Task<ControlResponse> SendAgentRequestAsync(ControlStateCoordinator coordinator, OperationStatusStore store, ControlEnvelope request)
     {
+        if (coordinator.GetAgentRegistration("owner", 1) == null)
+            coordinator.RegisterAgent(new AgentRegistration { UserSid = "owner", SessionId = 1, ProcessId = 100, IsReady = true }, DateTime.UtcNow);
         using HttpClient http = new();
         ClientSyncCoordinator sync = new(http, new MachineScheduleCoordinator(new MachineScheduleStore(Paths)), coordinator, new AgentCommandClient());
         NamedPipeControlServer server = new(coordinator, Paths, new UserDataMigrationRunner(new LegacyFileMigration()), store, sync, new OperationDecisionStore(Paths));

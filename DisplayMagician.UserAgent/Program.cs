@@ -41,7 +41,7 @@ internal static class Program
         ProfileCommandHandler profileCommandHandler = new ProfileCommandHandler(registration, serviceClient);
         TaskCompletionSource<ControlResponse> migrationCompletion = new TaskCompletionSource<ControlResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         AgentCommandServer commandServer = new AgentCommandServer(registration.CommandPipeName);
-        Task serviceConnection = RunServiceConnectionWithRetryAsync(serviceClient, registration, acquireDisplayControl, migrateUserData, migrationCompletion, cancellationTokenSource.Token);
+        Task serviceConnection = RunServiceConnectionWithRetryAsync(serviceClient, registration, false, migrateUserData, migrationCompletion, cancellationTokenSource.Token);
         // Control Service can deliver its saved client-sync manifest as soon as it accepts the
         // registration. Start this listener before awaiting migration so that delivery cannot
         // block the persistent registration pipe that carries the migration response.
@@ -61,6 +61,18 @@ internal static class Program
         {
             cancellationTokenSource.Cancel();
             throw new InvalidOperationException(readyResponse.Message);
+        }
+
+        // Explicit acquisition follows startup restoration and its ready confirmation.
+        // Otherwise the debug/CLI acquire mode can deadlock before it reaches recovery.
+        if (acquireDisplayControl)
+        {
+            ControlResponse leaseResponse = await serviceClient.AcquireDisplayControlAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
+            if (!leaseResponse.IsSuccessful)
+            {
+                cancellationTokenSource.Cancel();
+                throw new InvalidOperationException(leaseResponse.Message);
+            }
         }
 
         await serviceClient.ReportAgentOperationStateAsync(registration, AgentOperationState.Idle, cancellationTokenSource.Token).ConfigureAwait(false);

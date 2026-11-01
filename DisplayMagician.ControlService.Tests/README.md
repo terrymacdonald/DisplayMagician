@@ -37,3 +37,6 @@ MachineScheduleStoreTests also covers automatic backup recovery for corrupt/null
 
 
 InstallationResetTests covers full multi-user configuration/backups/legacy deletion with retained logs, defaults and migration suppression; cache-junction confinement; later-user legacy import suppression; explicit administrator/confirmation requirements and Hello/Welcome compatibility. Every deletion uses an owned GUID temporary root. It never resets installed services or real user data.
+
+
+AgentLeaseLifecycleTests covers malformed-lease empty-state recovery without backup resurrection, restarted active reservations/ready-owner recovery, failed prospective writes and retry, observed disconnect recovery, failed registration connection counts, confirmed-dead process cleanup, late PID-bound messages and pre-registration launch readiness. OperationStatusPersistenceTests also rejects heartbeat/progress requests from replaced Agent pipes. These cases use temporary files and substituted processes/commands; installed multi-session checks remain on the manual queue.

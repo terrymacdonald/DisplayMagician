@@ -3,12 +3,14 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using DisplayMagician.Contracts;
+using NLog;
 
 namespace DisplayMagician.ControlService;
 
 /// <summary>Durably stores the machine-wide display-control lease, including unresolved recovery state.</summary>
 public sealed class DisplayControlLeaseStore
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly string _leasePath;
 
     public DisplayControlLeaseStore(StoragePaths storagePaths)
@@ -19,17 +21,19 @@ public sealed class DisplayControlLeaseStore
 
     public DisplayControlLease? Load()
     {
-        if (!File.Exists(_leasePath))
-        {
-            return null;
-        }
-
         try
         {
-            return JsonSerializer.Deserialize<DisplayControlLease>(File.ReadAllText(_leasePath, Encoding.UTF8));
+            DisplayControlLease lease = JsonSerializer.Deserialize<DisplayControlLease>(File.ReadAllText(_leasePath, Encoding.UTF8))
+                ?? throw new JsonException("The lease document is null.");
+            if (string.IsNullOrWhiteSpace(lease.OwnerUserSid) || lease.OwnerSessionId < 0 || lease.ActiveOperationId == Guid.Empty)
+                throw new JsonException("The lease identity is invalid.");
+            return lease;
         }
+        catch (FileNotFoundException) { return null; } // No lease is normal on first start or after release.
+        catch (DirectoryNotFoundException) { return null; }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException)
         {
+            Logger.Warn(ex, "DisplayControlLeaseStore/Load: Could not read lease at {0}; starting without a lease. Reapply the desired profile if required.", _leasePath);
             return null;
         }
     }
@@ -37,7 +41,7 @@ public sealed class DisplayControlLeaseStore
     public void Save(DisplayControlLease lease)
     {
         ArgumentNullException.ThrowIfNull(lease);
-        Write(JsonSerializer.Serialize(lease));
+        AtomicFileStore.WriteAllText(_leasePath, JsonSerializer.Serialize(lease), _leasePath + ".bak");
     }
 
     public void Clear()
@@ -48,36 +52,4 @@ public sealed class DisplayControlLeaseStore
         }
     }
 
-    private void Write(string json)
-    {
-        string directoryPath = Path.GetDirectoryName(_leasePath)!;
-        Directory.CreateDirectory(directoryPath);
-        string temporaryPath = Path.Combine(directoryPath, $".{Path.GetFileName(_leasePath)}.{Guid.NewGuid():N}.tmp");
-        try
-        {
-            using (FileStream stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
-            using (StreamWriter writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
-            {
-                writer.Write(json);
-                writer.Flush();
-                stream.Flush(flushToDisk: true);
-            }
-
-            if (File.Exists(_leasePath))
-            {
-                File.Replace(temporaryPath, _leasePath, $"{_leasePath}.bak", ignoreMetadataErrors: true);
-            }
-            else
-            {
-                File.Move(temporaryPath, _leasePath);
-            }
-        }
-        finally
-        {
-            if (File.Exists(temporaryPath))
-            {
-                File.Delete(temporaryPath);
-            }
-        }
-    }
 }

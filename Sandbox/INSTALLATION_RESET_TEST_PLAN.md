@@ -1,5 +1,7 @@
 # Full installation reset validation
 
+Status: deferred by the user on 1 November 2026 for Terry's consolidated manual test run. These installed checks have not been executed/passed. Tracked in the [whole-app test checklist](../Docs/CODEBASE_BUG_REVIEW.md#whole-app-completion-checklist); source review can continue meanwhile.
+
 Run only inside Windows Sandbox. This test deliberately deletes all DM data in that disposable environment. Do not run reset against host data to validate this feature.
 
 1. Build the current Debug bundle with `build_displaymagician.ps1`. Run `debug_displaymagician.ps1` as administrator, select Windows Sandbox, and install that freshly built bundle. Follow the harness README for prerequisites.

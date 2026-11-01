@@ -22,6 +22,7 @@ public sealed class ControlStateCoordinator
     {
         _leaseStore = leaseStore ?? throw new ArgumentNullException(nameof(leaseStore));
         _displayControlLease = _leaseStore.Load();
+        if (_displayControlLease?.ActiveOperationId.HasValue == true) _displayControlLease.IsRecoveryRequired = true;
         _activeOperationIsExplicit = _displayControlLease?.ActiveOperationId.HasValue == true;
     }
 
@@ -48,14 +49,14 @@ public sealed class ControlStateCoordinator
                     return false;
                 }
 
-                existingAgent.ConnectionCount++;
                 UpdateRegistration(existingAgent, registration, utcNow);
+                existingAgent.ConnectionCount++;
                 message = "Agent connection registered.";
                 return true;
             }
 
-            _agentsBySession[registration.SessionId] = new RegisteredAgent(CopyRegistration(registration), utcNow);
             ConfirmRecoveryRestored(registration);
+            _agentsBySession[registration.SessionId] = new RegisteredAgent(CopyRegistration(registration), utcNow);
             message = "Agent connection registered.";
             return true;
         }
@@ -85,9 +86,18 @@ public sealed class ControlStateCoordinator
     {
         lock (_syncRoot)
         {
-            if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent) || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
+            if (_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent))
+                RecordHeartbeat(userSid, sessionId, agent.Registration.ProcessId, operationState, isRecoveryRequired, utcNow);
+        }
+    }
+
+    public bool RecordHeartbeat(string userSid, int sessionId, int processId, AgentOperationState operationState, bool isRecoveryRequired, DateTime utcNow)
+    {
+        lock (_syncRoot)
+        {
+            if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent) || agent.Registration.ProcessId != processId || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase))
             {
-                return;
+                return false;
             }
 
             agent.LastHeartbeatUtc = utcNow;
@@ -97,22 +107,25 @@ public sealed class ControlStateCoordinator
             if (_displayControlLease != null && _displayControlLease.OwnerSessionId == sessionId &&
                 string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase))
             {
-                _displayControlLease.LastHeartbeatUtc = utcNow;
-                _displayControlLease.IsRecoveryRequired |= isRecoveryRequired;
+                DisplayControlLease updated = CopyLease(_displayControlLease);
+                bool explicitOperation = _activeOperationIsExplicit;
+                updated.LastHeartbeatUtc = utcNow;
+                updated.IsRecoveryRequired |= isRecoveryRequired;
                 if (operationState == AgentOperationState.Running || operationState == AgentOperationState.Restoring)
                 {
-                    if (!_displayControlLease.ActiveOperationId.HasValue)
+                    if (!updated.ActiveOperationId.HasValue)
                     {
-                        _displayControlLease.ActiveOperationId = Guid.NewGuid();
-                        _activeOperationIsExplicit = false;
+                        updated.ActiveOperationId = Guid.NewGuid();
+                        explicitOperation = false;
                     }
                 }
                 else if (operationState == AgentOperationState.Idle && !isRecoveryRequired && !_activeOperationIsExplicit)
                 {
-                    _displayControlLease.ActiveOperationId = null;
+                    updated.ActiveOperationId = null;
                 }
-                PersistLease();
+                CommitLease(updated, explicitOperation, observedState: true);
             }
+            return true;
         }
     }
 
@@ -140,31 +153,32 @@ public sealed class ControlStateCoordinator
                 string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase))
                 return Deny(ControlErrorCode.RecoveryRequired, "The display lease still requires confirmed recovery before new work can begin.");
 
-            if (_displayControlLease != null && (_displayControlLease.OwnerSessionId != sessionId || !string.Equals(_displayControlLease.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase)))
+            DisplayControlLease? candidate = _displayControlLease == null ? null : CopyLease(_displayControlLease);
+            if (candidate != null && (candidate.OwnerSessionId != sessionId || !string.Equals(candidate.OwnerUserSid, userSid, StringComparison.OrdinalIgnoreCase)))
             {
-                if (_displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired)
+                if (candidate.ActiveOperationId.HasValue || candidate.IsRecoveryRequired)
                 {
                     return Deny(ControlErrorCode.DisplayControlBusy, "Another user currently owns DisplayMagician display control.");
                 }
 
                 // An idle lease must not reserve display control indefinitely while its Agent keeps heartbeating.
-                _displayControlLease = null;
+                candidate = null;
             }
 
-            if (_displayControlLease == null) _activeOperationIsExplicit = false;
-            _displayControlLease ??= new DisplayControlLease
+            bool explicitOperation = candidate != null && _activeOperationIsExplicit;
+            candidate ??= new DisplayControlLease
             {
                 OwnerUserSid = userSid,
                 OwnerSessionId = sessionId,
                 AcquiredUtc = utcNow
             };
-            _displayControlLease.LastHeartbeatUtc = utcNow;
-            PersistLease();
+            candidate.LastHeartbeatUtc = utcNow;
+            CommitLease(candidate, explicitOperation);
 
             return new LeaseDecision
             {
                 IsGranted = true,
-                Lease = CopyLease(_displayControlLease),
+                Lease = CopyLease(candidate),
                 Message = "Display control acquired."
             };
         }
@@ -193,10 +207,10 @@ public sealed class ControlStateCoordinator
                 return false;
             }
 
-            _displayControlLease.ActiveOperationId = operationId;
-            _activeOperationIsExplicit = true;
-            _displayControlLease.LastHeartbeatUtc = utcNow;
-            PersistLease();
+            DisplayControlLease updated = CopyLease(_displayControlLease);
+            updated.ActiveOperationId = operationId;
+            updated.LastHeartbeatUtc = utcNow;
+            CommitLease(updated, true);
             return true;
         }
     }
@@ -211,11 +225,11 @@ public sealed class ControlStateCoordinator
                 return;
             }
 
-            _displayControlLease.LastHeartbeatUtc = utcNow;
-            _displayControlLease.IsRecoveryRequired = requiresRecovery;
-            _displayControlLease.ActiveOperationId = requiresRecovery ? operationId : null;
-            _activeOperationIsExplicit = requiresRecovery;
-            PersistLease();
+            DisplayControlLease updated = CopyLease(_displayControlLease);
+            updated.LastHeartbeatUtc = utcNow;
+            updated.IsRecoveryRequired = requiresRecovery;
+            updated.ActiveOperationId = requiresRecovery ? operationId : null;
+            CommitLease(updated, requiresRecovery, observedState: true);
         }
     }
 
@@ -229,17 +243,21 @@ public sealed class ControlStateCoordinator
             }
 
             DisplayControlLease releasedLease = CopyLease(_displayControlLease);
-            _displayControlLease = null;
-            ClearPersistedLease();
+            CommitLease(null, false);
             return releasedLease;
         }
     }
 
     public void RecordOperationStatus(OperationStatus status, DateTime utcNow)
+        => RecordOperationStatus(status, utcNow, null);
+
+    public void RecordOperationStatus(OperationStatus status, DateTime utcNow, int? processId)
     {
         ArgumentNullException.ThrowIfNull(status);
         lock (_syncRoot)
         {
+            if (processId.HasValue && (!_agentsBySession.TryGetValue(status.OwnerSessionId, out RegisteredAgent? agent)
+                || agent.Registration.ProcessId != processId.Value || !string.Equals(agent.Registration.UserSid, status.OwnerUserSid, StringComparison.OrdinalIgnoreCase))) return;
             if (_displayControlLease == null || _displayControlLease.OwnerSessionId != status.OwnerSessionId ||
                 !string.Equals(_displayControlLease.OwnerUserSid, status.OwnerUserSid, StringComparison.OrdinalIgnoreCase)) return;
             if (status.IsTerminal)
@@ -251,9 +269,9 @@ public sealed class ControlStateCoordinator
             {
                 // Automatically detected games acquire a lease without a client
                 // reservation. Bind their real operation ID when progress arrives.
-                _displayControlLease.ActiveOperationId = status.OperationId;
-                _activeOperationIsExplicit = true;
-                PersistLease();
+                DisplayControlLease updated = CopyLease(_displayControlLease);
+                updated.ActiveOperationId = status.OperationId;
+                CommitLease(updated, true, observedState: true);
             }
         }
     }
@@ -352,13 +370,25 @@ public sealed class ControlStateCoordinator
 
             if (_displayControlLease.ActiveOperationId.HasValue || _displayControlLease.IsRecoveryRequired)
             {
-                _displayControlLease.IsRecoveryRequired = true;
-                PersistLease();
+                DisplayControlLease updated = CopyLease(_displayControlLease);
+                updated.IsRecoveryRequired = true;
+                CommitLease(updated, _activeOperationIsExplicit, observedState: true);
                 return;
             }
 
-            _displayControlLease = null;
-            ClearPersistedLease();
+            CommitLease(null, false, observedState: true);
+        }
+    }
+
+    internal void UnregisterStoppedAgent(string userSid, int sessionId, int processId)
+    {
+        lock (_syncRoot)
+        {
+            if (!_agentsBySession.TryGetValue(sessionId, out RegisteredAgent? agent) || agent.Registration.ProcessId != processId
+                || !string.Equals(agent.Registration.UserSid, userSid, StringComparison.OrdinalIgnoreCase)) return;
+            // The broker confirmed the process exited, so none of its remaining pipes can own a live connection.
+            agent.ConnectionCount = 1;
+            UnregisterAgent(userSid, sessionId, processId);
         }
     }
 
@@ -421,37 +451,41 @@ public sealed class ControlStateCoordinator
         bool ownerHeartbeatIsStale = utcNow - _displayControlLease.LastHeartbeatUtc > AgentHeartbeatTimeout;
         if (ownerHeartbeatIsStale)
         {
-            _displayControlLease = null;
-            ClearPersistedLease();
+            CommitLease(null, false, observedState: true);
         }
     }
 
     private void ConfirmRecoveryRestored(AgentRegistration registration)
     {
-        if (_displayControlLease == null || !_displayControlLease.IsRecoveryRequired || registration.IsRecoveryRequired || registration.OperationState != AgentOperationState.Idle ||
+        if (_displayControlLease == null || !_displayControlLease.IsRecoveryRequired || !registration.IsReady || registration.IsRecoveryRequired || registration.OperationState != AgentOperationState.Idle ||
             _displayControlLease.OwnerSessionId != registration.SessionId ||
             !string.Equals(_displayControlLease.OwnerUserSid, registration.UserSid, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
-        _displayControlLease.IsRecoveryRequired = false;
-        _displayControlLease.ActiveOperationId = null;
-        _activeOperationIsExplicit = false;
-        PersistLease();
+        DisplayControlLease restored = CopyLease(_displayControlLease);
+        restored.IsRecoveryRequired = false;
+        restored.ActiveOperationId = null;
+        CommitLease(restored, false, observedState: true);
     }
 
-    private void PersistLease()
+    private void CommitLease(DisplayControlLease? lease, bool explicitOperation, bool observedState = false)
     {
-        if (_leaseStore != null && _displayControlLease != null)
+        // Actual completion/disconnection remains true even when persistence fails.
+        // Prospective grants/reservations and explicit release publish only after saving succeeds.
+        if (observedState)
         {
-            _leaseStore.Save(CopyLease(_displayControlLease));
+            _displayControlLease = lease;
+            _activeOperationIsExplicit = explicitOperation;
         }
-    }
-
-    private void ClearPersistedLease()
-    {
-        _leaseStore?.Clear();
+        if (_leaseStore != null)
+        {
+            if (lease == null) _leaseStore.Clear();
+            else _leaseStore.Save(lease);
+        }
+        _displayControlLease = lease;
+        _activeOperationIsExplicit = explicitOperation;
     }
 
     private static DisplayControlLease CopyLease(DisplayControlLease lease)

@@ -75,3 +75,6 @@ The Agent follows ControlService's shared logging settings through its authentic
 
 
 PrepareUserAgentForReset (104) is accepted only through the existing ControlService-authenticated command pipe. It prevents new work, cancels tracked operations, waits for completion/idle/restoration and requests shutdown only after recovery is clear. Failure/cancellation leaves the Agent available and recovery data intact. Startup exits while the installation-maintenance gate is present. No general reset/storage deletion or expanded SessionLauncher permissions are added to UserAgent.
+
+
+The explicit --acquire-display-control startup option acquires only after migration, pending restoration and the ready-registration response. This preserves startup recovery before new work; ordinary startup/reconnect wire formats are unchanged.
