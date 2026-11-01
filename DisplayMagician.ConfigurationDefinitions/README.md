@@ -14,6 +14,8 @@ Shortcut schema 9 adds `WaitAfterStartSecs` to Start/After Programs and `WaitAft
 
 Shortcut schema 10 adds optional `StopAllInstances` to Stop Programs. Missing values mean false (newest matching instance only); true explicitly requests every matching instance. Repository validation requires a JSON boolean when present. UserAgent owns the backed-up migration and runtime selection/restart behaviour; these definitions remain independent of process and UI APIs.
 
+The current shortcut version is shared as `ShortcutDefinition.CurrentFileVersion`. Version validation rejects malformed, nonpositive and newer-than-supported markers on reads/commits while preserving unversioned legacy compatibility. It performs no writes; the owning Agent migration preserves the original and backup on failure.
+
 ## Build
 
 ```powershell

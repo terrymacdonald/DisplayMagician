@@ -23,6 +23,7 @@ public static class RepositoryDocumentValidation
             throw new JsonException($"The repository must contain a {collectionName} array.");
 
         HashSet<string> identities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (repository == RepositoryKind.Shortcuts) ValidateShortcutFileVersion(document.RootElement);
         foreach (JsonElement item in items.EnumerateArray())
         {
             if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("UUID", out JsonElement id) ||
@@ -49,5 +50,14 @@ public static class RepositoryDocumentValidation
                 }
             }
         }
+    }
+
+    public static void ValidateShortcutFileVersion(JsonElement root)
+    {
+        // Unversioned/blank files are supported legacy inputs; migration owns their upgrade.
+        if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("ShortcutFileVersion", out JsonElement version) || version.ValueKind == JsonValueKind.Null) return;
+        if (version.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(version.GetString())) return;
+        if (version.ValueKind != JsonValueKind.String || !int.TryParse(version.GetString(), out int number) || number < 1 || number > ShortcutDefinition.CurrentFileVersion)
+            throw new JsonException($"Unsupported shortcut file version. Supported versions are 1 to {ShortcutDefinition.CurrentFileVersion}; the file must be preserved.");
     }
 }

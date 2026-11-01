@@ -53,6 +53,8 @@ Shortcut schema 10 adds the per-entry `StopAllInstances` boolean, defaulting to 
 
 Shell dispatch is distinguished from receiving a process handle: successfully handing work to an existing shell application does not cause an invalid PID read. Start-and-forget reports dispatch success; monitored launches still require their existing process-selection checks. Existing provider log argument contents remain unchanged by user choice.
 
+Shortcut version checks run before legacy cleanup can modify invalid-version files. Unsupported newer versions are refused at startup, repository reads/commits and window-snapshot saves; originals and existing backups are preserved. Supported older versions are upgraded once, and current-version files are not rewritten just by loading. Missing/blank legacy markers remain supported.
+
 ## Development
 
 Message read-state changes and synchronization report index-write failures instead of reporting an unsaved change as successful. Process launch logs include the executable and process ID, with raw command arguments omitted from support logs.

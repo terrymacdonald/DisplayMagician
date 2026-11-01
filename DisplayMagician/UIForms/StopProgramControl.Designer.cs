@@ -144,7 +144,7 @@ namespace DisplayMagician.UIForms
             chk_stop_all_instances.AutoSize = true;
             chk_stop_all_instances.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             chk_stop_all_instances.ForeColor = System.Drawing.Color.White;
-            chk_stop_all_instances.Location = new System.Drawing.Point(161, 116);
+            chk_stop_all_instances.Location = new System.Drawing.Point(536, 115);
             chk_stop_all_instances.Name = "chk_stop_all_instances";
             chk_stop_all_instances.Size = new System.Drawing.Size(160, 24);
             chk_stop_all_instances.TabIndex = 6;

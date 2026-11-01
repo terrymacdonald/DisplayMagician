@@ -270,6 +270,9 @@ public sealed class StopProgramReviewTests : IDisposable
         control.StopProgram = new() { StopAllInstances = true };
         CheckBox checkbox = (CheckBox)control.Controls["chk_stop_all_instances"]!;
         Assert.Equal("Stop all instances", checkbox.Text);
+        control.Width = control.MinimumSize.Width;
+        Assert.False(checkbox.Bounds.IntersectsWith(control.Controls["chk_disabled"]!.Bounds));
+        Assert.True(control.ClientRectangle.Contains(checkbox.Bounds));
         Assert.True(checkbox.Checked);
         Assert.Equal(false, unsaved.GetValue(form));
         checkbox.Checked = false;

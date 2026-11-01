@@ -10,6 +10,7 @@ namespace DisplayMagician.ConfigurationDefinitions;
 /// </summary>
 public sealed class ShortcutDefinition
 {
+    public const int CurrentFileVersion = 10;
     public string Id { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public ShortcutDefinitionCategory Category { get; init; }

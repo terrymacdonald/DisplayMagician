@@ -8,6 +8,8 @@ Connection/lifecycle regressions use isolated named pipes and substituted execut
 
 Stop Program regressions cover newest-only versus all-instance selection, successive entries, mixed stop results, retained restarts, reverse cleanup after exceptions, shell dispatch without a process handle, version-9-to-10 migration, malformed flag rejection, desktop copies/portable conversion and the Designer-backed checkbox. Process tests launch only temporary copies of a Windows utility and clean up those test processes; failure tests substitute bounded callbacks rather than changing installed applications.
 
+`ShortcutMigrationVersionTests` additionally cover malformed/zero/negative/overflow/wrong-type markers, each supported older version, current-version idempotence, unversioned legacy compatibility, newer-version rejection and protection against overwriting a live newer repository or downgrading it through window-snapshot saves.
+
 ## Run
 
 Additional regression cases cover locked message-index writes, omission of launch arguments from logs, and the desktop Messages form's disconnected-service, timeout, and rejected-request paths. Form tests use an injected client and do not connect to installed services or initialize WebView2.

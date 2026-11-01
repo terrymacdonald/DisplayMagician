@@ -27,7 +27,15 @@ public sealed class ShortcutStore
     public RepositorySnapshot GetSnapshot()
     {
         lock (_writeLock)
-            return Runtime.AtomicFile.GetSnapshot(_shortcutFilePath, RepositoryKind.Shortcuts);
+        {
+            RepositorySnapshot snapshot = Runtime.AtomicFile.GetSnapshot(_shortcutFilePath, RepositoryKind.Shortcuts);
+            if (!string.IsNullOrWhiteSpace(snapshot.Json))
+            {
+                using JsonDocument document = JsonDocument.Parse(snapshot.Json);
+                RepositoryDocumentValidation.ValidateShortcutFileVersion(document.RootElement);
+            }
+            return snapshot;
+        }
     }
 
     public bool TryGetShortcutDefinition(string shortcutId, out ShortcutDefinition? shortcutDefinition)
@@ -57,6 +65,7 @@ public sealed class ShortcutStore
         }
 
         using JsonDocument document = JsonDocument.Parse(json);
+        RepositoryDocumentValidation.ValidateShortcutFileVersion(document.RootElement);
         if (!document.RootElement.TryGetProperty("Shortcuts", out JsonElement shortcuts) || shortcuts.ValueKind != JsonValueKind.Array)
         {
             return definitions;
@@ -144,6 +153,8 @@ public sealed class ShortcutStore
             throw new ArgumentException("The shortcut store only accepts shortcut repositories.", nameof(request));
         lock (_writeLock)
         {
+            // Refuse writes if a newer application has replaced the on-disk repository.
+            GetSnapshot();
             return Runtime.AtomicFile.CommitSnapshot(_shortcutFilePath, request);
         }
     }
@@ -169,7 +180,7 @@ public sealed class ShortcutStore
             int previousCount = (shortcut["WindowPlacements"] as JsonArray)?.Count ?? 0;
             shortcut["WindowPlacements"] = JsonSerializer.SerializeToNode(placements);
             shortcut["WindowPlacementTimeoutSeconds"] ??= 20;
-            root["ShortcutFileVersion"] = "10";
+            root["ShortcutFileVersion"] = ShortcutDefinition.CurrentFileVersion.ToString();
             RepositoryCommitResult result = Commit(new RepositoryCommitRequest
             {
                 Repository = RepositoryKind.Shortcuts,
@@ -192,7 +203,8 @@ public sealed class ShortcutStore
                 : parsed as JsonObject ?? throw new JsonException("The shortcut file must contain a shortcut collection.");
             string? storedVersion = root["ShortcutFileVersion"]?.GetValue<string>();
             bool knownVersion = int.TryParse(storedVersion, out int versionNumber);
-            if (knownVersion && versionNumber > 10) return;
+            if (knownVersion && versionNumber > ShortcutDefinition.CurrentFileVersion)
+                throw new JsonException($"Unsupported shortcut file version '{storedVersion}'.");
             if (!string.IsNullOrWhiteSpace(storedVersion) && (!knownVersion || versionNumber < 1))
                 throw new JsonException($"Unsupported shortcut file version '{storedVersion}'.");
             if (root["Shortcuts"] is JsonObject wrappedShortcuts && wrappedShortcuts["$values"] is JsonArray values)
@@ -200,7 +212,7 @@ public sealed class ShortcutStore
             JsonArray shortcuts = root["Shortcuts"] as JsonArray ?? throw new JsonException("The shortcut file must contain a Shortcuts array.");
             bool hasLegacyMonitorName = shortcuts.OfType<JsonObject>().Any(shortcut =>
                 shortcut.ContainsKey("ProcessNameToMonitorUsesExecutable") || shortcut.ContainsKey("MonitorExecutablePath"));
-            if (knownVersion && versionNumber == 10 && !hasLegacyMonitorName) return;
+            if (knownVersion && versionNumber == ShortcutDefinition.CurrentFileVersion && !hasLegacyMonitorName) return;
             foreach (JsonNode? shortcutNode in shortcuts)
             {
                 JsonObject shortcut = shortcutNode as JsonObject ?? throw new JsonException("The shortcut file contains an invalid shortcut entry.");
@@ -233,7 +245,7 @@ public sealed class ShortcutStore
             }
             string previousVersion = int.TryParse(storedVersion, out versionNumber) && versionNumber >= 0
                 ? versionNumber.ToString() : "unknown";
-            root["ShortcutFileVersion"] = "10";
+            root["ShortcutFileVersion"] = ShortcutDefinition.CurrentFileVersion.ToString();
             root["LastUpdated"] = DateTime.UtcNow;
             string backupPath = $"{_shortcutFilePath}.v{previousVersion}.{DateTime.UtcNow:yyyyMMddHHmmss}.{Guid.NewGuid():N}.bak";
             File.Copy(_shortcutFilePath, backupPath, overwrite: false);
@@ -265,8 +277,11 @@ public sealed class ShortcutStore
                 return;
             }
 
-            if (rootObject["ShortcutFileVersion"] is JsonValue versionValue && versionValue.TryGetValue<string>(out string? version) &&
-                int.TryParse(version, out int versionNumber) && versionNumber > 9)
+            // Leave invalid or newer version markers untouched for the schema migration
+            // to validate before any legacy cleanup can rewrite the original file.
+            if (rootObject["ShortcutFileVersion"] is JsonNode versionNode &&
+                (versionNode is not JsonValue versionValue || !versionValue.TryGetValue<string>(out string? version) ||
+                 (!string.IsNullOrWhiteSpace(version) && (!int.TryParse(version, out int versionNumber) || versionNumber < 1 || versionNumber > 9))))
                 return;
 
             bool changed = false;

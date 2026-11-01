@@ -23,7 +23,7 @@ public sealed class ShortcutStoreTests
             string json = "{\"ShortcutFileVersion\":\"99\",\"Shortcuts\":[{\"UUID\":\"future\",\"Application\":{\"Future\":true},\"MonitorExecutablePath\":false}]}";
             File.WriteAllText(path, json, Encoding.Unicode);
             byte[] original = File.ReadAllBytes(path);
-            _ = new ShortcutStore(root);
+            Assert.Throws<InvalidDataException>(() => new ShortcutStore(root));
             Assert.Equal(original, File.ReadAllBytes(path));
             Assert.Single(Directory.GetFiles(directory));
         }
