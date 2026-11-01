@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -21,9 +21,8 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="filename">The file to open and read.</param>
         public void Read(string filename)
         {
-            var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Read(fs);
-            fs.Close();
         }
 
         /// <summary>
@@ -32,7 +31,7 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
         /// <param name="input">The input <see cref="Stream"/> to read from.</param>
         public void Read(Stream input)
         {
-            var reader = new BinaryReader(input);
+            using var reader = new BinaryReader(input);
             var magic = reader.ReadUInt32();
 
             if (magic != Magic && magic != Magic27)
@@ -40,7 +39,8 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
                 throw new InvalidDataException($"Unknown magic header: {magic:X}");
             }
 
-            Universe = (EUniverse)reader.ReadUInt32();
+            EUniverse universe = (EUniverse)reader.ReadUInt32();
+            List<Package> packages = new List<Package>();
 
             var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
 
@@ -67,9 +67,10 @@ namespace DisplayMagician.GameLibraries.SteamAppInfoParser
 
                 package.Data = deserializer.Deserialize(input);
 
-                Packages.Add(package);
+                packages.Add(package);
             } while (true);
-            reader.Close();
+            Universe = universe;
+            Packages = packages;
         }
     }
 }

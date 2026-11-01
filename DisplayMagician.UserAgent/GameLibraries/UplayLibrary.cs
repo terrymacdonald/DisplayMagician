@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -19,15 +19,16 @@ namespace DisplayMagician.GameLibraries
 
 
         #region Class Variables
-        // Static members are 'eagerly initialized', that is, 
+        // Static members are 'eagerly initialized', that is,
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
         private static readonly UplayLibrary _instance = new UplayLibrary();
-       
+
         // Common items to the class
         private List<Game> _allGames = new List<Game>();
         private string uplayAppIdRegex = @"^[0-9A-F]{1,10}$";
         private bool _isUplayInstalled = false;
+        private readonly IReadOnlyDictionary<uint, string>? _installedGames;
         private string _uplayExe = string.Empty;
         private string _uplayPath = string.Empty;
         private List<string> _uplayProcessList = new List<string>() { "UbisoftGameLauncher", "UbisoftGameLauncher64" };
@@ -44,6 +45,13 @@ namespace DisplayMagician.GameLibraries
 
         #region Class Constructors
         static UplayLibrary() { }
+
+        internal UplayLibrary(string path, IReadOnlyDictionary<uint, string> installedGames)
+        {
+            _uplayPath = path;
+            _installedGames = installedGames;
+            _isUplayInstalled = true;
+        }
 
         private UplayLibrary()
         {
@@ -69,7 +77,7 @@ namespace DisplayMagician.GameLibraries
                 {
                     logger.Info($"UplayLibrary/UplayLibrary: Uplay library is not installed!");
                 }
-                   
+
             }
             catch (SecurityException ex)
             {
@@ -179,7 +187,7 @@ namespace DisplayMagician.GameLibraries
                     logger.Warn(ex, $"UplayLibrary/IsRunning: Exception while trying to get the Uplay Library processes with names: {string.Join(", ", _uplayProcessList)}");
                     return false;
                 }
-                
+
             }
 
         }
@@ -217,7 +225,7 @@ namespace DisplayMagician.GameLibraries
         {
             if (!(uplayGame is UplayGame))
                 return false;
-            
+
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
             if (ContainsGame(uplayGame))
@@ -266,7 +274,7 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"UplayLibrary/RemoveGame: Didn't remove Uplay game with ID {uplayGame.Name} from the Uplay Library");
                 return false;
-            }                
+            }
             else
                 throw new UplayLibraryException();
         }
@@ -426,6 +434,12 @@ namespace DisplayMagician.GameLibraries
 
         public bool GetInstallDirFromRegKey(string regKeyPath, out string filePath)
         {
+            if (_installedGames != null)
+            {
+                Match match = Regex.Match(regKeyPath, @"(?:^|\\)Installs\\(?<id>\d+)", RegexOptions.IgnoreCase);
+                filePath = string.Empty;
+                return match.Success && uint.TryParse(match.Groups["id"].Value, out uint id) && _installedGames.TryGetValue(id, out filePath!);
+            }
             filePath = "";
 
             RegistryKey? uplayGameInstallKey;
@@ -447,6 +461,7 @@ namespace DisplayMagician.GameLibraries
                 return false;
             }
 
+            using RegistryKey? ownedKey = uplayGameInstallKey;
             // If the key doesn't exist we skip it as the game isn't installed any longer!
             if (uplayGameInstallKey == null)
             {
@@ -472,6 +487,7 @@ namespace DisplayMagician.GameLibraries
 
         public override bool LoadInstalledGames()
         {
+            bool scanComplete = true;
             try
             {
                 if (!_isUplayInstalled)
@@ -482,44 +498,29 @@ namespace DisplayMagician.GameLibraries
 
                 logger.Trace($"UplayLibrary/LoadInstalledGames: Uplay Game Installs Registry Key = HKLM\\{registryUplayInstallsKey}");
 
-                using (RegistryKey? uplayInstallKey = Registry.LocalMachine.OpenSubKey(registryUplayInstallsKey, RegistryKeyPermissionCheck.ReadSubTree))
+                Dictionary<uint, string> installedGames = _installedGames != null
+                    ? new Dictionary<uint, string>(_installedGames) : new Dictionary<uint, string>();
+                if (_installedGames == null)
                 {
-                    if (uplayInstallKey != null)
+                    using RegistryKey? installs = Registry.LocalMachine.OpenSubKey(registryUplayInstallsKey, RegistryKeyPermissionCheck.ReadSubTree);
+                    if (installs == null)
                     {
-                        int uplayGamesInstalledCount = 0;
-                        foreach (string uplayGameKeyName in uplayInstallKey.GetSubKeyNames())
-                        {
-                            if (int.TryParse(uplayGameKeyName, out int uplayGameId))
-                            {
-                                string uplayGameKeyFullName = $"{registryUplayInstallsKey}\\{uplayGameKeyName}";
-                                using (RegistryKey? uplayGameKey = Registry.LocalMachine.OpenSubKey(uplayGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
-                                {
-                                    if (uplayGameKey == null)
-                                        continue;
-
-                                    if (!string.IsNullOrEmpty(uplayGameKey.GetValue(@"InstallDir", "")?.ToString()))
-                                    {
-                                        uplayGamesInstalledCount++;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (uplayGamesInstalledCount == 0)
-                        {
-                            logger.Warn($"UplayLibrary/LoadInstalledGames: No Uplay games installed in the Uplay library");
-                            return false;
-                        }
-                        else
-                        {
-                            logger.Info($"UplayLibrary/LoadInstalledGames: Found {uplayGamesInstalledCount} installed games in the Uplay library");
-                        }
-                    }
-                    else
-                    {
-                        logger.Warn($"UplayLibrary/LoadInstalledGames: Couldn't access the Uplay Registry Key {registryUplayInstallsKey}");
+                        logger.Warn("UplayLibrary/LoadInstalledGames: Could not read the installation registry key {0}.", registryUplayInstallsKey);
                         return false;
                     }
+                    foreach (string name in installs.GetSubKeyNames())
+                    {
+                        if (!uint.TryParse(name, out uint id)) continue;
+                        using RegistryKey? game = installs.OpenSubKey(name, RegistryKeyPermissionCheck.ReadSubTree);
+                        string? directory = game?.GetValue("InstallDir", "")?.ToString();
+                        if (!string.IsNullOrWhiteSpace(directory)) installedGames[id] = directory;
+                    }
+                }
+                if (installedGames.Count == 0)
+                {
+                    _allGames.Clear();
+                    logger.Info("UplayLibrary/LoadInstalledGames: The readable installation list contains no installed games.");
+                    return true;
                 }
 
                 string uplayConfigFilePath = Path.Combine(_uplayPath, @"cache\configuration\configurations");
@@ -543,22 +544,35 @@ namespace DisplayMagician.GameLibraries
                     try
                     {
                         var gameCollection = ProtoBuf.Serializer.Deserialize<UplayCachedGameCollection>(file).Games;
+                        if (gameCollection.Count == 0)
+                        {
+                            logger.Warn("UplayLibrary/LoadInstalledGames: Installed games have no cached configuration records at {0}.", uplayConfigFilePath);
+                            return false;
+                        }
                         foreach (var item in gameCollection)
                         {
+                            bool installed = installedGames.ContainsKey(item.UplayId) || installedGames.ContainsKey(item.InstallId);
+                            if (installed && string.IsNullOrWhiteSpace(item.GameInfo))
+                            {
+                                scanComplete = false;
+                                logger.Warn("UplayLibrary/LoadInstalledGames: Installed game {0} has no readable configuration.", item.UplayId);
+                            }
                             if (!String.IsNullOrEmpty(item.GameInfo))
                             {
                                 ProductInformation productInfo;
                                 try
                                 {
                                     productInfo = deserializer.Deserialize<ProductInformation>(item.GameInfo);
+                                    if (productInfo == null || (installed && productInfo.root == null))
+                                        throw new InvalidDataException("An installed game configuration has no product root.");
                                     var root = productInfo.root;
 
-                                    string gameId = ""; 
+                                    string gameId = "";
                                     string gameName = "";
                                     string gameExePath = "";
                                     string gameIconPath = "";
 
-                                    string currentLang = CultureInfo.CurrentCulture.Name;                                    
+                                    string currentLang = CultureInfo.CurrentCulture.Name;
                                     foreach (var lang in productInfo.localizations)
                                     {
                                         if (lang.Key.Equals(currentLang))
@@ -690,11 +704,12 @@ namespace DisplayMagician.GameLibraries
                                                 break;
                                             }
                                         }
-                                    }                                    
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
-                                    if (item.GameInfo.StartsWith("root:"))
+                                    if (installed) scanComplete = false;
+                                    if (installed || item.GameInfo.StartsWith("root:"))
                                     {
                                         logger.Warn(ex, $"UplayLibrary/LoadInstalledGames: Error processing parsed game YAML layout data mapping for ID: {item.UplayId}");
                                     }
@@ -707,7 +722,7 @@ namespace DisplayMagician.GameLibraries
                         logger.Error(ex, $"UplayLibrary/LoadInstalledGames: Core structural error parsing protobuf map layout within configuration directory: {uplayConfigFilePath}");
                         return false;
                     }
-                }                   
+                }
 
                 logger.Info($"UplayLibrary/LoadInstalledGames: Found {_allGames.Count} total installed Ubisoft Connect games.");
             }
@@ -718,7 +733,7 @@ namespace DisplayMagician.GameLibraries
                 return false;
             }
 
-            return true;
+            return scanComplete;
         }
 
         public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)

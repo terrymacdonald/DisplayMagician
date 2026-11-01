@@ -39,7 +39,6 @@ namespace DisplayMagician.GameLibraries
         private string steamAppIdRegex = @"^[0-9A-F]{1,10}$";
         private string _steamExe = string.Empty;
         private string _steamPath = string.Empty;
-        private string _steamConfigVdfFile = string.Empty;
         private List<string> _steamProcessList = new List<string>() { "steam"};
         private string _registrySteamKey = @"SOFTWARE\WOW6432Node\Valve\Steam"; // under LocalMachine
         private string _registryAppsKey = $@"SOFTWARE\Valve\Steam\Apps"; // under CurrentUser

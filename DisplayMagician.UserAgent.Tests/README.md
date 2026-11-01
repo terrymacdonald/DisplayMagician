@@ -10,6 +10,10 @@ Stop Program regressions cover newest-only versus all-instance selection, succes
 
 `ShortcutMigrationVersionTests` additionally cover malformed/zero/negative/overflow/wrong-type markers, each supported older version, current-version idempotence, unversioned legacy compatibility, newer-version rejection and protection against overwriting a live newer repository or downgrading it through window-snapshot saves.
 
+`ProviderScanReviewTests` exercise actual Steam/Epic/GOG discovery with temporary metadata, supplied registry/app-info data and controlled file locks. Fixtures cover text VDF whitespace/escaping and old/new folder layouts, case-insensitive path deduplication, malformed/missing/locked metadata, successful empty scans, failed refresh retention and first-scan publication. Tests do not modify launcher installations or registry values. Steam's upstream binary app-info parser and installed launcher compatibility remain separate review/validation work.
+
+`OriginUbisoftReviewTests` cover invariant Origin versions, relative/legacy v2 executable resolution, literal parameter basenames, partial metadata failures, existing download/non-game filters, Ubisoft product/install identifiers and failed/empty catalogue refreshes. `SteamBinaryParserReviewTests` cover the three supported app-info signatures and two package signatures, oversized/out-of-range metadata, truncation, unterminated strings, record-boundary isolation, transactional repeat/failure reads and file-handle release. Fixtures use temporary files and supplied installation data; real current Steam binary-format compatibility and every installed provider scan remain on Terry's consolidated manual checklist in `Docs/CODEBASE_BUG_REVIEW.md`.
+
 ## Run
 
 Additional regression cases cover locked message-index writes, omission of launch arguments from logs, and the desktop Messages form's disconnected-service, timeout, and rejected-request paths. Form tests use an injected client and do not connect to installed services or initialize WebView2.
