@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
@@ -28,7 +29,7 @@ namespace DisplayMagician.GameLibraries
         }
 
         #region Class Variables
-        // Static members are 'eagerly initialized', that is, 
+        // Static members are 'eagerly initialized', that is,
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
         private static SteamLibrary _instance = new SteamLibrary();
@@ -44,12 +45,24 @@ namespace DisplayMagician.GameLibraries
         private string _registryAppsKey = $@"SOFTWARE\Valve\Steam\Apps"; // under CurrentUser
         private string _registryUsersKey = $@"SOFTWARE\Valve\Steam\Users"; // under CurrentUser
         private bool _isSteamInstalled = false;
+        private readonly IReadOnlyList<string>? _installedAppIds;
+        private readonly IReadOnlyList<App>? _appInfo;
+        private readonly IReadOnlyList<string>? _userIds;
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         // Other constants that are useful
         #endregion
 
         #region Class Constructors
         static SteamLibrary() { }
+
+        internal SteamLibrary(string steamPath, IReadOnlyList<string> installedAppIds, IReadOnlyList<App> appInfo, IReadOnlyList<string> userIds)
+        {
+            _steamPath = steamPath;
+            _installedAppIds = installedAppIds;
+            _appInfo = appInfo;
+            _userIds = userIds;
+            _isSteamInstalled = true;
+        }
 
         private SteamLibrary()
         {
@@ -66,7 +79,7 @@ namespace DisplayMagician.GameLibraries
                     }
                     _steamPath = steamInstallKey.GetValue("InstallPath", "C:\\Program Files (x86)\\Steam")?.ToString() ?? string.Empty;
                     _steamExe = $"{_steamPath}\\steam.exe";
-                }                   
+                }
                 if (File.Exists(_steamExe))
                 {
                     logger.Info($"SteamLibrary/SteamLibrary: Steam library is installed in {_steamPath}. Found {_steamExe}");
@@ -400,7 +413,7 @@ namespace DisplayMagician.GameLibraries
                     return true;
             }
 
-           
+
             return false;
 
         }
@@ -449,6 +462,7 @@ namespace DisplayMagician.GameLibraries
 
         public override bool LoadInstalledGames()
         {
+            bool scanComplete = true;
             try
             {
                 if (!_isSteamInstalled)
@@ -464,39 +478,38 @@ namespace DisplayMagician.GameLibraries
                 _allSteamGames.Clear();
 
                 List<string> steamAppIdsInstalled = new List<string>();
-                using (RegistryKey? steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
+                if (_installedAppIds != null) steamAppIdsInstalled.AddRange(_installedAppIds);
+                else
                 {
-                    if (steamAppsKey != null)
+                    using (RegistryKey? steamAppsKey = Registry.CurrentUser.OpenSubKey(_registryAppsKey, RegistryKeyPermissionCheck.ReadSubTree))
                     {
-                        foreach (string steamAppId in steamAppsKey.GetSubKeyNames())
+                        if (steamAppsKey != null)
                         {
-                            logger.Trace($"SteamLibrary/LoadInstalledGames: Found SteamGameKeyName = {steamAppId}");
-                            if (!String.IsNullOrWhiteSpace(steamAppId))
+                            foreach (string steamAppId in steamAppsKey.GetSubKeyNames())
                             {
-                                string steamGameKeyFullName = $"{_registryAppsKey}\\{steamAppId}";
-                                using (RegistryKey? steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
+                                logger.Trace($"SteamLibrary/LoadInstalledGames: Found SteamGameKeyName = {steamAppId}");
+                                if (!String.IsNullOrWhiteSpace(steamAppId))
                                 {
-                                    if (steamGameKey == null)
-                                        continue;
-                                    if (steamGameKey.GetValue(@"Installed", 0) is int installedValue && installedValue == 1)
+                                    string steamGameKeyFullName = $"{_registryAppsKey}\\{steamAppId}";
+                                    using (RegistryKey? steamGameKey = Registry.CurrentUser.OpenSubKey(steamGameKeyFullName, RegistryKeyPermissionCheck.ReadSubTree))
                                     {
-                                        logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} is an installed Steam App.");
-                                        steamAppIdsInstalled.Add(steamAppId);
+                                        if (steamGameKey == null)
+                                            continue;
+                                        if (steamGameKey.GetValue(@"Installed", 0) is int installedValue && installedValue == 1)
+                                        {
+                                            logger.Trace($"SteamLibrary/LoadInstalledGames: {steamGameKeyFullName} is an installed Steam App.");
+                                            steamAppIdsInstalled.Add(steamAppId);
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        if (steamAppIdsInstalled.Count == 0)
+                        }
+                        else
                         {
-                            logger.Warn($"SteamLibrary/LoadInstalledGames: No Steam games installed in the Steam library");
+                            logger.Warn($"SteamLibrary/LoadInstalledGames: Couldn't access the Steam Registry Key {_registrySteamKey}");
                             return false;
                         }
-                    }
-                    else
-                    {
-                        logger.Warn($"SteamLibrary/LoadInstalledGames: Couldn't access the Steam Registry Key {_registrySteamKey}");
-                        return false;
                     }
                 }
 
@@ -505,7 +518,8 @@ namespace DisplayMagician.GameLibraries
                 var newAppInfo = new AppInfo();
                 try
                 {
-                    newAppInfo.Read(appInfoVdfFile);
+                    if (_appInfo != null) newAppInfo.Apps = _appInfo.ToList();
+                    else if (steamAppIdsInstalled.Count > 0) newAppInfo.Read(appInfoVdfFile);
                 }
                 catch (Exception ex)
                 {
@@ -533,6 +547,8 @@ namespace DisplayMagician.GameLibraries
 
                             if (app.Data == null)
                             {
+                                scanComplete = false;
+                                logger.Warn("SteamLibrary/LoadInstalledGames: Installed app {0} has unreadable metadata; the scan is incomplete.", detectedAppID);
                                 continue;
                             }
 
@@ -589,56 +605,33 @@ namespace DisplayMagician.GameLibraries
                                 steamAppInfo.Add(detectedAppID, steamGameAppInfo);
                             }
                         }
-                        catch (ArgumentException ex)
+                        catch (Exception ex)
                         {
-                            logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: ArgumentException while processing the {appInfoVdfFile} VDF file");
+                            scanComplete = false;
+                            logger.Warn(ex, "SteamLibrary/LoadInstalledGames: Could not process installed app {0} in {1}; the scan is incomplete.", detectedAppID, appInfoVdfFile);
                         }
                     }
                 }
 
                 List<string> steamLibrariesPaths = new List<string> { _steamPath };
 
-                string _steamLibraryFoldersVdfFile = Path.Combine(_steamPath, "steamapps", "libraryfolders.vdf");
-                if (File.Exists(_steamLibraryFoldersVdfFile))
+                foreach ((string file, bool legacy) in new[]
                 {
-                    string steamLibraryFoldersText = File.ReadAllText(_steamLibraryFoldersVdfFile, Encoding.UTF8);
-                    Regex steamLibrariesRegex = new Regex(@"\t""path""\t\t""(.*?)""\n", RegexOptions.IgnoreCase);
-                    MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamLibraryFoldersText);
-                    foreach (Match steamLibraryMatch in steamLibrariesMatches)
+                    (Path.Combine(_steamPath, "steamapps", "libraryfolders.vdf"), false),
+                    (Path.Combine(_steamPath, "config", "config.vdf"), true)
+                })
+                {
+                    if (!File.Exists(file)) continue; // Older/newer clients may have only one source.
+                    try
                     {
-                        if (steamLibraryMatch.Success)
-                        {
-                            string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                            if (!steamLibraryPath.Equals(_steamPath) && Directory.Exists(steamLibraryPath))
-                            {
-                                if (!steamLibrariesPaths.Contains(steamLibraryPath))
-                                {
-                                    steamLibrariesPaths.Add(steamLibraryPath);
-                                }
-                            }
-                        }
+                        foreach (string libraryPath in ReadLibraryPaths(file, legacy))
+                            if (Directory.Exists(libraryPath) && !steamLibrariesPaths.Contains(libraryPath, StringComparer.OrdinalIgnoreCase))
+                                steamLibrariesPaths.Add(libraryPath);
                     }
-                }
-
-                _steamConfigVdfFile = Path.Combine(_steamPath, "config", "config.vdf");
-                if (File.Exists(_steamConfigVdfFile))
-                {
-                    string steamConfigVdfText = File.ReadAllText(_steamConfigVdfFile, Encoding.UTF8);
-                    Regex steamLibrariesRegex = new Regex(@"""BaseInstallFolder_\d+""\s+""(.*)""", RegexOptions.IgnoreCase);
-                    MatchCollection steamLibrariesMatches = steamLibrariesRegex.Matches(steamConfigVdfText);
-                    foreach (Match steamLibraryMatch in steamLibrariesMatches)
+                    catch (Exception ex)
                     {
-                        if (steamLibraryMatch.Success)
-                        {
-                            string steamLibraryPath = Regex.Unescape(steamLibraryMatch.Groups[1].Value);
-                            if (!steamLibraryPath.Equals(_steamPath) && Directory.Exists(steamLibraryPath))
-                            {
-                                if (!steamLibrariesPaths.Contains(steamLibraryPath))
-                                {
-                                    steamLibrariesPaths.Add(steamLibraryPath);
-                                }
-                            }
-                        }
+                        scanComplete = false;
+                        logger.Warn(ex, "SteamLibrary/LoadInstalledGames: Could not read library folders from {0}; continuing the incomplete scan.", file);
                     }
                 }
 
@@ -650,12 +643,9 @@ namespace DisplayMagician.GameLibraries
                         string[] steamLibraryAppManifestFilenames = Directory.GetFiles(steamLibraryAppManifestPath, "appmanifest_*.acf");
                         foreach (string steamLibraryAppManifestFilename in steamLibraryAppManifestFilenames)
                         {
-                            string steamLibraryAppManifestText = File.ReadAllText(steamLibraryAppManifestFilename);
-                            Regex appidRegex = new Regex(@"""appid""\s+""(\d+)""", RegexOptions.IgnoreCase);
-                            Match appidMatches = appidRegex.Match(steamLibraryAppManifestText);
-                            if (appidMatches.Success && !String.IsNullOrWhiteSpace(appidMatches.Groups[1].Value))
+                            try
                             {
-                                string steamGameId = appidMatches.Groups[1].Value;
+                                string steamGameId = ReadManifestAppId(steamLibraryAppManifestFilename);
                                 if (steamAppInfo.ContainsKey(steamGameId))
                                 {
                                     string steamGameExe = "";
@@ -690,74 +680,81 @@ namespace DisplayMagician.GameLibraries
                                     _allSteamGames.Add(gameToAdd);
                                 }
                             }
+                            catch (Exception ex)
+                            {
+                                scanComplete = false;
+                                logger.Warn(ex, "SteamLibrary/LoadInstalledGames: Could not read manifest {0}; continuing the incomplete scan.", steamLibraryAppManifestFilename);
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
+                        scanComplete = false;
                         logger.Warn(ex, $"SteamLibrary/LoadInstalledGames: Operational hiccup scanning storage directory path: {steamLibraryPath}.");
                     }
                 }
 
                 // Non-Steam Game Parsing Section
-                using (RegistryKey? steamUsersKey = Registry.CurrentUser.OpenSubKey(_registryUsersKey, RegistryKeyPermissionCheck.ReadSubTree))
+                List<string> userIds = _userIds?.ToList() ?? new List<string>();
+                if (_userIds == null)
                 {
-                    if (steamUsersKey != null)
+                    using RegistryKey? steamUsersKey = Registry.CurrentUser.OpenSubKey(_registryUsersKey, RegistryKeyPermissionCheck.ReadSubTree);
+                    if (steamUsersKey != null) userIds.AddRange(steamUsersKey.GetSubKeyNames());
+                }
+                foreach (string steamUserId in userIds)
+                {
+                    if (!String.IsNullOrWhiteSpace(steamUserId))
                     {
-                        foreach (string steamUserId in steamUsersKey.GetSubKeyNames())
+                        string shortcutsVdfFile = Path.Combine(_steamPath, "userdata", steamUserId, "config", "shortcuts.vdf");
+                        if (File.Exists(shortcutsVdfFile))
                         {
-                            if (!String.IsNullOrWhiteSpace(steamUserId))
+                            try
                             {
-                                string shortcutsVdfFile = Path.Combine(_steamPath, "userdata", steamUserId, "config", "shortcuts.vdf");
-                                if (File.Exists(shortcutsVdfFile))
+                                using var fs = new FileStream(shortcutsVdfFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                                var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
+                                var kvDoc = deserializer.Deserialize(fs);
+                                foreach (var (kvItemKey, kvItem) in kvDoc.Root)
                                 {
-                                    var fs = new FileStream(shortcutsVdfFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                                    try
-                                    {
-                                        var deserializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
-                                        var kvDoc = deserializer.Deserialize(fs);
-                                        foreach (var (kvItemKey, kvItem) in kvDoc.Root)
-                                        {
-                                            string shortcutGameID = "";
-                                            string shortcutGameName = "";
-                                            string shortcutGameExe = "";
-                                            string shortcutGameIconPath = "";
+                                    string shortcutGameID = "";
+                                    string shortcutGameName = "";
+                                    string shortcutGameExe = "";
+                                    string shortcutGameIconPath = "";
 
-                                            foreach (var (subItemKey, subItem) in kvItem)
-                                            {
-                                                switch (subItemKey.ToLower())
-                                                {
-                                                    case "appid":
-                                                        var appid = (UInt64)(int)subItem;
-                                                        shortcutGameID = ((appid << 32) | 0x02000000).ToString();
-                                                        break;
-                                                    case "appname":
-                                                        shortcutGameName = $"{(string)subItem} (via Steam)";
-                                                        break;
-                                                    case "exe":
-                                                        string tempString2 = (string)subItem;
-                                                        shortcutGameExe = (tempString2.StartsWith("\"") && tempString2.EndsWith("\"")) 
-                                                            ? tempString2.Substring(1, (tempString2.Length - 2)) 
-                                                            : tempString2;
-                                                        
-                                                        if (File.Exists(shortcutGameExe))
-                                                            shortcutGameIconPath = shortcutGameExe;
-                                                        break;
-                                                    case "icon":
-                                                        string? shortcutIconPath = (string)subItem;
-                                                        if (!string.IsNullOrWhiteSpace(shortcutIconPath) && File.Exists(shortcutIconPath))
-                                                            shortcutGameIconPath = shortcutIconPath;
-                                                        break;
-                                                }
-                                            }
-                                            SteamGame gameToAdd = new SteamGame(shortcutGameID, shortcutGameName, shortcutGameExe, shortcutGameIconPath);
-                                            _allSteamGames.Add(gameToAdd);
+                                    foreach (var (subItemKey, subItem) in kvItem)
+                                    {
+                                        switch (subItemKey.ToLower())
+                                        {
+                                            case "appid":
+                                                var appid = (UInt64)(int)subItem;
+                                                shortcutGameID = ((appid << 32) | 0x02000000).ToString();
+                                                break;
+                                            case "appname":
+                                                shortcutGameName = $"{(string)subItem} (via Steam)";
+                                                break;
+                                            case "exe":
+                                                string tempString2 = (string)subItem;
+                                                shortcutGameExe = (tempString2.StartsWith("\"") && tempString2.EndsWith("\""))
+                                                    ? tempString2.Substring(1, (tempString2.Length - 2))
+                                                    : tempString2;
+
+                                                if (File.Exists(shortcutGameExe))
+                                                    shortcutGameIconPath = shortcutGameExe;
+                                                break;
+                                            case "icon":
+                                                string? shortcutIconPath = (string)subItem;
+                                                if (!string.IsNullOrWhiteSpace(shortcutIconPath) && File.Exists(shortcutIconPath))
+                                                    shortcutGameIconPath = shortcutIconPath;
+                                                break;
                                         }
                                     }
-                                    finally
-                                    {
-                                        fs.Close();
-                                    }
+                                    SteamGame gameToAdd = new SteamGame(shortcutGameID, shortcutGameName, shortcutGameExe, shortcutGameIconPath);
+                                    _allSteamGames.Add(gameToAdd);
                                 }
+                            }
+                            catch (Exception ex)
+                            {
+                                scanComplete = false;
+                                logger.Warn(ex, "SteamLibrary/LoadInstalledGames: Could not read shortcuts {0}; continuing the incomplete scan.", shortcutsVdfFile);
                             }
                         }
                     }
@@ -772,9 +769,60 @@ namespace DisplayMagician.GameLibraries
                 return false;
             }
 
-            return true;
+            return scanComplete;
         }
 
+
+        internal static List<string> ReadLibraryPaths(string file, bool legacyConfig)
+        {
+            using FileStream stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var document = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream, new KVSerializerOptions { HasEscapeSequences = true });
+            if (!legacyConfig && !string.Equals(document.Name, "libraryfolders", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("The Steam library folder file has an unexpected root.");
+            List<string> paths = new List<string>();
+            Stack<KVObject> nodes = new Stack<KVObject>();
+            nodes.Push(document.Root);
+            while (nodes.Count > 0)
+            {
+                foreach (var (key, value) in nodes.Pop())
+                {
+                    if (legacyConfig)
+                    {
+                        if (value.IsCollection) { nodes.Push(value); continue; }
+                        const string prefix = "BaseInstallFolder_";
+                        if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || !int.TryParse(key.Substring(prefix.Length), out _)) continue;
+                    }
+                    else if (!int.TryParse(key, out _)) continue;
+
+                    KVObject path = value;
+                    if (!legacyConfig && value.IsCollection)
+                    {
+                        path = value.FirstOrDefault(item => string.Equals(item.Key, "path", StringComparison.OrdinalIgnoreCase)).Value;
+                        if (path == null) throw new InvalidDataException("A Steam library entry has no path.");
+                    }
+                    string libraryPath = (string)path;
+                    if (string.IsNullOrWhiteSpace(libraryPath)) throw new InvalidDataException("A Steam library entry has an empty path.");
+                    paths.Add(Path.GetFullPath(libraryPath));
+                }
+            }
+            return paths;
+        }
+
+        private static string ReadManifestAppId(string file)
+        {
+            using FileStream stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var document = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream, new KVSerializerOptions { HasEscapeSequences = true });
+            if (!string.Equals(document.Name, "AppState", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("The Steam app manifest has an unexpected root.");
+            foreach (var (key, value) in document.Root)
+                if (string.Equals(key, "appid", StringComparison.OrdinalIgnoreCase))
+                {
+                    string id = (string)value;
+                    if (uint.TryParse(id, out _)) return id;
+                    break;
+                }
+            throw new InvalidDataException("The Steam app manifest has no valid app ID.");
+        }
 
         public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {

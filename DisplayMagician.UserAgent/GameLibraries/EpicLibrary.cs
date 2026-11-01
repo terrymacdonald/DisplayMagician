@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -18,7 +18,7 @@ namespace DisplayMagician.GameLibraries
     public sealed class EpicLibrary : GameLibrary
     {
         #region Class Variables
-        // Static members are 'eagerly initialized', that is, 
+        // Static members are 'eagerly initialized', that is,
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
         private static readonly EpicLibrary _instance = new EpicLibrary();
@@ -45,6 +45,12 @@ namespace DisplayMagician.GameLibraries
         #region Class Constructors
         static EpicLibrary() { }
 
+        internal EpicLibrary(string localContent)
+        {
+            _epicLocalContent = localContent;
+            _isEpicInstalled = true;
+        }
+
         private EpicLibrary()
         {
             try
@@ -57,7 +63,7 @@ namespace DisplayMagician.GameLibraries
                     logger.Info($"EpicLibrary/EpicLibrary: Epic library is not installed!");
                     return;
                 }
-                    
+
                 _epicExe = EpicOnlineServicesKey.GetValue("ModSdkCommand") as string
                     ?? @"C:/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win64/EpicGamesLauncher.exe";
                 _epicPath = Path.GetDirectoryName(_epicExe) ?? string.Empty;
@@ -70,7 +76,7 @@ namespace DisplayMagician.GameLibraries
                 {
                     logger.Info($"EpicLibrary/EpicLibrary: Epic library is not installed!");
                 }
-                   
+
             }
             catch (SecurityException ex)
             {
@@ -113,12 +119,12 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public override string GameLibraryName 
-        { 
-            get 
+        public override string GameLibraryName
+        {
+            get
             {
                 return "Epic";
-            } 
+            }
         }
 
         public override SupportedGameLibraryType GameLibraryType
@@ -267,7 +273,7 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"EpicLibrary/RemoveEpicGame: Didn't remove Epic game with ID {epicGame.Name} from the Epic Library");
                 return false;
-            }                
+            }
             else
                 throw new EpicLibraryException();
         }
@@ -434,6 +440,7 @@ namespace DisplayMagician.GameLibraries
 
         public override bool LoadInstalledGames()
         {
+            bool scanComplete = true;
             try
             {
                 if (!_isEpicInstalled)
@@ -486,19 +493,19 @@ namespace DisplayMagician.GameLibraries
                     catch (Exception ex)
                     {
                         logger.Error(ex, $"EpicLibrary/LoadInstalledGames: Exception trying to convert manifest to a JSON object. Skipping file: {localInstalledGameManifestFile}");
+                        scanComplete = false;
                         continue;
                     }
 
-                    if (epicManifest != null)
+                    if (epicManifest != null && !string.IsNullOrWhiteSpace(epicManifest.AppName))
                     {
                         allManifests.Add(epicManifest);
                     }
-                }
-
-                if (allManifests.Count == 0)
-                {
-                    logger.Warn($"EpicLibrary/LoadInstalledGames: No Epic games installed in the Epic library");
-                    return false;
+                    else
+                    {
+                        scanComplete = false;
+                        logger.Warn("EpicLibrary/LoadInstalledGames: Manifest {0} has no application identity; the scan is incomplete.", localInstalledGameManifestFile);
+                    }
                 }
 
                 // Clear existing collection to avoid duplication if re-scanned
@@ -514,7 +521,11 @@ namespace DisplayMagician.GameLibraries
                     InstalledManifiest? installedAppManifest = allManifests.FirstOrDefault(a => a.AppName == installedApp.AppName);
 
                     if (installedAppManifest == null)
+                    {
+                        scanComplete = false;
+                        logger.Warn("EpicLibrary/LoadInstalledGames: Installed application {0} has no readable manifest; the scan is incomplete.", installedApp.AppName);
                         continue;
+                    }
 
                     // DLC Filtering
                     if (installedAppManifest.AppName != installedAppManifest.MainGameAppName)
@@ -528,7 +539,7 @@ namespace DisplayMagician.GameLibraries
                         continue;
                     }
 
-                    // Extract the info into an EpicGame object                    
+                    // Extract the info into an EpicGame object
                     EpicGame epicGame = new EpicGame();
                     epicGame.Name = installedAppManifest.DisplayName ?? Path.GetFileName(installedApp.InstallLocation) ?? string.Empty;
                     epicGame.Directory = installedAppManifest.InstallLocation ?? installedApp.InstallLocation;
@@ -568,7 +579,7 @@ namespace DisplayMagician.GameLibraries
                 return false;
             }
 
-            return true;
+            return scanComplete;
         }
 
         /*public override Process StartGame(Game game, string gameArguments = "", ProcessPriorityClass processPriority = ProcessPriorityClass.Normal)
@@ -624,6 +635,7 @@ namespace DisplayMagician.GameLibraries
             public string AppVersion = string.Empty;
         }
 
+        [JsonProperty(Required = Required.Always)]
         public List<InstalledApp> InstallationList = new List<InstalledApp>();
     }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -18,7 +18,7 @@ namespace DisplayMagician.GameLibraries
     public sealed class GogLibrary : GameLibrary
     {
         #region Class Variables
-        // Static members are 'eagerly initialized', that is, 
+        // Static members are 'eagerly initialized', that is,
         // immediately when class is loaded for the first time.
         // .NET guarantees thread safety for static initialization
         private static readonly GogLibrary _instance = new GogLibrary();
@@ -32,11 +32,12 @@ namespace DisplayMagician.GameLibraries
         private string _gogLocalContent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "GOG.com");
         private string _gogProgramFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GOG Galaxy");
         private bool _isGogInstalled = false;
+        private readonly Func<string, (string Directory, string Executable, string FileName)?>? _readInstallation;
         private List<string> _gogProcessList = new List<string>(){ "GalaxyClient" };
 
-        internal string registryGogGalaxyClientKey = @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient"; 
+        internal string registryGogGalaxyClientKey = @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient";
         internal string registryGogGalaxyClientPathKey = @"SOFTWARE\WOW6432Node\GOG.com\GalaxyClient\paths";
-        internal string registryGogGalaxyGamesKey = @"SOFTWARE\WOW6432Node\GOG.com\Games\";     
+        internal string registryGogGalaxyGamesKey = @"SOFTWARE\WOW6432Node\GOG.com\Games\";
         //internal string registryGogLauncherKey = @"SOFTWARE\WOW6432Node\Gog";
         private readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -46,6 +47,13 @@ namespace DisplayMagician.GameLibraries
 
         #region Class Constructors
         static GogLibrary() { }
+
+        internal GogLibrary(string localContent, Func<string, (string Directory, string Executable, string FileName)?> readInstallation)
+        {
+            _gogLocalContent = localContent;
+            _readInstallation = readInstallation;
+            _isGogInstalled = true;
+        }
 
         private GogLibrary()
         {
@@ -70,7 +78,7 @@ namespace DisplayMagician.GameLibraries
                 string gogClientPath = GogGalaxyClientPathKey.GetValue("client") as string
                     ?? @"C:\Program Files (x86)\GOG Galaxy";
                 _gogPath = gogClientPath;
-                _gogExe = Path.Combine(gogClientPath, gogClientExeFilename);                
+                _gogExe = Path.Combine(gogClientPath, gogClientExeFilename);
                 if (File.Exists(_gogExe))
                 {
                     logger.Info($"GogLibrary/GogLibrary: GOG library is installed in {_gogPath}. Found {_gogExe}");
@@ -80,7 +88,7 @@ namespace DisplayMagician.GameLibraries
                 {
                     logger.Info($"GogLibrary/GogLibrary: GOG library is not installed!");
                 }
-                   
+
             }
             catch (SecurityException ex)
             {
@@ -123,12 +131,12 @@ namespace DisplayMagician.GameLibraries
             }
         }
 
-        public override string GameLibraryName 
-        { 
-            get 
+        public override string GameLibraryName
+        {
+            get
             {
                 return "GOG";
-            } 
+            }
         }
 
         public override SupportedGameLibraryType GameLibraryType
@@ -184,10 +192,10 @@ namespace DisplayMagician.GameLibraries
                         return true;
                     else
                         return false;
-                }                
+                }
                 catch (Exception ex) {
                     logger.Warn(ex, $"GogLibrary/IsRunning: Exception while trying to get the GOG Library processes with names: {string.Join(", ", _gogProcessList)}");
-                    return false; 
+                    return false;
                 }
             }
 
@@ -227,7 +235,7 @@ namespace DisplayMagician.GameLibraries
         {
             if (!(gogGame is GogGame))
                 return false;
-            
+
             // Doublecheck if it already exists
             // Because then we just update the one that already exists
             if (ContainsGame(gogGame))
@@ -276,7 +284,7 @@ namespace DisplayMagician.GameLibraries
             {
                 logger.Debug($"GogLibrary/RemoveGogGame: Didn't remove Gog game with ID {gogGame.Name} from the Gog Library");
                 return false;
-            }                
+            }
             else
                 throw new GogLibraryException();
         }
@@ -436,6 +444,7 @@ namespace DisplayMagician.GameLibraries
 
         public override bool LoadInstalledGames()
         {
+            bool scanComplete = true;
             try
             {
                 if (!_isGogInstalled)
@@ -453,14 +462,15 @@ namespace DisplayMagician.GameLibraries
 
                 logger.Trace($"GogLibrary/LoadInstalledGames: supportInstaller Directory {gogSupportInstallerDir} exists!");
                 string[] gogSupportInstallerGameDirs = Directory.GetDirectories(gogSupportInstallerDir, "*", SearchOption.AllDirectories);
-                
+
                 // FIX: Format directory collection properly for readability inside Trace records
                 logger.Trace($"GogLibrary/LoadInstalledGames: Found game directories in supportInstaller: {string.Join(", ", gogSupportInstallerGameDirs)}");
 
                 if (gogSupportInstallerGameDirs.Length == 0)
                 {
-                    logger.Warn($"GogLibrary/LoadInstalledGames: No GOG games installed in the GOG Galaxy library");
-                    return false;
+                    _allGogGames.Clear();
+                    logger.Info("GogLibrary/LoadInstalledGames: The readable GOG support directory contains no installed games.");
+                    return true;
                 }
 
                 // FIX: Clear the tracking list collection before rebuilding to prevent catalog duplication leaks!
@@ -482,6 +492,7 @@ namespace DisplayMagician.GameLibraries
                     logger.Trace($"GogLibrary/LoadInstalledGames: Looking for games info file {gogGameInfoFilename}");
                     if (!File.Exists(gogGameInfoFilename))
                     {
+                        scanComplete = false;
                         logger.Warn($"GogLibrary/LoadInstalledGames: Couldn't find games info file {gogGameInfoFilename}. There seems to be a problem with your GOG installation.");
                         continue;
                     }
@@ -493,12 +504,14 @@ namespace DisplayMagician.GameLibraries
                     }
                     catch (Exception ex)
                     {
+                        scanComplete = false;
                         logger.Warn(ex, $"GogLibrary/LoadInstalledGames: Exception trying to convert the {gogGameInfoFilename} to a JSON object. Skipping entry.");
                         continue;
                     }
 
-                    if (gogGameInfo == null)
+                    if (gogGameInfo == null || string.IsNullOrWhiteSpace(gogGameInfo.gameId) || string.IsNullOrWhiteSpace(gogGameInfo.rootGameId))
                     {
+                        scanComplete = false;
                         logger.Warn($"GogLibrary/LoadInstalledGames: The {gogGameInfoFilename} file could not be deserialized. Skipping entry.");
                         continue;
                     }
@@ -512,17 +525,18 @@ namespace DisplayMagician.GameLibraries
 
                     string registryGogGalaxyGameKey = registryGogGalaxyGamesKey + gogGameInfo.gameId;
                     logger.Trace($"GogLibrary/GogLibrary: GOG Galaxy Games registry key = HKLM\\{registryGogGalaxyGameKey}");
-                    
-                    using (RegistryKey? GogGalaxyGameKey = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGameKey, RegistryKeyPermissionCheck.ReadSubTree))
+
+                    try
                     {
-                        if (GogGalaxyGameKey == null)
+                        var installation = _readInstallation != null ? _readInstallation(gogGameInfo.gameId) : ReadInstallation(gogGameInfo.gameId);
+                        if (installation == null)
                         {
                             logger.Info($"GogLibrary/GogLibrary: Could not find registry key {registryGogGalaxyGameKey} for {gogGameInfo.name}. Skipping entry.");
                             continue;
                         }
 
-                        string gameDirectory = GogGalaxyGameKey.GetValue("path", "")?.ToString() ?? string.Empty;
-                        string gameExePath = GogGalaxyGameKey.GetValue("exe", "")?.ToString() ?? string.Empty;
+                        string gameDirectory = installation.Value.Directory;
+                        string gameExePath = installation.Value.Executable;
                         if (!File.Exists(gameExePath))
                         {
                             logger.Info($"GogLibrary/GogLibrary: Could not verify game file target path {gameExePath}. Skipping entry.");
@@ -533,12 +547,17 @@ namespace DisplayMagician.GameLibraries
                         gogGame.Id = gogGameInfo.gameId;
                         gogGame.Name = gogGameInfo.name;
                         gogGame.Directory = gameDirectory;
-                        gogGame.Executable = GogGalaxyGameKey.GetValue("exeFile", "")?.ToString() ?? string.Empty;
+                        gogGame.Executable = installation.Value.FileName;
                         gogGame.ExePath = gameExePath;
                         gogGame.IconPath = gameExePath;
                         gogGame.ProcessName = Path.GetFileNameWithoutExtension(gogGame.ExePath);
 
                         _allGogGames.Add(gogGame);
+                    }
+                    catch (Exception ex)
+                    {
+                        scanComplete = false;
+                        logger.Warn(ex, "GogLibrary/LoadInstalledGames: Could not read installation data for {0}; continuing the incomplete scan.", gogGameInfo.gameId);
                     }
                 }
 
@@ -551,9 +570,15 @@ namespace DisplayMagician.GameLibraries
                 return false;
             }
 
-            return true;
+            return scanComplete;
         }
 
+        private (string Directory, string Executable, string FileName)? ReadInstallation(string gameId)
+        {
+            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(registryGogGalaxyGamesKey + gameId, RegistryKeyPermissionCheck.ReadSubTree);
+            return key == null ? null : (key.GetValue("path", "")?.ToString() ?? string.Empty,
+                key.GetValue("exe", "")?.ToString() ?? string.Empty, key.GetValue("exeFile", "")?.ToString() ?? string.Empty);
+        }
 
         public override List<Process>? StartGame(Game game, string gameArguments = "", ProcessPriority processPriority = ProcessPriority.Normal)
         {
