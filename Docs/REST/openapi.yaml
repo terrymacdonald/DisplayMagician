@@ -2334,6 +2334,13 @@
           },
           "links": {
             "$ref": "#/components/schemas/OperationLinks"
+          },
+          "displayResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisplayConfigurationResult"
+            },
+            "description": "Display capture, apply and restoration diagnostics; absent on older servers. Warning-only application remains successful."
           }
         }
       },
@@ -3221,6 +3228,94 @@
             ]
           },
           "retryable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DisplayConfigurationIssue": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "severity",
+          "stage",
+          "component",
+          "displayId",
+          "message"
+        ],
+        "properties": {
+          "severity": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "description": "0 = warning, 1 = fatal. Restoration failures are reported as warnings."
+          },
+          "stage": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string"
+          },
+          "displayId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "nativeErrorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exceptionHResult": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "DisplayConfigurationResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profileId",
+          "isCapture",
+          "isRestoration",
+          "attempt",
+          "topologyApplied",
+          "issues",
+          "isSuccessful",
+          "hasWarnings"
+        ],
+        "properties": {
+          "profileId": {
+            "type": "string"
+          },
+          "isCapture": {
+            "type": "boolean"
+          },
+          "isRestoration": {
+            "type": "boolean"
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "topologyApplied": {
+            "type": "boolean"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisplayConfigurationIssue"
+            }
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "hasWarnings": {
             "type": "boolean"
           }
         }

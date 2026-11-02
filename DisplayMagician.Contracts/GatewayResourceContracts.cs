@@ -96,6 +96,8 @@ public sealed class OperationAccepted
 
 public sealed class GatewayOperationView
 {
+    public DisplayConfigurationResult[] DisplayResults { get; set; } = Array.Empty<DisplayConfigurationResult>();
+
     public Guid Id { get; set; }
     public string Type { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;

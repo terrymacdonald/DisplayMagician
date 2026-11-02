@@ -1,3 +1,4 @@
+using DisplayMagician.Contracts;
 using DisplayMagician.UserAgent.Runtime.Windows;
 using NVAPIWrapper;
 using EDIDParser;
@@ -1213,6 +1214,9 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         }
 
         public bool UpdateActiveConfig()
+            => UpdateActiveConfig(new DisplayConfigurationDiagnostics());
+
+        internal bool UpdateActiveConfig(DisplayConfigurationDiagnostics diagnostics)
         {
             SharedLogger.logger.Trace($"NVIDIALibrary/UpdateActiveConfig: Updating the currently active config");
             try
@@ -1223,6 +1227,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             catch (Exception ex)
             {
                 SharedLogger.logger.Trace(ex, $"NVIDIALibrary/UpdateActiveConfig: Exception updating the currently active config");
+                diagnostics.Add("Capture", "NVIDIA", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 return false;
             }
 
@@ -2605,6 +2610,9 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         }
 
         public bool SetActiveConfig(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs)
+            => SetActiveConfig(displayConfig, delayInMs, new DisplayConfigurationDiagnostics());
+
+        internal bool SetActiveConfig(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
 
             if (_initialised && _nvapiApiHelper != null)
@@ -2648,6 +2656,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfig: Exception: The GPU DisplayGrid could not be made. SetDisplayGrids() returned error message {ex.Message}");
+                            diagnostics.Add("VendorConfiguration", "NVIDIA", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                             return false;
                         }
 
@@ -2657,7 +2666,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                 else if (!displayConfig.MosaicConfig.IsMosaicEnabled && ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
                 {
                     // We are on a Mosaic profile now, and we need to change to a non-Mosaic profile
-                    TurnOffMosaic(delayInMs);
+                    if (!TurnOffMosaic(delayInMs, diagnostics)) return false;
 
                 }
                 else if (!displayConfig.MosaicConfig.IsMosaicEnabled && !ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
@@ -2677,6 +2686,9 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         }
 
         public bool TurnOffMosaic(int delayInMs)
+            => TurnOffMosaic(delayInMs, new DisplayConfigurationDiagnostics());
+
+        internal bool TurnOffMosaic(int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
             SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Mosaic config that is currently set is no longer needed. Removing Mosaic config.");
 
@@ -2731,6 +2743,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"NVIDIALibrary/TurnOffMosaic: Exception while trying to disable Mosaic using EnableCurrentTopo(false).");
+                            diagnostics.Add("Surround", "NVIDIA", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                             return false;
                         }
                     }
@@ -2743,6 +2756,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/TurnOffMosaic: Exception while trying to turn off Mosaic.");
+                diagnostics.Add("Surround", "NVIDIA", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 return false;
             }
 
@@ -2750,7 +2764,12 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         }
 
         public bool SetActiveConfigOverride(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs)
+            => SetActiveConfigOverride(displayConfig, delayInMs, new DisplayConfigurationDiagnostics());
+
+        internal bool SetActiveConfigOverride(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
+            string diagnosticStage = "VendorOverride";
+            string diagnosticDisplayId = string.Empty;
 
             if (_initialised && _nvapiApiHelper != null)
             {
@@ -2769,6 +2788,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             if (drsHelper == null)
                             {
                                 SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Failed to create a DRS session. DRS settings will not be applied.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Failed to create a DRS session. DRS settings will not be applied.", displayId: diagnosticDisplayId);
                             }
                             else
                             {
@@ -2780,6 +2800,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                 if (!loaded)
                                 {
                                     SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Failed to load the current DRS settings into memory.");
+                                    diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Failed to load the current DRS settings into memory.", displayId: diagnosticDisplayId);
                                 }
                                 else
                                 {
@@ -2791,6 +2812,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     if (!baseProfile.HasValue)
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Failed to get the base DRS profile. The DRS Settings may not have been loaded.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Failed to get the base DRS profile. The DRS Settings may not have been loaded.", displayId: diagnosticDisplayId);
                                     }
                                     else
                                     {
@@ -2810,6 +2832,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                                 if (storedBaseProfile == null || activeBaseProfile == null)
                                                 {
                                                     SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Could not find both the stored and active base DRS profiles. Skipping DRS setting application.");
+                                                    diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Could not find both the stored and active base DRS profiles. Skipping DRS setting application.", displayId: diagnosticDisplayId);
                                                 }
                                                 else
                                                 {
@@ -2847,6 +2870,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                                                     catch (Exception ex)
                                                                     {
                                                                         SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception caused whilst changing setting '{currentSetting.SettingName}' ({currentSetting.SettingId}).");
+                                                                        diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                                                     }
                                                                 }
                                                                 break;
@@ -2874,6 +2898,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                                         catch (Exception ex)
                                                         {
                                                             SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to restore setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default.");
+                                                            diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                                         }
                                                     }
                                                 }
@@ -2881,6 +2906,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                             catch (Exception ex)
                                             {
                                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to find base profiles in either the stored or active display configs.");
+                                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                             }
 
                                             // Save the Settings if needed
@@ -2895,6 +2921,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                                 catch (Exception ex)
                                                 {
                                                     SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to save the current DRS settings.");
+                                                    diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                                 }
                                             }
                                         }
@@ -2906,6 +2933,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                     catch (Exception ex)
                     {
                         SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception occurred whilst applying the DRS settings.");
+                        diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                     }
                 }
 
@@ -2927,6 +2955,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception occurred whilst building the display helper lookup. Per-display settings will be skipped.");
+                    diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                 }
 
                 // Go through the physical adapters and apply per-display settings
@@ -2940,6 +2969,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                     {
                         NVIDIA_PER_DISPLAY_CONFIG myDisplay = displayDict.Value;
                         string displayKey = displayDict.Key;
+                        diagnosticDisplayId = displayKey;
 
                         // Parse displayId from the composite key for connected display check
                         UInt32 displayId = 0;
@@ -2966,6 +2996,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                         if (!displayHelperLookup.TryGetValue(displayId, out NVAPIDisplayHelper? displayHelper) || displayHelper == null)
                         {
                             SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Could not find NVAPIDisplayHelper for display {displayId}. Skipping per-display settings.");
+                            diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Could not find NVAPIDisplayHelper for display {displayId}. Skipping per-display settings.", displayId: diagnosticDisplayId);
                             continue;
                         }
 
@@ -2984,12 +3015,14 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             {
                                 activeDisplay = new NVIDIA_PER_DISPLAY_CONFIG();
                                 SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Could not find display {displayKey} in ActiveDisplayConfig. Will apply all settings unconditionally.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Could not find display {displayKey} in ActiveDisplayConfig. Will apply all settings unconditionally.", displayId: diagnosticDisplayId);
                             }
                         }
                         catch (Exception ex)
                         {
                             activeDisplay = new NVIDIA_PER_DISPLAY_CONFIG();
                             SharedLogger.logger.Warn(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception getting active display config for {displayKey}. Will apply all settings unconditionally.");
+                            diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                         }
 
                         // Derive connector type gating booleans from the saved display configuration.
@@ -2999,6 +3032,8 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                         bool isDigitalWithProtocol = isDisplayPort || isHdmi;
 
                         // === Color Data ===
+
+                        diagnosticStage = "ColorData";
                         if (myDisplay.HasColorData && isDigitalWithProtocol)
                         {
                             try
@@ -3015,6 +3050,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: ColorControl returned null for display {displayId}. The Color settings may not have been applied.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: ColorControl returned null for display {displayId}. The Color settings may not have been applied.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3025,10 +3061,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting Color data for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === HDR Color Data ===
+
+                        diagnosticStage = "HDRColorData";
                         if (myDisplay.HasNvHdrEnabled && isDigitalWithProtocol)
                         {
                             try
@@ -3045,6 +3084,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: HdrColorControl returned null for display {displayId}. The HDR Color settings may not have been applied.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: HdrColorControl returned null for display {displayId}. The HDR Color settings may not have been applied.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3055,10 +3095,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting HDR Color data for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === Virtual Refresh Rate ===
+
+                        diagnosticStage = "VirtualRefreshRate";
                         if (myDisplay.HasVirtualRefreshRate && isDisplayPort)
                         {
                             try
@@ -3075,6 +3118,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: SetVirtualRefreshRateData returned false for display {displayId}.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: SetVirtualRefreshRateData returned false for display {displayId}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3085,10 +3129,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting Virtual Refresh Rate data for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === Preferred Stereo Display ===
+
+                        diagnosticStage = "PreferredStereoDisplay";
                         if (myDisplay.HasPreferredStereoDisplay)
                         {
                             try
@@ -3105,6 +3152,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: SetPreferredStereoDisplay returned false for display {displayId}.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: SetPreferredStereoDisplay returned false for display {displayId}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3115,10 +3163,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting Preferred Stereo Display data for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === Source Color Space ===
+
+                        diagnosticStage = "SourceColorSpace";
                         if (myDisplay.HasSourceColorSpace && isDigitalWithProtocol)
                         {
                             try
@@ -3135,6 +3186,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: SetSourceColorSpace returned false for display {displayId}.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: SetSourceColorSpace returned false for display {displayId}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3145,10 +3197,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting Source Color Space for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === Source HDR Metadata ===
+
+                        diagnosticStage = "SourceHDRMetadata";
                         if (myDisplay.HasSourceHdrMetadata && isDigitalWithProtocol)
                         {
                             try
@@ -3165,6 +3220,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: SetSourceHdrMetadata returned false for display {displayId}.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: SetSourceHdrMetadata returned false for display {displayId}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3175,10 +3231,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting Source HDR Metadata for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === Output Mode ===
+
+                        diagnosticStage = "OutputMode";
                         if (myDisplay.HasOutputMode && isDigitalWithProtocol)
                         {
                             try
@@ -3195,6 +3254,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: SetOutputMode returned false for display {displayId}.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: SetOutputMode returned false for display {displayId}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3205,10 +3265,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting Output Mode for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === HDR Tone Mapping ===
+
+                        diagnosticStage = "HDRToneMapping";
                         if (myDisplay.HasHdrToneMapping && isDigitalWithProtocol)
                         {
                             try
@@ -3225,6 +3288,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: SetHdrToneMapping returned false for display {displayId}.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: SetHdrToneMapping returned false for display {displayId}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3235,10 +3299,13 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting HDR Tone Mapping for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 
                         // === InfoFrame Data ===
+
+                        diagnosticStage = "InfoFrameData";
                         if (myDisplay.HasInfoFrameData && isDigitalWithProtocol)
                         {
                             try
@@ -3255,6 +3322,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     else
                                     {
                                         SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: InfoFrameControl returned null for display {displayId}. The InfoFrame settings may not have been applied.");
+                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: InfoFrameControl returned null for display {displayId}. The InfoFrame settings may not have been applied.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3265,6 +3333,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while setting InfoFrame data for display {displayId}.");
+                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             }
                         }
 

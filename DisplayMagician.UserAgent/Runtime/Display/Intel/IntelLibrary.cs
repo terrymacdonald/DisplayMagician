@@ -1,3 +1,4 @@
+using DisplayMagician.Contracts;
 using DisplayMagician.UserAgent.Runtime;
 using DisplayMagician.UserAgent.Runtime.Windows;
 using IGCLWrapper;
@@ -898,6 +899,9 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
         }
 
         public bool UpdateActiveConfig()
+            => UpdateActiveConfig(new DisplayConfigurationDiagnostics());
+
+        internal bool UpdateActiveConfig(DisplayConfigurationDiagnostics diagnostics)
         {
             SharedLogger.logger.Trace($"IntelLibrary/UpdateActiveConfig: Updating the currently active config");
             try
@@ -908,6 +912,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
             catch (Exception ex)
             {
                 SharedLogger.logger.Trace(ex, $"IntelLibrary/UpdateActiveConfig: Exception updating the currently active config");
+                diagnostics.Add("Capture", "Intel", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 return false;
             }
 
@@ -1747,6 +1752,9 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
         }
 
         public bool SetActiveConfig(INTEL_DISPLAY_CONFIG displayConfig, int delayInMs)
+            => SetActiveConfig(displayConfig, delayInMs, new DisplayConfigurationDiagnostics());
+
+        internal bool SetActiveConfig(INTEL_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
             if (_initialised && _igclApiHelper != null)
             {
@@ -1781,6 +1789,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     catch (Exception ex)
                     {
                         SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Exception getting Combined Display settings for adapter {adapterNum}.");
+                        if (desiredAdapter.IsCombinedDisplay) return false;
                         continue;
                     }
 
@@ -1814,6 +1823,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Error disabling the current Intel Combined Display on adapter {adapterNum}");
+                                diagnostics.Add("VendorConfiguration", "Intel", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                                 return false;
                             }
                         }
@@ -1835,12 +1845,18 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Error creating the Intel Combined Display on adapter {adapterNum}");
+                            diagnostics.Add("VendorConfiguration", "Intel", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                             return false;
                         }
 
                         try
                         {
                             var updatedCombinedDisplay = adapter.GetCombinedDisplay();
+                            if (!updatedCombinedDisplay.HasValue || updatedCombinedDisplay.Value.NumOutputs != desiredAdapter.CombinedDisplay.NumOutputs)
+                            {
+                                diagnostics.Add("CombinedDisplay", "Intel", "The required Combined Display outputs were not applied.", DisplayConfigurationSeverity.Fatal);
+                                return false;
+                            }
                             if (updatedCombinedDisplay.HasValue &&
                                 updatedCombinedDisplay.Value.NumOutputs == desiredAdapter.CombinedDisplay.NumOutputs &&
                                 updatedCombinedDisplay.Value.CombinedDesktopWidth == desiredAdapter.CombinedDisplay.CombinedDesktopWidth &&
@@ -1875,6 +1891,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Error disabling the current Intel Combined Display on adapter {adapterNum}");
+                                diagnostics.Add("VendorConfiguration", "Intel", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                                 return false;
                             }
                         }
@@ -1896,7 +1913,12 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
         }
 
         public bool SetActiveConfigOverride(INTEL_DISPLAY_CONFIG displayConfig, int delayInMs)
+            => SetActiveConfigOverride(displayConfig, delayInMs, new DisplayConfigurationDiagnostics());
+
+        internal bool SetActiveConfigOverride(INTEL_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
+            string diagnosticStage = "VendorOverride";
+            string diagnosticDisplayId = string.Empty;
             if (_initialised && _igclApiHelper != null)
             {
                 SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Applying display settings stored in the display configuration");
@@ -1924,6 +1946,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     catch (Exception ex)
                     {
                         SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Exception getting adapter properties for adapter {adapterNum}.");
+                        diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                         success = false;
                         continue;
                     }
@@ -1947,11 +1970,13 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Exception getting display properties for display {display.Name} on adapter {adapterNum}.");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                             continue;
                         }
 
                         string logDisplayId = $"{display.Name}|{displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId}";
+                        diagnosticDisplayId = logDisplayId;
 
                         if (((uint)displayProperties.DisplayConfigFlags & (uint)ctl_display_config_flag_t.CTL_DISPLAY_CONFIG_FLAG_DISPLAY_ACTIVE) != (uint)ctl_display_config_flag_t.CTL_DISPLAY_CONFIG_FLAG_DISPLAY_ACTIVE)
                         {
@@ -1982,6 +2007,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         //------------------------------------
                         // SET INTEGER SCALING IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "IntegerScaling";
                         if (storedSettings.IsSupportedIntegerScaling)
                         {
                             try
@@ -2011,6 +2037,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Integer Scaling for display {logDisplayId}");
+                                diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                 success = false;
                             }
                         }
@@ -2018,6 +2045,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         //------------------------------------
                         // SET GPU SCALING IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "GPUScaling";
                         if (storedSettings.IsSupportedGPUScaling)
                         {
                             try
@@ -2046,6 +2074,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying GPU Scaling for display {logDisplayId}");
+                                diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                 success = false;
                             }
                         }
@@ -2053,6 +2082,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         //------------------------------------
                         // SET IMAGE SHARPENING IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "ImageSharpening";
                         if (storedSettings.IsSupportedImageSharpening)
                         {
                             try
@@ -2083,6 +2113,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Image Sharpening for display {logDisplayId}");
+                                diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                 success = false;
                             }
                         }
@@ -2090,6 +2121,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         //------------------------------------
                         // SET PER-DISPLAY PIXEL TRANSFORMATION IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "PixelTransformation";
                         if (storedSettings.IsSupportedPixelTransformation && storedSettings.PixelTransformationSettings.Blocks is { Count: > 0 })
                         {
                             try
@@ -2131,6 +2163,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying pixel transformation for display {logDisplayId}");
+                                diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                 success = false;
                             }
                         }
@@ -2138,6 +2171,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         //------------------------------------
                         // SET DISPLAY SETTINGS IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "DisplaySettings";
                         try
                         {
                             var currentDisplaySettings = currentSettings.DisplaySettings;
@@ -2163,17 +2197,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying DisplaySettings for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying DisplaySettings for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET WIRE FORMAT IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "WireFormat";
                         try
                         {
                             var currentWireFormat = currentSettings.WireFormat;
@@ -2199,17 +2236,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying WireFormat for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying WireFormat for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET BRIGHTNESS IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "Brightness";
                         try
                         {
                             var currentBrightness = currentSettings.Brightness;
@@ -2233,17 +2273,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Brightness for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Brightness for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET POWER OPTIMIZATION IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "PowerOptimization";
                         try
                         {
                             if (currentSettings.IsSupportedPowerOptimization)
@@ -2267,17 +2310,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying PowerOptimization settings for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying PowerOptimization settings for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET LACE CONFIG IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "Lace";
                         try
                         {
                             var currentLaceConfig = currentSettings.LaceConfig;
@@ -2296,17 +2342,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying LACE config for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying LACE config for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET SOFTWARE PSR IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "SoftwarePSR";
                         try
                         {
                             var currentPsrSettings = currentSettings.SoftwarePsrSettings;
@@ -2335,17 +2384,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Software PSR settings for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Software PSR settings for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET DYNAMIC CONTRAST ENHANCEMENT IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "DynamicContrast";
                         try
                         {
                             var currentDceArgs = currentSettings.DynamicContrastEnhancement;
@@ -2378,17 +2430,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Dynamic Contrast Enhancement for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Dynamic Contrast Enhancement for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET INTEL ARC SYNC PROFILE IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "ArcSync";
                         try
                         {
                             if (currentSettings.IsSupportedIntelArcSync)
@@ -2412,17 +2467,20 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Intel Arc Sync profile for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Intel Arc Sync profile for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
                         //------------------------------------
                         // SET CUSTOM MODES IF NEEDED
                         //------------------------------------
+                        diagnosticStage = "CustomModes";
                         try
                         {
                             var storedModes = storedSettings.CustomModes;
@@ -2454,11 +2512,13 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (IGCLException ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Custom Modes for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying Custom Modes for display {logDisplayId}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
 
@@ -2470,6 +2530,8 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
 
                     // Compute the adapter device ID to look up stored adapter settings
                     string adapterDeviceId = $"{adapterProperties.PciVendorId:X4}_{adapterProperties.PciDeviceId:X4}_{adapterProperties.PciSubsysVendorId:X4}_{adapterProperties.PciSubsysId:X4}_{adapterProperties.RevId:X2}";
+                    diagnosticStage = "DriverSettings";
+                    diagnosticDisplayId = adapterDeviceId;
                     bool hasStoredAdapter = displayConfig.PhysicalAdapters.TryGetValue(adapterDeviceId, out INTEL_ADAPTER storedAdapter);
 
                     //------------------------------------
@@ -2507,6 +2569,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                 catch (Exception ex)
                                 {
                                     SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying 3D feature {stored3DFeature.FeatureType} for adapter {adapterNum}");
+                                    diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                     success = false;
                                 }
                             }
@@ -2514,6 +2577,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Warn(ex, $"IntelLibrary/SetActiveConfigOverride: Exception applying 3D settings for adapter {adapterNum}, skipping.");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                         }
                     }
 
@@ -2552,6 +2616,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                 catch (Exception ex)
                                 {
                                     SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying video processing feature {storedMediaFeature.FeatureType} for adapter {adapterNum}");
+                                    diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                     success = false;
                                 }
                             }
@@ -2559,6 +2624,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Warn(ex, $"IntelLibrary/SetActiveConfigOverride: Exception applying video processing settings for adapter {adapterNum}, skipping.");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                         }
                     }
 
@@ -2587,6 +2653,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         catch (Exception ex)
                         {
                             SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfigOverride: Error applying standard colour correction for adapter {adapterNum}");
+                            diagnostics.Add(diagnosticStage, "Intel", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                             success = false;
                         }
                     }

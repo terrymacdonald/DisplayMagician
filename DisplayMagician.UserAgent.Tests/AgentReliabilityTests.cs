@@ -88,7 +88,7 @@ public sealed class AgentReliabilityTests : IDisposable
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task ThrowingDisplayRestorationStillAttemptsAudioAndRetainsRecovery(bool startupRecovery)
+    public async Task ThrowingDisplayRestorationStillAttemptsAudioWithoutRetainingDisplayRecovery(bool startupRecovery)
     {
         ShortcutStore store = new(_root);
         store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = 0,
@@ -100,16 +100,21 @@ public sealed class AgentReliabilityTests : IDisposable
         {
             recovery.Save(new ShortcutRecoveryRecord { RequiresDisplayRestore = true, RequiresAudioRestore = true,
                 DisplayProfileId = "original-display", AudioProfileId = "original-audio", DisplayProfileSnapshotJson = "{}", AudioProfileSnapshotJson = "{}" });
-            Assert.False(await runner.RestorePendingRecoveryAsync(0, CancellationToken.None));
+            Assert.True(await runner.RestorePendingRecoveryAsync(0, CancellationToken.None));
         }
         else
         {
-            ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("test", 0, CancellationToken.None);
-            Assert.True(result.RequiresRecovery);
-            Assert.Equal(ShortcutRunOutcome.Failed, result.Outcome);
+            List<OperationStatusUpdate> updates = new();
+            ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("test", 0, CancellationToken.None,
+                (update, _) => { updates.Add(update); return Task.CompletedTask; });
+            Assert.False(result.RequiresRecovery);
+            Assert.Equal(ShortcutRunOutcome.Completed, result.Outcome);
+            DisplayConfigurationResult warning = Assert.Single(updates.SelectMany(update => update.DisplayResults));
+            Assert.True(warning.IsRestoration);
+            Assert.All(warning.Issues, issue => Assert.Equal(DisplayConfigurationSeverity.Warning, issue.Severity));
         }
         Assert.Equal(2, profiles.RestoreCalls);
-        Assert.True(recovery.HasPendingRecovery());
+        Assert.False(recovery.HasPendingRecovery());
     }
 
     [Fact]
@@ -330,6 +335,7 @@ public sealed class AgentReliabilityTests : IDisposable
     [InlineData(true, true)]
     [InlineData(false, true)]
     [InlineData(true, false)]
+    [InlineData(false, false)]
     public async Task ShortcutCompletionIncludesBothRestorationResults(bool displayRestores, bool audioRestores)
     {
         ShortcutStore store = new ShortcutStore(_root);
@@ -342,8 +348,8 @@ public sealed class AgentReliabilityTests : IDisposable
         ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("test", 0, CancellationToken.None);
 
         Assert.Equal(2, profiles.RestoreCalls);
-        Assert.Equal(displayRestores && audioRestores ? ShortcutRunOutcome.Completed : ShortcutRunOutcome.Failed, result.Outcome);
-        Assert.Equal(!(displayRestores && audioRestores), result.RequiresRecovery);
+        Assert.Equal(audioRestores ? ShortcutRunOutcome.Completed : ShortcutRunOutcome.Failed, result.Outcome);
+        Assert.Equal(!audioRestores, result.RequiresRecovery);
         Assert.Equal(result.RequiresRecovery, recovery.HasPendingRecovery());
         if (result.RequiresRecovery)
         {

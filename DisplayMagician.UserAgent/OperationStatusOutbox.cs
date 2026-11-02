@@ -66,6 +66,7 @@ public sealed class OperationStatusOutbox
                 Enqueue(new OperationStatusUpdate
                 {
                     OperationId = operationId, OperationType = previous.OperationType,
+                    DisplayResults = previous.DisplayResults.Select(result => result.Copy()).ToArray(),
                     Phase = OperationPhase.Failed, IsTerminal = true, IsSuccessful = false,
                     ErrorCode = recoveryRequired ? ControlErrorCode.RecoveryRequired : ControlErrorCode.ExecutionFailed,
                     Message = recoveryRequired
@@ -149,6 +150,6 @@ public sealed class OperationStatusOutbox
         }
     }
 
-    private static OperationStatusUpdate Copy(OperationStatusUpdate source) => new OperationStatusUpdate { UpdateId = source.UpdateId, OperationId = source.OperationId, OperationType = source.OperationType, Phase = source.Phase, Message = source.Message, IsTerminal = source.IsTerminal, IsSuccessful = source.IsSuccessful, ErrorCode = source.ErrorCode };
+    private static OperationStatusUpdate Copy(OperationStatusUpdate source) => new OperationStatusUpdate { UpdateId = source.UpdateId, OperationId = source.OperationId, OperationType = source.OperationType, Phase = source.Phase, Message = source.Message, DisplayResults = source.DisplayResults.Select(result => result.Copy()).ToArray(), IsTerminal = source.IsTerminal, IsSuccessful = source.IsSuccessful, ErrorCode = source.ErrorCode };
     private sealed class PersistedOutbox { public int SchemaVersion { get; set; } public OperationStatusUpdate[] Pending { get; set; } = Array.Empty<OperationStatusUpdate>(); public OperationStatusUpdate[] Active { get; set; } = Array.Empty<OperationStatusUpdate>(); }
 }

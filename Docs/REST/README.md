@@ -20,7 +20,7 @@ The specification and client guide describe the approved target API. The current
 - **Planning the target client:** read the specification, then the client guide; track unspecified details in the roadmap.
 - **Working on server components:** read the architecture and roadmap alongside the specification.
 
-The [Swift and Kotlin foundations](../../Clients/README.md) are generated from implemented OpenAPI and include native pairing, pinning, secure storage, safe mutation recovery, polling, and a compact phone/watch status relay. Run `generate_rest_clients.ps1` after contract changes and `verify_rest_clients.ps1 -CompileKotlin` to check generation and the Android/JVM contracts. Apple validation runs with `swift test` on macOS.
+The entire Kotlin/Swift client area, including handwritten code, generated models, tests, fixtures, documentation and native-client tooling/CI, has been removed at the owner's request. Commercial client applications are developed separately from this repository. The C# service contracts and Gateway OpenAPI remain the server-side authority.
 
 No REST client has shipped against the prototype. No migration routes, compatibility aliases, or deprecation periods are needed.
 

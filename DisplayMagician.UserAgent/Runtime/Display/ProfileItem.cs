@@ -1,3 +1,4 @@
+using DisplayMagician.Contracts;
 using DisplayMagician.UserAgent.Runtime.AMD;
 using DisplayMagician.UserAgent.Runtime.Intel;
 using DisplayMagician.UserAgent.Runtime.NVIDIA;
@@ -714,6 +715,9 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
         public bool CreateProfileFromCurrentDisplaySettings(bool captureWallpaper = true)
+            => CreateProfileFromCurrentDisplaySettings(captureWallpaper, new DisplayConfigurationDiagnostics());
+
+        internal bool CreateProfileFromCurrentDisplaySettings(bool captureWallpaper, DisplayConfigurationDiagnostics diagnostics)
         {
             // Calling the 3 different libraries automatically gets the different configs from each of the 3 video libraries.
             // If the video library isn't in use then it also fills in the defaults so that the JSON file can save properly
@@ -729,19 +733,19 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 if (nvidiaLibrary.IsInstalled)
                 {
-                    nvidiaLibrary.UpdateActiveConfig();
+                    if (!diagnostics.Run("Capture", "NVIDIA", () => nvidiaLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
                 }
                 if (amdLibrary.IsInstalled)
                 {
-                    amdLibrary.UpdateActiveConfig();
+                    if (!diagnostics.Run("Capture", "AMD", () => amdLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
                 }
                 if (intelLibrary.IsInstalled)
                 {
-                    intelLibrary.UpdateActiveConfig();
+                    if (!diagnostics.Run("Capture", "Intel", () => intelLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
                 }
 
                 // Always update Windows display settings
-                winLibrary.UpdateActiveConfig();         
+                if (!diagnostics.Run("Capture", "Windows", () => winLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
 
                 // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;
@@ -771,6 +775,7 @@ namespace DisplayMagician.UserAgent.Runtime
             }
             catch (Exception ex)
             {
+                diagnostics.Add("Capture", "Display", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 SharedLogger.logger.Error(ex, $"ProfileItem/CreateProfileFromCurrentDisplaySettings: Exception within CreateProfileFromCurrentDisplaySettings function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return false;
             }
@@ -848,6 +853,9 @@ namespace DisplayMagician.UserAgent.Runtime
 
         // Actually set this profile active
         public bool SetActive(bool useADLEyefinity = false, int delayInMs = 500)
+            => SetActiveWithDiagnostics(new DisplayConfigurationDiagnostics(), useADLEyefinity, delayInMs);
+
+        internal bool SetActiveWithDiagnostics(DisplayConfigurationDiagnostics diagnostics, bool useADLEyefinity = false, int delayInMs = 500)
         {
             try
             {
@@ -866,7 +874,6 @@ namespace DisplayMagician.UserAgent.Runtime
                 bool itWorkedforNVIDIAOverride = false;
                 bool itWorkedforAMDOverride = false;
                 bool itWorkedforIntelOverride = false;
-                bool errorApplyingSomething = false;
 
                 // Wake up all attached displays in case they have gone to sleep
                 WinLibrary.WakeUpAllDisplays(delayInMs);
@@ -972,6 +979,13 @@ namespace DisplayMagician.UserAgent.Runtime
                     SharedLogger.logger.Trace($"ProfileItem/SetActive: Skipping applying Intel display settings as the Intel library isn't installed.");
                 }
 
+                if (NVIDIADisplayConfig.IsInUse && NVIDIADisplayConfig.MosaicConfig.IsMosaicEnabled && !applyNVIDIASettings)
+                    diagnostics.Add("Surround", "NVIDIA", "Required Surround configuration is unavailable.", DisplayConfigurationSeverity.Fatal);
+                if (AMDDisplayConfig.IsInUse && AMDDisplayConfig.IsEyefinity && !applyAMDSettings)
+                    diagnostics.Add("Eyefinity", "AMD", "Required Eyefinity configuration is unavailable.", DisplayConfigurationSeverity.Fatal);
+                if (IntelDisplayConfig.IsInUse && IntelDisplayConfig.CombinedDisplayIsInUse && !applyIntelSettings)
+                    diagnostics.Add("CombinedDisplay", "Intel", "Required Combined Display configuration is unavailable.", DisplayConfigurationSeverity.Fatal);
+
                 if (applyNVIDIASettings)
                 {
                     // If a Surround/Mosaic Display is required, all source monitors must be active
@@ -984,7 +998,7 @@ namespace DisplayMagician.UserAgent.Runtime
                         WinLibrary.EnableAllConnectedDisplays();
                         Thread.Sleep(delayInMs);
                     }
-                    itWorkedforNVIDIA = nvidiaLibrary.SetActiveConfig(NVIDIADisplayConfig, delayInMs);
+                    itWorkedforNVIDIA = diagnostics.Run("Surround", "NVIDIA", () => nvidiaLibrary.SetActiveConfig(NVIDIADisplayConfig, delayInMs, diagnostics), DisplayConfigurationSeverity.Fatal);
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforNVIDIA)
                     {
@@ -993,7 +1007,6 @@ namespace DisplayMagician.UserAgent.Runtime
                     else
                     {
                         SharedLogger.logger.Warn($"ProfileItem/SetActive: The NVIDIA display settings in {Name} were NOT applied successfully.");
-                        errorApplyingSomething = true;
                     }
                 }
                 else
@@ -1014,7 +1027,7 @@ namespace DisplayMagician.UserAgent.Runtime
                         WinLibrary.EnableAllConnectedDisplays();
                         Thread.Sleep(delayInMs);
                     }
-                    itWorkedforAMD = amdLibrary.SetActiveConfig(AMDDisplayConfig, useADLEyefinity, delayInMs);
+                    itWorkedforAMD = diagnostics.Run("Eyefinity", "AMD", () => amdLibrary.SetActiveConfig(AMDDisplayConfig, useADLEyefinity, delayInMs, diagnostics), DisplayConfigurationSeverity.Fatal);
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforAMD)
                     {
@@ -1023,7 +1036,6 @@ namespace DisplayMagician.UserAgent.Runtime
                     else
                     {
                         SharedLogger.logger.Warn($"ProfileItem/SetActive: The AMD display settings in {Name} were NOT applied successfully.");
-                        errorApplyingSomething = true;
                     }
                 }
                 else
@@ -1045,7 +1057,7 @@ namespace DisplayMagician.UserAgent.Runtime
                     }
 
                     SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply Intel display config from {Name}...");
-                    itWorkedforIntel = intelLibrary.SetActiveConfig(IntelDisplayConfig, delayInMs);
+                    itWorkedforIntel = diagnostics.Run("CombinedDisplay", "Intel", () => intelLibrary.SetActiveConfig(IntelDisplayConfig, delayInMs, diagnostics), DisplayConfigurationSeverity.Fatal);
                     Thread.Sleep(delayInMs); // Give it a second to wake up the displays
                     if (itWorkedforIntel)
                     {
@@ -1054,7 +1066,6 @@ namespace DisplayMagician.UserAgent.Runtime
                     else
                     {
                         SharedLogger.logger.Trace($"ProfileItem/SetActive: The Intel display settings within {Name} were NOT applied successfully.");
-                        errorApplyingSomething = true;
                     }
                 }
                 else
@@ -1079,7 +1090,7 @@ namespace DisplayMagician.UserAgent.Runtime
                 // Note: we are unable to check if the Windows CCD display config is possible, as it won't match if either the current display config is a Mosaic config,
                 // or if the display config we want to change to is a Mosaic config. So we just have to assume that it will work!
                 SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply Windows display config in{Name}...");
-                itWorkedforWindows = winLibrary.SetActiveConfig(WindowsDisplayConfig, delayInMs);
+                itWorkedforWindows = diagnostics.Run("Topology", "Windows", () => winLibrary.SetActiveConfig(WindowsDisplayConfig, delayInMs, diagnostics), DisplayConfigurationSeverity.Fatal);
                 Thread.Sleep(delayInMs);
                 if (itWorkedforWindows)
                 {
@@ -1090,7 +1101,7 @@ namespace DisplayMagician.UserAgent.Runtime
                         if (itWorkedforNVIDIA)
                         {
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply 2nd part of the NVIDIA display config from {Name}...");
-                            itWorkedforNVIDIAOverride = nvidiaLibrary.SetActiveConfigOverride(NVIDIADisplayConfig, delayInMs);
+                            itWorkedforNVIDIAOverride = diagnostics.Run("VendorOverride", "NVIDIA", () => nvidiaLibrary.SetActiveConfigOverride(NVIDIADisplayConfig, delayInMs, diagnostics), DisplayConfigurationSeverity.Warning);
                             Thread.Sleep(delayInMs);
                             if (itWorkedforNVIDIAOverride)
                             {
@@ -1099,7 +1110,6 @@ namespace DisplayMagician.UserAgent.Runtime
                             else
                             {
                                 SharedLogger.logger.Warn($"ProfileItem/SetActive: The NVIDIA display settings that override windows within {Name} were NOT applied correctly.");
-                                errorApplyingSomething = true;
                             }
                         }
                         else
@@ -1124,7 +1134,7 @@ namespace DisplayMagician.UserAgent.Runtime
                         if (itWorkedforAMD)
                         {
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply 2nd part of the AMD display config in {Name}...");
-                            itWorkedforAMDOverride = amdLibrary.SetActiveConfigOverride(AMDDisplayConfig, delayInMs);
+                            itWorkedforAMDOverride = diagnostics.Run("VendorOverride", "AMD", () => amdLibrary.SetActiveConfigOverride(AMDDisplayConfig, delayInMs, diagnostics), DisplayConfigurationSeverity.Warning);
                             Thread.Sleep(delayInMs);
                             if (itWorkedforAMDOverride)
                             {
@@ -1133,7 +1143,6 @@ namespace DisplayMagician.UserAgent.Runtime
                             else
                             {
                                 SharedLogger.logger.Warn($"ProfileItem/SetActive: The AMD display settings that override windows within {Name} were NOT applied correctly.");
-                                errorApplyingSomething = true;
                             }
                         }
                         else
@@ -1159,7 +1168,7 @@ namespace DisplayMagician.UserAgent.Runtime
                         if (itWorkedforIntel)
                         {
                             SharedLogger.logger.Trace($"ProfileItem/SetActive: Attempting to apply 2nd part of the Intel display config in {Name}...");
-                            itWorkedforIntelOverride = intelLibrary.SetActiveConfigOverride(IntelDisplayConfig, delayInMs);
+                            itWorkedforIntelOverride = diagnostics.Run("VendorOverride", "Intel", () => intelLibrary.SetActiveConfigOverride(IntelDisplayConfig, delayInMs, diagnostics), DisplayConfigurationSeverity.Warning);
                             Thread.Sleep(delayInMs);
                             if (itWorkedforIntelOverride)
                             {
@@ -1168,7 +1177,6 @@ namespace DisplayMagician.UserAgent.Runtime
                             else
                             {
                                 SharedLogger.logger.Warn($"ProfileItem/SetActive: The Intel display settings that override windows within {Name} were NOT applied correctly.");
-                                errorApplyingSomething = true;
                             }
                         }
                         else
@@ -1192,11 +1200,19 @@ namespace DisplayMagician.UserAgent.Runtime
                 else
                 {
                     SharedLogger.logger.Error($"ProfileItem/SetActive: The Windows CCD display settings in {Name} were NOT applied correctly, so skipping setting the overrides.");
-                    errorApplyingSomething = true;
+                }
+
+                if (itWorkedforWindows)
+                {
+                    try { WinLibrary.CompareAppliedLayout(WindowsDisplayConfig, winLibrary.GetActiveConfig(), diagnostics); }
+                    catch (Exception ex)
+                    {
+                        diagnostics.Add("Verification", "Windows", "Could not verify the applied display layout: " + ex.Message, exception: ex);
+                    }
                 }
 
                 // Give the final error if there are any
-                if (errorApplyingSomething)
+                if (!diagnostics.Result.IsSuccessful)
                 {
                     SharedLogger.logger.Error($"ProfileItem/SetActive: ProfileItem was unable to successfully apply your display profile within {Name}.");
                 }
@@ -1205,10 +1221,11 @@ namespace DisplayMagician.UserAgent.Runtime
                     SharedLogger.logger.Info($"ProfileItem/SetActive: ProfileItem successfully applied your display profile contained within {Name}.");
                 }
             
-                return true;
+                return diagnostics.Result.IsSuccessful;
             }
             catch (Exception ex)
             {
+                diagnostics.Add("Topology", "Display", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 SharedLogger.logger.Error(ex, $"ProfileItem/SetActive: Exception within SetActive function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
                 return false;
             }

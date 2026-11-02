@@ -23,9 +23,9 @@ There is no released REST API to migrate. Update the implementation and [openapi
 7. Confirm removal of Windows SID/session fields.
 8. Approve the target route and behavior design. Final schema validation and [openapi.yaml](openapi.yaml) updates remain delivery and release checks as routes are implemented. Keep design-only schemas explicitly marked as unavailable.
 9. Record approved decisions in the specification and the [contract completion register](#6-contract-completion-register). Track remaining implementation and validation work there without treating it as completed P0 work.
-10. Approve ordinary Swift and Kotlin HTTP/JSON clients as a design goal. Keep SSE optional for phone clients and avoid schema unions where a simple status field is sufficient. Verify generated models and native pairing/TLS behavior before client release.
+10. Approve ordinary Swift and Kotlin HTTP/JSON clients as a design goal. Keep SSE optional for phone clients and avoid schema unions where a simple status field is sufficient. Verify native pairing/TLS behaviour in the separately maintained apps before their release.
 
-P0 status (2026-10-09): **complete as design approval**. The project owner accepted the remaining checks as later delivery/release gates, not as checks already performed. Schema/example validation, generated Swift/Kotlin model compilation, and native TLS-trust/pairing feasibility still must pass before the target schema is published as a finished client contract. The current [openapi.yaml](openapi.yaml) describes implemented Gateway behavior and is updated alongside each delivered slice; the design-only [target-openapi.json](target-openapi.json) remains the approved target baseline.
+P0 status (2026-10-09): **complete as design approval**. The project owner accepted the remaining checks as later delivery/release gates, not as checks already performed. Schema/example validation and server-side compatibility checks still must pass before the target schema is published as a finished contract; commercial native-app verification is tracked separately. The current [openapi.yaml](openapi.yaml) describes implemented Gateway behavior and is updated alongside each delivered slice; the design-only [target-openapi.json](target-openapi.json) remains the approved target baseline.
 
 ### P1: Identity, credential, and HTTP foundation
 
@@ -69,7 +69,7 @@ Retry recovery: interrupted reservations return non-retryable `409 idempotency-o
 
 P3 implementation and verification (2026-10-22): Saved edits now use durable pending-publication markers. Interrupted event publication retires only the affected user's replay generation; startup reconciles persisted operations/decisions with the journal. Empty retained history has a usable signed snapshot boundary. SSE tests now exercise snapshot/resume, grants, connection limits, revoked credentials, and stalled reads; a five-second cancellation deadline bounds credential revalidation even during blocked I/O. Public capabilities advertise SSE. Both OpenAPI documents declare 64-bit operation sequences to match the shared C# contract.
 
-[Swift and Kotlin foundations](../../Clients/README.md) now include generated models and all 25 polling routes, native HTTPS/SPKI/host verification, QR pairing, secure credentials, durable exact-request idempotency recovery, polling, and compact watch status relay contracts. Generation has a deterministic drift check and native CI jobs. Minimum versions are iOS 16 and Android API 26, approved by the owner. The Kotlin sources compile against the Android SDK and their portable JSON/watch/QR/pin/renewal checks run on the JVM. Apple Security/Keychain builds and native device flows still require Xcode/devices; added CI is not evidence of an executed GitHub run. The owner deferred the containing iOS app's ATS exception choice for arbitrary private DNS until the Xcode/device test; no ATS exception has been approved or applied.
+The entire Kotlin/Swift client area, including handwritten code, generated models, tests, fixtures, documentation and native-client tooling/CI, has been removed at the owner's request. Commercial client applications are developed separately from this repository. The C# service contracts and Gateway OpenAPI remain the server-side authority.
 
 The [installed P3 plan](../../Sandbox/REST_P3_TEST_PLAN.md) and a developer-only HTTPS harness are prepared. `test_rest_p3.ps1 -PrepareSandbox` builds and stages the harness in the existing read-only local-assets mapping. It pairs and revokes temporary clients and tests actual paging, ETags, SSE limits/resume, and revocation without executing hardware actions. The owner has left installed runs, installer lifecycle, and phone/watch platform acceptance for their test PC and device environments (2026-10-22). These checks have not been marked passed. **P3 remains open for those acceptance checks; Telegram conformance stays conditional on starting that product.**
 
@@ -80,12 +80,12 @@ Local verification (2026-10-22): ControlService tests pass (128); Gateway tests 
 1. [x] Implement SSE snapshots, event IDs, resume, reconnect behavior, and the published per-device/per-user concurrent-stream limits. Installed acceptance is tracked below.
 2. [x] Implement ETags and compact/artwork representations.
 3. [x] Implement cursor pagination and bounded retention.
-4. [x] Generate Swift and Kotlin client foundations. Kotlin compilation/JVM checks run here; Apple native compilation still needs its macOS runner.
-5. [x] Add handwritten pairing, pinning, credential, and idempotency layers. Add SSE support only for phone clients that choose to use events; ordinary HTTPS polling covers the phone workflow. Device acceptance and the iOS ATS choice remain below.
-6. [x] Add phone/watch status relay contract tests. Actual WatchConnectivity/Wear OS channels are tested with their applications.
+4. Client model generation and native-client CI were removed from this repository at the owner's request on 2 November 2026. Commercial apps are maintained separately.
+5. Client pairing, pinning, credential storage and mutation recovery are responsibilities of the separately maintained applications.
+6. Phone/watch integration acceptance belongs with the separately maintained applications.
 7. Deferred: Add Telegram connector conformance tests when that product is started.
 8. [ ] Execute Windows Sandbox installed-environment validation; the harness and test plan are ready.
-9. [ ] Compile/test the Apple package in Xcode and test pairing, TLS trust, secure storage, and operation polling on supported phones, including suspension and process restart. Confirm the iOS ATS configuration for custom private DNS. Test event recovery only for clients that elect to use SSE.
+9. Native application builds and device acceptance are tracked outside this repository.
 10. [ ] Verify install, service start/restart, upgrade, and uninstall behavior for Gateway, ControlService, local UI, certificate renewal, configured listener port, and firewall rules. Check that an interrupted update leaves a usable installation and valid identity state.
 
 ## 3. Definition of done for each route
@@ -181,7 +181,7 @@ Resolve policy questions with the project owner before consequential implementat
 
 - Keep the specification, client guide, architecture guide, and implemented OpenAPI cross-linked.
 - Update shared contracts and Gateway schemas together; do not add a separate client-specific ControlService model.
-- Validate OpenAPI syntax, all examples against finalized schemas, and generated Swift/Kotlin client compilation.
+- Validate OpenAPI syntax and all examples against finalized server schemas; native application compilation is tracked separately.
 - Contract-test route identifiers, HTTP methods/statuses, capabilities, JSON enums, Problem Details, and request correlation.
 - Publish the `https://displaymagician.org/problems/{errorCode}` documentation pages used as Problem Details type URIs before release.
 - Test accepted-but-not-completed behavior, duplicate mutations, lost responses, decisions answered by another client, SSE continuity loss, and service/Agent restarts.

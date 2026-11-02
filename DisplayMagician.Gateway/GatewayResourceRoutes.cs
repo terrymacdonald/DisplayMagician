@@ -285,6 +285,7 @@ internal static class GatewayResourceRoutes
             Status = status,
             Phase = operation.Phase switch { OperationPhase.AwaitingUserDecision => "waiting-for-decision", OperationPhase.WaitingForGameToStart => "waiting-for-game-to-start", OperationPhase.WaitingForGameToClose => "waiting-for-game-to-close", _ => string.Concat(operation.Phase.ToString().SelectMany((character, index) => char.IsUpper(character) && index > 0 ? new[] { '-', char.ToLowerInvariant(character) } : new[] { char.ToLowerInvariant(character) })) },
             Message = operation.Message,
+            DisplayResults = operation.DisplayResults.Select(result => result.Copy()).ToArray(),
             Sequence = operation.Sequence,
             StartedAt = operation.StartedUtc,
             UpdatedAt = operation.UpdatedUtc,

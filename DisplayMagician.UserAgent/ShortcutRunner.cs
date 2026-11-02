@@ -1,3 +1,4 @@
+using DisplayMagician.UserAgent.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -200,6 +201,9 @@ public sealed class ShortcutRunner
             {
                 await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingDisplayProfile, "Applying display profile.", cancellationToken).ConfigureAwait(false);
                 ApplyDisplayProfileOperationResult displayResult = await _profileOperationService.ApplyDisplayProfileAsync(shortcut.ProfileId, cancellationToken).ConfigureAwait(false);
+                await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingDisplayProfile,
+                    displayResult.IsSuccessful ? displayResult.Details?.HasWarnings == true ? "Display profile applied with warnings." : "Display profile applied." : "Display profile could not be fully applied.",
+                    cancellationToken, displayResult.Details).ConfigureAwait(false);
                 if (!displayResult.IsSuccessful)
                 {
                     windowRun.DisplayProfileFailed = true;
@@ -829,12 +833,28 @@ public sealed class ShortcutRunner
             await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringDisplayProfile, "Restoring display profile.", cancellationToken).ConfigureAwait(false);
             try
             {
-                recoveryRestored = (await _profileOperationService.ApplyDisplayProfileAsync(recoveryRecord.DisplayProfileId, cancellationToken, recoveryRecord.DisplayProfileSnapshotJson).ConfigureAwait(false)).IsSuccessful;
+                ApplyDisplayProfileOperationResult result = await _profileOperationService.ApplyDisplayProfileAsync(recoveryRecord.DisplayProfileId, cancellationToken, recoveryRecord.DisplayProfileSnapshotJson).ConfigureAwait(false);
+                DisplayConfigurationResult details = result.Details?.Copy() ?? (result.IsSuccessful
+                    ? new DisplayConfigurationResult { ProfileId = recoveryRecord.DisplayProfileId }
+                    : DisplayConfigurationDiagnostics.Failure(recoveryRecord.DisplayProfileId, "Restoration", "Display restoration could not be completed."));
+                details.IsRestoration = true;
+                foreach (DisplayConfigurationIssue issue in details.Issues)
+                    issue.Severity = DisplayConfigurationSeverity.Warning;
+                if (!result.IsSuccessful || result.Details?.HasWarnings == true)
+                    _logger.Warn("ShortcutRunner/RestoreRecoveryAsync: Display restoration for profile {0} finished with warnings; continuing other restoration steps without retaining a display retry.", recoveryRecord.DisplayProfileId);
+                await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringDisplayProfile,
+                    result.IsSuccessful && !details.HasWarnings ? "Display profile restored." : "Display restoration finished with warnings.",
+                    cancellationToken, details).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
-                recoveryRestored = false;
-                _logger.Error(ex, "ShortcutRunner/RestoreRecoveryAsync: Could not restore display profile {0}; continuing other restoration steps.", recoveryRecord.DisplayProfileId);
+                _logger.Warn(ex, "ShortcutRunner/RestoreRecoveryAsync: Could not restore display profile {0}; continuing other restoration steps without retaining a display retry.", recoveryRecord.DisplayProfileId);
+                DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
+                diagnostics.Result.IsRestoration = true;
+                diagnostics.Result.ProfileId = recoveryRecord.DisplayProfileId;
+                diagnostics.Add("Restoration", "Display", ex.Message, exception: ex);
+                await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringDisplayProfile,
+                    "Display restoration finished with warnings.", cancellationToken, diagnostics.Result).ConfigureAwait(false);
             }
         }
         if (recoveryRecord.RequiresAudioRestore)
@@ -876,9 +896,9 @@ public sealed class ShortcutRunner
     }
 
     private static async Task PublishRecoveryStatusAsync(Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid operationId,
-        OperationPhase phase, string message, CancellationToken cancellationToken)
+        OperationPhase phase, string message, CancellationToken cancellationToken, DisplayConfigurationResult? displayResult = null)
     {
-        try { await PublishStatusAsync(publishStatusAsync, operationId, phase, message, cancellationToken).ConfigureAwait(false); }
+        try { await PublishStatusAsync(publishStatusAsync, operationId, phase, message, cancellationToken, displayResult).ConfigureAwait(false); }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             _logger.Warn(ex, "ShortcutRunner/PublishRecoveryStatusAsync: Could not publish restoration progress for operation {0}; continuing restoration.", operationId);
@@ -962,7 +982,7 @@ public sealed class ShortcutRunner
         }
     }
 
-    private static Task PublishStatusAsync(Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid operationId, OperationPhase phase, string message, CancellationToken cancellationToken)
+    private static Task PublishStatusAsync(Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync, Guid operationId, OperationPhase phase, string message, CancellationToken cancellationToken, DisplayConfigurationResult? displayResult = null)
     {
         return publishStatusAsync == null
             ? Task.CompletedTask
@@ -971,6 +991,7 @@ public sealed class ShortcutRunner
                 OperationId = operationId,
                 OperationType = DisplayOperationType.StartShortcut,
                 Phase = phase,
+                DisplayResults = displayResult == null ? Array.Empty<DisplayConfigurationResult>() : new[] { displayResult.Copy() },
                 Message = message
             }, cancellationToken);
     }

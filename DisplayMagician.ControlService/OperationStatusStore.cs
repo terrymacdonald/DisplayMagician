@@ -91,6 +91,8 @@ public sealed class OperationStatusStore
             status.OperationType = update.OperationType;
             status.Phase = update.Phase;
             status.Message = update.Message ?? string.Empty;
+            if (update.DisplayResults.Length > 0)
+                status.DisplayResults = update.DisplayResults.Select(result => result.Copy()).ToArray();
             status.UpdatedUtc = utcNow;
             status.IsTerminal = update.IsTerminal;
             status.IsSuccessful = update.IsSuccessful;
@@ -344,6 +346,7 @@ public sealed class OperationStatusStore
             Sequence = status.Sequence,
             Phase = status.Phase,
             Message = status.Message,
+            DisplayResults = status.DisplayResults.Select(result => result.Copy()).ToArray(),
             StartedUtc = status.StartedUtc,
             UpdatedUtc = status.UpdatedUtc,
             IsTerminal = status.IsTerminal,

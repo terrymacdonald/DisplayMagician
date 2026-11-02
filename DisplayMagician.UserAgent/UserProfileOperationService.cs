@@ -24,7 +24,8 @@ public class UserProfileOperationService
     {
         // External Windows settings changes do not invalidate the repository caches.
         // Refresh before deciding whether a shortcut can skip applying its profiles.
-        ProfileRepository.UpdateActiveProfile();
+        if (!ProfileRepository.TryUpdateActiveProfile(out DisplayConfigurationResult currentDisplayCapture))
+            throw new DisplayConfigurationCaptureException(currentDisplayCapture);
         AudioProfileRepository.UpdateActiveAudioProfile();
         string displayId = ProfileRepository.CurrentProfile?.UUID ?? string.Empty;
         string audioId = AudioProfileRepository.CurrentAudioProfile?.UUID ?? string.Empty;
@@ -33,8 +34,10 @@ public class UserProfileOperationService
         if (captureDisplaySnapshot)
         {
             ProfileItem display = new ProfileItem();
-            if (!display.CreateProfileFromCurrentDisplaySettings())
-                throw new InvalidOperationException("The original display configuration could not be captured for recovery.");
+            DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
+            diagnostics.Result.IsCapture = true;
+            if (!display.CreateProfileFromCurrentDisplaySettings(true, diagnostics))
+                throw new DisplayConfigurationCaptureException(diagnostics.Result);
             displayJson = SerializeDisplayRecoveryProfile(display);
         }
         if (captureAudioSnapshot)
@@ -74,15 +77,28 @@ public class UserProfileOperationService
         catch (Newtonsoft.Json.JsonException ex)
         {
             Logger.Error(ex, "UserProfileOperationService/ApplyDisplayProfileAsync: Could not read the original display recovery snapshot for profile {0}.", profileId);
-            return new ApplyDisplayProfileOperationResult(false, false);
+            return new ApplyDisplayProfileOperationResult(false, false)
+            {
+                Details = DisplayConfigurationDiagnostics.Failure(profileId, "Validation", "The display recovery snapshot could not be read.", ex)
+            };
         }
         if (profile == null)
         {
-            return new ApplyDisplayProfileOperationResult(false, false);
+            return new ApplyDisplayProfileOperationResult(false, false)
+            {
+                Details = DisplayConfigurationDiagnostics.Failure(profileId, "Validation", "The requested display profile was not found.")
+            };
         }
 
-        SharedApplyProfileResult result = await Task.Run(() => ProfileRepository.ApplyProfile(profile), cancellationToken).ConfigureAwait(false);
-        return new ApplyDisplayProfileOperationResult(result == SharedApplyProfileResult.Successful, result == SharedApplyProfileResult.Cancelled);
+        return await Task.Run(() =>
+        {
+            SharedApplyProfileResult result = ProfileRepository.ApplyProfile(profile, out DisplayConfigurationResult details);
+            details.IsRestoration = !string.IsNullOrWhiteSpace(snapshotJson);
+            return new ApplyDisplayProfileOperationResult(result == SharedApplyProfileResult.Successful, result == SharedApplyProfileResult.Cancelled)
+            {
+                Details = details
+            };
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     public ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds)
@@ -114,7 +130,18 @@ public class UserProfileOperationService
     }
 }
 
-public sealed record ApplyDisplayProfileOperationResult(bool IsSuccessful, bool WasCancelled);
+public sealed record ApplyDisplayProfileOperationResult(bool IsSuccessful, bool WasCancelled)
+{
+    public DisplayConfigurationResult? Details { get; init; }
+}
+
+internal sealed class DisplayConfigurationCaptureException : InvalidOperationException
+{
+    internal DisplayConfigurationResult Details { get; }
+
+    internal DisplayConfigurationCaptureException(DisplayConfigurationResult details)
+        : base("The current display configuration could not be captured reliably.") => Details = details;
+}
 public sealed record ApplyAudioProfileOperationResult(bool IsSuccessful, IReadOnlyList<string> MissingDeviceNames);
 public sealed record UserProfileOperationState(string DisplayProfileId, string AudioProfileId)
 {

@@ -905,7 +905,8 @@ public sealed class ProfileCommandHandler
                 OperationId = profileOperationId,
                 OperationType = DisplayOperationType.ApplyDisplayProfile,
                 Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed,
-                Message = result.IsSuccessful ? "Display profile applied." : "Display profile could not be applied.",
+                Message = result.IsSuccessful ? result.Details?.HasWarnings == true ? "Display profile applied with warnings." : "Display profile applied." : "Display profile could not be applied.",
+                DisplayResults = result.Details == null ? Array.Empty<DisplayConfigurationResult>() : new[] { result.Details },
                 IsTerminal = true,
                 IsSuccessful = result.IsSuccessful,
                 ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed
@@ -967,6 +968,7 @@ public sealed class ProfileCommandHandler
                 Message = _shortcutRunner.IsRecoveryRequired
                     ? "Shortcut operation failed. Original settings still require recovery."
                     : "Shortcut operation failed unexpectedly.",
+                DisplayResults = ex is DisplayConfigurationCaptureException captureError ? new[] { captureError.Details } : Array.Empty<DisplayConfigurationResult>(),
                 IsTerminal = true,
                 ErrorCode = _shortcutRunner.IsRecoveryRequired ? ControlErrorCode.RecoveryRequired : ControlErrorCode.ExecutionFailed
             }, CancellationToken.None).ConfigureAwait(false);
@@ -1071,6 +1073,9 @@ public sealed class ProfileCommandHandler
         await _statusDeliveryLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            OperationStatusUpdate? previous = _operationStatusOutbox.GetActive().FirstOrDefault(item => item.OperationId == update.OperationId);
+            if (previous != null && previous.UpdateId != update.UpdateId)
+                update.DisplayResults = previous.DisplayResults.Concat(update.DisplayResults).Select(result => result.Copy()).ToArray();
             _operationStatusOutbox.Enqueue(update);
             await FlushPendingStatusUpdatesCoreAsync(cancellationToken).ConfigureAwait(false);
         }

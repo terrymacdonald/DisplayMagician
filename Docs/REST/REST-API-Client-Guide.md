@@ -10,7 +10,7 @@
 
 Read the [specification](REST-API-Specification.md) for the target contract and the [architecture guide](REST-API-Architecture.md) for the trust model. [openapi.yaml](openapi.yaml) describes the routes in the current Gateway build, including cursor pagination, saved-resource ETags, and optional SSE events. Installed SSE validation remains P3 work.
 
-The repository now includes [Swift and Kotlin client foundations](../../Clients/README.md) for iOS 16+ and Android API 26+. They include generated models/routes and native pairing, TLS pinning, secure credential storage, durable mutation retries, polling, and a shared phone/watch status fixture. Native device acceptance is tracked separately from the Windows and JVM checks.
+The entire Kotlin/Swift client area, including handwritten code, generated models, tests, fixtures, documentation and native-client tooling/CI, has been removed at the owner's request. Commercial client applications are developed separately from this repository. The C# service contracts and Gateway OpenAPI remain the server-side authority.
 
 Gateway firewall access is enabled for Windows Private and Domain networks by default. An administrator can also enable Public networks in the desktop Server Settings form; phone clients use the same HTTPS and pairing flow on each profile.
 
@@ -557,7 +557,7 @@ Use the event names and payloads in the [target schema](target-openapi.json). Do
 - Keep phone/watch credentials on the phone.
 - Browser clients are deferred; do not assume CORS or browser EventSource support.
 
-Runtime cross-process views and shared protocol types belong in `DisplayMagician.Contracts`. Swift/Kotlin code generation consumes the REST schema; it does not create a new server-side authority or justify client-specific ControlService DTOs.
+Runtime cross-process views and shared protocol types belong in `DisplayMagician.Contracts`. Separately maintained clients consume the REST schema; they do not create a new server-side authority or justify client-specific ControlService DTOs.
 
 ### 4.7 Duplicate watch and Telegram commands
 

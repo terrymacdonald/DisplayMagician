@@ -785,7 +785,14 @@ namespace DisplayMagician.UserAgent.Runtime
         }
 
         public static void UpdateActiveProfile()
+            => TryUpdateActiveProfile(out _);
+
+        internal static bool TryUpdateActiveProfile(out DisplayConfigurationResult captureResult,
+            Func<ProfileItem, DisplayConfigurationDiagnostics, bool>? capture = null)
         {
+            DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
+            captureResult = diagnostics.Result;
+            captureResult.IsCapture = true;
 
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: Updating the profile currently active (in use now).");
 
@@ -797,11 +804,13 @@ namespace DisplayMagician.UserAgent.Runtime
             // Get the display settings
             try
             {
-                profile.CreateProfileFromCurrentDisplaySettings(captureWallpaper: false);
+                if (!(capture != null ? capture(profile, diagnostics) : profile.CreateProfileFromCurrentDisplaySettings(false, diagnostics))) return false;
             }
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"ProfileRepository/UpdateActiveProfile: Exception within UpdateActiveProfile function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                diagnostics.Add("Capture", "Display", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
+                return false;
             }
 
             if (_profilesLoaded && _allProfiles.Count > 0)
@@ -813,12 +822,13 @@ namespace DisplayMagician.UserAgent.Runtime
                     {
                         _currentProfile = loadedProfile;
                         SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The profile '{loadedProfile.Name}' is currently active (in use now).");
-                        return;
+                        return true;
                     }
                 }
             }
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
             _currentProfile = profile;
+            return true;
         }
 
         public static ProfileItem? GetActiveProfile()
@@ -867,8 +877,7 @@ namespace DisplayMagician.UserAgent.Runtime
             }
 
             SharedLogger.logger.Trace($"ProfileRepository/RecheckIsActiveProfile: Refreshing the current display settings before checking whether profile {profile.Name} is active.");
-            UpdateActiveProfile();
-            return IsActiveProfile(profile);
+            return TryUpdateActiveProfile(out _) && IsActiveProfile(profile);
         }
 
 
@@ -1656,7 +1665,14 @@ namespace DisplayMagician.UserAgent.Runtime
 
         // ApplyProfile lives here so that the UI works.
         public static ApplyProfileResult ApplyProfile(ProfileItem profile)
+            => ApplyProfile(profile, out _);
+
+        internal static ApplyProfileResult ApplyProfile(ProfileItem profile, out DisplayConfigurationResult displayResult,
+            Func<DisplayConfigurationDiagnostics, bool>? apply = null, Action<int>? wait = null, Action? refresh = null)
         {
+            DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
+            displayResult = diagnostics.Result;
+            wait ??= Thread.Sleep;
             SharedLogger.logger.Trace($"Program/ApplyProfile: Starting");
             // We try to time the profile display swap
             Stopwatch stopWatch = new Stopwatch();
@@ -1664,12 +1680,22 @@ namespace DisplayMagician.UserAgent.Runtime
 
             if (profile == null)
             {
+                diagnostics.Add("Validation", "Display", "The display profile was not found.", DisplayConfigurationSeverity.Fatal);
                 SharedLogger.logger.Debug($"ProfileRepository/ApplyProfile: The supplied profile is null! Can't be used.");
                 return ApplyProfileResult.Error;
             }
 
+            if (profile.ApplyProfileCount < 1)
+            {
+                diagnostics.Add("Validation", "Display", "A profile must be applied at least once.", DisplayConfigurationSeverity.Fatal);
+                return ApplyProfileResult.Error;
+            }
+
+            displayResult.ProfileId = profile.UUID;
+
             if (!profile.HasUsableSavedConfiguration(out string errorMessage))
             {
+                diagnostics.Add("Validation", "Display", errorMessage, DisplayConfigurationSeverity.Fatal);
                 SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: The supplied profile '{profile.Name}' has invalid configuration data and cannot be applied. {errorMessage}");
                 return ApplyProfileResult.Error;
             }
@@ -1685,7 +1711,11 @@ namespace DisplayMagician.UserAgent.Runtime
                 // We try to use this profile. We apply the profiles the number of times that the user The profiles have checking logic in them
                 for (int i = profile.ApplyProfileCount; i > 0; i--)
                 {
-                    if (!(profile.SetActive()))
+                    diagnostics = new DisplayConfigurationDiagnostics();
+                    displayResult = diagnostics.Result;
+                    displayResult.ProfileId = profile.UUID;
+                    displayResult.Attempt = profile.ApplyProfileCount - i + 1;
+                    if (!diagnostics.Run("Topology", "Display", () => apply != null ? apply(diagnostics) : profile.SetActiveWithDiagnostics(diagnostics), DisplayConfigurationSeverity.Fatal))
                     {
                         SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.Name} Profile!");
                         result = ApplyProfileResult.Error;
@@ -1700,13 +1730,14 @@ namespace DisplayMagician.UserAgent.Runtime
                     {
                         // we have more than one profile attempt to go, so delay the requested amount, converting seconds to milliseconds.
                         // Note - usiong THread.Sleep instead of Task.Delay, as this is not a UI thread and we want to delay this thread.
-                        Thread.Sleep(profile.ApplyProfileDelay * 1000);
+                        wait(profile.ApplyProfileDelay * 1000);
                     }
                 }
             }
             catch (Exception ex)
             {
                 SharedLogger.logger.Error(ex, $"ProfileRepository/ApplyProfile: Failed to complete changing the Windows Display layout");
+                diagnostics.Add("Topology", "Display", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 result = ApplyProfileResult.Error;
             }
             finally
@@ -1720,6 +1751,7 @@ namespace DisplayMagician.UserAgent.Runtime
                     }
                     else
                     {
+                        diagnostics.Add("Wallpaper", "Windows", "The wallpaper could not be applied.");
                         SharedLogger.logger.Warn($"Program/ApplyProfile: We attempted to apply the desktop wallpaper configuration for profile {profile.Name}, and it failed :(");
                     }
                 }
@@ -1728,14 +1760,15 @@ namespace DisplayMagician.UserAgent.Runtime
                 // We unset the variable that the user is changing profiles
                 _userChangingProfiles = false;
                 // Pause for a bit to let things settle
-                Thread.Sleep(200);
+                wait(200);
                 // Get the elapsed time as a TimeSpan value.
                 TimeSpan ts = stopWatch.Elapsed;
                 string resultString = "failed";
                 if (result == ApplyProfileResult.Successful)
                 {
                     resultString = "was successful";
-                    ProfileRepository.UpdateActiveProfile();
+                    if (refresh != null) refresh();
+                    else ProfileRepository.UpdateActiveProfile();
 
                 }
                 // Display the TimeSpan time and result.

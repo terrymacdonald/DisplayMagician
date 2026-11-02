@@ -1,4 +1,5 @@
-﻿using ADLXWrapper;
+using DisplayMagician.Contracts;
+using ADLXWrapper;
 using DisplayMagician.UserAgent.Runtime;
 using DisplayMagician.UserAgent.Runtime.NVIDIA;
 using DisplayMagician.UserAgent.Runtime.Windows;
@@ -2254,6 +2255,9 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         }
 
         public bool UpdateActiveConfig()
+            => UpdateActiveConfig(new DisplayConfigurationDiagnostics());
+
+        internal bool UpdateActiveConfig(DisplayConfigurationDiagnostics diagnostics)
         {
             SharedLogger.logger.Trace($"AMDLibrary/UpdateActiveConfig: Updating the currently active config");
             try
@@ -2264,6 +2268,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             catch (Exception ex)
             {
                 SharedLogger.logger.Trace(ex, $"AMDLibrary/UpdateActiveConfig: Exception updating the currently active config");
+                diagnostics.Add("Capture", "AMD", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 return false;
             }
 
@@ -3536,6 +3541,9 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
         }
 
         public bool SetActiveConfig(AMD_DISPLAY_CONFIG displayConfig, bool useADLEyefinity, int delayInMs)
+            => SetActiveConfig(displayConfig, useADLEyefinity, delayInMs, new DisplayConfigurationDiagnostics());
+
+        internal bool SetActiveConfig(AMD_DISPLAY_CONFIG displayConfig, bool useADLEyefinity, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
 
             if (_initialised && _adlxSystem != null)
@@ -3699,6 +3707,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, "AMDLibrary/SetActiveConfig: Exception occurred while trying to create or read back the Eyefinity Desktop using ADLX");
+                                diagnostics.Add("VendorConfiguration", "AMD", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                                 return false;
                             }
                         }
@@ -3789,6 +3798,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                             catch (Exception ex)
                             {
                                 SharedLogger.logger.Error(ex, "AMDLibrary/SetActiveConfig: Exception occurred while trying to destroy the Eyefinity Desktops using ADLX");
+                                diagnostics.Add("VendorConfiguration", "AMD", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                                 return false;
                             }
 
@@ -3814,7 +3824,12 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
 
         public bool SetActiveConfigOverride(AMD_DISPLAY_CONFIG displayConfig, int delayInMs)
+            => SetActiveConfigOverride(displayConfig, delayInMs, new DisplayConfigurationDiagnostics());
+
+        internal bool SetActiveConfigOverride(AMD_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
+            string diagnosticStage = "VendorOverride";
+            string diagnosticDisplayId = string.Empty;
             if (_initialised && _adlxSystem != null)
             {
                 // Get the current list of all displays available on the system
@@ -3827,6 +3842,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
                 foreach (var display in displaysList)
                 {
+                    diagnosticDisplayId = display.UniqueId.ToString();
                     // Only apply settings we have stored
                     if (!displayConfig.Displays.TryGetValue(display.UniqueId, out var stored))
                     {
@@ -3837,6 +3853,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                     try
                     {
                         // Color depth
+                        diagnosticStage = "ColorDepth";
                         var currentColorDepth = display.GetColorDepthState();
                         if (currentColorDepth.supported)
                         {
@@ -3847,6 +3864,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetColorDepth(stored.ColorDepth))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: ColorDepth is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: ColorDepth is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -3860,6 +3878,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Custom color (includes support flags inside AMD_CUSTOM_COLOR_INFO)
+                        diagnosticStage = "CustomColor";
                         var currentCustomColor = new AMD_CUSTOM_COLOR_INFO(display.GetCustomColor());
                         if (!currentCustomColor.Equals(stored.CustomColorInfo))
                         {
@@ -3867,6 +3886,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                             if (!display.TryApplyCustomColor(stored.CustomColorInfo.ToCustomColorDto()))
                             {
                                 SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: CustomColor is no longer supported for display {display.UniqueId}, skipping.");
+                                diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: CustomColor is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                             }
                         }
                         else
@@ -3875,6 +3895,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Gamma best effort reapply
+                        diagnosticStage = "Gamma";
                         if (stored.GammaInfo.IsSupported)
                         {
                             var currentGamma = new AMD_GAMMA_INFO(display.GetGamma());
@@ -3887,6 +3908,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                     if (!display.TryReapplyGamma())
                                     {
                                         SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamma is no longer supported for display {display.UniqueId}, skipping.");
+                                        diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Gamma is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3901,6 +3923,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Gamut best effort reapply
+                        diagnosticStage = "Gamut";
                         if (stored.GamutInfo.IsGamutSupported || stored.GamutInfo.IsWhitePointSupported)
                         {
                             var currentGamut = new AMD_GAMUT_INFO(display.GetGamut());
@@ -3913,6 +3936,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                     if (!display.TryReapplyGamut())
                                     {
                                         SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamut is no longer supported for display {display.UniqueId}, skipping.");
+                                        diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Gamut is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 else
@@ -3927,6 +3951,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Connectivity experience
+                        diagnosticStage = "ConnectivityExperience";
                         var currentConn = new AMD_CONNECTIVITY_EXPERIENCE_INFO(display.GetConnectivityExperience());
                         if (!currentConn.Equals(stored.ConnectivityExperience))
                         {
@@ -3934,6 +3959,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                             if (!display.TryApplyConnectivityExperience(stored.ConnectivityExperience.ToConnectivityExperienceDto()))
                             {
                                 SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Connectivity experience is no longer supported for display {display.UniqueId}, skipping.");
+                                diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Connectivity experience is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                             }
                         }
                         else
@@ -3942,6 +3968,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Apply 3DLUT
+                        diagnosticStage = "ThreeDLut";
                         if (stored.ThreeDLUTSettings.IsSupportedSCE || stored.ThreeDLUTSettings.IsSupportedSCEVividGaming || stored.ThreeDLUTSettings.IsSupportedSCEDynamicContrast || stored.ThreeDLUTSettings.IsSupportedUser3DLUT)
                         {
                             var current3dLut = new AMD_3DLUT_INFO(display.GetThreeDLut());
@@ -3953,15 +3980,18 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                     if (!display.TryApplyThreeDLut(stored.ThreeDLUTSettings.ToThreeDLUTDto()))
                                     {
                                         SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT is no longer supported for display {display.UniqueId}, skipping.");
+                                        diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: 3DLUT is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                     }
                                     else if (!new AMD_3DLUT_INFO(display.GetThreeDLut()).Equals(stored.ThreeDLUTSettings))
                                     {
                                         SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: 3DLUT readback does not match the saved settings for display {display.UniqueId}.");
+                                        diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: 3DLUT readback does not match the saved settings for display {display.UniqueId}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                                 catch (ADLXException ex)
                                 {
                                     SharedLogger.logger.Warn(ex, $"AMDLibrary/SetActiveConfigOverride: Unable to restore the saved 3DLUT settings for display {display.UniqueId}; continuing with other overrides.");
+                                    diagnostics.Add(diagnosticStage, "AMD", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                                 }
                             }
                             else
@@ -3971,6 +4001,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // FreeSync
+                        diagnosticStage = "FreeSync";
                         var currentFreeSync = display.GetFreeSyncState();
                         if (currentFreeSync.supported)
                         {
@@ -3981,6 +4012,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetFreeSync(stored.IsEnabledFreeSync))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: FreeSync is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: FreeSync is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -3994,6 +4026,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // FreeSync Color Accuracy
+                        diagnosticStage = "FreeSyncColorAccuracy";
                         var currentFsColorAcc = display.GetFreeSyncColorAccuracyState();
                         if (currentFsColorAcc.supported)
                         {
@@ -4004,6 +4037,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetFreeSyncColorAccuracy(stored.IsEnabledFreeSyncColorAccuracy))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: FreeSync Color Accuracy is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: FreeSync Color Accuracy is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4017,6 +4051,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Dynamic Refresh Rate Control
+                        diagnosticStage = "DynamicRefreshRateControl";
                         var currentDrrc = display.GetDynamicRefreshRateControlState();
                         if (currentDrrc.supported)
                         {
@@ -4027,6 +4062,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetDynamicRefreshRateControl(stored.IsEnabledDynamicRefreshRateControl))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: DRRC is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: DRRC is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4040,6 +4076,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Display blanking
+                        diagnosticStage = "DisplayBlanking";
                         var currentBlanking = display.GetDisplayBlankingState();
                         if (currentBlanking.supported)
                         {
@@ -4050,6 +4087,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetDisplayBlanked(stored.IsEnabledDisplayBlanking))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Display blanking is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Display blanking is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4063,6 +4101,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // GPU scaling
+                        diagnosticStage = "GPUScaling";
                         var currentGpuScaling = display.GetGpuScalingState();
                         if (currentGpuScaling.supported)
                         {
@@ -4073,6 +4112,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetGpuScaling(stored.IsEnabledGPUScaling))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: GPU scaling is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: GPU scaling is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4086,6 +4126,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Integer scaling
+                        diagnosticStage = "IntegerScaling";
                         var currentIntScaling = display.GetIntegerScalingState();
                         if (currentIntScaling.supported)
                         {
@@ -4096,6 +4137,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetIntegerScaling(stored.IsEnabledIntegerScaling))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Integer scaling is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Integer scaling is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4109,6 +4151,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Pixel format
+                        diagnosticStage = "PixelFormat";
                         var currentPixelFormat = display.GetPixelFormatState();
                         if (currentPixelFormat.supported)
                         {
@@ -4119,6 +4162,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetPixelFormat(stored.CurrentPixelFormat))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Pixel format is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Pixel format is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4132,6 +4176,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Scaling mode
+                        diagnosticStage = "ScalingMode";
                         var currentScalingMode = display.GetScalingMode();
                         if (currentScalingMode.supported)
                         {
@@ -4142,6 +4187,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetScalingMode(stored.CurrentScalingMode))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Scaling mode is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Scaling mode is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4155,6 +4201,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // Virtual Super Resolution
+                        diagnosticStage = "VirtualSuperResolution";
                         var currentVsr = display.GetVirtualSuperResolutionState();
                         if (currentVsr.supported)
                         {
@@ -4165,6 +4212,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetVirtualSuperResolution(stored.IsEnabledVSR))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: VSR is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: VSR is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4178,6 +4226,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // HDCP
+                        diagnosticStage = "HDCP";
                         var currentHdcp = display.GetHdcpState();
                         if (currentHdcp.supported)
                         {
@@ -4188,6 +4237,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetHdcp(stored.IsEnabledHDCP))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: HDCP is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: HDCP is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4201,6 +4251,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         }
 
                         // VariBright
+                        diagnosticStage = "VariBright";
                         var currentVariBright = display.GetVariBrightState();
                         if (currentVariBright.supported)
                         {
@@ -4211,6 +4262,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 if (!display.TrySetVariBright(stored.IsEnabledVariBright, stored.VariBrightMode))
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: VariBright is no longer supported for display {display.UniqueId}, skipping.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: VariBright is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4234,10 +4286,13 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                     catch (Exception ex)
                     {
                         SharedLogger.logger.Error(ex, $"AMDLibrary/SetActiveConfigOverride: Error applying settings for display {display.UniqueId}");
+                        diagnostics.Add(diagnosticStage, "AMD", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                         return false;
                     }
                 }
 
+                diagnosticDisplayId = string.Empty;
+                diagnosticStage = "Driver3DSettings";
                 // Apply per-GPU 3D settings (keyed by stable hardware identity)
                 try
                 {
@@ -4266,6 +4321,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 else
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to apply 3D settings for GPU {gpuKey}.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Failed to apply 3D settings for GPU {gpuKey}.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4278,6 +4334,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Warn(ex, "AMDLibrary/SetActiveConfigOverride: Failed to apply per-GPU 3D settings via ADLX.");
+                    diagnostics.Add(diagnosticStage, "AMD", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                 }
 
                 // Apply per-GPU multimedia settings
@@ -4308,6 +4365,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 else
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale enabled for GPU {gpuKey}.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale enabled for GPU {gpuKey}.", displayId: diagnosticDisplayId);
                                 }
                                 if (storedGpu.VideoUpscale.IsEnabled)
                                 {
@@ -4318,6 +4376,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                     else
                                     {
                                         SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale sharpness for GPU {gpuKey}.");
+                                        diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Failed to set VideoUpscale sharpness for GPU {gpuKey}.", displayId: diagnosticDisplayId);
                                     }
                                 }
                             }
@@ -4334,6 +4393,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 else
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to set VideoSuperResolution enabled for GPU {gpuKey}.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Failed to set VideoSuperResolution enabled for GPU {gpuKey}.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4346,6 +4406,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Warn(ex, "AMDLibrary/SetActiveConfigOverride: Failed to apply per-GPU multimedia settings via ADLX.");
+                    diagnostics.Add(diagnosticStage, "AMD", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                 }
 
                 // Apply per-GPU power tuning settings
@@ -4377,6 +4438,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 else
                                 {
                                     SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Failed to apply ManualPowerTuning for GPU {gpuKey}.");
+                                    diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Failed to apply ManualPowerTuning for GPU {gpuKey}.", displayId: diagnosticDisplayId);
                                 }
                             }
                             else
@@ -4389,6 +4451,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                 catch (Exception ex)
                 {
                     SharedLogger.logger.Warn(ex, "AMDLibrary/SetActiveConfigOverride: Failed to apply per-GPU power tuning settings via ADLX.");
+                    diagnostics.Add(diagnosticStage, "AMD", ex.Message, displayId: diagnosticDisplayId, exception: ex);
                 }
             }
             else

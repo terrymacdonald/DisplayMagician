@@ -55,4 +55,4 @@ Use a new sandbox or reset snapshot for each lifecycle case. Preserve the approv
 
 ## Native phone and watch acceptance
 
-Run [the client acceptance checklist](../Clients/README.md) on an iOS 16+ device/simulator with Xcode and an Android API 26+ device/emulator. A native compiler check or JVM test does not validate Keychain, Android Keystore, URLSession trust challenges, Android hostname verification, WatchConnectivity, or Wear OS Data Layer on a device. Telegram conformance remains conditional on starting that product.
+Native phone/watch acceptance is tracked with the separately maintained commercial applications. This repository retains the Windows Gateway installation and server-side checks.

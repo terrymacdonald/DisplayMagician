@@ -63,3 +63,5 @@ ProgramDelayTests allows 20 ms Windows timer precision when observing a requeste
 
 
 InstallationResetFormTests exercises duplicate submission, pending-close prevention, failure/retry state and success UI using substituted reset calls. AgentReliabilityTests checks reset cancellation, exclusion of overlapping operations, waiting for completion before stopping and preservation of pending recovery when preparation is cancelled. No tests issue a real reset or stop installed processes.
+
+`DisplayConfigurationReviewTests` cover fatal versus warning readback, equivalent refresh fractions, virtual-mode indices, renumbered targets, native error details, repeated apply recovery/delays, shortcut decisions and placement eligibility, failed capture cache preservation, and diagnostics through status completion/reconnection. Native calls are substituted or compared as data; these tests do not apply real display layouts. Restoration regressions enforce the approved warning-only display recovery policy while preserving audio/volume failure handling.

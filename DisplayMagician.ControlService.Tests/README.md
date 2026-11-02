@@ -40,3 +40,5 @@ InstallationResetTests covers full multi-user configuration/backups/legacy delet
 
 
 AgentLeaseLifecycleTests covers malformed-lease empty-state recovery without backup resurrection, restarted active reservations/ready-owner recovery, failed prospective writes and retry, observed disconnect recovery, failed registration connection counts, confirmed-dead process cleanup, late PID-bound messages and pre-registration launch readiness. OperationStatusPersistenceTests also rejects heartbeat/progress requests from replaced Agent pipes. These cases use temporary files and substituted processes/commands; installed multi-session checks remain on the manual queue.
+
+`DisplayDiagnosticStatusTests` checks diagnostics across progress, completion, durable reload, user isolation and mutable-copy boundaries.
