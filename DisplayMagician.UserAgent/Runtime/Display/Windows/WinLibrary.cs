@@ -314,9 +314,6 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             SharedLogger.logger.Trace("WinLibrary/WinLibrary: Intialising Windows CCD library interface");
             _initialised = true;
 
-            // Set the DPI awareness for the process this thread is running within so that the DPI calls return the right values at the right times
-            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);
-
             _activeDisplayConfig = GetActiveConfig();
             _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
         }
@@ -944,8 +941,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             // and map the adapter name to adapter id
             // and populate the display source information
 
-            // Set the DPI awareness for the process this thread is running within so that the DPI calls return the right values
-            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+            // Keep physical-pixel capture on this thread and restore its previous context on every exit.
+            using ThreadDpiAwarenessScope dpiScope = new ThreadDpiAwarenessScope(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
             List<uint> targetPathIdsToChange = new List<uint>();
             List<uint> targetModeIdsToChange = new List<uint>();
@@ -1167,9 +1164,6 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                     SharedLogger.logger.Trace($"WinLibrary/GetWindowsDisplayConfig: Skipping getting HDR and SDR White levels information as display {paths[i].TargetInfo.Id} uses a {paths[i].TargetInfo.OutputTechnology} connector that doesn't support HDR.");
                 }
             }
-
-            // Set the DPI awareness for the process this thread is running within so that the DPI calls return the right values
-            CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);
 
             // Get all the DisplayAdapters currently in the system
             // This will be used for windows to translate the adapter details beween reboots
@@ -1811,6 +1805,52 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public bool SetActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig, int delayInMs)
             => SetActiveConfig(displayConfig, delayInMs, new DisplayConfigurationDiagnostics());
 
+        internal static WIN32STATUS ApplyTopologyOnlyConfiguration(DISPLAYCONFIG_PATH_INFO[] paths, SDC flags,
+            Func<uint, DISPLAYCONFIG_PATH_INFO[], uint, DISPLAYCONFIG_MODE_INFO[]?, SDC, WIN32STATUS>? setConfiguration = null)
+        {
+            // SetDisplayConfig requires invalid mode indexes and a null mode array for
+            // SDC_TOPOLOGY_SUPPLIED. Keep the saved arrays intact for later attempts/restoration.
+            DISPLAYCONFIG_PATH_INFO[] topologyPaths = paths.ToArray();
+            Dictionary<(ulong AdapterId, uint Value, int Kind), ushort> cloneGroups = new Dictionary<(ulong, uint, int), ushort>();
+            for (int i = 0; i < topologyPaths.Length; i++)
+            {
+                DISPLAYCONFIG_PATH_SOURCE_INFO source = topologyPaths[i].SourceInfo;
+                if (topologyPaths[i].Flags.HasFlag(DISPLAYCONFIG_PATH_FLAGS.DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE))
+                {
+                    // Dropping refresh-rate awareness must not reinterpret packed virtual-mode
+                    // indexes as ordinary indexes. Virtual-mode awareness is supported on Windows 10.
+                    flags |= SDC.SDC_VIRTUAL_MODE_AWARE;
+                    (ulong AdapterId, uint Value, int Kind) groupKey;
+                    if (source.sourceModeInfoIdx != ushort.MaxValue)
+                        groupKey = (source.AdapterId.Value, source.sourceModeInfoIdx, 0);
+                    else if (source.cloneGroupId != ushort.MaxValue)
+                        groupKey = (0, source.cloneGroupId, 1); // Preserve explicit group membership across adapters.
+                    else if (source.Id != uint.MaxValue)
+                        groupKey = (source.AdapterId.Value, source.Id, 2);
+                    else
+                        groupKey = (source.AdapterId.Value, (uint)i, 3);
+
+                    if (!cloneGroups.TryGetValue(groupKey, out ushort cloneGroup))
+                    {
+                        if (cloneGroups.Count >= ushort.MaxValue)
+                            throw new InvalidOperationException("The display topology contains too many clone groups.");
+                        cloneGroup = (ushort)cloneGroups.Count;
+                        cloneGroups.Add(groupKey, cloneGroup);
+                    }
+                    // When source modes are omitted, virtual clone membership must be explicit.
+                    source.sourceModeInfoIdx = ushort.MaxValue;
+                    source.cloneGroupId = cloneGroup;
+                }
+                else
+                    source.ModeInfoIdx = CCDImport.DISPLAYCONFIG_PATH_MODE_IDX_INVALID;
+
+                topologyPaths[i].SourceInfo = source;
+                topologyPaths[i].TargetInfo.ModeInfoIdx = CCDImport.DISPLAYCONFIG_PATH_MODE_IDX_INVALID;
+            }
+            setConfiguration ??= CCDImport.SetDisplayConfig;
+            return setConfiguration((uint)topologyPaths.Length, topologyPaths, 0, null, flags);
+        }
+
         internal static void CompareAppliedLayout(WINDOWS_DISPLAY_CONFIG saved, WINDOWS_DISPLAY_CONFIG actual, DisplayConfigurationDiagnostics diagnostics)
         {
             DISPLAYCONFIG_PATH_INFO[] expectedPaths = saved.DisplayConfigPaths.Where(path => path.Flags.HasFlag(DISPLAYCONFIG_PATH_FLAGS.DISPLAYCONFIG_PATH_ACTIVE)).ToArray();
@@ -2058,13 +2098,13 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration A THIRD TIME, this time just supplying {myPathsCount} display config paths and letting Windows figure out the best modes to use. This may work but is hit and miss.");
                 // Try it again, because in some systems it doesn't work at the first try
-                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, topologyOnlyFlags);
+                err = ApplyTopologyOnlyConfiguration(displayConfig.DisplayConfigPaths, topologyOnlyFlags);
                 if ((topologyOnlyFlags & SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE) == SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE &&
                     (err == WIN32STATUS.ERROR_INVALID_PARAMETER || err == WIN32STATUS.ERROR_NOT_SUPPORTED))
                 {
                     SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry 2. DRR-aware SetDisplayConfig apply returned WIN32STATUS {err}. Retrying without DRR-aware flags.");
                     topologyOnlyFlags = SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES;
-                    err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, topologyOnlyFlags);
+                    err = ApplyTopologyOnlyConfiguration(displayConfig.DisplayConfigPaths, topologyOnlyFlags);
                 }
 
                 if (err == WIN32STATUS.ERROR_SUCCESS)
@@ -2118,7 +2158,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 SharedLogger.logger.Info($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
                 
                 SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set Windows DPI Scaling setting for display sources.");
-                CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+                using ThreadDpiAwarenessScope dpiScope = new ThreadDpiAwarenessScope(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
                 foreach (var displaySourceEntry in displayConfig.DisplaySources)
                 {
                     // We only need to set the source on the first display source
@@ -2133,7 +2173,6 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                     }
 
                 }
-                CCDImport.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);
 
 
                 // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting

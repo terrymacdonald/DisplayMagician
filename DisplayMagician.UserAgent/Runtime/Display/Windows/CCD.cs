@@ -1299,10 +1299,10 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
         // SetDisplayConfig
         [DllImport("user32")]
-        public static extern WIN32STATUS SetDisplayConfig([In] uint numPathArrayElements, [In] DISPLAYCONFIG_PATH_INFO[] pathArray, [In] uint numModeInfoArrayElements, [In] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, [In] SDC flags);
+        public static extern WIN32STATUS SetDisplayConfig([In] uint numPathArrayElements, [In] DISPLAYCONFIG_PATH_INFO[] pathArray, [In] uint numModeInfoArrayElements, [In] DISPLAYCONFIG_MODE_INFO[]? modeInfoArray, [In] SDC flags);
 
-        [DllImport("user32")]
-        public static extern bool SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT value);
+        [DllImport("user32", SetLastError = true)]
+        public static extern IntPtr SetThreadDpiAwarenessContext(IntPtr value);
 
 
 

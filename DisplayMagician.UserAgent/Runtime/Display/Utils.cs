@@ -956,32 +956,17 @@ namespace DisplayMagician.UserAgent.Runtime
                 return false;
             }
 
-            // Now we need to go through the list1, checking that all it's items are in list2
+            // Match each entry once. Reusing a match would treat [A, A, B] and
+            // [A, B, B] as equal. Use Equals directly to preserve display-ID workarounds.
+            bool[] matched = new bool[list2.Count];
             foreach (T item1 in list1)
             {
                 bool foundIt = false;
-                foreach (T item2 in list2)
+                for (int i = 0; i < list2.Count; i++)
                 {
-                    if (item1.Equals(item2))
+                    if (!matched[i] && item1.Equals(list2[i]))
                     {
-                        foundIt = true;
-                        break;
-                    }
-                }
-                if (!foundIt)
-                {
-                    return false;
-                }
-            }
-
-            // Now we need to go through the list2, checking that all it's items are in list1
-            foreach (T item2 in list2)
-            {
-                bool foundIt = false;
-                foreach (T item1 in list1)
-                {
-                    if (item1.Equals(item2))
-                    {
+                        matched[i] = true;
                         foundIt = true;
                         break;
                     }
