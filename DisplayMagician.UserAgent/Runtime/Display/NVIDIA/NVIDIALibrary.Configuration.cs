@@ -9,21 +9,17 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA;
 public partial class NVIDIALibrary
 {
     internal static bool ApplyMosaicConfiguration(NVIDIA_MOSAIC_CONFIG desired, NVIDIA_MOSAIC_CONFIG cached,
-        Func<NVIDIA_MOSAIC_CONFIG?> readCurrent, Func<NVAPIMosaicGridTopologiesDto, bool> setGrids,
+        Func<NVAPIMosaicGridTopologiesDto, bool> setGrids,
         Func<bool> prepare, Func<bool> disable, Action<int> wait, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
     {
-        NVIDIA_MOSAIC_CONFIG? current = null;
-        try { current = readCurrent(); }
-        catch (Exception ex) { diagnostics.Add("SurroundReadback", "NVIDIA", ex.Message, exception: ex); }
-        if (!current.HasValue)
-            diagnostics.Add("SurroundReadback", "NVIDIA", "Current Surround state is unavailable; cached state cannot confirm that the requested layout is already applied.");
-
+        // Display-change refresh and operation capture own this cache. Avoid another native
+        // query merely to decide whether to apply the requested topology.
         if (desired.IsMosaicEnabled)
         {
-            if (current.HasValue && current.Value.MosaicGridTopologies.Grids?.Length > 0 && desired.Equals(current.Value)) return true;
+            if (cached.MosaicGridTopologies.Grids?.Length > 0 && desired.Equals(cached)) return true;
             // Preserve the established 1x1 wake-up step. Its failure must not prevent
             // the actual creation attempt, which can still succeed on affected drivers.
-            if (!(current?.IsMosaicEnabled ?? cached.IsMosaicEnabled))
+            if (!cached.IsMosaicEnabled)
             {
                 try { prepare(); }
                 catch (Exception ex) { diagnostics.Add("SurroundPreparation", "NVIDIA", "The preparatory 1x1 step failed; attempting the requested layout: " + ex.Message, exception: ex); }
@@ -36,10 +32,7 @@ public partial class NVIDIALibrary
             }, DisplayConfigurationSeverity.Fatal);
         }
 
-        // An unavailable comparison read must not turn unsupported Mosaic hardware
-        // into a new failure gate. Retain positive cached evidence that removal is needed;
-        // otherwise Windows applies/verifies the requested ordinary layout, with a warning.
-        return !(current?.IsMosaicEnabled ?? cached.IsMosaicEnabled) ||
+        return !cached.IsMosaicEnabled ||
             diagnostics.Run("Surround", "NVIDIA", disable, DisplayConfigurationSeverity.Fatal);
     }
 

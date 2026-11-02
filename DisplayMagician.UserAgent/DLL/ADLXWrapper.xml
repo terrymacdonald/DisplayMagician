@@ -511,10 +511,22 @@
             Gamma info and reapply.
             </summary>
         </member>
+        <member name="M:ADLXWrapper.ADLXDisplay.ApplyGamma(ADLXWrapper.GammaDto)">
+            <summary>Applies saved gamma settings.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLXDisplay.TryApplyGamma(ADLXWrapper.GammaDto)">
+            <summary>Applies saved gamma settings, returning false when unsupported.</summary>
+        </member>
         <member name="M:ADLXWrapper.ADLXDisplay.GetGamut">
             <summary>
             Gamut info and reapply.
             </summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLXDisplay.ApplyGamut(ADLXWrapper.GamutDto)">
+            <summary>Applies saved gamut settings.</summary>
+        </member>
+        <member name="M:ADLXWrapper.ADLXDisplay.TryApplyGamut(ADLXWrapper.GamutDto)">
+            <summary>Applies saved gamut settings, returning false when unsupported.</summary>
         </member>
         <member name="M:ADLXWrapper.ADLXDisplay.GetThreeDLut">
             <summary>

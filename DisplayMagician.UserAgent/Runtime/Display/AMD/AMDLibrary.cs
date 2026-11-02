@@ -3014,6 +3014,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
                                         // Logic cribbed from https://github.com/elitak/amd-adl-sdk/blob/master/Sample/Eyefinity/ati_eyefinity.c
                                         // Go through each display Target
+                                        List<ADL_MODE> activeModesForMap = new List<ADL_MODE>();
                                         foreach (var displayTarget in displayTargetArray)
                                         {
                                             // Get the current Display Modes for this adapter/display combination
@@ -3107,14 +3108,12 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                                 if (isSlsEnabled)
                                                 {
                                                     // SLS is enabled for this display
-                                                    if (!myDisplayConfig.Adl2SlsConfig.SLSEnabledDisplayTargets.Contains(displayMode))
+                                                    if (!activeModesForMap.Contains(displayMode))
                                                     {
-                                                        myDisplayConfig.Adl2SlsConfig.SLSEnabledDisplayTargets.Add(displayMode);
+                                                        activeModesForMap.Add(displayMode);
                                                     }
-                                                    // we also update the main IsSLSEnabled so that it is indicated at the top level too
-
-                                                    myDisplayConfig.Adl2SlsConfig.IsSlsEnabled = true;
-                                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} has a matching SLS grid set! Eyefinity (SLS) is enabled. Setting IsSlsEnabled to true");
+                                                    // The aggregate flag is updated only when this map is recorded.
+                                                    SharedLogger.logger.Trace($"AMDLibrary/GetAMDDisplayConfig: AMD Adapter #{oneAdapter.AdapterIndex.ToString()} has a matching SLS grid set! Eyefinity (SLS) is enabled for this map");
 
                                                 }
                                             }
@@ -3122,10 +3121,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                         }
 
                                         // Only Add the mySLSMapConfig to the displayConfig if SLS is enabled
-                                        if (myDisplayConfig.Adl2SlsConfig.IsSlsEnabled)
-                                        {
-                                            myDisplayConfig.Adl2SlsConfig.SLSMapConfigs.Add(mySLSMapConfig);
-                                        }
+                                        RecordActiveSlsMap(ref myDisplayConfig, mySLSMapConfig, activeModesForMap);
 
                                     }
                                     else
@@ -3540,6 +3536,25 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             return sb.ToString();
         }
 
+        internal static void RecordActiveSlsMap(ref AMD_DISPLAY_CONFIG config, AMD_SLSMAP_CONFIG map, IReadOnlyList<ADL_MODE> activeModes)
+        {
+            // The aggregate flag means at least one adapter contains an active map.
+            // A previous adapter's result must not make this adapter's inactive map active.
+            if (activeModes.Count == 0) return;
+            config.IsEyefinity = true;
+            config.Adl2SlsConfig.IsSlsEnabled = true;
+            config.Adl2SlsConfig.SLSMapConfigs.Add(map);
+            foreach (ADL_MODE mode in activeModes)
+                if (!config.Adl2SlsConfig.SLSEnabledDisplayTargets.Contains(mode)) config.Adl2SlsConfig.SLSEnabledDisplayTargets.Add(mode);
+        }
+
+        internal static bool HasRequiredSlsMaps(AMD_SLS_CONFIG config, DisplayConfigurationDiagnostics diagnostics)
+        {
+            if (config.SLSMapConfigs != null && config.SLSMapConfigs.Count > 0) return true;
+            diagnostics.Add("Eyefinity", "AMD", "Legacy ADL Eyefinity was requested, but the saved snapshot contains no SLS maps.", DisplayConfigurationSeverity.Fatal);
+            return false;
+        }
+
         public bool SetActiveConfig(AMD_DISPLAY_CONFIG displayConfig, bool useADLEyefinity, int delayInMs)
             => SetActiveConfig(displayConfig, useADLEyefinity, delayInMs, new DisplayConfigurationDiagnostics());
 
@@ -3573,6 +3588,8 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // If set then we are using the older ADL API to create the Eyefinity Desktop
                         SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfig: Using the older ADL API to create the Eyefinity Desktop.");
                         
+                        if (!HasRequiredSlsMaps(displayConfig.Adl2SlsConfig, diagnostics)) return false;
+
                         // Set the initial state of the ADL_STATUS
                         ADL_STATUS ADLRet = 0;
                         for (int slsMapConfigIndex = 0; slsMapConfigIndex < displayConfig.Adl2SlsConfig.SLSMapConfigs.Count; slsMapConfigIndex++)
@@ -3855,7 +3872,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Color depth
                         diagnosticStage = "ColorDepth";
                         var currentColorDepth = display.GetColorDepthState();
-                        if (currentColorDepth.supported)
+                        if (stored.IsSupportedColorDepth && currentColorDepth.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: ColorDepth is supported for display {display.UniqueId}.");
                             if (currentColorDepth.current != stored.ColorDepth)
@@ -3894,7 +3911,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: CustomColor already matches for display {display.UniqueId}, skipping.");
                         }
 
-                        // Gamma best effort reapply
+                        // Restore captured gamma settings
                         diagnosticStage = "Gamma";
                         if (stored.GammaInfo.IsSupported)
                         {
@@ -3904,8 +3921,8 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma supported for display {display.UniqueId}.");
                                 if (!currentGamma.Equals(stored.GammaInfo))
                                 {
-                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma differs for display {display.UniqueId}, reapplying.");
-                                    if (!display.TryReapplyGamma())
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamma differs for display {display.UniqueId}, applying saved settings.");
+                                    if (!display.TryApplyGamma(stored.GammaInfo.ToGammaDto()))
                                     {
                                         SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamma is no longer supported for display {display.UniqueId}, skipping.");
                                         diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Gamma is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
@@ -3922,7 +3939,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                             }
                         }
 
-                        // Gamut best effort reapply
+                        // Restore captured gamut settings
                         diagnosticStage = "Gamut";
                         if (stored.GamutInfo.IsGamutSupported || stored.GamutInfo.IsWhitePointSupported)
                         {
@@ -3932,8 +3949,8 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                                 SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut supported for display {display.UniqueId}.");
                                 if (!currentGamut.Equals(stored.GamutInfo))
                                 {
-                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut differs for display {display.UniqueId}, reapplying.");
-                                    if (!display.TryReapplyGamut())
+                                    SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Gamut differs for display {display.UniqueId}, applying saved settings.");
+                                    if (!display.TryApplyGamut(stored.GamutInfo.ToGamutDto()))
                                     {
                                         SharedLogger.logger.Warn($"AMDLibrary/SetActiveConfigOverride: Gamut is no longer supported for display {display.UniqueId}, skipping.");
                                         diagnostics.Add(diagnosticStage, "AMD", $"AMDLibrary/SetActiveConfigOverride: Gamut is no longer supported for display {display.UniqueId}, skipping.", displayId: diagnosticDisplayId);
@@ -4003,7 +4020,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // FreeSync
                         diagnosticStage = "FreeSync";
                         var currentFreeSync = display.GetFreeSyncState();
-                        if (currentFreeSync.supported)
+                        if (stored.IsSupportedFreeSync && currentFreeSync.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: FreeSync supported for display {display.UniqueId}.");
                             if (currentFreeSync.enabled != stored.IsEnabledFreeSync)
@@ -4028,7 +4045,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // FreeSync Color Accuracy
                         diagnosticStage = "FreeSyncColorAccuracy";
                         var currentFsColorAcc = display.GetFreeSyncColorAccuracyState();
-                        if (currentFsColorAcc.supported)
+                        if (stored.IsSupportedFreeSyncColorAccuracy && currentFsColorAcc.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: FreeSync Color Accuracy supported for display {display.UniqueId}.");
                             if (currentFsColorAcc.enabled != stored.IsEnabledFreeSyncColorAccuracy)
@@ -4053,7 +4070,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Dynamic Refresh Rate Control
                         diagnosticStage = "DynamicRefreshRateControl";
                         var currentDrrc = display.GetDynamicRefreshRateControlState();
-                        if (currentDrrc.supported)
+                        if (stored.IsSupportedDynamicRefreshRateControl && currentDrrc.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: DRRC supported for display {display.UniqueId}.");
                             if (currentDrrc.enabled != stored.IsEnabledDynamicRefreshRateControl)
@@ -4078,7 +4095,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Display blanking
                         diagnosticStage = "DisplayBlanking";
                         var currentBlanking = display.GetDisplayBlankingState();
-                        if (currentBlanking.supported)
+                        if (stored.IsSupportedDisplayBlanking && currentBlanking.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Display blanking supported for display {display.UniqueId}.");
                             if (currentBlanking.blanked != stored.IsEnabledDisplayBlanking)
@@ -4103,7 +4120,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // GPU scaling
                         diagnosticStage = "GPUScaling";
                         var currentGpuScaling = display.GetGpuScalingState();
-                        if (currentGpuScaling.supported)
+                        if (stored.IsSupportedGPUScaling && currentGpuScaling.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: GPU scaling supported for display {display.UniqueId}.");
                             if (currentGpuScaling.enabled != stored.IsEnabledGPUScaling)
@@ -4128,7 +4145,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Integer scaling
                         diagnosticStage = "IntegerScaling";
                         var currentIntScaling = display.GetIntegerScalingState();
-                        if (currentIntScaling.supported)
+                        if (stored.IsSupportedIntegerScaling && currentIntScaling.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Integer scaling supported for display {display.UniqueId}.");
                             if (currentIntScaling.enabled != stored.IsEnabledIntegerScaling)
@@ -4153,7 +4170,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Pixel format
                         diagnosticStage = "PixelFormat";
                         var currentPixelFormat = display.GetPixelFormatState();
-                        if (currentPixelFormat.supported)
+                        if (stored.IsSupportedPixelFormat && currentPixelFormat.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Pixel format supported for display {display.UniqueId}.");
                             if (currentPixelFormat.current != stored.CurrentPixelFormat)
@@ -4178,7 +4195,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Scaling mode
                         diagnosticStage = "ScalingMode";
                         var currentScalingMode = display.GetScalingMode();
-                        if (currentScalingMode.supported)
+                        if (stored.IsSupportedScalingMode && currentScalingMode.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: Scaling mode supported for display {display.UniqueId}.");
                             if (currentScalingMode.mode != stored.CurrentScalingMode)
@@ -4203,7 +4220,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // Virtual Super Resolution
                         diagnosticStage = "VirtualSuperResolution";
                         var currentVsr = display.GetVirtualSuperResolutionState();
-                        if (currentVsr.supported)
+                        if (stored.IsSupportedVSR && currentVsr.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VSR supported for display {display.UniqueId}.");
                             if (currentVsr.enabled != stored.IsEnabledVSR)
@@ -4228,7 +4245,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // HDCP
                         diagnosticStage = "HDCP";
                         var currentHdcp = display.GetHdcpState();
-                        if (currentHdcp.supported)
+                        if (stored.IsSupportedHDCP && currentHdcp.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: HDCP supported for display {display.UniqueId}.");
                             if (currentHdcp.enabled != stored.IsEnabledHDCP)
@@ -4253,7 +4270,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
                         // VariBright
                         diagnosticStage = "VariBright";
                         var currentVariBright = display.GetVariBrightState();
-                        if (currentVariBright.supported)
+                        if (stored.IsSupportedVariBright && currentVariBright.supported)
                         {
                             SharedLogger.logger.Trace($"AMDLibrary/SetActiveConfigOverride: VariBright supported for display {display.UniqueId}.");
                             if (currentVariBright.enabled != stored.IsEnabledVariBright || currentVariBright.mode != stored.VariBrightMode)

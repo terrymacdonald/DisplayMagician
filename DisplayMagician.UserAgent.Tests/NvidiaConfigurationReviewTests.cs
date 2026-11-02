@@ -20,7 +20,7 @@ public sealed class NvidiaConfigurationReviewTests
     public void RejectedOrThrowingSurroundCreationIsFatal(bool throws)
     {
         DisplayConfigurationDiagnostics diagnostics = new();
-        bool result = NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(true), Mosaic(false), () => Mosaic(false),
+        bool result = NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(true), Mosaic(false),
             _ => throws ? throw new Win32Exception(5) : false, () => true, () => true, _ => { }, 10, diagnostics);
         Assert.False(result);
         Assert.False(diagnostics.Result.IsSuccessful);
@@ -36,7 +36,7 @@ public sealed class NvidiaConfigurationReviewTests
         DisplayConfigurationDiagnostics diagnostics = new();
         int creations = 0;
         List<int> waits = new();
-        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(true), Mosaic(false), () => Mosaic(false),
+        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(true), Mosaic(false),
             _ => { creations++; return true; }, () => throws ? throw new IOException("Preparation failed") : false,
             () => throw new InvalidOperationException("Required disable should not run"), waits.Add, 10, diagnostics));
         Assert.Equal(1, creations);
@@ -45,66 +45,47 @@ public sealed class NvidiaConfigurationReviewTests
     }
 
     [Fact]
-    public void LiveStateReplacesACachedMatchBeforeDecidingToSkipSurround()
+    public void CachedMatchSkipsUnnecessaryTopologyWritesAndPreparation()
     {
         NVIDIA_MOSAIC_CONFIG desired = Mosaic(true);
-        int creations = 0;
-        int preparations = 0;
-        DisplayConfigurationDiagnostics diagnostics = new();
-        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(desired, desired, () => Mosaic(false),
-            _ => { creations++; return true; }, () => { preparations++; return true; }, () => true, _ => { }, 0, diagnostics));
-        Assert.Equal(1, creations);
-        Assert.Equal(1, preparations);
-    }
-
-    [Fact]
-    public void ConfirmedLiveMatchSkipsUnnecessaryTopologyWrites()
-    {
-        NVIDIA_MOSAIC_CONFIG desired = Mosaic(true);
-        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(desired, Mosaic(false), () => desired,
+        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(desired, desired,
             _ => throw new InvalidOperationException("Unnecessary creation"), () => throw new InvalidOperationException("Unnecessary preparation"),
             () => throw new InvalidOperationException("Unnecessary removal"), _ => { }, 0, new DisplayConfigurationDiagnostics()));
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void UnavailableLiveReadCannotJustifySkippingRequestedSurround(bool throws)
+    [Fact]
+    public void MissingCachedGridsCannotJustifySkippingRequestedCreation()
     {
         NVIDIA_MOSAIC_CONFIG desired = Mosaic(true);
+        NVIDIA_MOSAIC_CONFIG cached = desired;
+        cached.MosaicGridTopologies = new NVAPIMosaicGridTopologiesDto();
         int creations = 0;
-        DisplayConfigurationDiagnostics diagnostics = new();
-        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(desired, desired,
-            () => throws ? throw new IOException("Read failed") : null,
-            _ => { creations++; return true; }, () => true, () => true, _ => { }, 0, diagnostics));
+        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(desired, cached,
+            _ => { creations++; return true; }, () => true, () => true, _ => { }, 0, new DisplayConfigurationDiagnostics()));
         Assert.Equal(1, creations);
-        Assert.True(diagnostics.Result.HasWarnings);
-        Assert.True(diagnostics.Result.IsSuccessful);
-    }
-
-    [Theory]
-    [InlineData(false, true, 1)]
-    [InlineData(true, false, 0)]
-    public void LiveStateControlsRequiredRemoval(bool cachedEnabled, bool liveEnabled, int expectedRemovals)
-    {
-        int removals = 0;
-        DisplayConfigurationDiagnostics diagnostics = new();
-        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(false), Mosaic(cachedEnabled), () => Mosaic(liveEnabled),
-            _ => true, () => true, () => { removals++; return true; }, _ => { }, 0, diagnostics));
-        Assert.Equal(expectedRemovals, removals);
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void UnavailableReadPreservesOrdinaryLayoutCompatibilityAndKnownRemovalNeed(bool cachedEnabled)
+    public void CachedAggregateFlagControlsRequiredRemoval(bool enabled)
     {
         int removals = 0;
+        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(false), Mosaic(enabled),
+            _ => true, () => true, () => { removals++; return true; }, _ => { }, 0, new DisplayConfigurationDiagnostics()));
+        Assert.Equal(enabled ? 1 : 0, removals);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RejectedOrThrowingRequiredRemovalIsFatal(bool throws)
+    {
         DisplayConfigurationDiagnostics diagnostics = new();
-        Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(false), Mosaic(cachedEnabled), () => null,
-            _ => true, () => true, () => { removals++; return true; }, _ => { }, 0, diagnostics));
-        Assert.Equal(cachedEnabled ? 1 : 0, removals);
-        Assert.True(diagnostics.Result.HasWarnings);
+        Assert.False(NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(false), Mosaic(true),
+            _ => true, () => true, () => throws ? throw new Win32Exception(5) : false, _ => { }, 0, diagnostics));
+        Assert.False(diagnostics.Result.IsSuccessful);
+        if (throws) Assert.Contains(diagnostics.Result.Issues, issue => issue.NativeErrorCode == "5");
     }
 
     [Theory]

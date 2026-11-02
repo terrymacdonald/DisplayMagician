@@ -2598,20 +2598,6 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             if (_initialised && _nvapiApiHelper != null)
             {
                 return ApplyMosaicConfiguration(displayConfig.MosaicConfig, ActiveDisplayConfig.MosaicConfig,
-                    () =>
-                    {
-                        using NVAPIMosaicHelper helper = _nvapiApiHelper.GetMosaicHelper();
-                        NVAPIMosaicCurrentTopoDto? current = helper.GetCurrentTopo();
-                        if (!current.HasValue) return null;
-                        NVIDIA_MOSAIC_CONFIG config = new NVIDIA_MOSAIC_CONFIG
-                        {
-                            IsMosaicEnabled = current.Value.TopoBrief.Enabled,
-                            MosaicCurrentTopo = current.Value
-                        };
-                        if (config.IsMosaicEnabled)
-                            config.MosaicGridTopologies = helper.EnumDisplayGrids() ?? new NVAPIMosaicGridTopologiesDto();
-                        return config;
-                    },
                     grids =>
                     {
                         using NVAPIMosaicHelper helper = _nvapiApiHelper.GetMosaicHelper();
