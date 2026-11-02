@@ -33,6 +33,8 @@ namespace DisplayMagician.Processes
         private readonly DateTime _watchStartedUtc;
         private readonly bool _continueTrackingDescendants;
         private readonly Func<ProcessSnapshotScan> _captureSnapshot;
+        private readonly Func<int, DateTime?> _readProcessStartTime;
+        private readonly Func<Process, DateTime> _readLaunchStartTime;
         private Timer? _snapshotTimer;
         private int _snapshotInProgress;
         private int _completedSnapshotCount;
@@ -47,10 +49,13 @@ namespace DisplayMagician.Processes
         private DateTime _nextSnapshotAttemptUtc;
         private bool _lastSnapshotSucceeded;
         private bool _trackingFailed;
+        private int _consecutiveStatusFailures;
+        private DateTime _nextStatusAttemptUtc;
+        private string? _trackingFailureMessage;
 
         public bool IsTrackingFailed { get { lock (_syncRoot) return _trackingFailed; } }
 
-        public bool HadTrackingError { get { lock (_syncRoot) return _hadTrackingError || _consecutiveSnapshotFailures > 0 || _trackingFailed; } }
+        public bool HadTrackingError { get { lock (_syncRoot) return _hadTrackingError || _consecutiveSnapshotFailures > 0 || _consecutiveStatusFailures > 0 || _trackingFailed; } }
 
         public bool IsInDirectLaunchTree(int processId)
         {
@@ -58,9 +63,12 @@ namespace DisplayMagician.Processes
                 return _directLaunchTreeProcessIds.Contains(processId);
         }
 
-        internal ProcessTreeMonitor(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants, Func<ProcessSnapshotScan>? captureSnapshot = null)
+        internal ProcessTreeMonitor(string expectedExecutablePath, int startTimeout, bool continueTrackingDescendants, Func<ProcessSnapshotScan>? captureSnapshot = null,
+            Func<int, DateTime?>? readProcessStartTime = null, Func<Process, DateTime>? readLaunchStartTime = null)
         {
             _captureSnapshot = captureSnapshot ?? CaptureProcessSnapshot;
+            _readProcessStartTime = readProcessStartTime ?? ReadProcessStartTime;
+            _readLaunchStartTime = readLaunchStartTime ?? (process => process.StartTime.ToUniversalTime());
             _continueTrackingDescendants = continueTrackingDescendants;
             _expectedExecutablePath = Path.GetFullPath(expectedExecutablePath);
             _expectedExecutableName = Path.GetFileName(expectedExecutablePath);
@@ -107,6 +115,9 @@ namespace DisplayMagician.Processes
         {
             get
             {
+                ThrowIfTrackingFailed();
+                lock (_syncRoot)
+                    if (_consecutiveStatusFailures > 0 && DateTime.UtcNow < _nextStatusAttemptUtc) return true;
                 if (_continueTrackingDescendants) CaptureProcessTree(null);
                 ThrowIfTrackingFailed();
                 KeyValuePair<int, DateTime>[] processIds;
@@ -119,14 +130,15 @@ namespace DisplayMagician.Processes
                         _completedSnapshotCount < _minimumSnapshotCountForDirectLaunch;
                 }
 
+                Exception? queryFailure = null;
                 foreach (KeyValuePair<int, DateTime> tracked in processIds)
                 {
                     try
                     {
-                        using (Process process = Process.GetProcessById(tracked.Key))
+                        if (_readProcessStartTime(tracked.Key) == tracked.Value)
                         {
-                            if (!process.HasExited && process.StartTime.ToUniversalTime() == tracked.Value)
-                                return true;
+                            lock (_syncRoot) _consecutiveStatusFailures = 0;
+                            return true;
                         }
                     }
                     catch (ArgumentException)
@@ -135,9 +147,26 @@ namespace DisplayMagician.Processes
                     }
                     catch (Exception ex)
                     {
+                        queryFailure = ex;
                         logger.Trace(ex, $"ProcessTreeMonitor/IsRunning: Could not query tracked PID {tracked.Key}.");
                     }
                 }
+
+                if (queryFailure != null)
+                {
+                    int failures;
+                    lock (_syncRoot)
+                    {
+                        failures = ++_consecutiveStatusFailures;
+                        _nextStatusAttemptUtc = DateTime.UtcNow.Add(SnapshotRetryInterval);
+                    }
+                    logger.Warn(queryFailure, "ProcessTreeMonitor/IsRunning: Process status check {0} of {1} failed for {2}; exit is not confirmed.", failures, MaximumSnapshotFailures, _expectedExecutablePath);
+                    if (failures >= MaximumSnapshotFailures)
+                        FailTracking($"Process tracking failed for '{_expectedExecutablePath}' after {MaximumSnapshotFailures} failed process status checks.");
+                    ThrowIfTrackingFailed();
+                    return true;
+                }
+                lock (_syncRoot) _consecutiveStatusFailures = 0;
 
                 // A launcher may already have exited while its child process is starting.
                 // Do not report the tree as closed until a snapshot taken after the launch has
@@ -233,12 +262,13 @@ namespace DisplayMagician.Processes
         public void RegisterLaunchedProcesses(IEnumerable<Process?>? launchedProcesses)
             => RegisterLaunchedProcesses(launchedProcesses, requireExpectedExecutable: false);
 
-        internal void RegisterLaunchedProcesses(IEnumerable<Process?>? launchedProcesses, bool requireExpectedExecutable)
+        internal void RegisterLaunchedProcesses(IEnumerable<Process?>? launchedProcesses, bool requireExpectedExecutable, CancellationToken cancellationToken = default)
         {
             if (launchedProcesses == null)
                 return;
 
             bool registeredLaunchedProcess = false;
+            bool hadCandidate = false;
             HashSet<ProcessIdentity> launchRoots = new HashSet<ProcessIdentity>();
             lock (_syncRoot)
                 foreach (int processId in _directLaunchTreeProcessIds)
@@ -250,6 +280,8 @@ namespace DisplayMagician.Processes
                 {
                     if (process == null)
                         continue;
+                    hadCandidate = true;
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     if (requireExpectedExecutable)
                     {
@@ -261,10 +293,29 @@ namespace DisplayMagician.Processes
                         if (!launchedExpected && !PathsMatch(process)) continue;
                     }
 
+                    DateTime startedUtc = default;
+                    for (int attempt = 1; attempt <= MaximumSnapshotFailures; attempt++)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        try
+                        {
+                            startedUtc = _readLaunchStartTime(process);
+                            break;
+                        }
+                        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException or IOException or UnauthorizedAccessException)
+                        {
+                            logger.Warn(ex, "ProcessTreeMonitor/RegisterLaunchedProcesses: Identity check {0} of {1} failed for launched PID {2}, monitoring {3}.", attempt, MaximumSnapshotFailures, process.Id, _expectedExecutablePath);
+                            if (attempt == MaximumSnapshotFailures)
+                            {
+                                FailTracking($"Process tracking failed for '{_expectedExecutablePath}' after {MaximumSnapshotFailures} failed launch identity checks.");
+                                ThrowIfTrackingFailed();
+                            }
+                            if (cancellationToken.WaitHandle.WaitOne(SnapshotRetryInterval)) cancellationToken.ThrowIfCancellationRequested();
+                        }
+                    }
                     lock (_syncRoot)
                     {
                         if (_disposed) return;
-                        DateTime startedUtc = process.StartTime.ToUniversalTime();
                         if (startedUtc < _watchStartedUtc) continue;
                         if (_existingExpectedProcessIds.TryGetValue(process.Id, out DateTime existingStartedUtc) && existingStartedUtc == startedUtc)
                             continue;
@@ -285,6 +336,8 @@ namespace DisplayMagician.Processes
                         }
                     }
                 }
+                catch (ProcessTrackingException) { throw; }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
                 catch (Exception ex)
                 {
                     if (ex is System.ComponentModel.Win32Exception) _hadTrackingError = true;
@@ -294,7 +347,12 @@ namespace DisplayMagician.Processes
 
             // Direct launches have authoritative roots. Discovery remains open for game
             // library/alternative-executable callers until they explicitly select a root.
-            if (!requireExpectedExecutable) SelectProcessTrees(launchRoots);
+            if (!requireExpectedExecutable && hadCandidate && launchRoots.Count == 0)
+            {
+                FailTracking($"Process tracking failed for '{_expectedExecutablePath}': no returned process could be verified as a new launch.");
+                ThrowIfTrackingFailed();
+            }
+            if (!requireExpectedExecutable && launchRoots.Count > 0) SelectProcessTrees(launchRoots);
             if (registeredLaunchedProcess)
             {
                 // Capture any child that was started before the launcher returned control.
@@ -609,6 +667,7 @@ namespace DisplayMagician.Processes
                         }
                         catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
                         {
+                            if (ex is not ArgumentException) deferredParents.Add(process.ParentProcessId);
                             if (ex is System.ComponentModel.Win32Exception) _hadTrackingError = true;
                             logger.Trace(ex, "ProcessTreeMonitor/ExpandTrackedDescendants: Could not verify descendant PID {0}.", process.ProcessId);
                         }
@@ -639,6 +698,12 @@ namespace DisplayMagician.Processes
                     catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
                     {
                         if (runningIds.Contains(tracked.Key) && ex is System.ComponentModel.Win32Exception) _hadTrackingError = true;
+                        if (ex is not ArgumentException)
+                        {
+                            deferredParents.Add(tracked.Key);
+                            logger.Trace(ex, "ProcessTreeMonitor/RemoveExitedOrReusedProcesses: Retaining uncertain tracked PID {0} for a bounded retry.", tracked.Key);
+                            continue;
+                        }
                         logger.Trace(ex, "ProcessTreeMonitor/RemoveExitedOrReusedProcesses: Could not verify tracked PID {0}.", tracked.Key);
                     }
                     // If the parent was in this snapshot but exited while it was being
@@ -746,7 +811,31 @@ namespace DisplayMagician.Processes
         private void ThrowIfTrackingFailed()
         {
             lock (_syncRoot)
-                if (_trackingFailed) throw new ProcessTrackingException($"Process tracking failed for '{_expectedExecutablePath}' after {MaximumSnapshotFailures} consecutive failed scans.");
+                if (_trackingFailed) throw new ProcessTrackingException(_trackingFailureMessage ?? $"Process tracking failed for '{_expectedExecutablePath}' after {MaximumSnapshotFailures} consecutive failed scans.");
+        }
+
+        private static DateTime? ReadProcessStartTime(int processId)
+        {
+            using Process process = Process.GetProcessById(processId);
+            return process.HasExited ? null : process.StartTime.ToUniversalTime();
+        }
+
+        private void FailTracking(string message)
+        {
+            lock (_syncRoot)
+            {
+                if (_disposed || _trackingFailed) return;
+                _trackingFailed = true;
+                _trackingFailureMessage = message;
+                // Discovery can observe unrelated copies before authoritative launch roots
+                // are selected. A failed registration must not expose those to cleanup.
+                foreach (int processId in _trackedProcessStartTimes.Keys.Where(id => !_directLaunchTreeProcessIds.Contains(id)).ToArray())
+                    _trackedProcessStartTimes.Remove(processId);
+                _observedExpectedProcesses.Clear();
+                _trackedParents.Clear();
+            }
+            logger.Error("ProcessTreeMonitor/FailTracking: {0}", message);
+            CompleteDiscovery();
         }
 
         private void CompleteDiscovery()
@@ -766,7 +855,7 @@ namespace DisplayMagician.Processes
             timer?.Dispose();
             if (failed)
             {
-                logger.Error("ProcessTreeMonitor/CompleteDiscovery: Stopped tracking {0} after {1} consecutive snapshot failures; process completion has not been confirmed.", _expectedExecutablePath, MaximumSnapshotFailures);
+                logger.Error("ProcessTreeMonitor/CompleteDiscovery: Stopped tracking {0} after verification failures; process completion has not been confirmed.", _expectedExecutablePath);
             }
             else if (!HasObservedExpectedProcess)
             {

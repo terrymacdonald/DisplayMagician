@@ -266,7 +266,7 @@ public sealed class ShortcutRunner
                     {
                         return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
                     }
-                    monitor.RegisterLaunchedProcesses(processes, requireExpectedExecutable: !shortcut.MonitorLaunchedExecutable);
+                    monitor.RegisterLaunchedProcesses(processes, requireExpectedExecutable: !shortcut.MonitorLaunchedExecutable, cancellationToken);
                     windowRun.Monitors.Add(("main", monitor));
                     if (!shortcut.MonitorLaunchedExecutable)
                     {
@@ -353,7 +353,7 @@ public sealed class ShortcutRunner
                     windowRun.RequireMainSource = true;
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.StartingGame, "Starting game.", cancellationToken).ConfigureAwait(false);
                     List<Process>? launchedProcesses = gameLibrary.StartGame(game, shortcut.GameArguments, (ProcessPriority)(int)shortcut.ProcessPriority);
-                    try { gameMonitor.RegisterLaunchedProcesses(launchedProcesses, requireExpectedExecutable: true); }
+                    try { gameMonitor.RegisterLaunchedProcesses(launchedProcesses, requireExpectedExecutable: true, cancellationToken); }
                     finally { if (launchedProcesses != null) ProcessUtils.DisposeProcesses(launchedProcesses); }
                     DateTime gameStartDeadlineUtc = DateTime.UtcNow.AddSeconds(Math.Clamp(shortcut.StartTimeoutSeconds, 1, 60));
                     await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.WaitingForGameToStart, "Waiting for game to start.", cancellationToken).ConfigureAwait(false);
@@ -491,7 +491,7 @@ public sealed class ShortcutRunner
                 }
                 else
                 {
-                    outcome = executeAction != null ? executeAction(action, executionOrder) : action.StartProgram == null ? ProgramActionOutcome.Failed : StartProgram(action.StartProgram, executionOrder, startedPrograms, windowRun);
+                    outcome = executeAction != null ? executeAction(action, executionOrder) : action.StartProgram == null ? ProgramActionOutcome.Failed : StartProgram(action.StartProgram, executionOrder, startedPrograms, windowRun, cancellationToken);
                     if (outcome == ProgramActionOutcome.Failed)
                         failure = $"Could not start '{action.StartProgram?.ExecutablePath ?? action.StartProgram?.ApplicationId ?? "the configured program"}'.";
                 }
@@ -571,7 +571,7 @@ public sealed class ShortcutRunner
         }
     }
 
-    private static ProgramActionOutcome StartProgram(ShortcutStartProgramDefinition program, int sequence, List<StartedProgram> startedPrograms, WindowPlacementRun windowRun)
+    private static ProgramActionOutcome StartProgram(ShortcutStartProgramDefinition program, int sequence, List<StartedProgram> startedPrograms, WindowPlacementRun windowRun, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(program.ApplicationId))
         {
@@ -581,13 +581,13 @@ public sealed class ShortcutRunner
                 return program.ArgumentsRequired && string.IsNullOrWhiteSpace(program.Arguments) ? ProgramActionOutcome.Failed : ProgramActionOutcome.Skipped;
             }
 
-            Process? uwpProcess = UwpApplicationLauncher.Start(program.ApplicationId, program.Arguments);
+            Process? uwpProcess = UwpApplicationLauncher.Start(program.ApplicationId, program.Arguments, out bool ownsProcess);
             if (uwpProcess == null)
             {
                 return ProgramActionOutcome.Failed;
             }
 
-            if (program.CloseOnFinish)
+            if (program.CloseOnFinish && ownsProcess)
             {
                 startedPrograms.Add(new StartedProgram(program.Priority, sequence, new List<Process> { uwpProcess }, null));
             }
@@ -627,7 +627,7 @@ public sealed class ShortcutRunner
                 windowRun.Monitors.Add((program.Id, monitor));
                 if (!program.CloseOnFinish) windowRun.OwnedHelperMonitors.Add(monitor);
                 retainedMonitor = true;
-                monitor.RegisterLaunchedProcesses(startedProcesses);
+                monitor.RegisterLaunchedProcesses(startedProcesses, requireExpectedExecutable: false, cancellationToken);
             }
             return ProgramActionOutcome.Succeeded;
         }
@@ -729,6 +729,14 @@ public sealed class ShortcutRunner
                 try
                 {
                     processesToStop = action.StartedProgram.Monitor?.GetTrackedProcesses(refresh: true) ?? new List<Process>();
+                    if (action.StartedProgram.Monitor != null)
+                    {
+                        foreach (Process candidate in processesToStop.Where(process => !action.StartedProgram.Monitor.IsInDirectLaunchTree(process.Id)).ToArray())
+                        {
+                            processesToStop.Remove(candidate);
+                            candidate.Dispose();
+                        }
+                    }
                     foreach (Process process in action.StartedProgram.Processes)
                     {
                         if (action.StartedProgram.Monitor != null && !action.StartedProgram.Monitor.IsInDirectLaunchTree(process.Id)) continue;
@@ -935,6 +943,7 @@ public sealed class ShortcutRunner
                 {
                     try
                     {
+                        if (!monitor.IsInDirectLaunchTree(process.Id)) continue;
                         string path = process.MainModule?.FileName ?? string.Empty;
                         if (!string.IsNullOrWhiteSpace(path)) sources.Add(new WindowPlacementService.Source(programId, path, new HashSet<int> { process.Id }, monitor.IsInDirectLaunchTree(process.Id)));
                         else isComplete = false;

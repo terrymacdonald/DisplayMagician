@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace DisplayMagician.Processes
 {
@@ -109,9 +110,14 @@ namespace DisplayMagician.Processes
 
         public static bool ProcessExited(Process process)
         {
+            return CheckProcessExited(process, item => item.HasExited);
+        }
+
+        internal static bool CheckProcessExited(Process process, Func<Process, bool> hasExited)
+        {
             if (process == null)
             {
-                logger.Trace("ProcessUtils/ProcessExited: Null process supplied — treating as exited.");
+                logger.Trace("ProcessUtils/CheckProcessExited: Null process supplied — treating as exited.");
                 return true;
             }
             int pid;
@@ -121,39 +127,29 @@ namespace DisplayMagician.Processes
             }
             catch (InvalidOperationException)
             {
-                logger.Trace("ProcessUtils/ProcessExited: Unstarted/unassociated process supplied — treating as exited.");
+                logger.Trace("ProcessUtils/CheckProcessExited: Unstarted/unassociated process supplied — treating as exited.");
                 return true;
             }
             if (pid <= 0)
             {
-                logger.Trace("ProcessUtils/ProcessExited: Invalid process ID — treating as exited.");
+                logger.Trace("ProcessUtils/CheckProcessExited: Invalid process ID — treating as exited.");
                 return true;
             }
-            try
+            for (int attempt = 1; attempt <= 3; attempt++)
             {
-                if (process.HasExited)
+                try { return hasExited(process); }
+                catch (ArgumentException)
                 {
-                    logger.Trace($"ProcessUtils/ProcessExited: {pid} has exited and is not running. This means the process has finished!");
-                    return true;
+                    return true; // The selected process no longer exists.
                 }
-                //logger.Trace($"ProcessUtils/ProcessExited: {pid} is still running as it has not exited yet.");
-                return false;
+                catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException)
+                {
+                    logger.Warn(ex, "ProcessUtils/CheckProcessExited: Status check {0} of 3 failed for PID {1}; exit is not confirmed.", attempt, pid);
+                    if (attempt == 3) throw new ProcessTrackingException($"Process status failed for PID {pid} after 3 verification attempts; exit is not confirmed.");
+                    Thread.Sleep(250);
+                }
             }
-            catch (ArgumentException ex)
-            {
-                logger.Trace(ex, $"ProcessUtils/ProcessExited: {pid} is not running, and the process ID has expired. This means the process has finished!");
-                return true;
-            }
-            catch (InvalidOperationException ex)
-            {
-                logger.Warn(ex, $"ProcessUtils/ProcessExited: {pid} was not started by this process object. This likely means the process has finished!");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                logger.Trace(ex, $"ProcessUtils/ProcessExited: Exception when checking if {pid} is still running, so assuming the process has finished!");
-                return true;
-            }
+            return false;
         }
 
         public static bool ProcessExited(string executable)
@@ -266,6 +262,7 @@ namespace DisplayMagician.Processes
                     logger.Trace($"ProcessUtils/StopProcess: Win32Exception! Process {procId} was successfully killed.");
                     return true;
                 }
+                catch (ProcessTrackingException) { throw; }
                 catch (InvalidOperationException)
                 {
                     // Process exited on its own between the Win32Exception and the Kill() call — that's fine.
@@ -273,6 +270,7 @@ namespace DisplayMagician.Processes
                     return true;
                 }
             }
+            catch (ProcessTrackingException) { throw; }
             catch (InvalidOperationException ex)
             {
                 logger.Error(ex, $"ProcessUtils/StopProcess: Couldn't kill {procId} as the process appears to have closed already.");

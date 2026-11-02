@@ -14,6 +14,8 @@ Stop Program regressions cover newest-only versus all-instance selection, succes
 
 `OriginUbisoftReviewTests` cover invariant Origin versions, relative/legacy v2 executable resolution, literal parameter basenames, partial metadata failures, existing download/non-game filters, Ubisoft product/install identifiers and failed/empty catalogue refreshes. `SteamBinaryParserReviewTests` cover the three supported app-info signatures and two package signatures, oversized/out-of-range metadata, truncation, unterminated strings, record-boundary isolation, transactional repeat/failure reads and file-handle release. Fixtures use temporary files and supplied installation data; real current Steam binary-format compatibility and every installed provider scan remain on Terry's consolidated manual checklist in `Docs/CODEBASE_BUG_REVIEW.md`.
 
+`ProcessOwnershipReviewTests` cover bounded/recovered process-query failures (including completed startup discovery), launch-registration retries/cancellation, speculative-copy isolation in cleanup/window sources, pre-existing or empty launch results, synchronous exit-query failures and packaged activation ownership/error cases. Test activation callbacks use temporary Windows utility processes, not real packaged apps; actual activation/COM lifetime and Close on finish on installed packaged apps remain explicitly pending manual validation.
+
 ## Run
 
 Additional regression cases cover locked message-index writes, omission of launch arguments from logs, and the desktop Messages form's disconnected-service, timeout, and rejected-request paths. Form tests use an injected client and do not connect to installed services or initialize WebView2.
