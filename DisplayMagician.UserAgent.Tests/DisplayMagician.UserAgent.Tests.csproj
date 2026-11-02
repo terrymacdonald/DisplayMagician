@@ -29,5 +29,8 @@
     <Reference Include="ADLXWrapper">
       <HintPath>..\DisplayMagician.UserAgent\DLL\ADLXWrapper.dll</HintPath>
     </Reference>
+    <Reference Include="NVAPIWrapper">
+      <HintPath>..\DisplayMagician.UserAgent\DLL\NVAPIWrapper.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

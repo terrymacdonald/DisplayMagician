@@ -954,7 +954,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         public static bool operator !=(NVIDIA_DISPLAY_CONFIG lhs, NVIDIA_DISPLAY_CONFIG rhs) => !(lhs == rhs);
     }
 
-    public class NVIDIALibrary : IDisposable
+    public partial class NVIDIALibrary : IDisposable
     {
     
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -1221,7 +1221,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             SharedLogger.logger.Trace($"NVIDIALibrary/UpdateActiveConfig: Updating the currently active config");
             try
             {
-                _activeDisplayConfig = GetActiveConfig();
+                _activeDisplayConfig = GetNVIDIADisplayConfig(false, diagnostics);
                 _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers(out bool failure);
             }
             catch (Exception ex)
@@ -1241,8 +1241,9 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             return GetNVIDIADisplayConfig(allDisplays);
         }
 
-        private NVIDIA_DISPLAY_CONFIG GetNVIDIADisplayConfig(bool allDisplays = false)
+        private NVIDIA_DISPLAY_CONFIG GetNVIDIADisplayConfig(bool allDisplays = false, DisplayConfigurationDiagnostics? diagnostics = null)
         {
+            diagnostics ??= new DisplayConfigurationDiagnostics();
             NVIDIA_DISPLAY_CONFIG myDisplayConfig = CreateDefaultConfig();
 
             if (_initialised && _nvapiApiHelper != null)
@@ -2284,7 +2285,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                         {
                             if (drsHelper == null)
                             {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: Failed to create a DRS session. DRS settings will not be captured.");
+                                diagnostics.Add("DriverSettings", "NVIDIA", "Failed to create a DRS session; driver settings will not be captured.");
                             }
                             else
                             {
@@ -2295,7 +2296,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                 bool loaded = drsHelper.LoadSettings();
                                 if (!loaded)
                                 {
-                                    SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: Failed to load DRS settings into memory.");
+                                    diagnostics.Add("DriverSettings", "NVIDIA", "Failed to load DRS settings; driver settings will not be captured.");
                                 }
                                 else
                                 {
@@ -2306,35 +2307,15 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                                     var baseProfile = drsHelper.GetBaseProfile();
                                     if (!baseProfile.HasValue)
                                     {
-                                        SharedLogger.logger.Warn($"NVIDIALibrary/GetNVIDIADisplayConfig: Failed to get the base DRS profile. The DRS Settings may not have been loaded.");
+                                        diagnostics.Add("DriverSettings", "NVIDIA", "Failed to get the base DRS profile; driver settings will not be captured.");
                                     }
                                     else
                                     {
                                         SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Successfully got the base DRS Profile. Profile Name is {baseProfile.Value.ProfileName}.");
 
-                                        // Create a DRS config entry to track the base profile
-                                        NVIDIA_DRS_CONFIG drsConfig = new NVIDIA_DRS_CONFIG();
-                                        drsConfig.IsBaseProfile = true;
-                                        drsConfig.ProfileInfo = baseProfile.Value;
-
-                                        if (baseProfile.Value.NumOfSettings > 0)
-                                        {
-                                            // Enumerate all settings in the base profile
-                                            try
-                                            {
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Trying to enumerate the DRS settings from the base DRS Profile {baseProfile.Value.ProfileName}.");
-                                                var drsDriverSettings = drsHelper.EnumSettings(baseProfile.Value);
-                                                drsConfig.DriverSettings = drsDriverSettings.ToList();
-                                                SharedLogger.logger.Trace($"NVIDIALibrary/GetNVIDIADisplayConfig: Successfully enumerated {drsConfig.DriverSettings.Count} DRS settings from the base DRS Profile {baseProfile.Value.ProfileName}.");
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                SharedLogger.logger.Error(ex, $"NVIDIALibrary/GetNVIDIADisplayConfig: Exception occurred whilst enumerating the DRS settings from the base DRS Profile {baseProfile.Value.ProfileName}.");
-                                            }
-
-                                            // Save the DRS Config to the main config so it gets saved
+                                        if (baseProfile.Value.NumOfSettings > 0 && TryCaptureDrsSnapshot(baseProfile.Value,
+                                            () => drsHelper.EnumSettings(baseProfile.Value), diagnostics, out NVIDIA_DRS_CONFIG drsConfig))
                                             myDisplayConfig.DRSSettings.Add(drsConfig);
-                                        }
                                     }
                                 }
                             }
@@ -2342,7 +2323,7 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"NVIDIALibrary/GetNVIDIADisplayConfig: Exception occurred whilst getting the DRS settings.");
+                        diagnostics.Add("DriverSettings", "NVIDIA", "Exception while capturing driver settings: " + ex.Message, exception: ex);
                     }
 
                     // At this stage we should set the IsInUse flag to report that the NVIDIA config is in Use
@@ -2614,74 +2595,32 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
 
         internal bool SetActiveConfig(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
-
             if (_initialised && _nvapiApiHelper != null)
             {
-                // We want to check if we need to apply a NVIDIA Surround (Mosaic) config
-                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Testing whether the display configuration uses NVIDIA Surround");
-                if (displayConfig.MosaicConfig.IsMosaicEnabled)
-                {
-                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: The display configuration we want to use has NVIDIA Surround (Mosaic) enabled");
-                    if (displayConfig.MosaicConfig.Equals(ActiveDisplayConfig.MosaicConfig))
+                return ApplyMosaicConfiguration(displayConfig.MosaicConfig, ActiveDisplayConfig.MosaicConfig,
+                    () =>
                     {
-                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Mosaic current config is exactly the same as the one we want, so skipping applying the Mosaic config as we already have the right one!");
-                    }                    
-                    else
+                        using NVAPIMosaicHelper helper = _nvapiApiHelper.GetMosaicHelper();
+                        NVAPIMosaicCurrentTopoDto? current = helper.GetCurrentTopo();
+                        if (!current.HasValue) return null;
+                        NVIDIA_MOSAIC_CONFIG config = new NVIDIA_MOSAIC_CONFIG
+                        {
+                            IsMosaicEnabled = current.Value.TopoBrief.Enabled,
+                            MosaicCurrentTopo = current.Value
+                        };
+                        if (config.IsMosaicEnabled)
+                            config.MosaicGridTopologies = helper.EnumDisplayGrids() ?? new NVAPIMosaicGridTopologiesDto();
+                        return config;
+                    },
+                    grids =>
                     {
-             
-                        // If we are on a non-Mosaic profile now, then we need to set a 1x1 display grid just to wake up the displays properly
-                        if (!ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
-                        {
-                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: The current display configuration does not have NVIDIA Surround (Mosaic) enabled, so we need to set a 1x1 mosaic matrix to ensure that all displays are awake.");
-                            TurnOffMosaic(delayInMs);
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: The current display configuration does have a NVIDIA Surround (Mosaic) enabled, so we will skip setting the 1x1 mosaice grid.");
-                        }
-
-                        // Now that the Mosaic is turned off, we can apply the new Mosaic Topology
-                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Next we apply the wanted Mosaic config now");
-                        try
-                        {
-                            using (var mosaicHelper = _nvapiApiHelper.GetMosaicHelper())
-                            {
-                                // If we get here then the display is valid, so now we actually apply the new Mosaic Topology
-                                mosaicHelper.SetDisplayGrids(displayConfig.MosaicConfig.MosaicGridTopologies, 0);
-                                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: NvAPI_Mosaic_SetDisplayGrids returned OK.");
-                                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: Waiting {delayInMs * 3} milliseconds to let the Mosaic display change take place before continuing");
-                                Thread.Sleep(delayInMs * 3);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfig: Exception: The GPU DisplayGrid could not be made. SetDisplayGrids() returned error message {ex.Message}");
-                            diagnostics.Add("VendorConfiguration", "NVIDIA", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
-                            return false;
-                        }
-
-                    }
-
-                }
-                else if (!displayConfig.MosaicConfig.IsMosaicEnabled && ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
-                {
-                    // We are on a Mosaic profile now, and we need to change to a non-Mosaic profile
-                    if (!TurnOffMosaic(delayInMs, diagnostics)) return false;
-
-                }
-                else if (!displayConfig.MosaicConfig.IsMosaicEnabled && !ActiveDisplayConfig.MosaicConfig.IsMosaicEnabled)
-                {
-                    // We are on a non-Mosaic profile now, and we are changing to a non-Mosaic profile
-                    // so there is nothing to do as far as NVIDIA is concerned!
-                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfig: We are on a non-Mosaic profile now, and we are changing to a non-Mosaic profile so there is no need to modify Mosaic settings!");
-                }
-
+                        using NVAPIMosaicHelper helper = _nvapiApiHelper.GetMosaicHelper();
+                        return helper.SetDisplayGrids(grids, 0);
+                    },
+                    () => TurnOffMosaic(delayInMs),
+                    () => TurnOffMosaic(delayInMs, diagnostics), Thread.Sleep, delayInMs, diagnostics);
             }
-            else
-            {
-                SharedLogger.logger.Info($"NVIDIALibrary/SetActiveConfig: Tried to run SetActiveConfig but the NVIDIA NvAPI library isn't initialised! This generally means you don't have a NVIDIA video card in your machine.");
-            }
-
+            SharedLogger.logger.Info("NVIDIALibrary/SetActiveConfig: NVIDIA NVAPI is not initialised; no NVIDIA topology settings were applied.");
             return true;
         }
 
@@ -2690,77 +2629,29 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
 
         internal bool TurnOffMosaic(int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
-            SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Mosaic config that is currently set is no longer needed. Removing Mosaic config.");
-
-            NVAPIApiHelper? nvapiApiHelper = _nvapiApiHelper;
-            if (nvapiApiHelper == null)
+            NVAPIApiHelper? helper = _nvapiApiHelper;
+            if (helper == null)
             {
-                SharedLogger.logger.Error("NVIDIALibrary/TurnOffMosaic: NVIDIA NVAPI helper is unavailable.");
+                diagnostics.Add("Surround", "NVIDIA", "The NVAPI helper is unavailable.", DisplayConfigurationSeverity.Fatal);
                 return false;
             }
-
             try
             {
-                using (var mosaicHelper = nvapiApiHelper.GetMosaicHelper())
-                {
-                    // First attempt: Create 1x1 grids for each display and apply them
-                    SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Trying to set a 1x1 DisplayGrid to disable Mosaic.");
-                    NVAPIMosaicGridTopologiesDto? individualScreensTopology = CreateSingleScreenMosaicTopology(mosaicHelper);
-                    if (individualScreensTopology.HasValue)
+                using NVAPIMosaicHelper mosaic = helper.GetMosaicHelper();
+                return DisableMosaicWithFallback(
+                    () =>
                     {
-                        try
-                        {
-                            mosaicHelper.SetDisplayGrids(individualScreensTopology.Value, 0);
-                            SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: NvAPI_Mosaic_SetDisplayGrids returned OK.");
-                            SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Waiting {delayInMs * 3} milliseconds to let the Mosaic display change take place before continuing");
-                            Thread.Sleep(delayInMs * 3);
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"NVIDIALibrary/TurnOffMosaic: Exception while trying to set a 1x1 DisplayGrid using SetDisplayGrids.");
-                        }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Warn($"NVIDIALibrary/TurnOffMosaic: Could not create a 1x1 DisplayGrid topology. Will try EnableCurrentTopo(false) instead.");
-                    }
-
-                    // Check if Mosaic is still on after the first attempt
-                    NVAPIMosaicCurrentTopoDto? currentTopo = mosaicHelper.GetCurrentTopo();
-                    bool mosaicStillOn = currentTopo.HasValue && currentTopo.Value.TopoBrief.Enabled;
-
-                    if (mosaicStillOn)
-                    {
-                        // If the Mosaic is still on, then the last mosaic disable failed, so we need to then try turning it off using EnableCurrentTopo(false)
-                        SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Previous attempt to turn off Mosaic failed. Now trying to use EnableCurrentTopo(false) to disable Mosaic instead.");
-                        try
-                        {
-                            mosaicHelper.EnableCurrentTopo(false);
-                            SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: EnableCurrentTopo(false) returned OK.");
-                            SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Waiting {delayInMs * 3} milliseconds to let the Mosaic display change take place before continuing");
-                            Thread.Sleep(delayInMs * 3);
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"NVIDIALibrary/TurnOffMosaic: Exception while trying to disable Mosaic using EnableCurrentTopo(false).");
-                            diagnostics.Add("Surround", "NVIDIA", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Trace($"NVIDIALibrary/TurnOffMosaic: Mosaic successfully disabled using SetDisplayGrids method.");
-                    }
-                }
+                        NVAPIMosaicGridTopologiesDto? singles = CreateSingleScreenMosaicTopology(mosaic);
+                        return singles.HasValue ? mosaic.SetDisplayGrids(singles.Value, 0) : null;
+                    },
+                    () => mosaic.GetCurrentTopo()?.TopoBrief.Enabled,
+                    () => mosaic.EnableCurrentTopo(false), Thread.Sleep, delayInMs, diagnostics);
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, $"NVIDIALibrary/TurnOffMosaic: Exception while trying to turn off Mosaic.");
                 diagnostics.Add("Surround", "NVIDIA", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
                 return false;
             }
-
-            return true;
         }
 
         public bool SetActiveConfigOverride(NVIDIA_DISPLAY_CONFIG displayConfig, int delayInMs)
@@ -2775,165 +2666,30 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             {
 
                 // We need to first update the active config to make sure it's set
-                UpdateActiveConfig();
+                if (!TryRefreshOverrideState(UpdateActiveConfig, diagnostics)) return false;
 
-                // Set the DRS Settings only if we need to
                 if (displayConfig.DRSSettings != null && displayConfig.DRSSettings.Count > 0)
                 {
                     try
                     {
-                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Attempting to create a DRS session.");
-                        using (var drsHelper = _nvapiApiHelper.CreateDrsSession())
+                        using NVAPIDrsHelper? drs = _nvapiApiHelper.CreateDrsSession();
+                        if (drs == null || !drs.LoadSettings())
+                            diagnostics.Add("DriverSettings", "NVIDIA", "Could not create/load a DRS session; skipping driver settings.");
+                        else
                         {
-                            if (drsHelper == null)
-                            {
-                                SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Failed to create a DRS session. DRS settings will not be applied.");
-                                diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Failed to create a DRS session. DRS settings will not be applied.", displayId: diagnosticDisplayId);
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Successfully created a DRS session.");
-
-                                // Load the current DRS Settings into memory
-                                SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Attempting to load the current DRS settings into memory.");
-                                bool loaded = drsHelper.LoadSettings();
-                                if (!loaded)
-                                {
-                                    SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Failed to load the current DRS settings into memory.");
-                                    diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Failed to load the current DRS settings into memory.", displayId: diagnosticDisplayId);
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Successfully loaded the current DRS settings into memory.");
-
-                                    // Get the base DRS profile
-                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Attempting to get the base DRS profile.");
-                                    var baseProfile = drsHelper.GetBaseProfile();
-                                    if (!baseProfile.HasValue)
-                                    {
-                                        SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Failed to get the base DRS profile. The DRS Settings may not have been loaded.");
-                                        diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Failed to get the base DRS profile. The DRS Settings may not have been loaded.", displayId: diagnosticDisplayId);
-                                    }
-                                    else
-                                    {
-                                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Successfully got the base DRS Profile.");
-
-                                        // Go through all the settings we have in the saved profile, and change the current profile settings to be the same
-                                        if (displayConfig.DRSSettings != null && displayConfig.DRSSettings.Count > 0)
-                                        {
-                                            bool needToSave = false;
-                                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: There are {displayConfig.DRSSettings.Count} stored DRS settings in the base DRS profile so we need to process them");
-
-                                            try
-                                            {
-                                                // Get the Base Profiles from the stored config and the active config
-                                                NVIDIA_DRS_CONFIG? storedBaseProfile = displayConfig.DRSSettings.Find(p => p.IsBaseProfile == true);
-                                                NVIDIA_DRS_CONFIG? activeBaseProfile = ActiveDisplayConfig.DRSSettings?.Find(p => p.IsBaseProfile == true);
-                                                if (storedBaseProfile == null || activeBaseProfile == null)
-                                                {
-                                                    SharedLogger.logger.Warn($"NVIDIALibrary/SetActiveConfigOverride: Could not find both the stored and active base DRS profiles. Skipping DRS setting application.");
-                                                    diagnostics.Add(diagnosticStage, "NVIDIA", $"NVIDIALibrary/SetActiveConfigOverride: Could not find both the stored and active base DRS profiles. Skipping DRS setting application.", displayId: diagnosticDisplayId);
-                                                }
-                                                else
-                                                {
-                                                    foreach (var drsSetting in storedBaseProfile.Value.DriverSettings)
-                                                    {
-                                                        for (int i = 0; i < activeBaseProfile.Value.DriverSettings.Count; i++)
-                                                        {
-                                                            NVAPIDrsSettingDto currentSetting = activeBaseProfile.Value.DriverSettings[i];
-
-                                                            // If the setting is also in the active base profile (it should be!), then we set it.
-                                                            if (drsSetting.SettingId == currentSetting.SettingId)
-                                                            {
-                                                                // Compare only the current value based on the setting type (closest to old CurrentValue behavior)
-                                                                bool currentValueMatches = drsSetting.SettingType switch
-                                                                {
-                                                                    _NVDRS_SETTING_TYPE.NVDRS_DWORD_TYPE => drsSetting.CurrentDwordValue == currentSetting.CurrentDwordValue,
-                                                                    _NVDRS_SETTING_TYPE.NVDRS_STRING_TYPE or _NVDRS_SETTING_TYPE.NVDRS_WSTRING_TYPE => string.Equals(drsSetting.CurrentStringValue, currentSetting.CurrentStringValue, StringComparison.Ordinal),
-                                                                    _NVDRS_SETTING_TYPE.NVDRS_BINARY_TYPE => (drsSetting.CurrentBinaryValue == null && currentSetting.CurrentBinaryValue == null) ||
-                                                                        (drsSetting.CurrentBinaryValue != null && currentSetting.CurrentBinaryValue != null && drsSetting.CurrentBinaryValue.SequenceEqual(currentSetting.CurrentBinaryValue)),
-                                                                    _ => drsSetting.Equals(currentSetting)
-                                                                };
-
-                                                                if (currentValueMatches)
-                                                                {
-                                                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: '{currentSetting.SettingName}' ({currentSetting.SettingId}) current value already matches the desired value, so skipping changing it.");
-                                                                }
-                                                                else
-                                                                {
-                                                                    try
-                                                                    {
-                                                                        drsHelper.SetSetting(baseProfile.Value, drsSetting);
-                                                                        needToSave = true;
-                                                                        SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We changed setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) using NVAPIDrsHelper.SetSetting()");
-                                                                    }
-                                                                    catch (Exception ex)
-                                                                    {
-                                                                        SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception caused whilst changing setting '{currentSetting.SettingName}' ({currentSetting.SettingId}).");
-                                                                        diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
-                                                                    }
-                                                                }
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-
-                                                    // Now go through and revert any unset settings to defaults. This guards against new settings being added by other profiles
-                                                    // after we've created a display profile. If we didn't do this those newer settings would stay set.
-                                                    foreach (var currentSetting in activeBaseProfile.Value.DriverSettings)
-                                                    {
-                                                        // Skip any settings that we've already set
-                                                        if (storedBaseProfile.Value.DriverSettings.Exists(ds => ds.SettingId == currentSetting.SettingId))
-                                                        {
-                                                            continue;
-                                                        }
-
-                                                        try
-                                                        {
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Attempting to restore DRS setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default.");
-                                                            drsHelper.RestoreProfileDefaultSetting(baseProfile.Value, currentSetting.SettingId);
-                                                            needToSave = true;
-                                                            SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We restored active setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default value using NVAPIDrsHelper.RestoreProfileDefaultSetting()");
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to restore setting '{currentSetting.SettingName}' ({currentSetting.SettingId}) to its default.");
-                                                            diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to find base profiles in either the stored or active display configs.");
-                                                diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
-                                            }
-
-                                            // Save the Settings if needed
-                                            if (needToSave)
-                                            {
-                                                try
-                                                {
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: Attempting to save the current DRS settings.");
-                                                    drsHelper.SaveSettings();
-                                                    SharedLogger.logger.Trace($"NVIDIALibrary/SetActiveConfigOverride: We successfully saved the current DRS Settings.");
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception while trying to save the current DRS settings.");
-                                                    diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            NVAPIDrsProfileDto? profile = drs.GetBaseProfile();
+                            int storedIndex = displayConfig.DRSSettings.FindIndex(item => item.IsBaseProfile);
+                            if (!profile.HasValue || storedIndex < 0)
+                                diagnostics.Add("DriverSettings", "NVIDIA", "The current or saved base DRS profile is unavailable; skipping driver settings.");
+                            else if (TryCaptureDrsSnapshot(profile.Value, () => drs.EnumSettings(profile.Value), diagnostics, out NVIDIA_DRS_CONFIG current))
+                                ApplyDrsSnapshot(displayConfig.DRSSettings[storedIndex], current.DriverSettings,
+                                    setting => drs.SetSetting(profile.Value, setting),
+                                    settingId => drs.RestoreProfileDefaultSetting(profile.Value, settingId), drs.SaveSettings, diagnostics);
                         }
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"NVIDIALibrary/SetActiveConfigOverride: Exception occurred whilst applying the DRS settings.");
-                        diagnostics.Add(diagnosticStage, "NVIDIA", ex.Message, displayId: diagnosticDisplayId, exception: ex);
+                        diagnostics.Add("DriverSettings", "NVIDIA", "Could not apply driver settings: " + ex.Message, exception: ex);
                     }
                 }
 
