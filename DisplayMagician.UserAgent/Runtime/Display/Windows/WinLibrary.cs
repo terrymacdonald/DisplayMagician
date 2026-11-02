@@ -841,6 +841,18 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             return GetWindowsDisplayConfig(selector);
         }
 
+        internal static void TrimDisplayConfigBuffers(ref DISPLAYCONFIG_PATH_INFO[] paths, int pathCount,
+            ref DISPLAYCONFIG_MODE_INFO[] modes, int modeCount)
+        {
+            if (pathCount < 0 || pathCount > paths.Length || modeCount < 0 || modeCount > modes.Length)
+                throw new WinLibraryException($"QueryDisplayConfig returned invalid counts: {pathCount} paths for capacity {paths.Length}, {modeCount} modes for capacity {modes.Length}.");
+
+            // Only the returned counts define valid entries. Do not filter zero-valued
+            // entries within that range, reorder modes or renumber any mode indexes.
+            Array.Resize(ref paths, pathCount);
+            Array.Resize(ref modes, modeCount);
+        }
+
         private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS)
         {
 
@@ -920,6 +932,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
+
+            TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount);
 
             // First of all generate the current displayIdentifiers
             windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
@@ -1376,6 +1390,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 SharedLogger.logger.Error($"WinLibrary/GetDisplaySourceNames: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays");
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
+
+            TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount);
 
             // Prepare the empty DisplaySources dictionary
             Dictionary<string, List<uint>> DisplaySources = new Dictionary<string, List<uint>>();
@@ -2586,6 +2602,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
+            TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount);
+
             foreach (var path in paths)
             {
                 if (path.TargetInfo.TargetAvailable == false)
@@ -2793,6 +2811,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
+            TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount);
+
             foreach (var path in paths)
             {
                 /*if (path.TargetInfo.TargetAvailable == false)
@@ -2955,6 +2975,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
 
+            TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount);
+
             foreach (var path in paths)
             {
                 // get display adapter name
@@ -3037,6 +3059,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
                 SharedLogger.logger.Error($"WinLibrary/GetAllAdapterIDs: ERROR - QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays");
                 throw new WinLibraryException($"QueryDisplayConfig returned WIN32STATUS {err} when trying to query all available displays.");
             }
+
+            TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount);
 
             foreach (var path in paths)
             {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Newtonsoft.Json;
 using DisplayMagician.UserAgent.Runtime;
 using DisplayMagician.UserAgent.Runtime.Windows;
 using AgentWinLibrary = DisplayMagician.UserAgent.Runtime.Windows.WinLibrary;
@@ -11,6 +12,78 @@ namespace DisplayMagician.UserAgent.Tests;
 
 public sealed class WindowsDisplayInteropReviewTests
 {
+    [Fact]
+    public void TrimmedCapturePreservesNativeDataIndexesAndValidZeroEntriesThroughJson()
+    {
+        DISPLAYCONFIG_PATH_INFO[] paths = new DISPLAYCONFIG_PATH_INFO[5];
+        DISPLAYCONFIG_MODE_INFO[] modes = new DISPLAYCONFIG_MODE_INFO[6];
+        paths[0] = Path(1, 10);
+        paths[0].SourceInfo.ModeInfoIdx = 1;
+        paths[0].TargetInfo.ModeInfoIdx = 2;
+        paths[1] = VirtualPath(1, 11, 1);
+        paths[1].TargetInfo.ModeInfoIdx = 0x0002ffff;
+        // Index zero is deliberately a valid zero-valued entry: it must stay in place.
+        modes[1] = new DISPLAYCONFIG_MODE_INFO { InfoType = DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE,
+            Id = 1, SourceMode = new DISPLAYCONFIG_SOURCE_MODE { Width = 1920, Height = 1080, Position = new POINTL { X = -1920 } } };
+        modes[2] = new DISPLAYCONFIG_MODE_INFO { InfoType = DISPLAYCONFIG_MODE_INFO_TYPE.DISPLAYCONFIG_MODE_INFO_TYPE_TARGET,
+            Id = 10, TargetMode = new DISPLAYCONFIG_TARGET_MODE { TargetVideoSignalInfo = new DISPLAYCONFIG_VIDEO_SIGNAL_INFO { PixelRate = 148500000 } } };
+        byte[][] expectedPaths = paths.Take(2).Select(NativeBytes).ToArray();
+        byte[][] expectedModes = modes.Take(3).Select(NativeBytes).ToArray();
+
+        AgentWinLibrary.TrimDisplayConfigBuffers(ref paths, 2, ref modes, 3);
+        WINDOWS_DISPLAY_CONFIG saved = new() { DisplayConfigPaths = paths, DisplayConfigModes = modes };
+        WINDOWS_DISPLAY_CONFIG loaded = JsonConvert.DeserializeObject<WINDOWS_DISPLAY_CONFIG>(JsonConvert.SerializeObject(saved));
+
+        Assert.Equal(2, loaded.DisplayConfigPaths.Length);
+        Assert.Equal(3, loaded.DisplayConfigModes.Length);
+        for (int i = 0; i < loaded.DisplayConfigPaths.Length; i++)
+            Assert.Equal(expectedPaths[i], NativeBytes(loaded.DisplayConfigPaths[i]));
+        for (int i = 0; i < loaded.DisplayConfigModes.Length; i++)
+            Assert.Equal(expectedModes[i], NativeBytes(loaded.DisplayConfigModes[i]));
+        Assert.Equal(1u, loaded.DisplayConfigPaths[0].SourceInfo.ModeInfoIdx);
+        Assert.Equal(0x0002ffffu, loaded.DisplayConfigPaths[1].TargetInfo.ModeInfoIdx);
+        Assert.Equal(DISPLAYCONFIG_MODE_INFO_TYPE.Zero, loaded.DisplayConfigModes[0].InfoType);
+    }
+
+    [Fact]
+    public void FullReturnedCountsLeaveBothBuffersIntact()
+    {
+        DISPLAYCONFIG_PATH_INFO[] paths = { Path(1, 10) };
+        DISPLAYCONFIG_MODE_INFO[] modes = new DISPLAYCONFIG_MODE_INFO[2];
+        DISPLAYCONFIG_PATH_INFO[] originalPaths = paths;
+        DISPLAYCONFIG_MODE_INFO[] originalModes = modes;
+        AgentWinLibrary.TrimDisplayConfigBuffers(ref paths, 1, ref modes, 2);
+        Assert.Same(originalPaths, paths);
+        Assert.Same(originalModes, modes);
+    }
+
+    [Fact]
+    public void ZeroReturnedCountsProduceEmptyArrays()
+    {
+        DISPLAYCONFIG_PATH_INFO[] paths = new DISPLAYCONFIG_PATH_INFO[3];
+        DISPLAYCONFIG_MODE_INFO[] modes = new DISPLAYCONFIG_MODE_INFO[5];
+        AgentWinLibrary.TrimDisplayConfigBuffers(ref paths, 0, ref modes, 0);
+        Assert.Empty(paths);
+        Assert.Empty(modes);
+    }
+
+    [Theory]
+    [InlineData(-1, 1)]
+    [InlineData(3, 1)]
+    [InlineData(1, -1)]
+    [InlineData(1, 4)]
+    public void InvalidReturnedCountsFailBeforeChangingEitherBuffer(int pathCount, int modeCount)
+    {
+        DISPLAYCONFIG_PATH_INFO[] paths = new DISPLAYCONFIG_PATH_INFO[2];
+        DISPLAYCONFIG_MODE_INFO[] modes = new DISPLAYCONFIG_MODE_INFO[3];
+        DISPLAYCONFIG_PATH_INFO[] originalPaths = paths;
+        DISPLAYCONFIG_MODE_INFO[] originalModes = modes;
+        Assert.Throws<DisplayMagician.UserAgent.Runtime.Windows.WinLibraryException>(() =>
+            AgentWinLibrary.TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount));
+        Assert.Same(originalPaths, paths);
+        Assert.Same(originalModes, modes);
+    }
+
     [Fact]
     public void LegacyTopologyFallbackOmitsModesAndPreservesPathsAndCloneSourceIds()
     {
@@ -196,6 +269,22 @@ public sealed class WindowsDisplayInteropReviewTests
         SourceInfo = new DISPLAYCONFIG_PATH_SOURCE_INFO { AdapterId = new LUID { LowPart = 1 }, Id = sourceId, ModeInfoIdx = 3 },
         TargetInfo = new DISPLAYCONFIG_PATH_TARGET_INFO { AdapterId = new LUID { LowPart = 1 }, Id = targetId, ModeInfoIdx = 7 }
     };
+
+    private static byte[] NativeBytes<T>(T value) where T : struct
+    {
+        int size = Marshal.SizeOf<T>();
+        IntPtr buffer = Marshal.AllocHGlobal(size);
+        try
+        {
+            // Initialise padding so comparisons measure the native fields consistently.
+            byte[] bytes = new byte[size];
+            Marshal.Copy(bytes, 0, buffer, size);
+            Marshal.StructureToPtr(value, buffer, false);
+            Marshal.Copy(buffer, bytes, 0, size);
+            return bytes;
+        }
+        finally { Marshal.FreeHGlobal(buffer); }
+    }
 
     private static DISPLAYCONFIG_PATH_INFO VirtualPath(uint sourceId, uint targetId, ushort sourceMode)
     {
