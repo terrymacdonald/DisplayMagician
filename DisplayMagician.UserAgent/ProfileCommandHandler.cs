@@ -920,12 +920,21 @@ public sealed class ProfileCommandHandler
             {
                 OperationId = profileOperationId,
                 OperationType = DisplayOperationType.ApplyDisplayProfile,
-                Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed,
-                Message = result.IsSuccessful ? result.Details?.HasWarnings == true ? "Display profile applied with warnings." : "Display profile applied." : "Display profile could not be applied.",
+                Phase = result.WasCancelled ? OperationPhase.Cancelled : result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed,
+                Message = result.WasCancelled ? "Display profile operation cancelled." : result.IsSuccessful ? result.Details?.HasWarnings == true ? "Display profile applied with warnings." : "Display profile applied." : "Display profile could not be applied.",
                 DisplayResults = result.Details == null ? Array.Empty<DisplayConfigurationResult>() : new[] { result.Details },
                 IsTerminal = true,
                 IsSuccessful = result.IsSuccessful,
-                ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed
+                ErrorCode = result.IsSuccessful || result.WasCancelled ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed
+            }, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (operationCancellationSource.IsCancellationRequested)
+        {
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = profileOperationId, OperationType = DisplayOperationType.ApplyDisplayProfile,
+                Phase = OperationPhase.Cancelled, Message = "Display profile operation cancelled.",
+                IsTerminal = true, ErrorCode = ControlErrorCode.None
             }, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -971,6 +980,16 @@ public sealed class ProfileCommandHandler
                 IsTerminal = true,
                 IsSuccessful = wasSuccessful,
                 ErrorCode = result.RequiresRecovery ? ControlErrorCode.RecoveryRequired : errorCode
+            }, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (operationCancellationSource.IsCancellationRequested)
+        {
+            await PublishShortcutStatusAsync(new OperationStatusUpdate
+            {
+                OperationId = operationId, OperationType = DisplayOperationType.StartShortcut,
+                Phase = _shortcutRunner.IsRecoveryRequired ? OperationPhase.Failed : OperationPhase.Cancelled,
+                Message = "Shortcut operation cancelled.", IsTerminal = true,
+                ErrorCode = _shortcutRunner.IsRecoveryRequired ? ControlErrorCode.RecoveryRequired : ControlErrorCode.None
             }, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)

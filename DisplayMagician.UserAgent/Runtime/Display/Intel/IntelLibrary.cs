@@ -573,6 +573,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
     {
         public bool IsInUse;
         public bool CombinedDisplayIsInUse;
+        public bool IdentityRequiresRecapture; // Unknown saved identity must survive typed JSON round trips.
         public Dictionary<string, INTEL_ADAPTER> PhysicalAdapters;  // Key is adapter ID
         public Dictionary<string, INTEL_DISPLAY_WITH_SETTINGS> Displays;  // Key is display ID
         public List<string> DisplayIdentifiers;
@@ -581,6 +582,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
         {
             IsInUse = false;
             CombinedDisplayIsInUse = false;
+            IdentityRequiresRecapture = false;
             PhysicalAdapters = new Dictionary<string, INTEL_ADAPTER>();
             Displays = new Dictionary<string, INTEL_DISPLAY_WITH_SETTINGS>();
             DisplayIdentifiers = new List<string>();
@@ -595,6 +597,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_CONFIG/Equals: The IsInUse values don't equal each other");
                 return false;
             }
+            if (IdentityRequiresRecapture != other.IdentityRequiresRecapture) return false;
             if (CombinedDisplayIsInUse != other.CombinedDisplayIsInUse)
             {
                 SharedLogger.logger.Trace($"INTEL_DISPLAY_CONFIG/Equals: The CombinedDisplayIsInUse values don't equal each other");
@@ -637,7 +640,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
 
         public override int GetHashCode()
         {
-            return (IsInUse, CombinedDisplayIsInUse, PhysicalAdapters.Count, Displays.Count, DisplayIdentifiers).GetHashCode();
+            return (IsInUse, CombinedDisplayIsInUse, IdentityRequiresRecapture, PhysicalAdapters.Count, Displays.Count, DisplayIdentifiers).GetHashCode();
         }
 
         public static bool operator ==(INTEL_DISPLAY_CONFIG lhs, INTEL_DISPLAY_CONFIG rhs) => lhs.Equals(rhs);
@@ -1001,10 +1004,12 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     catch (IGCLException ex)
                     {
                         SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: IGCLException getting Combined Display settings for adapter {adapterNum}.");
+                        throw;
                     }
                     catch (Exception ex)
                     {
                         SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting Combined Display settings for adapter {adapterNum}.");
+                        throw;
                     }
 
                     //------------------------------------
@@ -1154,8 +1159,8 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                         }
                         catch (Exception ex)
                         {
-                            SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting display properties for display {display.Name} on adapter {adapterNum}. Skipping display.");
-                            continue;
+                            SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting display properties for display {display.Name} on adapter {adapterNum}; capture cannot be completed.");
+                            throw;
                         }
 
                         string logDisplayId = $"{display.Name}|{displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId}";
@@ -2732,6 +2737,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     int displayNum = 0;
 
                     var adapterDeviceProperties = adapter.GetDeviceProperties();
+                    string adapterIdentity = IntelAdapterIdentity.Key(adapter.GetProperties());
 
                     foreach (var display in displays)
                     {
@@ -2772,7 +2778,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId.ToString("G")                          
                         };
                         
-                        string displayIdentifier = String.Join("#", displayInfo);
+                        string displayIdentifier = IntelAdapterIdentity.ScopeIdentifier(String.Join("#", displayInfo), adapterIdentity);
                         if (!displayIdentifiers.Contains(displayIdentifier))
                         {
                             displayIdentifiers.Add(displayIdentifier);
@@ -2819,6 +2825,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     int displayNum = 0;
 
                     var adapterDeviceProperties = adapter.GetDeviceProperties();
+                    string adapterIdentity = IntelAdapterIdentity.Key(adapter.GetProperties());
 
                     foreach (var display in displays)
                     {
@@ -2861,7 +2868,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId.ToString("G")                          
                         };
                         
-                        string displayIdentifier = String.Join("#", displayInfo);
+                        string displayIdentifier = IntelAdapterIdentity.ScopeIdentifier(String.Join("#", displayInfo), adapterIdentity);
                         if (!displayIdentifiers.Contains(displayIdentifier))
                         {
                             displayIdentifiers.Add(displayIdentifier);

@@ -263,6 +263,107 @@ public sealed class WindowsDisplayInteropReviewTests
         Assert.True(CollectionComparer.EqualButDifferentOrder(Array.Empty<ADVANCED_HDR_INFO_PER_PATH>(), Array.Empty<ADVANCED_HDR_INFO_PER_PATH>()));
     }
 
+    [Theory]
+    [InlineData(2u, 1u)]
+    [InlineData(2u, 3u)]
+    [InlineData(7u, 8u)]
+    public void AdapterRemappingKeepsEveryStructureConsistentAcrossRepeatedPasses(uint firstId, uint secondId)
+    {
+        WINDOWS_DISPLAY_CONFIG saved = new();
+        saved.DisplayAdapters.Add(1, "card-A");
+        saved.DisplayAdapters.Add(2, "card-B");
+        DISPLAYCONFIG_PATH_INFO first = Path(0, 10);
+        DISPLAYCONFIG_PATH_INFO second = Path(0, 20);
+        second.SourceInfo.AdapterId = new LUID { LowPart = 2 };
+        second.TargetInfo.AdapterId = new LUID { LowPart = 2 };
+        saved.DisplayConfigPaths = new[] { first, second };
+        saved.DisplayConfigModes = new[]
+        {
+            new DISPLAYCONFIG_MODE_INFO { AdapterId = new LUID { LowPart = 1 } },
+            new DISPLAYCONFIG_MODE_INFO { AdapterId = new LUID { LowPart = 2 } }
+        };
+        for (uint adapterId = 1; adapterId <= 2; adapterId++)
+        {
+            ADVANCED_HDR_INFO_PER_PATH hdr = new() { AdapterId = new LUID { LowPart = adapterId } };
+            hdr.AdvancedColorInfo.Header.AdapterId = hdr.AdapterId;
+            hdr.SDRWhiteLevel.Header.AdapterId = hdr.AdapterId;
+            saved.DisplayHDRStates.Add(hdr);
+        }
+        saved.DisplaySources.Add("source-A", new List<DISPLAY_SOURCE> { new() { AdapterId = new LUID { LowPart = 1 } } });
+        saved.DisplaySources.Add("source-B", new List<DISPLAY_SOURCE> { new() { AdapterId = new LUID { LowPart = 2 } } });
+        Dictionary<ulong, string> current = new() { [firstId] = "card-A", [secondId] = "card-B" };
+        for (int pass = 0; pass < 3; pass++)
+        {
+            AgentWinLibrary.PatchWindowsDisplayConfig(ref saved, AgentWinLibrary.GetAdapterIdMap(saved, current), current);
+            Assert.Equal("card-A", saved.DisplayAdapters[firstId]);
+            Assert.Equal("card-B", saved.DisplayAdapters[secondId]);
+            Assert.Equal(2, saved.DisplayAdapters.Count);
+            for (int index = 0; index < 2; index++)
+            {
+                ulong expected = index == 0 ? firstId : secondId;
+                Assert.Equal(expected, saved.DisplayConfigPaths[index].SourceInfo.AdapterId.Value);
+                Assert.Equal(expected, saved.DisplayConfigPaths[index].TargetInfo.AdapterId.Value);
+                Assert.Equal(expected, saved.DisplayConfigModes[index].AdapterId.Value);
+                Assert.Equal(expected, saved.DisplayHDRStates[index].AdapterId.Value);
+                Assert.Equal(expected, saved.DisplayHDRStates[index].AdvancedColorInfo.Header.AdapterId.Value);
+                Assert.Equal(expected, saved.DisplayHDRStates[index].SDRWhiteLevel.Header.AdapterId.Value);
+                Assert.Equal(expected, saved.DisplaySources[index == 0 ? "source-A" : "source-B"][0].AdapterId.Value);
+            }
+        }
+    }
+
+    [Fact]
+    public void ConflictingPartialAdapterMapDoesNotDiscardSavedDictionaryEntries()
+    {
+        WINDOWS_DISPLAY_CONFIG config = new();
+        config.DisplayAdapters.Add(1, "card-A");
+        config.DisplayAdapters.Add(2, "unavailable-card");
+        AgentWinLibrary.PatchWindowsDisplayConfig(ref config, new Dictionary<ulong, ulong> { [1] = 2 },
+            new Dictionary<ulong, string> { [2] = "card-A" });
+        Assert.Equal("card-A", config.DisplayAdapters[1]);
+        Assert.Equal("unavailable-card", config.DisplayAdapters[2]);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MissingDpiSourcesWarnAndStillApplyTheFollowingSource(bool nullList)
+    {
+        Dictionary<string, List<DISPLAY_SOURCE>> sources = new()
+        {
+            ["missing"] = nullList ? null! : new List<DISPLAY_SOURCE>(),
+            ["working"] = new List<DISPLAY_SOURCE> { new() { SourceId = 7 } }
+        };
+        DisplayConfigurationDiagnostics diagnostics = new();
+        List<uint> called = new();
+        AgentWinLibrary.ApplySourceDpiSettings(sources, source => { called.Add(source.SourceId); return true; }, diagnostics);
+        Assert.Equal(new uint[] { 7 }, called);
+        Assert.True(diagnostics.Result.IsSuccessful);
+        Assert.Equal("missing", Assert.Single(diagnostics.Result.Issues).DisplayId);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RejectedOrThrowingDpiWriteDoesNotPreventTheNextSource(bool throws)
+    {
+        Dictionary<string, List<DISPLAY_SOURCE>> sources = new()
+        {
+            ["rejected"] = new List<DISPLAY_SOURCE> { new() { SourceId = 1 } },
+            ["working"] = new List<DISPLAY_SOURCE> { new() { SourceId = 2 } }
+        };
+        DisplayConfigurationDiagnostics diagnostics = new();
+        List<uint> called = new();
+        AgentWinLibrary.ApplySourceDpiSettings(sources, source =>
+        {
+            called.Add(source.SourceId);
+            return source.SourceId == 2 || (throws ? throw new InvalidOperationException("DPI write failed") : false);
+        }, diagnostics);
+        Assert.Equal(new uint[] { 1, 2 }, called);
+        Assert.True(diagnostics.Result.IsSuccessful);
+        Assert.Equal("rejected", Assert.Single(diagnostics.Result.Issues).DisplayId);
+    }
+
     private static DISPLAYCONFIG_PATH_INFO Path(uint sourceId, uint targetId) => new()
     {
         Flags = DISPLAYCONFIG_PATH_FLAGS.DISPLAYCONFIG_PATH_ACTIVE,

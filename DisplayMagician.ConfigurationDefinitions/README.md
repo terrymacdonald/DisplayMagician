@@ -24,4 +24,4 @@ dotnet build .\DisplayMagician.ConfigurationDefinitions\DisplayMagician.Configur
 
 Use `DisplayMagician.Contracts` for cross-process request, response, and enum types. Use this project only for portable persisted definitions.
 
-Display-profile repository validation accepts supported legacy envelopes and version 5, rejecting invalid/newer version markers before a client commit can replace stored data. UserAgent owns the backed-up Intel PCI-identity migration and authoritative file access; see [display detection](../Docs/DISPLAY_DETECTION.md).
+Display-profile repository validation accepts supported legacy envelopes through version 6, rejecting invalid/newer version markers before a client commit can replace stored data. UserAgent owns the backed-up Intel PCI-identity migration and authoritative file access; see [display detection](../Docs/DISPLAY_DETECTION.md).

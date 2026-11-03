@@ -145,7 +145,8 @@ public sealed class ShortcutRunner
 
         UserProfileOperationState originalState = _profileOperationService.CaptureCurrentProfileState(
             captureDisplaySnapshot: !string.IsNullOrWhiteSpace(shortcut.ProfileId) && shortcut.DisplayPermanence == ShortcutDefinitionPermanence.Temporary,
-            captureAudioSnapshot: !string.IsNullOrWhiteSpace(shortcut.AudioProfileId) && shortcut.AudioPermanence == ShortcutDefinitionPermanence.Temporary);
+            captureAudioSnapshot: !string.IsNullOrWhiteSpace(shortcut.AudioProfileId) && shortcut.AudioPermanence == ShortcutDefinitionPermanence.Temporary,
+            cancellationToken: cancellationToken);
         bool shouldApplyDisplayProfile = !string.IsNullOrWhiteSpace(shortcut.ProfileId) && !string.Equals(shortcut.ProfileId, originalState.DisplayProfileId, StringComparison.OrdinalIgnoreCase);
         bool shouldApplyAudioProfile = !string.IsNullOrWhiteSpace(shortcut.AudioProfileId) && !string.Equals(shortcut.AudioProfileId, originalState.AudioProfileId, StringComparison.OrdinalIgnoreCase);
         ShortcutRecoveryRecord? recoveryRecord = null;

@@ -284,7 +284,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         public static bool operator !=(WINDOWS_DISPLAY_CONFIG lhs, WINDOWS_DISPLAY_CONFIG rhs) => !(lhs == rhs);
     }
 
-    public class WinLibrary : IDisposable
+    public partial class WinLibrary : IDisposable
     {
 
         [DllImport("user32")]
@@ -466,34 +466,24 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             }
 
             ulong newAdapterValue = 0;
-            ulong oldAdapterValue = 0;
 
             try
             {
                 // Update the DisplayAdapters with the current adapter id
                 SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Going through the display adatpers to update the adapter id");
-                ulong[] currentKeys = savedDisplayConfig.DisplayAdapters.Keys.ToArray();
-                var currentLength = savedDisplayConfig.DisplayAdapters.Count;
-                for (int i = 0; i < currentLength; i++)
+                // Build from the original entries so swaps and chains cannot collide
+                // with keys that still belong to another saved adapter.
+                Dictionary<ulong, string> remappedAdapters = new Dictionary<ulong, string>();
+                foreach (KeyValuePair<ulong, string> savedAdapter in savedDisplayConfig.DisplayAdapters)
                 {
-                    oldAdapterValue = currentKeys[i];
-                    // Change the Dictionary Key AdapterIDs
-                    if (adapterOldToNewMap.ContainsKey(oldAdapterValue))
-                    {
-                        // We get here if there is a matching adapter
-                        newAdapterValue = adapterOldToNewMap[oldAdapterValue];
-
-                        // Skip if we've already replaced something!
-                        if (!savedDisplayConfig.DisplayAdapters.ContainsKey(newAdapterValue))
-                        {
-                            // Add a new dictionary key with the old value
-                            savedDisplayConfig.DisplayAdapters.Add(newAdapterValue, savedDisplayConfig.DisplayAdapters[oldAdapterValue]);
-                            // Remove the old dictionary key
-                            savedDisplayConfig.DisplayAdapters.Remove(oldAdapterValue);
-                        }
-                        SharedLogger.logger.Trace($"WinLibrary/PatchWindowsDisplayConfig: Updated DisplayAdapter from adapter {oldAdapterValue} to adapter {newAdapterValue} instead.");
-                    }
+                    ulong adapterId = adapterOldToNewMap.TryGetValue(savedAdapter.Key, out ulong mappedId)
+                        ? mappedId : savedAdapter.Key;
+                    remappedAdapters.Add(adapterId, savedAdapter.Value);
+                    SharedLogger.logger.Trace("WinLibrary/PatchWindowsDisplayConfig: Mapped display adapter {0} to {1}.", savedAdapter.Key, adapterId);
                 }
+                // A conflicting/incomplete map leaves the original dictionary intact
+                // through the existing catch below; preserve the native fallback policy.
+                savedDisplayConfig.DisplayAdapters = remappedAdapters;
             }
             catch (Exception ex)
             {
@@ -859,6 +849,9 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         }
 
         private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector = QDC.QDC_ONLY_ACTIVE_PATHS)
+            => GetWindowsDisplayConfig(selector, out _);
+
+        private WINDOWS_DISPLAY_CONFIG GetWindowsDisplayConfig(QDC selector, out DISPLAYCONFIG_PATH_INFO[] rawPaths)
         {
 
             // Prepare the empty windows display config
@@ -939,6 +932,8 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
 
             TrimDisplayConfigBuffers(ref paths, pathCount, ref modes, modeCount);
+            // Preserve unmodified, legacy-format routes before the existing capture normalisation.
+            rawPaths = paths.ToArray();
 
             // First of all generate the current displayIdentifiers
             windowsDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers();
@@ -1920,348 +1915,131 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             }
         }
 
+        internal static void ApplySourceDpiSettings(IEnumerable<KeyValuePair<string, List<DISPLAY_SOURCE>>> sources,
+            Func<DISPLAY_SOURCE, bool> apply, DisplayConfigurationDiagnostics diagnostics,
+            DISPLAYCONFIG_PATH_INFO[]? legacyPaths = null)
+        {
+            Dictionary<(ulong Adapter, uint Source), uint> legacyScaling = new();
+            foreach (KeyValuePair<string, List<DISPLAY_SOURCE>> entry in sources)
+            {
+                if (entry.Value == null || entry.Value.Count == 0)
+                {
+                    diagnostics.Add("Scaling", "Windows", "The saved display source has no DPI settings; skipping scaling for this source.", displayId: entry.Key);
+                    continue;
+                }
+                DISPLAY_SOURCE source = entry.Value[0];
+                if (legacyPaths != null)
+                {
+                    // Zero denotes an unsupported/uncaptured setting, not a competing clone preference.
+                    if (source.SourceDPIScalingInfo.Current == 0) continue;
+                    DISPLAYCONFIG_PATH_INFO[] matches = legacyPaths.Where(path => path.TargetInfo.Id == source.TargetId &&
+                        path.SourceInfo.AdapterId.Equals(source.AdapterId)).ToArray();
+                    if (matches.Length != 1)
+                    {
+                        diagnostics.Add("Scaling", "Windows", "The saved DPI source cannot be matched uniquely after legacy recovery; skipping scaling for this source.", displayId: entry.Key);
+                        continue;
+                    }
+                    source.AdapterId = matches[0].SourceInfo.AdapterId;
+                    source.SourceId = matches[0].SourceInfo.Id;
+                    var identity = (source.AdapterId.Value, source.SourceId);
+                    if (legacyScaling.TryGetValue(identity, out uint previous))
+                    {
+                        if (previous != source.SourceDPIScalingInfo.Current)
+                            diagnostics.Add("Scaling", "Windows", "Legacy clone members have conflicting saved scaling; retaining the first source setting.", displayId: entry.Key);
+                        continue;
+                    }
+                    legacyScaling.Add(identity, source.SourceDPIScalingInfo.Current);
+                }
+                if (diagnostics.Run("Scaling", "Windows", () => apply(source), DisplayConfigurationSeverity.Warning, entry.Key))
+                    SharedLogger.logger.Trace("WinLibrary/ApplySourceDpiSettings: Set DPI scaling for display source {0} ({1}).", source.SourceId, entry.Key);
+                else
+                    SharedLogger.logger.Error("WinLibrary/ApplySourceDpiSettings: Could not set DPI scaling for display source {0} ({1}).", source.SourceId, entry.Key);
+            }
+        }
+
         internal bool SetActiveConfig(WINDOWS_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
-
-            bool displayConfigPassedValidation = false;
-            bool displayConfigAppliedSuccessfully = false;
-
-            // Get the all possible windows display configs
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Generating a list of all the current display configs");
-            WINDOWS_DISPLAY_CONFIG allWindowsDisplayConfig = GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS);
-
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Checking whether the display configuration contains a cloned display.");
-            if (displayConfig.IsCloned)
-            {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: We have a cloned display in this display profile");
-            }
-            else
-            {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: We have no cloned displays in thus display profile");
-            }
-
-            // Now we go through the Paths to update the LUIDs as per Soroush's suggestion
-            //SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Patching the adapter IDs to make the saved config valid");
-            //PatchWindowsDisplayConfig(ref displayConfig);
-
-            uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
-            uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
-            SDC validateFlags = SDC.DISPLAYMAGICIAN_VALIDATE;
-            SDC setFlags = SDC.DISPLAYMAGICIAN_SET;
-            SDC topologyOnlyFlags = SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES;
-            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
-            {
-                validateFlags |= SDC.SDC_VIRTUAL_MODE_AWARE | SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE;
-                setFlags |= SDC.SDC_VIRTUAL_MODE_AWARE | SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE;
-                topologyOnlyFlags |= SDC.SDC_VIRTUAL_MODE_AWARE | SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE;
-            }
-
-            // First we need to validate the display config            
-            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to validate the supplied display configuration with {myPathsCount} display config paths and {myModesCount} modes.");
-            // Now set the specified display configuration for this computer                    
-            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, validateFlags);
-            if ((validateFlags & SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE) == SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE &&
-                (err == WIN32STATUS.ERROR_INVALID_PARAMETER || err == WIN32STATUS.ERROR_NOT_SUPPORTED))
-            {
-                SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: DRR-aware SetDisplayConfig validation returned WIN32STATUS {err}. Retrying without DRR-aware flags.");
-                validateFlags = SDC.DISPLAYMAGICIAN_VALIDATE;
-                setFlags = SDC.DISPLAYMAGICIAN_SET;
-                topologyOnlyFlags = SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES;
-                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, validateFlags);
-            }
-
-            if (err == WIN32STATUS.ERROR_SUCCESS)
-            {
-                displayConfigPassedValidation = true;
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully validated that the display configuration would work if applied!");
-            }
-            else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
-            {
-                SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: The combination of parameters and flags specified is invalid. Display configuration not valid.");
-            }
-            else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
-            {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not validated.");
-                diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
+            // Preserve the existing initial all-path read. Failed native attempts can
+            // change routing, so obtain fresh legacy routes only if recovery needs them.
+            GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS);
+            DISPLAYCONFIG_PATH_INFO[]? legacyAppliedPaths = null;
+            if (!ApplyWindowsLayout(displayConfig, () =>
+                {
+                    GetWindowsDisplayConfig(QDC.QDC_ALL_PATHS, out DISPLAYCONFIG_PATH_INFO[] paths);
+                    return paths;
+                }, OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000), delayInMs, diagnostics,
+                legacyApplied: paths => legacyAppliedPaths = paths))
                 return false;
-            }
-            else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
+            WIN32STATUS err;
+
+            diagnostics.Result.TopologyApplied = true;
+            SharedLogger.logger.Info($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
+
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set Windows DPI Scaling setting for display sources.");
+            using ThreadDpiAwarenessScope dpiScope = new ThreadDpiAwarenessScope(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+            ApplySourceDpiSettings(displayConfig.DisplaySources,
+                source => SetDPISettings(source.AdapterId, source.SourceId, source.TargetId, source.SourceDPIScalingInfo), diagnostics, legacyAppliedPaths);
+
+
+            // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting
+            // This code will only turn on the HDR setting.
+            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Turning on Windows HDR.");
+            foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.DisplayHDRStates)
             {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not validated.");
-                diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                return false;
-            }
-            else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
-            {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An unspecified error occurred. Display configuration not validated.");
-                diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                return false;
-            }
-            else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
-            {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not validated.");
-                diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                return false;
-            }
-            else
-            {
-                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not validated.");
-                diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                return false;
-            }
-
-            // If the display config passed validation, then we can try and apply it
-            if (displayConfigPassedValidation)
-            {
-                // Try and apply the validated display config
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration with {myPathsCount} display config paths and {myModesCount} modes.");
-                // Now set the specified display configuration for this computer                    
-                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, setFlags);
-                if ((setFlags & SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE) == SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE &&
-                    (err == WIN32STATUS.ERROR_INVALID_PARAMETER || err == WIN32STATUS.ERROR_NOT_SUPPORTED))
+                try
                 {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: DRR-aware SetDisplayConfig apply returned WIN32STATUS {err}. Retrying without DRR-aware flags.");
-                    setFlags = SDC.DISPLAYMAGICIAN_SET;
-                    topologyOnlyFlags = SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES;
-                    err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, setFlags);
-                }
-
-                if (err == WIN32STATUS.ERROR_SUCCESS)
-                {
-                    displayConfigAppliedSuccessfully = true;
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Successfully set the display configuration to the settings supplied on attempt #1!");
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting {delayInMs} milliseconds after a successful attempt #1 to continue.");
-                    Thread.Sleep(delayInMs);
-                }
-                else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without SDC_FORCE_MODE_ENUMERATION as that works on some computers.");
-                }
-                else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
-                }
-                else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
-                }
-                else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: An unspecified error occurred. Display configuration not applied.");
-                }
-                else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
-                }
-            }
-
-            // If the display config didn't pass validation, then we can try and apply it again in exactly the same way as sometimes it isn't applied correctly the first time
-            if (displayConfigPassedValidation && !displayConfigAppliedSuccessfully)
-            {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempt #1 failed, so waiting {delayInMs * 2} milliseconds seconds to try again!");
-                Thread.Sleep(delayInMs*2);
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration A SECOND TIME with {myPathsCount} display config paths and {myModesCount} modes. Sometimes it doesn't work the first time!");
-                // Try it again, because in some systems it doesn't work at the first try
-                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, setFlags);
-                if ((setFlags & SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE) == SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE &&
-                    (err == WIN32STATUS.ERROR_INVALID_PARAMETER || err == WIN32STATUS.ERROR_NOT_SUPPORTED))
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry. DRR-aware SetDisplayConfig apply returned WIN32STATUS {err}. Retrying without DRR-aware flags.");
-                    setFlags = SDC.DISPLAYMAGICIAN_SET;
-                    topologyOnlyFlags = SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES;
-                    err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, setFlags);
-                }
-
-                if (err == WIN32STATUS.ERROR_SUCCESS)
-                {
-                    displayConfigAppliedSuccessfully = true;
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Retry. Successfully set the display configuration to the settings supplied on attempt #2!");
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting {delayInMs} milliseconds after a successful attempt #2 to continue.");
-                    Thread.Sleep(delayInMs);
-                }
-                else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry. The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without any specific data other than the topology as that works on some computers.");
-                }
-                else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
-                }
-                else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
-                }
-                else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. An unspecified error occurred. Display configuration not applied.");
-                }
-                else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry. SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
-                }
-
-            }
-
-            // If the display config didn't pass validation, then we can try and apply it again but this time only suplpy the topology and allow changes.
-            // This can avoid some issues if the supplied modes are no longer valid.
-            if (displayConfigPassedValidation && !displayConfigAppliedSuccessfully)
-            {
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempt #2 failed, so waiting {delayInMs*3} milliseconds try again!");
-                Thread.Sleep(delayInMs*3);
-
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set the display configuration A THIRD TIME, this time just supplying {myPathsCount} display config paths and letting Windows figure out the best modes to use. This may work but is hit and miss.");
-                // Try it again, because in some systems it doesn't work at the first try
-                err = ApplyTopologyOnlyConfiguration(displayConfig.DisplayConfigPaths, topologyOnlyFlags);
-                if ((topologyOnlyFlags & SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE) == SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE &&
-                    (err == WIN32STATUS.ERROR_INVALID_PARAMETER || err == WIN32STATUS.ERROR_NOT_SUPPORTED))
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry 2. DRR-aware SetDisplayConfig apply returned WIN32STATUS {err}. Retrying without DRR-aware flags.");
-                    topologyOnlyFlags = SDC.SDC_APPLY | SDC.SDC_TOPOLOGY_SUPPLIED | SDC.SDC_ALLOW_CHANGES;
-                    err = ApplyTopologyOnlyConfiguration(displayConfig.DisplayConfigPaths, topologyOnlyFlags);
-                }
-
-                if (err == WIN32STATUS.ERROR_SUCCESS)
-                {
-                    displayConfigAppliedSuccessfully = true;
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Retry 2. Successfully set the display configuration to the settings supplied on attempt #3!");
-                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Waiting {delayInMs} milliseconds after a successful attempt #3 to continue.");
-                    Thread.Sleep(delayInMs);
-                }
-                else if (err == WIN32STATUS.ERROR_INVALID_PARAMETER)
-                {
-                    SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: Retry 2. The combination of parameters and flags specified is invalid. Display configuration not applied. So trying again without any specific data other than the topology as that works on some computers.");
-                }
-                else if (err == WIN32STATUS.ERROR_NOT_SUPPORTED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The system is not running a graphics driver that was written according to the Windows Display Driver Model (WDDM). The function is only supported on a system with a WDDM driver running. Display configuration not applied.");
-                    diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                    return false;
-                }
-                else if (err == WIN32STATUS.ERROR_ACCESS_DENIED)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The caller does not have access to the console session. This error occurs if the calling process does not have access to the current desktop or is running on a remote session. Display configuration not applied.");
-                    diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                    return false;
-                }
-                else if (err == WIN32STATUS.ERROR_GEN_FAILURE)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. An unspecified error occurred. Display configuration not applied.");
-                    diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                    return false;
-                }
-                else if (err == WIN32STATUS.ERROR_BAD_CONFIGURATION)
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. The function could not find a workable solution for the source and target modes that the caller did not specify. Display configuration not applied.");
-                    diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                    return false;
-                }
-                else
-                {
-                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: Retry 2. SetDisplayConfig couldn't set the display configuration using the settings supplied. Display configuration not applied.");
-                    diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                    return false;
-                }
-
-            }
-
-            // If the display config was applied successfully, we can move on to applying the other windows settings
-            if (displayConfigAppliedSuccessfully)
-            {
-                diagnostics.Result.TopologyApplied = true;
-                SharedLogger.logger.Info($"WinLibrary/SetActiveConfig: SUCCESS! The display configuration has been successfully applied");
-                
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Attempting to set Windows DPI Scaling setting for display sources.");
-                using ThreadDpiAwarenessScope dpiScope = new ThreadDpiAwarenessScope(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-                foreach (var displaySourceEntry in displayConfig.DisplaySources)
-                {
-                    // We only need to set the source on the first display source
-                    // Set the Windows Scaling DPI per source
-                    if (diagnostics.Run("Scaling", "Windows", () => SetDPISettings(displaySourceEntry.Value[0].AdapterId, displaySourceEntry.Value[0].SourceId, displaySourceEntry.Value[0].TargetId, displaySourceEntry.Value[0].SourceDPIScalingInfo), DisplayConfigurationSeverity.Warning))
+                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to get information whether HDR color is in use now on Display {myHDRstate.Id}.");
+                    // Get advanced HDR info
+                    var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
+                    colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+                    colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
+                    colorInfo.Header.AdapterId = myHDRstate.AdapterId;
+                    colorInfo.Header.Id = myHDRstate.Id;
+                    err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
+                    if (err == WIN32STATUS.ERROR_SUCCESS)
                     {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Set the DPI scaling settings for display source {displaySourceEntry.Value[0].SourceId}");
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - Unable to set the DPI scaling settings for display source {displaySourceEntry.Value[0].SourceId}");
-                    }
+                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Advanced Color Info gathered from Display {myHDRstate.Id}");
 
-                }
-
-
-                // NOTE: There is currently no way within Windows CCD API to set the HDR settings to any particular setting
-                // This code will only turn on the HDR setting.
-                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Turning on Windows HDR.");
-                foreach (ADVANCED_HDR_INFO_PER_PATH myHDRstate in displayConfig.DisplayHDRStates)
-                {
-                    try
-                    {
-                        SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Trying to get information whether HDR color is in use now on Display {myHDRstate.Id}.");
-                        // Get advanced HDR info
-                        var colorInfo = new DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO();
-                        colorInfo.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
-                        colorInfo.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>();
-                        colorInfo.Header.AdapterId = myHDRstate.AdapterId;
-                        colorInfo.Header.Id = myHDRstate.Id;
-                        err = CCDImport.DisplayConfigGetDeviceInfo(ref colorInfo);
-                        if (err == WIN32STATUS.ERROR_SUCCESS)
+                        if (myHDRstate.AdvancedColorInfo.AdvancedColorEnabled != colorInfo.AdvancedColorEnabled)
                         {
-                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Advanced Color Info gathered from Display {myHDRstate.Id}");
+                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: HDR is available for use on Display {myHDRstate.Id}, and we want it set to {myHDRstate.AdvancedColorInfo.BitsPerColorChannel} but is currently {colorInfo.AdvancedColorEnabled}.");
 
-                            if (myHDRstate.AdvancedColorInfo.AdvancedColorEnabled != colorInfo.AdvancedColorEnabled)
+
+                            var setColorState = new DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE();
+                            setColorState.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE;
+                            setColorState.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE>();
+                            setColorState.Header.AdapterId = myHDRstate.AdapterId;
+                            setColorState.Header.Id = myHDRstate.Id;
+                            setColorState.EnableAdvancedColor = myHDRstate.AdvancedColorInfo.AdvancedColorEnabled;
+                            err = CCDImport.DisplayConfigSetDeviceInfo(ref setColorState);
+                            if (err == WIN32STATUS.ERROR_SUCCESS)
                             {
-                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: HDR is available for use on Display {myHDRstate.Id}, and we want it set to {myHDRstate.AdvancedColorInfo.BitsPerColorChannel} but is currently {colorInfo.AdvancedColorEnabled}.");
-
-
-                                var setColorState = new DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE();
-                                setColorState.Header.Type = DISPLAYCONFIG_DEVICE_INFO_TYPE.DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE;
-                                setColorState.Header.Size = (uint)Marshal.SizeOf<DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE>();
-                                setColorState.Header.AdapterId = myHDRstate.AdapterId;
-                                setColorState.Header.Id = myHDRstate.Id;
-                                setColorState.EnableAdvancedColor = myHDRstate.AdvancedColorInfo.AdvancedColorEnabled;
-                                err = CCDImport.DisplayConfigSetDeviceInfo(ref setColorState);
-                                if (err == WIN32STATUS.ERROR_SUCCESS)
-                                {
-                                    SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! Set HDR successfully to {myHDRstate.AdvancedColorInfo.AdvancedColorEnabled} on Display {myHDRstate.Id}");
-                                }
-                                else
-                                {
-                                    SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to set the HDR settings for display #{myHDRstate.Id}");
-                                    diagnostics.Add("HDR", "Windows", "Could not set HDR.", displayId: myHDRstate.Id.ToString(), nativeErrorCode: err.ToString());
-                                }
+                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: SUCCESS! Set HDR successfully to {myHDRstate.AdvancedColorInfo.AdvancedColorEnabled} on Display {myHDRstate.Id}");
                             }
                             else
                             {
-                                SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Skipping setting HDR on Display {myHDRstate.Id} as it is already in the correct HDR mode: {colorInfo.AdvancedColorEnabled}");
+                                SharedLogger.logger.Error($"WinLibrary/SetActiveConfig: ERROR - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to set the HDR settings for display #{myHDRstate.Id}");
+                                diagnostics.Add("HDR", "Windows", "Could not set HDR.", displayId: myHDRstate.Id.ToString(), nativeErrorCode: err.ToString());
                             }
                         }
                         else
                         {
-                            diagnostics.Add("HDR", "Windows", "Could not read HDR state.", displayId: myHDRstate.Id.ToString(), nativeErrorCode: err.ToString());
-                            SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out if HDR is supported for display #{myHDRstate.Id}");
+                            SharedLogger.logger.Trace($"WinLibrary/SetActiveConfig: Skipping setting HDR on Display {myHDRstate.Id} as it is already in the correct HDR mode: {colorInfo.AdvancedColorEnabled}");
                         }
-
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        diagnostics.Add("HDR", "Windows", ex.Message, displayId: myHDRstate.Id.ToString(), exception: ex);
+                        diagnostics.Add("HDR", "Windows", "Could not read HDR state.", displayId: myHDRstate.Id.ToString(), nativeErrorCode: err.ToString());
+                        SharedLogger.logger.Warn($"WinLibrary/SetActiveConfig: WARNING - DisplayConfigGetDeviceInfo returned WIN32STATUS {err} when trying to find out if HDR is supported for display #{myHDRstate.Id}");
                     }
+
                 }
-                return true;
+                catch (Exception ex)
+                {
+                    diagnostics.Add("HDR", "Windows", ex.Message, displayId: myHDRstate.Id.ToString(), exception: ex);
+                }
             }
-            else
-            {
-                diagnostics.Add("Topology", "Windows", "Windows could not apply the display topology.", DisplayConfigurationSeverity.Fatal, nativeErrorCode: err.ToString());
-                SharedLogger.logger.Info($"WinLibrary/SetActiveConfig: UH OH! The display configuration has NOT applied correctly. There was an error.");
-                return false;
-            }
+            return true;
 
                 /*
                             // Get the existing displays config
@@ -2489,22 +2267,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
 
             SharedLogger.logger.Trace($"WinLibrary/IsPossibleConfig: Testing whether the display configuration is valid ");
             // Test whether a specified display configuration is supported on the computer                    
-            uint myPathsCount = (uint)displayConfig.DisplayConfigPaths.Length;
-            uint myModesCount = (uint)displayConfig.DisplayConfigModes.Length;
-            SDC validateFlags = SDC.DISPLAYMAGICIAN_VALIDATE;
-            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
-            {
-                validateFlags |= SDC.SDC_VIRTUAL_MODE_AWARE | SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE;
-            }
-
-            WIN32STATUS err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, validateFlags);
-            if ((validateFlags & SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE) == SDC.SDC_VIRTUAL_REFRESH_RATE_AWARE &&
-                (err == WIN32STATUS.ERROR_INVALID_PARAMETER || err == WIN32STATUS.ERROR_NOT_SUPPORTED))
-            {
-                SharedLogger.logger.Warn($"WinLibrary/IsPossibleConfig: DRR-aware SetDisplayConfig validation returned WIN32STATUS {err}. Retrying without DRR-aware flags.");
-                validateFlags = SDC.DISPLAYMAGICIAN_VALIDATE;
-                err = CCDImport.SetDisplayConfig(myPathsCount, displayConfig.DisplayConfigPaths, myModesCount, displayConfig.DisplayConfigModes, validateFlags);
-            }
+            WIN32STATUS err = ValidateWindowsLayout(displayConfig, OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000), out _);
 
             if (err == WIN32STATUS.ERROR_SUCCESS)
             {

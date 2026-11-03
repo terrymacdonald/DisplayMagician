@@ -20,11 +20,11 @@ public class UserProfileOperationService
 
     public UserProfileOperationState CaptureCurrentProfileState() => CaptureCurrentProfileState(false, false);
 
-    internal virtual UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot)
+    internal virtual UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot, CancellationToken cancellationToken = default)
     {
         string displayId;
         string displayJson = string.Empty;
-        using (DisplayHardwareAccess.Enter())
+        using (DisplayHardwareAccess.Enter(cancellationToken))
         {
             if (!ProfileRepository.TryUpdateActiveProfile(out DisplayConfigurationResult currentDisplayCapture,
                 captureWallpaper: captureDisplaySnapshot))
@@ -34,6 +34,7 @@ public class UserProfileOperationService
             if (captureDisplaySnapshot && display != null)
                 displayJson = SerializeDisplayRecoveryProfile(display);
         }
+        cancellationToken.ThrowIfCancellationRequested();
         AudioProfileRepository.UpdateActiveAudioProfile();
         string audioId = AudioProfileRepository.CurrentAudioProfile?.UUID ?? string.Empty;
         string audioJson = string.Empty;
@@ -89,7 +90,7 @@ public class UserProfileOperationService
 
         return await Task.Run(() =>
         {
-            SharedApplyProfileResult result = ProfileRepository.ApplyProfile(profile, out DisplayConfigurationResult details);
+            SharedApplyProfileResult result = ProfileRepository.ApplyProfile(profile, out DisplayConfigurationResult details, cancellationToken: cancellationToken);
             details.IsRestoration = !string.IsNullOrWhiteSpace(snapshotJson);
             return new ApplyDisplayProfileOperationResult(result == SharedApplyProfileResult.Successful, result == SharedApplyProfileResult.Cancelled)
             {

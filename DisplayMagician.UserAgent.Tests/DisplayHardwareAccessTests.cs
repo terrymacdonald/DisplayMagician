@@ -433,6 +433,8 @@ public sealed class DisplayHardwareAccessTests : IDisposable
     public void ProfileDefaultsAndPreviewUseStoredDataOnly()
     {
         ProfileItem profile = new();
+        Assert.Equal(1, profile.ApplyProfileCount);
+        Assert.Equal(0, profile.ApplyProfileDelay);
         Assert.False(profile.NVIDIADisplayConfig.IsInUse);
         Assert.False(profile.AMDDisplayConfig.IsInUse);
         Assert.False(profile.IntelDisplayConfig.IsInUse);
@@ -474,7 +476,7 @@ public sealed class DisplayHardwareAccessTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, "{\"ProfileFileVersion\":\"4\",\"Profiles\":[],\"FutureSetting\":\"keep\"}", System.Text.Encoding.Unicode);
         RepositorySnapshot snapshot = ProfileRepository.GetSnapshot();
-        Assert.Equal("5", Newtonsoft.Json.Linq.JObject.Parse(snapshot.Json)["ProfileFileVersion"]);
+        Assert.Equal("6", Newtonsoft.Json.Linq.JObject.Parse(snapshot.Json)["ProfileFileVersion"]);
         RepositoryCommitResult commit = ProfileRepository.CommitSnapshot(new RepositoryCommitRequest
         {
             Repository = RepositoryKind.DisplayProfiles, ExpectedRevision = snapshot.Revision, Json = snapshot.Json
@@ -489,12 +491,133 @@ public sealed class DisplayHardwareAccessTests : IDisposable
     {
         string path = ProfileRepository.ProfileStorageFileName;
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        const string original = "{\"ProfileFileVersion\":\"6\",\"Profiles\":[]}";
+        const string original = "{\"ProfileFileVersion\":\"7\",\"Profiles\":[]}";
         File.WriteAllText(path, original, System.Text.Encoding.Unicode);
         Assert.Throws<Newtonsoft.Json.JsonSerializationException>(() => ProfileRepository.GetSnapshot());
         Assert.False(ProfileRepository.SaveProfiles());
         Assert.Equal(original, File.ReadAllText(path, System.Text.Encoding.Unicode));
         Assert.Single(Directory.GetFiles(Path.GetDirectoryName(path)!));
+    }
+
+    [Fact]
+    public async Task CancelledApplyLeavesTheHardwareQueueWithoutRunningItsAction()
+    {
+        using ManualResetEventSlim entered = new();
+        using ManualResetEventSlim release = new();
+        using ManualResetEventSlim queued = new();
+        using CancellationTokenSource cancellation = new();
+        Task owner = Task.Run(() =>
+        {
+            using IDisposable access = DisplayHardwareAccess.Enter();
+            entered.Set();
+            Assert.True(release.Wait(TimeSpan.FromSeconds(10)));
+        });
+        Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+        int applies = 0;
+        Task applying = Task.Run(() =>
+        {
+            queued.Set();
+            ProfileRepository.ApplyProfile(Profile(), out _, _ => { Interlocked.Increment(ref applies); return true; },
+                _ => { }, () => { }, cancellationToken: cancellation.Token);
+        });
+        try
+        {
+            Assert.True(queued.Wait(TimeSpan.FromSeconds(5)));
+            cancellation.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => applying.WaitAsync(TimeSpan.FromSeconds(3)));
+            Assert.Equal(0, applies);
+            Assert.False(owner.IsCompleted);
+        }
+        finally { release.Set(); await owner; }
+    }
+
+    [Fact]
+    public void CancellationAfterReadingPreventsTheFirstApplyWithoutAddingAFatalIssue()
+    {
+        using CancellationTokenSource cancellation = new();
+        int applies = 0;
+        ApplyProfileResult result = ProfileRepository.ApplyProfile(Profile(), out DisplayConfigurationResult details,
+            _ => { applies++; return true; }, _ => { }, () => { },
+            refreshBeforeApply: _ => { cancellation.Cancel(); return true; }, cancellationToken: cancellation.Token);
+        Assert.Equal(ApplyProfileResult.Cancelled, result);
+        Assert.Equal(0, applies);
+        Assert.Empty(details.Issues);
+        Assert.False(ProfileRepository.UserChangingProfiles);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ProductionApplyAndOriginalCaptureRespectCancellationWhileQueued(bool originalCapture)
+    {
+        using ManualResetEventSlim entered = new();
+        using ManualResetEventSlim release = new();
+        using CancellationTokenSource cancellation = new();
+        Task owner = Task.Run(() =>
+        {
+            using IDisposable access = DisplayHardwareAccess.Enter();
+            entered.Set();
+            Assert.True(release.Wait(TimeSpan.FromSeconds(10)));
+        });
+        Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+        UserProfileOperationService service = new();
+        // An intentionally invalid profile also prevents native writes if the regression returns.
+        ProfileItem invalid = new() { ApplyProfileCount = 0 };
+        Task operation = originalCapture
+            ? Task.Run(() => service.CaptureCurrentProfileState(false, false, cancellation.Token))
+            : service.ApplyDisplayProfileAsync(invalid.UUID, cancellation.Token,
+                UserProfileOperationService.SerializeDisplayRecoveryProfile(invalid));
+        try
+        {
+            await Task.Delay(100);
+            cancellation.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => operation.WaitAsync(TimeSpan.FromSeconds(3)));
+            Assert.False(owner.IsCompleted);
+        }
+        finally { release.Set(); await owner; }
+    }
+
+    [Theory]
+    [InlineData("CombinedDisplay")]
+    [InlineData("DisplayProperties")]
+    public void EssentialScanReadFailurePreservesTheCompletedSnapshot(string stage)
+    {
+        ProfileItem previous = new() { Name = "Complete snapshot" };
+        ProfileRepository.CurrentProfile = previous;
+        DisplayDetectionSnapshot before = ProfileRepository.GetDisplaySnapshot();
+        Assert.False(ProfileRepository.TryUpdateActiveProfile(out DisplayConfigurationResult result,
+            (_, _) => throw new IOException(stage + " read failed")));
+        Assert.Same(before, ProfileRepository.GetDisplaySnapshot());
+        Assert.False(result.IsSuccessful);
+        Assert.Contains(result.Issues, issue => issue.Message.Contains(stage, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(1, 0)]
+    [InlineData(3, 7)]
+    public void LayoutOverwriteRetainsTheUsersRepeatCountAndDelay(int count, int delay)
+    {
+        ProfileItem original = Profile();
+        original.ApplyProfileCount = count;
+        original.ApplyProfileDelay = delay;
+        ProfileRepository.AllProfiles.Add(original);
+        using System.Drawing.Bitmap bitmap = new(1, 1);
+        Assert.True(ProfileRepository.CaptureLayoutToProfile(original, captured =>
+        {
+            // Even a capture implementation that replaces defaults cannot edit repeat preferences.
+            captured.ApplyProfileCount = 1;
+            captured.ApplyProfileDelay = 0;
+            captured.ProfileBitmap = bitmap;
+            captured.ProfileTightestBitmap = bitmap;
+            return true;
+        }));
+        ProfileItem saved = Assert.Single(ProfileRepository.AllProfiles);
+        Assert.Equal(count, saved.ApplyProfileCount);
+        Assert.Equal(delay, saved.ApplyProfileDelay);
+        using JsonDocument document = JsonDocument.Parse(ProfileRepository.GetSnapshot().Json);
+        JsonElement persisted = Assert.Single(document.RootElement.GetProperty("Profiles").EnumerateArray());
+        Assert.Equal(count, persisted.GetProperty("ApplyProfileCount").GetInt32());
+        Assert.Equal(delay, persisted.GetProperty("ApplyProfileDelay").GetInt32());
     }
 
     private ProfileCommandHandler Handler(Func<bool> refresh)

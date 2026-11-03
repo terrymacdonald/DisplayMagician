@@ -1201,6 +1201,9 @@ namespace DisplayMagician.UserAgent.Runtime
                     SharedLogger.logger.Warn("ProfileRepository/CaptureLayoutToProfile: Profile {0} changed during capture; retaining the newer definition.", original.UUID);
                     return false;
                 }
+                // Capturing hardware does not edit the user-selected repeat policy.
+                captured.ApplyProfileCount = original.ApplyProfileCount;
+                captured.ApplyProfileDelay = original.ApplyProfileDelay;
                 if (!captured.PreSave()) return false;
                 List<ProfileItem> previous = _allProfiles;
                 _allProfiles = new List<ProfileItem>(previous);
@@ -1751,9 +1754,10 @@ namespace DisplayMagician.UserAgent.Runtime
             return uncheckedFilename;
         }
 
-        private static bool ApplyFreshProfile(ProfileItem profile, DisplayConfigurationDiagnostics diagnostics)
+        private static bool ApplyFreshProfile(ProfileItem profile, DisplayConfigurationDiagnostics diagnostics, CancellationToken cancellationToken)
         {
             PatchLoadedProfile(profile);
+            cancellationToken.ThrowIfCancellationRequested();
             return profile.SetActiveWithDiagnostics(diagnostics);
         }
 
@@ -1763,11 +1767,12 @@ namespace DisplayMagician.UserAgent.Runtime
 
         internal static ApplyProfileResult ApplyProfile(ProfileItem profile, out DisplayConfigurationResult displayResult,
             Func<DisplayConfigurationDiagnostics, bool>? apply = null, Action<int>? wait = null, Action? refresh = null,
-            Func<DisplayConfigurationDiagnostics, bool>? refreshBeforeApply = null)
+            Func<DisplayConfigurationDiagnostics, bool>? refreshBeforeApply = null, CancellationToken cancellationToken = default)
         {
-            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter(cancellationToken);
             DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
             displayResult = diagnostics.Result;
+            bool hasWaitOverride = wait != null;
             wait ??= Thread.Sleep;
             SharedLogger.logger.Trace($"Program/ApplyProfile: Starting");
             // We try to time the profile display swap
@@ -1816,13 +1821,18 @@ namespace DisplayMagician.UserAgent.Runtime
                 // We try to use this profile. We apply the profiles the number of times that the user The profiles have checking logic in them
                 for (int i = profile.ApplyProfileCount; i > 0; i--)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     diagnostics = new DisplayConfigurationDiagnostics();
                     displayResult = diagnostics.Result;
                     displayResult.ProfileId = profile.UUID;
                     displayResult.Attempt = profile.ApplyProfileCount - i + 1;
                     if (!diagnostics.Run("Capture", "Display", () => refreshBeforeApply != null ? refreshBeforeApply(diagnostics) :
                         apply != null || ProfileItem.RefreshDisplayLibraries(diagnostics), DisplayConfigurationSeverity.Fatal) ||
-                        !diagnostics.Run("Topology", "Display", () => apply != null ? apply(diagnostics) : ApplyFreshProfile(profile, diagnostics), DisplayConfigurationSeverity.Fatal))
+                        !diagnostics.Run("Topology", "Display", () =>
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            return apply != null ? apply(diagnostics) : ApplyFreshProfile(profile, diagnostics, cancellationToken);
+                        }, DisplayConfigurationSeverity.Fatal))
                     {
                         SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.Name} Profile!");
                         result = ApplyProfileResult.Error;
@@ -1832,14 +1842,24 @@ namespace DisplayMagician.UserAgent.Runtime
                         SharedLogger.logger.Trace($"ProfileRepository/ApplyProfile: Successfully applied the  {profile.Name} Profile!");
                         result = ApplyProfileResult.Successful;
                     }
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     if (i > 1 && profile.ApplyProfileDelay > 0 && profile.ApplyProfileDelay <= 1000)
                     {
                         // we have more than one profile attempt to go, so delay the requested amount, converting seconds to milliseconds.
-                        // Note - usiong THread.Sleep instead of Task.Delay, as this is not a UI thread and we want to delay this thread.
-                        wait(profile.ApplyProfileDelay * 1000);
+                        // Only the between-attempt pause is cancellable; native settling waits stay unchanged.
+                        if (!hasWaitOverride && cancellationToken.CanBeCanceled)
+                        {
+                            if (cancellationToken.WaitHandle.WaitOne(profile.ApplyProfileDelay * 1000))
+                                cancellationToken.ThrowIfCancellationRequested();
+                        }
+                        else wait(profile.ApplyProfileDelay * 1000);
                     }
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                result = ApplyProfileResult.Cancelled;
             }
             catch (Exception ex)
             {
@@ -1850,7 +1870,7 @@ namespace DisplayMagician.UserAgent.Runtime
             finally
             {
                 // If the applying path info worked, then we attempt to set the desktop background if needed
-                if (profile.WallpaperConfiguration.WallpaperMode.Equals(Wallpaper.Mode.Apply))
+                if (result != ApplyProfileResult.Cancelled && profile.WallpaperConfiguration.WallpaperMode.Equals(Wallpaper.Mode.Apply))
                 {
                     if (Wallpaper.Apply(profile.WallpaperConfiguration))
                     {

@@ -481,6 +481,48 @@ public sealed class ShortcutUiConcurrencyTests : IDisposable
         Assert.False(Field<bool>(form, "_configurationLoaded"));
         Assert.Contains("no longer available", Assert.Single(messages));
     });
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FailedDisplayRefreshRetriesThenStopsUntilANewTrigger(bool throws) => WinFormsTestRunner.Run(async () =>
+    {
+        FakeClient client = new();
+        int reads = 0;
+        using MainForm form = new(client, _ =>
+        {
+            reads++;
+            return throws ? Task.FromException<bool>(new IOException("Transient scan failure")) : Task.FromResult(false);
+        });
+        Set(form, "_refreshDisplaySnapshotRequested", true);
+        Task refresh = Call(form, "RefreshNotifyIconMenusAsync");
+        for (int index = 0; index < 3; index++)
+        {
+            await Until(() => client.Pending.Count > index);
+            client.Pending[index].Completion.SetResult(Session(Guid.NewGuid()));
+        }
+        await refresh;
+        Assert.Equal(3, reads);
+        Assert.True(Field<bool>(form, "_refreshDisplaySnapshotRequested"));
+        await Task.Delay(100);
+        Assert.Equal(3, client.Pending.Count);
+    });
+
+    [Fact]
+    public void SuccessfulDisplayRetryClearsThePendingRequest() => WinFormsTestRunner.Run(async () =>
+    {
+        FakeClient client = new();
+        int reads = 0;
+        using MainForm form = new(client, _ => Task.FromResult(++reads == 2));
+        Set(form, "_refreshDisplaySnapshotRequested", true);
+        Task refresh = Call(form, "RefreshNotifyIconMenusAsync");
+        client.Pending[0].Completion.SetResult(Session(Guid.NewGuid()));
+        await Until(() => client.Pending.Count == 2);
+        client.Pending[1].Completion.SetResult(Session(Guid.NewGuid()));
+        await refresh;
+        Assert.Equal(2, reads);
+        Assert.False(Field<bool>(form, "_refreshDisplaySnapshotRequested"));
+    });
+
     private static ControlResponse Audio(string id) => new() { IsSuccessful = true, AudioProfileList = new AudioProfileListResult { CanAccessAudioSettings = true, SavedProfiles = new[] { new AudioProfileView { Id = id, Name = id } } } };
     private static ControlResponse Session(Guid id) => new() { IsSuccessful = true, WindowPlacementSession = new WindowPlacementSessionView { OperationId = id, CanSave = true } };
     private static ControlResponse Profiles(string id, string? png = null) => new() { IsSuccessful = true, ProfileList = new ProfileListResult { SavedProfiles = new[] { new DisplayProfileView { Id = id, Name = id, DetailedLayoutPngBase64 = png } } } };

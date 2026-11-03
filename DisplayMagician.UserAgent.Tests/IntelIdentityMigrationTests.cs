@@ -37,6 +37,7 @@ public sealed class IntelIdentityMigrationTests : IDisposable
     [InlineData("2")]
     [InlineData("3")]
     [InlineData("4")]
+    [InlineData("5")]
     public void LegacyProfileMigratesAdapterAndDisplayTogetherWithoutLosingSettings(string version)
     {
         JObject root = Document(version);
@@ -45,7 +46,7 @@ public sealed class IntelIdentityMigrationTests : IDisposable
         JObject result = JObject.Parse(migrated);
         JObject config = (JObject)result["Profiles"]![0]!["IntelDisplayConfig"]!;
         string key = IntelAdapterIdentity.Key(Properties(1));
-        Assert.Equal("5", result["ProfileFileVersion"]);
+        Assert.Equal("6", result["ProfileFileVersion"]);
         Assert.True((bool)config["PhysicalAdapters"]![key]!["IsCombinedDisplay"]!);
         Assert.Equal(key, config["PhysicalAdapters"]![key]!["AdapterID"]);
         Assert.Equal("keep adapter", config["PhysicalAdapters"]![key]!["FutureSetting"]);
@@ -72,7 +73,7 @@ public sealed class IntelIdentityMigrationTests : IDisposable
     }
 
     [Theory]
-    [InlineData("\"6\"")]
+    [InlineData("\"7\"")]
     [InlineData("\"0\"")]
     [InlineData("\"unknown\"")]
     [InlineData("5")]
@@ -141,6 +142,99 @@ public sealed class IntelIdentityMigrationTests : IDisposable
         INTEL_DISPLAY_CONFIG config = new() { IsInUse = true };
         config.PhysicalAdapters.Add(IntelAdapterIdentity.Key(Properties(1)), new INTEL_ADAPTER());
         Assert.True(IntelAdapterIdentity.ValidateForApply(config, new DisplayConfigurationDiagnostics()));
+    }
+
+    [Fact]
+    public void MissingLocationRemainsUnknownAcrossRepositoryAndRecoveryRoundTrips()
+    {
+        JObject root = Document("5");
+        JObject profile = (JObject)root["Profiles"]![0]!;
+        JObject config = (JObject)profile["IntelDisplayConfig"]!;
+        config["IsInUse"] = true;
+        JObject defaults = JObject.Parse(DisplayMagician.UserAgent.UserProfileOperationService.SerializeDisplayRecoveryProfile(new ProfileItem()));
+        foreach (JProperty property in defaults.Properties())
+            if (profile[property.Name] == null) profile[property.Name] = property.Value.DeepClone();
+        JObject adapter = (JObject)((JObject)config["PhysicalAdapters"]!).Properties().Single().Value;
+        ((JObject)adapter["AdapterProperties"]!).Remove("AdapterBdf");
+        string json = AgentConfigMigrationRunner.MigrateDisplayProfilesJson(root.ToString());
+        for (int index = 0; index < 3; index++)
+        {
+            ProfileItem loaded = JsonConvert.DeserializeObject<ProfileItem>(JObject.Parse(json)["Profiles"]![0]!.ToString(),
+                DisplayMagician.UserAgent.UserProfileOperationService.RecoveryJsonSettings)!;
+            Assert.True(IntelAdapterIdentity.RequiresRecapture(loaded.IntelDisplayConfig));
+            string recovery = AgentConfigMigrationRunner.MigrateDisplayRecoveryJson(
+                DisplayMagician.UserAgent.UserProfileOperationService.SerializeDisplayRecoveryProfile(loaded));
+            ProfileItem restored = JsonConvert.DeserializeObject<ProfileItem>(recovery)!;
+            Assert.True(IntelAdapterIdentity.RequiresRecapture(restored.IntelDisplayConfig));
+            Assert.DoesNotContain("-PCI_", Assert.Single(restored.IntelDisplayConfig.PhysicalAdapters).Key);
+            json = AgentConfigMigrationRunner.MigrateDisplayProfilesJson(new JObject
+            {
+                ["ProfileFileVersion"] = "6", ["Profiles"] = new JArray(JObject.Parse(recovery))
+            }.ToString());
+        }
+    }
+
+    [Fact]
+    public void KnownZeroPciLocationIsNotConfusedWithAnUnknownLocation()
+    {
+        JObject root = Document("5");
+        JObject adapter = (JObject)((JObject)root["Profiles"]![0]!["IntelDisplayConfig"]!["PhysicalAdapters"]!).Properties().Single().Value;
+        adapter["AdapterProperties"]!["AdapterBdf"]!["Bus"] = 0;
+        JObject migrated = JObject.Parse(AgentConfigMigrationRunner.MigrateDisplayProfilesJson(root.ToString()));
+        Assert.Null(migrated["Profiles"]![0]!["IntelDisplayConfig"]!["IdentityRequiresRecapture"]);
+        Assert.Contains("-PCI_00_00_00", ((JObject)migrated["Profiles"]![0]!["IntelDisplayConfig"]!["PhysicalAdapters"]!).Properties().Single().Name);
+    }
+
+    [Fact]
+    public void ConnectivityIdentifiersMigrateWithTheOwningAdapterAndKeepThePort()
+    {
+        JObject root = Document("5");
+        JObject profile = (JObject)root["Profiles"]![0]!;
+        JObject config = (JObject)profile["IntelDisplayConfig"]!;
+        JObject adapter = (JObject)((JObject)config["PhysicalAdapters"]!).Properties().Single().Value;
+        adapter["Name"] = "Intel card";
+        const string identifier = "IntelIGCL#Intel card#4660#1#DP#mux#output#converter#EDID#product#7";
+        config["DisplayIdentifiers"] = new JArray(identifier);
+        profile["ProfileDisplayIdentifiers"] = new JArray(identifier, "WINAPI|unchanged");
+        JObject migrated = JObject.Parse(AgentConfigMigrationRunner.MigrateDisplayProfilesJson(root.ToString()));
+        string expected = IntelAdapterIdentity.ScopeIdentifier(identifier, IntelAdapterIdentity.Key(Properties(1)));
+        Assert.Equal(expected, migrated["Profiles"]![0]!["IntelDisplayConfig"]!["DisplayIdentifiers"]![0]);
+        Assert.Equal(expected, migrated["Profiles"]![0]!["ProfileDisplayIdentifiers"]![0]);
+        Assert.Equal("WINAPI|unchanged", migrated["Profiles"]![0]!["ProfileDisplayIdentifiers"]![1]);
+        Assert.True(IntelAdapterIdentity.TryGetOutput(expected, out string owner, out uint encoder));
+        Assert.Equal(IntelAdapterIdentity.Key(Properties(1)), owner);
+        Assert.Equal(7u, encoder);
+    }
+
+    [Fact]
+    public void AmbiguousLegacyConnectivityRequiresRecaptureInsteadOfGuessing()
+    {
+        JObject root = Document("5");
+        JObject config = (JObject)root["Profiles"]![0]!["IntelDisplayConfig"]!;
+        JObject adapters = (JObject)config["PhysicalAdapters"]!;
+        JObject adapter = (JObject)adapters.Properties().Single().Value;
+        adapter["Name"] = "Intel card";
+        JObject second = (JObject)adapter.DeepClone();
+        second["AdapterProperties"]!["AdapterBdf"]!["Bus"] = 2;
+        adapters[IntelAdapterIdentity.Key(Properties(2))] = second;
+        config["DisplayIdentifiers"] = new JArray("IntelIGCL#Intel card#4660#1#DP#mux#output#converter#EDID#product#7");
+        JObject migrated = JObject.Parse(AgentConfigMigrationRunner.MigrateDisplayProfilesJson(root.ToString()));
+        Assert.True((bool)migrated["Profiles"]![0]!["IntelDisplayConfig"]!["IdentityRequiresRecapture"]!);
+    }
+
+    [Fact]
+    public void ExistingCapturedKeyIsNotReplacedByDefaultedPropertyData()
+    {
+        JObject root = Document("5");
+        JObject config = (JObject)root["Profiles"]![0]!["IntelDisplayConfig"]!;
+        JObject adapters = (JObject)config["PhysicalAdapters"]!;
+        JObject adapter = (JObject)adapters.Properties().Single().Value;
+        adapters.RemoveAll();
+        string key = IntelAdapterIdentity.Key(Properties(1));
+        adapters[key] = adapter;
+        adapter["AdapterProperties"]!["AdapterBdf"]!["Bus"] = 0;
+        JObject migrated = JObject.Parse(AgentConfigMigrationRunner.MigrateDisplayProfilesJson(root.ToString()));
+        Assert.NotNull(migrated["Profiles"]![0]!["IntelDisplayConfig"]!["PhysicalAdapters"]![key]);
     }
 
     private static DeviceAdapterPropertiesDto Properties(byte bus) => new()

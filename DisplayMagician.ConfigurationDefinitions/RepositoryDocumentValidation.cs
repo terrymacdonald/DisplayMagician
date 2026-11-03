@@ -8,7 +8,7 @@ namespace DisplayMagician.ConfigurationDefinitions;
 /// <summary>Validates the portable repository envelope without loading hardware or discarding unknown fields.</summary>
 public static class RepositoryDocumentValidation
 {
-    public const int CurrentDisplayProfileFileVersion = 5;
+    public const int CurrentDisplayProfileFileVersion = 6;
     public static void Validate(string json, RepositoryKind repository)
     {
         string collectionName = repository switch

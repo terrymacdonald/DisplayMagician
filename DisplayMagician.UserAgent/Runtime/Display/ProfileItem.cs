@@ -708,9 +708,8 @@ namespace DisplayMagician.UserAgent.Runtime
                 // And then update the bitmaps
                 _profileBitmap = this.ProfileIcon.ToBitmap(256, 256);
                 _profileShortcutBitmap = this.ProfileIcon.ToTightestBitmap();
-                // And set it as default to only apply the profile once
-                _applyProfileCount = 1;
-                _applyProfileDelay = 0;
+                // Repeat count/delay belong to the user. New profiles already have
+                // constructor defaults; capture must retain an existing selection.
 
                 return true;
                 

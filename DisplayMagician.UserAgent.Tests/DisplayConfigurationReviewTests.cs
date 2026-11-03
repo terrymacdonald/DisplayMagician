@@ -275,7 +275,7 @@ public sealed class DisplayConfigurationReviewTests
 
     private sealed class FakeProfiles(bool fatal) : UserProfileOperationService
     {
-        internal override UserProfileOperationState CaptureCurrentProfileState(bool display, bool audio)
+        internal override UserProfileOperationState CaptureCurrentProfileState(bool display, bool audio, CancellationToken cancellationToken = default)
             => new("original", "") { DisplayProfileSnapshotJson = display ? "{}" : "" };
 
         internal override Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string id, CancellationToken token, string? snapshot)

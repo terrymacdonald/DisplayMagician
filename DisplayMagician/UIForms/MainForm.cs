@@ -546,9 +546,12 @@ namespace DisplayMagician.UIForms
             try
             {
                 int refreshVersion;
+                int displayRefreshFailures = 0;
                 do
                 {
                     refreshVersion = _notifyMenuRefreshVersion;
+                    bool refreshDisplaySnapshot = _refreshDisplaySnapshotRequested;
+                    bool retryDisplayRefresh = false;
                     try
                     {
                         using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(_trayLifetimeToken);
@@ -556,12 +559,18 @@ namespace DisplayMagician.UIForms
                         ControlResponse response = await _controlServiceClient.GetActiveWindowPlacementSessionAsync(timeout.Token);
                         if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
                         if (refreshVersion != _notifyMenuRefreshVersion) continue;
-                        bool refreshDisplaySnapshot = _refreshDisplaySnapshotRequested;
+                        refreshDisplaySnapshot = _refreshDisplaySnapshotRequested;
                         _refreshDisplaySnapshotRequested = false;
-                        await _refreshTrayProfiles(refreshDisplaySnapshot, _trayLifetimeToken);
+                        bool refreshed = await _refreshTrayProfiles(refreshDisplaySnapshot, _trayLifetimeToken);
+                        if (!refreshed && refreshDisplaySnapshot)
+                        {
+                            _refreshDisplaySnapshotRequested = true;
+                            retryDisplayRefresh = true;
+                        }
+                        else if (refreshed && refreshDisplaySnapshot) displayRefreshFailures = 0;
                         if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
                         if (refreshVersion != _notifyMenuRefreshVersion) continue;
-                        if (refreshDisplaySnapshot && DisplayProfileWindow != null && !DisplayProfileWindow.IsDisposed)
+                        if (refreshed && refreshDisplaySnapshot && DisplayProfileWindow != null && !DisplayProfileWindow.IsDisposed)
                             DisplayProfileWindow.RefreshCurrentView();
                         WindowPlacementSessionView session = response.WindowPlacementSession;
                         _cachedWindowPlacementSession = response.IsSuccessful && session?.CanSave == true && session.OperationId != _completedWindowPlacementOperationId
@@ -570,11 +579,29 @@ namespace DisplayMagician.UIForms
                     catch (Exception ex)
                     {
                         if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
+                        if (refreshDisplaySnapshot)
+                        {
+                            _refreshDisplaySnapshotRequested = true;
+                            retryDisplayRefresh = true;
+                        }
                         if (refreshVersion != _notifyMenuRefreshVersion) continue;
                         _cachedWindowPlacementSession = null;
                         logger.Debug(ex, "MainForm/RefreshNotifyIconMenusAsync: Active shortcut session is unavailable.");
                     }
                     if (!mainContextMenuStrip.Visible) RebuildNotifyIconMenus();
+                    if (retryDisplayRefresh)
+                    {
+                        if (++displayRefreshFailures < 3)
+                        {
+                            try { await Task.Delay(250 * displayRefreshFailures, _trayLifetimeToken); }
+                            catch (OperationCanceledException) { return; }
+                            if (IsDisposed) return;
+                            // Coalesce new events into this retry; retain the pending request
+                            // after exhaustion so the next user/event refresh can try again.
+                            if (refreshVersion == _notifyMenuRefreshVersion) ++_notifyMenuRefreshVersion;
+                        }
+                        else logger.Warn("MainForm/RefreshNotifyIconMenusAsync: Display snapshot refresh failed after 3 attempts; retaining the previous view until the next refresh.");
+                    }
                 }
                 while (refreshVersion != _notifyMenuRefreshVersion);
             }

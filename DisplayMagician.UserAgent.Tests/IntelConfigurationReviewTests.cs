@@ -137,12 +137,58 @@ public sealed class IntelConfigurationReviewTests
         group.CombinedDisplayOutputWindowsDisplayEncoderId = 99;
         group.ChildInfos[0] = new CombinedDisplayChildInfoDto { DisplayOutputWindowsDisplayEncoderId = 1 };
         group.ChildInfos[1] = new CombinedDisplayChildInfoDto { DisplayOutputWindowsDisplayEncoderId = 2 };
-        desired.PhysicalAdapters.Add("adapter", new INTEL_ADAPTER { IsCombinedDisplay = true, CombinedDisplay = group });
-        desired.DisplayIdentifiers.Add("IntelIGCL#99");
-        Assert.Contains("WINAPI|monitor|path|99", IntelDisplayTopology.GetHiddenIdentifiers(desired, desired,
-            new[] { "IntelIGCL#1", "IntelIGCL#2" }, new[] { "WINAPI|monitor|path|99" }));
+        const string adapter = "8086_1234_8086_0001_00-PCI_01_00_00";
+        const string windows = "WINAPI|PCI#VEN_8086&DEV_1234&SUBSYS_00018086&REV_00|DP|99";
+        desired.PhysicalAdapters.Add(adapter, new INTEL_ADAPTER { IsCombinedDisplay = true, CombinedDisplay = group });
+        desired.DisplayIdentifiers.Add(IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#99", adapter));
+        Assert.Contains(windows, IntelDisplayTopology.GetHiddenIdentifiers(desired, desired,
+            new[] { IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#1", adapter), IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#2", adapter) }, new[] { windows }));
         Assert.Empty(IntelDisplayTopology.GetHiddenIdentifiers(desired, new INTEL_DISPLAY_CONFIG(),
-            new[] { "IntelIGCL#1" }, new[] { "WINAPI|monitor|path|99" }));
+            new[] { IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#1", adapter) }, new[] { windows }));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AnotherCardsEncoderIdsNeverHideAMissingOutput(bool sameModel)
+    {
+        const string cardA = "8086_1234_8086_0001_00-PCI_01_00_00";
+        string cardB = sameModel ? "8086_1234_8086_0001_00-PCI_02_00_00" : "8086_5678_8086_0001_00-PCI_02_00_00";
+        INTEL_DISPLAY_CONFIG desired = new() { IsInUse = true, CombinedDisplayIsInUse = true };
+        INTEL_DISPLAY_CONFIG active = new() { IsInUse = true, CombinedDisplayIsInUse = true };
+        CombinedDisplayArgsDto group = Group(2, 3840);
+        group.CombinedDisplayOutputWindowsDisplayEncoderId = 99;
+        group.ChildInfos[0] = new CombinedDisplayChildInfoDto { DisplayOutputWindowsDisplayEncoderId = 1 };
+        group.ChildInfos[1] = new CombinedDisplayChildInfoDto { DisplayOutputWindowsDisplayEncoderId = 2 };
+        desired.PhysicalAdapters.Add(cardA, new INTEL_ADAPTER { IsCombinedDisplay = true, CombinedDisplay = group });
+        active.PhysicalAdapters.Add(cardB, new INTEL_ADAPTER { IsCombinedDisplay = true, CombinedDisplay = group });
+        desired.DisplayIdentifiers.Add(IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#99", cardA));
+        string missing = IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#1", cardA);
+        Assert.Empty(IntelDisplayTopology.GetHiddenIdentifiers(desired, active,
+            new[] { IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#1", cardB), IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#2", cardB) }, new[] { missing }));
+        Assert.NotEqual(IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#1", cardA), IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#1", cardB));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WindowsLogicalWarningsRequireAnUnambiguousMatchingCard(bool anotherIdenticalCard)
+    {
+        const string card = "8086_1234_8086_0001_00-PCI_01_00_00";
+        INTEL_DISPLAY_CONFIG config = new() { IsInUse = true, CombinedDisplayIsInUse = true };
+        CombinedDisplayArgsDto group = Group(2, 3840);
+        group.CombinedDisplayOutputWindowsDisplayEncoderId = 99;
+        group.ChildInfos[0] = new CombinedDisplayChildInfoDto { DisplayOutputWindowsDisplayEncoderId = 0 };
+        group.ChildInfos[1] = new CombinedDisplayChildInfoDto { DisplayOutputWindowsDisplayEncoderId = 1 };
+        config.PhysicalAdapters.Add(card, new INTEL_ADAPTER { IsCombinedDisplay = true, CombinedDisplay = group });
+        if (anotherIdenticalCard) config.PhysicalAdapters.Add("8086_1234_8086_0001_00-PCI_02_00_00", new INTEL_ADAPTER());
+        config.DisplayIdentifiers.Add(IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#99", card));
+        const string windows = "WINAPI|PCI#VEN_8086&DEV_1234&SUBSYS_00018086&REV_00|DP|99";
+        string[] candidates = { windows, "WINAPI|PCI#VEN_10DE&DEV_1234&SUBSYS_00018086&REV_00|DP|99" };
+        List<string> hidden = IntelDisplayTopology.GetHiddenIdentifiers(config, new INTEL_DISPLAY_CONFIG(),
+            new[] { IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#0", card), IntelAdapterIdentity.ScopeIdentifier("IntelIGCL#1", card) }, candidates);
+        if (anotherIdenticalCard) Assert.Empty(hidden);
+        else Assert.Equal(new[] { windows }, hidden);
     }
 
     [Theory]

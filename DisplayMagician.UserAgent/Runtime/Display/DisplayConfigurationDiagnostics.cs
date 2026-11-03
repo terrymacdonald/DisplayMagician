@@ -48,6 +48,10 @@ internal sealed class DisplayConfigurationDiagnostics
             if (!Result.Issues.Skip(previousCount).Any(issue => issue.Severity == severity))
                 Add(stage, component, "The requested display settings could not be applied.", severity, displayId: displayId);
         }
+        catch (OperationCanceledException)
+        {
+            throw; // Cancellation belongs to the operation boundary, not native failure diagnostics.
+        }
         catch (Exception ex)
         {
             Add(stage, component, ex.Message, severity, displayId: displayId, exception: ex);

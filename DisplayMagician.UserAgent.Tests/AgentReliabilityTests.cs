@@ -679,7 +679,7 @@ public sealed class AgentReliabilityTests : IDisposable
         public int CaptureCalls { get; private set; }
         public TaskCompletionSource<bool> AudioStarted { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         public ManualResetEventSlim ReleaseAudio { get; } = new ManualResetEventSlim();
-        internal override UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot)
+        internal override UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot, CancellationToken cancellationToken = default)
         {
             CaptureCalls++;
             return new UserProfileOperationState("original-display", "original-audio")

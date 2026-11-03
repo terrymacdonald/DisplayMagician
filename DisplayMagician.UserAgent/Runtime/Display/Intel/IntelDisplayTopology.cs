@@ -7,124 +7,75 @@ namespace DisplayMagician.UserAgent.Runtime.Intel;
 
 internal static class IntelDisplayTopology
 {
-    internal static List<string> GetHiddenIdentifiers(INTEL_DISPLAY_CONFIG displayConfig, INTEL_DISPLAY_CONFIG activeDisplayConfig, IEnumerable<string> connectedIdentifiers, IEnumerable<string> candidateIdentifiers)
+    internal static List<string> GetHiddenIdentifiers(INTEL_DISPLAY_CONFIG desired, INTEL_DISPLAY_CONFIG active,
+        IEnumerable<string> connectedIdentifiers, IEnumerable<string> candidateIdentifiers)
     {
-        List<string> topologyHiddenIdentifiers = new List<string>();
+        List<string> hidden = new();
+        if (!desired.IsInUse || (!desired.CombinedDisplayIsInUse && !active.CombinedDisplayIsInUse)) return hidden;
+        HashSet<(string Adapter, uint Encoder)> required = new();
+        HashSet<(string Adapter, uint Encoder)> topology = new();
+        HashSet<(string Adapter, uint Encoder)> connected = new();
+        foreach (string identifier in desired.DisplayIdentifiers ?? new List<string>())
+            if (IntelAdapterIdentity.TryGetOutput(identifier, out string adapter, out uint encoder)) required.Add((adapter, encoder));
+        foreach (string identifier in connectedIdentifiers)
+            if (IntelAdapterIdentity.TryGetOutput(identifier, out string adapter, out uint encoder)) connected.Add((adapter, encoder));
 
-        if (!displayConfig.IsInUse || candidateIdentifiers == null)
-            return topologyHiddenIdentifiers;
+        if (!AddCombinedOutputs(desired, required, topology, null) || !AddCombinedOutputs(active, null, topology, connected) ||
+            required.Count == 0 || !required.IsSubsetOf(connected)) return hidden;
 
-        if (!displayConfig.CombinedDisplayIsInUse && !activeDisplayConfig.CombinedDisplayIsInUse)
-            return topologyHiddenIdentifiers;
-
-        HashSet<uint> requiredPhysicalEncoderIds = new HashSet<uint>();
-        foreach (string displayIdentifier in displayConfig.DisplayIdentifiers ?? new List<string>())
+        string[] adapterIds = (desired.PhysicalAdapters?.Keys ?? Enumerable.Empty<string>())
+            .Concat(active.PhysicalAdapters?.Keys ?? Enumerable.Empty<string>()).Distinct(StringComparer.Ordinal).ToArray();
+        foreach (string identifier in candidateIdentifiers.Where(value => !string.IsNullOrWhiteSpace(value)))
         {
-            if (TryGetWindowsDisplayEncoderId(displayIdentifier, out uint displayEncoderId))
-                requiredPhysicalEncoderIds.Add(displayEncoderId);
-        }
-
-        HashSet<uint> topologyHiddenEncoderIds = new HashSet<uint>();
-        HashSet<uint> connectedEncoderIds = new HashSet<uint>(connectedIdentifiers
-            .Select(identifier => TryGetWindowsDisplayEncoderId(identifier, out uint displayEncoderId) ? displayEncoderId : 0)
-            .Where(displayEncoderId => displayEncoderId != 0));
-
-        if (!AddCombinedDisplayEncoderIds(displayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, true))
-            return topologyHiddenIdentifiers;
-
-        if (!AddCombinedDisplayEncoderIds(activeDisplayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, false, connectedEncoderIds))
-            return topologyHiddenIdentifiers;
-
-        if (requiredPhysicalEncoderIds.Count == 0)
-        {
-            SharedLogger.logger.Warn("IntelDisplayTopology/GetHiddenIdentifiers: No physical Intel display outputs were available to validate the combined display topology.");
-            return topologyHiddenIdentifiers;
-        }
-
-        if (!requiredPhysicalEncoderIds.All(connectedEncoderIds.Contains))
-        {
-            SharedLogger.logger.Trace("IntelDisplayTopology/GetHiddenIdentifiers: A required physical Intel display output is unavailable, so retaining the missing-display warning.");
-            return topologyHiddenIdentifiers;
-        }
-
-        foreach (string candidateIdentifier in candidateIdentifiers.Where(identifier => !String.IsNullOrWhiteSpace(identifier)))
-        {
-            if (!TryGetWindowsDisplayEncoderId(candidateIdentifier, out uint displayEncoderId))
+            if (IntelAdapterIdentity.TryGetOutput(identifier, out string adapter, out uint encoder))
+            {
+                if (topology.Contains((adapter, encoder))) hidden.Add(identifier);
                 continue;
-
-            bool isWindowsLogicalMonitor = candidateIdentifier.StartsWith("WINAPI|", StringComparison.OrdinalIgnoreCase);
-            bool isTopologyHiddenIntelOutput = candidateIdentifier.StartsWith("IntelIGCL#", StringComparison.OrdinalIgnoreCase) && topologyHiddenEncoderIds.Contains(displayEncoderId);
-
-            if ((isWindowsLogicalMonitor && topologyHiddenEncoderIds.Contains(displayEncoderId)) || isTopologyHiddenIntelOutput)
-                topologyHiddenIdentifiers.Add(candidateIdentifier);
+            }
+            if (!identifier.StartsWith("WINAPI|", StringComparison.OrdinalIgnoreCase)) continue;
+            string[] parts = identifier.Split('|');
+            if (parts.Length < 4 || !uint.TryParse(parts[3], out encoder)) continue;
+            // Windows target IDs are adapter-scoped too. The interface path identifies
+            // a hardware model; suppress only when that model names one physical card.
+            // Identical cards with ambiguous Windows paths retain their advisory.
+            string[] matches = adapterIds.Where(id => MatchesWindowsAdapter(id, parts[1])).ToArray();
+            if (matches.Length == 1 && topology.Contains((matches[0], encoder))) hidden.Add(identifier);
         }
-
-        if (topologyHiddenIdentifiers.Count > 0)
-            SharedLogger.logger.Trace($"IntelDisplayTopology/GetHiddenIdentifiers: Ignoring {topologyHiddenIdentifiers.Count} expected logical-monitor identifier(s) hidden by the Intel Combined Display topology.");
-
-        return topologyHiddenIdentifiers;
+        if (hidden.Count > 0)
+            SharedLogger.logger.Trace("IntelDisplayTopology/GetHiddenIdentifiers: Ignoring {0} logical-monitor identifier(s) hidden by the matching Intel Combined Display topology.", hidden.Count);
+        return hidden;
     }
 
-    private static bool AddCombinedDisplayEncoderIds(INTEL_DISPLAY_CONFIG displayConfig, HashSet<uint> requiredPhysicalEncoderIds, HashSet<uint> topologyHiddenEncoderIds, bool updateRequiredPhysicalEncoderIds, HashSet<uint>? activeCombinedChildEncoderIds = null)
+    private static bool AddCombinedOutputs(INTEL_DISPLAY_CONFIG config, HashSet<(string Adapter, uint Encoder)>? required,
+        HashSet<(string Adapter, uint Encoder)> topology, HashSet<(string Adapter, uint Encoder)>? connected)
     {
-        if (!displayConfig.CombinedDisplayIsInUse)
-            return true;
-
-        List<INTEL_ADAPTER> combinedDisplayAdapters = displayConfig.PhysicalAdapters?.Values
-            .Where(adapter => adapter.IsCombinedDisplay)
-            .ToList() ?? new List<INTEL_ADAPTER>();
-
-        if (combinedDisplayAdapters.Count == 0)
+        if (!config.CombinedDisplayIsInUse) return true;
+        var adapters = config.PhysicalAdapters?.Where(pair => pair.Value.IsCombinedDisplay).ToArray();
+        if (adapters == null || adapters.Length == 0) return false;
+        foreach (var pair in adapters)
         {
-            SharedLogger.logger.Warn("IntelDisplayTopology/AddCombinedDisplayEncoderIds: The Intel combined display configuration did not contain a combined display adapter.");
-            return false;
-        }
-
-        foreach (INTEL_ADAPTER adapter in combinedDisplayAdapters)
-        {
-            if (adapter.CombinedDisplay.ChildInfos == null || adapter.CombinedDisplay.ChildInfos.Count == 0)
+            CombinedDisplayArgsDto group = pair.Value.CombinedDisplay;
+            if (group.ChildInfos == null || group.ChildInfos.Count == 0) return false;
+            var combined = (pair.Key, group.CombinedDisplayOutputWindowsDisplayEncoderId);
+            topology.Add(combined);
+            required?.Remove(combined);
+            foreach (CombinedDisplayChildInfoDto child in group.ChildInfos)
             {
-                SharedLogger.logger.Warn($"IntelDisplayTopology/AddCombinedDisplayEncoderIds: The Intel combined display on adapter {adapter.Name} did not contain component display outputs.");
-                return false;
-            }
-
-            uint combinedDisplayEncoderId = adapter.CombinedDisplay.CombinedDisplayOutputWindowsDisplayEncoderId;
-            topologyHiddenEncoderIds.Add(combinedDisplayEncoderId);
-            if (updateRequiredPhysicalEncoderIds)
-                requiredPhysicalEncoderIds.Remove(combinedDisplayEncoderId);
-
-            foreach (CombinedDisplayChildInfoDto childInfo in adapter.CombinedDisplay.ChildInfos)
-            {
-                uint childDisplayEncoderId = childInfo.DisplayOutputWindowsDisplayEncoderId;
-                topologyHiddenEncoderIds.Add(childDisplayEncoderId);
-                activeCombinedChildEncoderIds?.Add(childDisplayEncoderId);
-                if (updateRequiredPhysicalEncoderIds)
-                    requiredPhysicalEncoderIds.Add(childDisplayEncoderId);
+                var output = (pair.Key, child.DisplayOutputWindowsDisplayEncoderId);
+                topology.Add(output);
+                required?.Add(output);
+                connected?.Add(output);
             }
         }
-
         return true;
     }
 
-    private static bool TryGetWindowsDisplayEncoderId(string displayIdentifier, out uint displayEncoderId)
+    private static bool MatchesWindowsAdapter(string adapterId, string devicePath)
     {
-        displayEncoderId = 0;
-        if (String.IsNullOrWhiteSpace(displayIdentifier))
-            return false;
-
-        if (displayIdentifier.StartsWith("WINAPI|", StringComparison.OrdinalIgnoreCase))
-        {
-            string[] windowsIdentifierParts = displayIdentifier.Split('|');
-            return windowsIdentifierParts.Length > 3 && UInt32.TryParse(windowsIdentifierParts[3], out displayEncoderId);
-        }
-
-        if (displayIdentifier.StartsWith("IntelIGCL#", StringComparison.OrdinalIgnoreCase))
-        {
-            int finalSeparatorIndex = displayIdentifier.LastIndexOf('#');
-            return finalSeparatorIndex >= 0 && UInt32.TryParse(displayIdentifier.Substring(finalSeparatorIndex + 1), out displayEncoderId);
-        }
-
-        return false;
+        string[] parts = adapterId.Split(new[] { "-PCI_" }, StringSplitOptions.None)[0].Split('_');
+        if (parts.Length != 5) return false;
+        return devicePath.IndexOf("VEN_" + parts[0] + "&DEV_" + parts[1], StringComparison.OrdinalIgnoreCase) >= 0 &&
+            devicePath.IndexOf("SUBSYS_" + parts[3] + parts[2], StringComparison.OrdinalIgnoreCase) >= 0 &&
+            devicePath.IndexOf("REV_" + parts[4], StringComparison.OrdinalIgnoreCase) >= 0;
     }
-
 }
