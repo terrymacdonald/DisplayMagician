@@ -1221,8 +1221,15 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
             SharedLogger.logger.Trace($"NVIDIALibrary/UpdateActiveConfig: Updating the currently active config");
             try
             {
-                _activeDisplayConfig = GetNVIDIADisplayConfig(false, diagnostics);
-                _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers(out bool failure);
+                NVIDIA_DISPLAY_CONFIG captured = GetNVIDIADisplayConfig(false, diagnostics);
+                List<string> connected = GetAllConnectedDisplayIdentifiers(out bool failure);
+                if (failure)
+                {
+                    diagnostics.Add("Capture", "NVIDIA", "Connected display enumeration failed; current library state was not published.", DisplayConfigurationSeverity.Fatal);
+                    return false;
+                }
+                _activeDisplayConfig = captured;
+                _allConnectedDisplayIdentifiers = connected;
             }
             catch (Exception ex)
             {
@@ -2597,7 +2604,17 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA
         {
             if (_initialised && _nvapiApiHelper != null)
             {
-                return ApplyMosaicConfiguration(displayConfig.MosaicConfig, ActiveDisplayConfig.MosaicConfig,
+                using NVAPIMosaicHelper topologyReader = _nvapiApiHelper.GetMosaicHelper();
+                NVAPIMosaicCurrentTopoDto? topology = topologyReader.GetCurrentTopo();
+                NVIDIA_MOSAIC_CONFIG current = new NVIDIA_MOSAIC_CONFIG
+                {
+                    IsMosaicEnabled = topology?.TopoBrief.Enabled ?? false,
+                    MosaicCurrentTopo = topology ?? new NVAPIMosaicCurrentTopoDto(),
+                    MosaicGridTopologies = topology?.TopoBrief.Enabled == true
+                        ? topologyReader.EnumDisplayGrids() ?? new NVAPIMosaicGridTopologiesDto()
+                        : new NVAPIMosaicGridTopologiesDto()
+                };
+                return ApplyMosaicConfiguration(displayConfig.MosaicConfig, current,
                     grids =>
                     {
                         using NVAPIMosaicHelper helper = _nvapiApiHelper.GetMosaicHelper();

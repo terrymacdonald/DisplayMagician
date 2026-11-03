@@ -646,7 +646,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
 
     #endregion
 
-    public class IntelLibrary : IDisposable
+    public partial class IntelLibrary : IDisposable
     {
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LoadLibrary(string dllToLoad);
@@ -906,8 +906,15 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
             SharedLogger.logger.Trace($"IntelLibrary/UpdateActiveConfig: Updating the currently active config");
             try
             {
-                _activeDisplayConfig = GetActiveConfig();
-                _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers(out bool failure);
+                INTEL_DISPLAY_CONFIG captured = GetActiveConfig();
+                List<string> connected = GetAllConnectedDisplayIdentifiers(out bool failure);
+                if (failure)
+                {
+                    diagnostics.Add("Capture", "Intel", "Connected display enumeration failed; current library state was not published.", DisplayConfigurationSeverity.Fatal);
+                    return false;
+                }
+                _activeDisplayConfig = captured;
+                _allConnectedDisplayIdentifiers = connected;
             }
             catch (Exception ex)
             {
@@ -948,7 +955,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     adapterNum++;
                     // Get adapter properties
                     var adapterProperties = adapter.GetProperties();
-                    var adapterDeviceID = $"{adapterProperties.PciVendorId:X4}_{adapterProperties.PciDeviceId:X4}_{adapterProperties.PciSubsysVendorId:X4}_{adapterProperties.PciSubsysId:X4}_{adapterProperties.RevId:X2}";
+                    var adapterDeviceID = IntelAdapterIdentity.Key(adapterProperties);
 
                     SharedLogger.logger.Trace($"IntelLibrary/GetIntelDisplayConfig: Processing Intel GPU adapter {adapterNum}({adapterProperties.Name}), PCI Device ID: 0x{adapterProperties.PciDeviceId:X4}, device type {adapterProperties.DeviceType} ({adapterNum}/{adapterTotalCount}");                    
 
@@ -1569,10 +1576,10 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             SharedLogger.logger.Error(ex, $"IntelLibrary/GetIntelDisplayConfig: Exception getting vblank timestamp for display {logDisplayId} on adapter {adapterNum}.");
                         }
 
-                        // 3. Create a unique Hardware PCI ID + Target ID
-                        // Format: VEN_8086&DEV_XXXX&REV_XX-PORT_X
+                        // 3. Include the physical adapter location so identical cards have distinct display keys.
+                        // Encoder IDs remain scoped to their owning adapter.
                         
-                        newDisplay.DisplayDeviceID = $"VEN_{adapterProperties.PciVendorId:X4}&DEV_{adapterProperties.PciDeviceId:X4}&REV_{adapterProperties.RevId:X2}-PORT_{displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId}";
+                        newDisplay.DisplayDeviceID = IntelAdapterIdentity.DisplayKey(adapterProperties, displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId);
 
                         // Add display to configuration
                         myDisplayConfig.Displays.Add(newDisplay.DisplayDeviceID, newDisplay);
@@ -1756,6 +1763,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
 
         internal bool SetActiveConfig(INTEL_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
+            if (!IntelAdapterIdentity.ValidateForApply(displayConfig, diagnostics)) return false;
             if (_initialised && _igclApiHelper != null)
             {
                 SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Managing Intel Combined Display configuration");
@@ -1767,13 +1775,19 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     return false;
                 }
 
+                HashSet<string> pendingRequired = new HashSet<string>(displayConfig.PhysicalAdapters.Where(pair => pair.Value.IsCombinedDisplay).Select(pair => pair.Key));
+                if (displayConfig.CombinedDisplayIsInUse && pendingRequired.Count == 0)
+                {
+                    diagnostics.Add("CombinedDisplay", "Intel", "The saved Combined Display has no required adapter configuration.", DisplayConfigurationSeverity.Fatal);
+                    return false;
+                }
                 int adapterNum = 0;
                 foreach (var adapter in adapters)
                 {
                     adapterNum++;
 
                     var adapterProperties = adapter.GetProperties();
-                    string adapterDeviceID = $"{adapterProperties.PciVendorId:X4}_{adapterProperties.PciDeviceId:X4}_{adapterProperties.PciSubsysVendorId:X4}_{adapterProperties.PciSubsysId:X4}_{adapterProperties.RevId:X2}";
+                    string adapterDeviceID = IntelAdapterIdentity.Key(adapterProperties);
 
                     if (!displayConfig.PhysicalAdapters.TryGetValue(adapterDeviceID, out INTEL_ADAPTER desiredAdapter))
                     {
@@ -1789,117 +1803,21 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     catch (Exception ex)
                     {
                         SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Exception getting Combined Display settings for adapter {adapterNum}.");
+                        diagnostics.Add("CombinedDisplay", "Intel", ex.Message, desiredAdapter.IsCombinedDisplay ? DisplayConfigurationSeverity.Fatal : DisplayConfigurationSeverity.Warning, adapterDeviceID, ex);
                         if (desiredAdapter.IsCombinedDisplay) return false;
                         continue;
                     }
 
 
-                    bool currentCombinedDisplayInUse = currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.NumOutputs > 1;
-                    bool desiredCombinedDisplayInUse = desiredAdapter.IsCombinedDisplay;
+                    pendingRequired.Remove(adapterDeviceID);
+                    if (!ApplyCombinedDisplay(desiredAdapter.IsCombinedDisplay, desiredAdapter.CombinedDisplay, currentCombinedDisplay,
+                        adapter.SetCombinedDisplay, adapter.GetCombinedDisplay, Thread.Sleep, delayInMs, diagnostics, adapterDeviceID)) return false;
 
-                    if (desiredCombinedDisplayInUse)
-                    {
-                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: New display layout requires a Combined Display on adapter {adapterNum}");
-
-                        if (currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.Equals(desiredAdapter.CombinedDisplay))
-                        {
-                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Combined Display layout matches desired configuration, skipping");
-                            continue;
-                        }
-
-                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Attempting to create the Intel Combined Display on adapter {adapterNum}");
-
-                        if (currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.NumOutputs > 1)
-                        {
-                            CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay.Value;
-                            disableCombinedDisplayArgs.OpType = ctl_combined_display_optype_t.CTL_COMBINED_DISPLAY_OPTYPE_DISABLE;
-
-                            try
-                            {
-                                adapter.SetCombinedDisplay(disableCombinedDisplayArgs);
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Disabled the current Intel Combined Display on adapter {adapterNum} before creating a new one");
-                                Thread.Sleep(delayInMs); // Wait a moment to ensure the disable takes effect
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Error disabling the current Intel Combined Display on adapter {adapterNum}");
-                                diagnostics.Add("VendorConfiguration", "Intel", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
-                                return false;
-                            }
-                        }
-
-                        CombinedDisplayArgsDto combinedDisplayArgs = desiredAdapter.CombinedDisplay;
-                        combinedDisplayArgs.OpType = ctl_combined_display_optype_t.CTL_COMBINED_DISPLAY_OPTYPE_ENABLE;
-
-                        if (combinedDisplayArgs.ChildInfos == null || combinedDisplayArgs.ChildInfos.Count == 0)
-                        {
-                            SharedLogger.logger.Error($"IntelLibrary/SetActiveConfig: The desired combined display on adapter {adapterNum} is missing ChildInfos.");
-                            return false;
-                        }
-
-                        try
-                        {
-                            adapter.SetCombinedDisplay(combinedDisplayArgs);
-                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Successfully created the Intel Combined Display on adapter {adapterNum}");
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Error creating the Intel Combined Display on adapter {adapterNum}");
-                            diagnostics.Add("VendorConfiguration", "Intel", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
-                            return false;
-                        }
-
-                        try
-                        {
-                            var updatedCombinedDisplay = adapter.GetCombinedDisplay();
-                            if (!updatedCombinedDisplay.HasValue || updatedCombinedDisplay.Value.NumOutputs != desiredAdapter.CombinedDisplay.NumOutputs)
-                            {
-                                diagnostics.Add("CombinedDisplay", "Intel", "The required Combined Display outputs were not applied.", DisplayConfigurationSeverity.Fatal);
-                                return false;
-                            }
-                            if (updatedCombinedDisplay.HasValue &&
-                                updatedCombinedDisplay.Value.NumOutputs == desiredAdapter.CombinedDisplay.NumOutputs &&
-                                updatedCombinedDisplay.Value.CombinedDesktopWidth == desiredAdapter.CombinedDisplay.CombinedDesktopWidth &&
-                                updatedCombinedDisplay.Value.CombinedDesktopHeight == desiredAdapter.CombinedDisplay.CombinedDesktopHeight)
-                            {
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: This new Combined Display layout matches the desired configuration.");
-                            }
-                            else
-                            {
-                                SharedLogger.logger.Warn($"IntelLibrary/SetActiveConfig: This new Combined Display layout is different from the one originally saved. You may need to update this desktop profile.");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Exception verifying Combined Display settings for adapter {adapterNum}.");
-                        }
-                    }
-                    else
-                    {
-                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Combined Display in use but new display layout does NOT require a Combined Display on adapter {adapterNum}");
-
-                        if (currentCombinedDisplay.HasValue && currentCombinedDisplay.Value.NumOutputs > 1)
-                        {
-                            CombinedDisplayArgsDto disableCombinedDisplayArgs = currentCombinedDisplay.Value;
-                            disableCombinedDisplayArgs.OpType = ctl_combined_display_optype_t.CTL_COMBINED_DISPLAY_OPTYPE_DISABLE;
-
-                            try
-                            {
-                                adapter.SetCombinedDisplay(disableCombinedDisplayArgs);
-                                SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Disabled the current Intel Combined Display on adapter {adapterNum} as it is not needed in the new display layout");
-                            }
-                            catch (Exception ex)
-                            {
-                                SharedLogger.logger.Error(ex, $"IntelLibrary/SetActiveConfig: Error disabling the current Intel Combined Display on adapter {adapterNum}");
-                                diagnostics.Add("VendorConfiguration", "Intel", ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfig: Combined Display layout is not currently in use and is NOT required, so leaving things as they are.");
-                        }
-                    }
+                }
+                if (pendingRequired.Count > 0)
+                {
+                    diagnostics.Add("CombinedDisplay", "Intel", "Required Intel adapters were not found: " + string.Join(", ", pendingRequired), DisplayConfigurationSeverity.Fatal);
+                    return false;
                 }
             }
             else
@@ -1917,6 +1835,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
 
         internal bool SetActiveConfigOverride(INTEL_DISPLAY_CONFIG displayConfig, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
         {
+            if (!IntelAdapterIdentity.ValidateForApply(displayConfig, diagnostics)) return false;
             string diagnosticStage = "VendorOverride";
             string diagnosticDisplayId = string.Empty;
             if (_initialised && _igclApiHelper != null)
@@ -1984,7 +1903,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             continue;
                         }
                     
-                        string displayDeviceId = $"VEN_{adapterProperties.PciVendorId:X4}&DEV_{adapterProperties.PciDeviceId:X4}&REV_{adapterProperties.RevId:X2}-PORT_{displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId}";
+                        string displayDeviceId = IntelAdapterIdentity.DisplayKey(adapterProperties, displayProperties.OsDisplayEncoderHandle.WindowsDisplayEncoderId);
 
                         if (!displayConfig.Displays.TryGetValue(displayDeviceId, out INTEL_DISPLAY_WITH_SETTINGS storedSettings))
                         {
@@ -2021,8 +1940,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                         retroScalingSettings.Get = false;
                                         retroScalingSettings.Enable = storedSettings.RetroScalingSettings.Enable;
                                         retroScalingSettings.RetroScalingType = storedSettings.RetroScalingSettings.RetroScalingType;
-                                        display.SetRetroScalingSettings(retroScalingSettings);
-                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Integer Scaling to Enabled={storedSettings.RetroScalingSettings.Enable}, Type={storedSettings.RetroScalingSettings.RetroScalingType}");
+                                        if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetRetroScalingSettings(retroScalingSettings), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                        {
+                                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Integer Scaling to Enabled={storedSettings.RetroScalingSettings.Enable}, Type={storedSettings.RetroScalingSettings.RetroScalingType}");
+                                        }
+                                        else success = false;
                                     }
                                     else
                                     {
@@ -2058,8 +1980,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                     {
                                         scalingSettings.Enable = storedSettings.ScalingSettings.Enable;
                                         scalingSettings.ScalingType = storedSettings.ScalingSettings.ScalingType;
-                                        display.SetCurrentScaling(scalingSettings);
-                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set GPU Scaling to Enabled={storedSettings.ScalingSettings.Enable}, Type={storedSettings.ScalingSettings.ScalingType}");
+                                        if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetCurrentScaling(scalingSettings), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                        {
+                                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set GPU Scaling to Enabled={storedSettings.ScalingSettings.Enable}, Type={storedSettings.ScalingSettings.ScalingType}");
+                                        }
+                                        else success = false;
                                     }
                                     else
                                     {
@@ -2097,8 +2022,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                         sharpnessSettings.Enable = storedSettings.SharpnessSettings.Enable;
                                         sharpnessSettings.FilterType = storedSettings.SharpnessSettings.FilterType;
                                         sharpnessSettings.Intensity = storedSettings.SharpnessSettings.Intensity;
-                                        display.SetCurrentSharpness(sharpnessSettings);
-                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Image Sharpening to Enabled={storedSettings.SharpnessSettings.Enable}, Intensity={storedSettings.SharpnessSettings.Intensity}");
+                                        if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetCurrentSharpness(sharpnessSettings), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                        {
+                                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Image Sharpening to Enabled={storedSettings.SharpnessSettings.Enable}, Intensity={storedSettings.SharpnessSettings.Intensity}");
+                                        }
+                                        else success = false;
                                     }
                                     else
                                     {
@@ -2181,8 +2109,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                 {
                                     var desiredDisplaySettings = storedSettings.DisplaySettings;
                                     desiredDisplaySettings.Set = true;
-                                    display.SetDisplaySettings(desiredDisplaySettings);
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set DisplaySettings for display {logDisplayId}");
+                                    if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetDisplaySettings(desiredDisplaySettings), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set DisplaySettings for display {logDisplayId}");
+                                    }
+                                    else success = false;
                                 }
                                 else
                                 {
@@ -2220,8 +2151,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                 {
                                     var desiredWireFormat = storedSettings.WireFormat;
                                     desiredWireFormat.Operation = ctl_wire_format_operation_type_t.CTL_WIRE_FORMAT_OPERATION_TYPE_SET;
-                                    display.SetWireFormat(desiredWireFormat);
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set WireFormat for display {logDisplayId}");
+                                    if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetWireFormat(desiredWireFormat), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set WireFormat for display {logDisplayId}");
+                                    }
+                                    else success = false;
                                 }
                                 else
                                 {
@@ -2260,8 +2194,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                     TargetBrightness = storedSettings.Brightness.TargetBrightness,
                                     SmoothTransitionTimeInMs = 0
                                 };
-                                if (!display.SetBrightnessSetting(brightnessToSet))
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Brightness not supported by current hardware, skipping");
+                                if (!diagnostics.Run(diagnosticStage, "Intel", () => display.SetBrightnessSetting(brightnessToSet), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                {
+                                    success = false;
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Brightness setting was rejected by the driver");
+                                }
                                 else
                                     SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Brightness to {storedSettings.Brightness.TargetBrightness} for display {logDisplayId}");
                             }
@@ -2294,8 +2231,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                 var currentPowerOptimization = currentSettings.PowerOptimizationSettings;
                                 if (!currentPowerOptimization.Equals(storedSettings.PowerOptimizationSettings))
                                 {
-                                    display.SetPowerOptimizationSetting(storedSettings.PowerOptimizationSettings);
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set PowerOptimization settings for display {logDisplayId}");
+                                    if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetPowerOptimizationSetting(storedSettings.PowerOptimizationSettings), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set PowerOptimization settings for display {logDisplayId}");
+                                    }
+                                    else success = false;
                                 }
                                 else
                                 {
@@ -2329,8 +2269,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             var currentLaceConfig = currentSettings.LaceConfig;
                             if (!currentLaceConfig.Equals(storedSettings.LaceConfig))
                             {
-                                if (!display.SetLACEConfig(storedSettings.LaceConfig))
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: LACE not supported by current hardware, skipping");
+                                if (!diagnostics.Run(diagnosticStage, "Intel", () => display.SetLACEConfig(storedSettings.LaceConfig), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                {
+                                    success = false;
+                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: LACE setting was rejected by the driver");
+                                }
                                 else
                                     SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set LACE config for display {logDisplayId}");
                             }
@@ -2414,8 +2357,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                     var desiredDceArgs = storedSettings.DynamicContrastEnhancement;
                                     desiredDceArgs.Set = true;
                                     var desiredHistogram = storedSettings.DynamicContrastEnhancementHistogram ?? Array.Empty<uint>();
-                                    display.SetDynamicContrastEnhancement(desiredDceArgs, desiredHistogram);
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Dynamic Contrast Enhancement for display {logDisplayId}");
+                                    if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetDynamicContrastEnhancement(desiredDceArgs, desiredHistogram), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Dynamic Contrast Enhancement for display {logDisplayId}");
+                                    }
+                                    else success = false;
                                 }
                                 else
                                 {
@@ -2451,8 +2397,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                 var currentArcSyncProfile = currentSettings.IntelArcSyncProfile;
                                 if (!currentArcSyncProfile.Equals(storedSettings.IntelArcSyncProfile))
                                 {
-                                    display.SetIntelArcSyncProfile(storedSettings.IntelArcSyncProfile);
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Intel Arc Sync profile for display {logDisplayId}");
+                                    if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetIntelArcSyncProfile(storedSettings.IntelArcSyncProfile), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Intel Arc Sync profile for display {logDisplayId}");
+                                    }
+                                    else success = false;
                                 }
                                 else
                                 {
@@ -2496,8 +2445,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                     var desiredCustomModeArgs = storedSettings.CustomModeArgs;
                                     desiredCustomModeArgs.CustomModeOpType = ctl_custom_mode_operation_types_t.CTL_CUSTOM_MODE_OPERATION_TYPES_ADD_CUSTOM_SOURCE_MODE;
                                     desiredCustomModeArgs.NumOfModes = (uint)storedModes.Count;
-                                    display.SetCustomModes(desiredCustomModeArgs, (IReadOnlyList<CustomSourceModeDto>)storedModes);
-                                    SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Custom Modes for display {logDisplayId}");
+                                    if (diagnostics.Run(diagnosticStage, "Intel", () => display.SetCustomModes(desiredCustomModeArgs, (IReadOnlyList<CustomSourceModeDto>)storedModes), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                    {
+                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set Custom Modes for display {logDisplayId}");
+                                    }
+                                    else success = false;
                                 }
                                 else
                                 {
@@ -2529,7 +2481,7 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                     }
 
                     // Compute the adapter device ID to look up stored adapter settings
-                    string adapterDeviceId = $"{adapterProperties.PciVendorId:X4}_{adapterProperties.PciDeviceId:X4}_{adapterProperties.PciSubsysVendorId:X4}_{adapterProperties.PciSubsysId:X4}_{adapterProperties.RevId:X2}";
+                    string adapterDeviceId = IntelAdapterIdentity.Key(adapterProperties);
                     diagnosticStage = "DriverSettings";
                     diagnosticDisplayId = adapterDeviceId;
                     bool hasStoredAdapter = displayConfig.PhysicalAdapters.TryGetValue(adapterDeviceId, out INTEL_ADAPTER storedAdapter);
@@ -2558,8 +2510,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                     {
                                         var setRequest = stored3DFeature;
                                         setRequest.Set = true;
-                                        threeDHelper.Set3DFeature(setRequest);
-                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set 3D feature {stored3DFeature.FeatureType} for adapter {adapterNum}");
+                                        if (diagnostics.Run(diagnosticStage, "Intel", () => threeDHelper.Set3DFeature(setRequest), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                        {
+                                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set 3D feature {stored3DFeature.FeatureType} for adapter {adapterNum}");
+                                        }
+                                        else success = false;
                                     }
                                     else
                                     {
@@ -2605,8 +2560,11 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                                     {
                                         var setRequest = storedMediaFeature;
                                         setRequest.Set = true;
-                                        mediaHelper.SetVideoProcessingFeature(setRequest);
-                                        SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set video processing feature {storedMediaFeature.FeatureType} for adapter {adapterNum}");
+                                        if (diagnostics.Run(diagnosticStage, "Intel", () => mediaHelper.SetVideoProcessingFeature(setRequest), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
+                                        {
+                                            SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set video processing feature {storedMediaFeature.FeatureType} for adapter {adapterNum}");
+                                        }
+                                        else success = false;
                                     }
                                     else
                                     {
@@ -2640,10 +2598,13 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
                             }
                             else if (!currentStandardColorCorrection.Value.Equals(storedAdapter.StandardColorCorrection))
                             {
-                                if (mediaHelper.SetStandardColorCorrection(storedAdapter.StandardColorCorrection))
+                                if (diagnostics.Run(diagnosticStage, "Intel", () => mediaHelper.SetStandardColorCorrection(storedAdapter.StandardColorCorrection), DisplayConfigurationSeverity.Warning, diagnosticDisplayId))
                                     SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Successfully set standard colour correction for adapter {adapterNum}");
                                 else
+                                {
+                                    success = false;
                                     SharedLogger.logger.Trace($"IntelLibrary/SetActiveConfigOverride: Standard colour correction is not supported by current hardware for adapter {adapterNum}, skipping");
+                                }
                             }
                             else
                             {
@@ -2742,125 +2703,8 @@ namespace DisplayMagician.UserAgent.Runtime.Intel
         }
 
         public List<string> GetCombinedDisplayTopologyHiddenIdentifiers(INTEL_DISPLAY_CONFIG displayConfig, IEnumerable<string> candidateIdentifiers)
-        {
-            List<string> topologyHiddenIdentifiers = new List<string>();
-
-            if (!_initialised || !displayConfig.IsInUse || candidateIdentifiers == null)
-                return topologyHiddenIdentifiers;
-
-            INTEL_DISPLAY_CONFIG activeDisplayConfig = ActiveDisplayConfig;
-            if (!displayConfig.CombinedDisplayIsInUse && !activeDisplayConfig.CombinedDisplayIsInUse)
-                return topologyHiddenIdentifiers;
-
-            HashSet<uint> requiredPhysicalEncoderIds = new HashSet<uint>();
-            foreach (string displayIdentifier in displayConfig.DisplayIdentifiers ?? new List<string>())
-            {
-                if (TryGetWindowsDisplayEncoderId(displayIdentifier, out uint displayEncoderId))
-                    requiredPhysicalEncoderIds.Add(displayEncoderId);
-            }
-
-            HashSet<uint> topologyHiddenEncoderIds = new HashSet<uint>();
-            HashSet<uint> connectedEncoderIds = new HashSet<uint>(_allConnectedDisplayIdentifiers
-                .Select(identifier => TryGetWindowsDisplayEncoderId(identifier, out uint displayEncoderId) ? displayEncoderId : 0)
-                .Where(displayEncoderId => displayEncoderId != 0));
-
-            if (!AddCombinedDisplayEncoderIds(displayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, true))
-                return topologyHiddenIdentifiers;
-
-            if (!AddCombinedDisplayEncoderIds(activeDisplayConfig, requiredPhysicalEncoderIds, topologyHiddenEncoderIds, false, connectedEncoderIds))
-                return topologyHiddenIdentifiers;
-
-            if (requiredPhysicalEncoderIds.Count == 0)
-            {
-                SharedLogger.logger.Warn("IntelLibrary/GetCombinedDisplayTopologyHiddenIdentifiers: No physical Intel display outputs were available to validate the combined display topology.");
-                return topologyHiddenIdentifiers;
-            }
-
-            if (!requiredPhysicalEncoderIds.All(connectedEncoderIds.Contains))
-            {
-                SharedLogger.logger.Trace("IntelLibrary/GetCombinedDisplayTopologyHiddenIdentifiers: A required physical Intel display output is unavailable, so retaining the missing-display warning.");
-                return topologyHiddenIdentifiers;
-            }
-
-            foreach (string candidateIdentifier in candidateIdentifiers.Where(identifier => !String.IsNullOrWhiteSpace(identifier)))
-            {
-                if (!TryGetWindowsDisplayEncoderId(candidateIdentifier, out uint displayEncoderId))
-                    continue;
-
-                bool isWindowsLogicalMonitor = candidateIdentifier.StartsWith("WINAPI|", StringComparison.OrdinalIgnoreCase);
-                bool isTopologyHiddenIntelOutput = candidateIdentifier.StartsWith("IntelIGCL#", StringComparison.OrdinalIgnoreCase) && topologyHiddenEncoderIds.Contains(displayEncoderId);
-
-                if ((isWindowsLogicalMonitor && topologyHiddenEncoderIds.Contains(displayEncoderId)) || isTopologyHiddenIntelOutput)
-                    topologyHiddenIdentifiers.Add(candidateIdentifier);
-            }
-
-            if (topologyHiddenIdentifiers.Count > 0)
-                SharedLogger.logger.Trace($"IntelLibrary/GetCombinedDisplayTopologyHiddenIdentifiers: Ignoring {topologyHiddenIdentifiers.Count} expected logical-monitor identifier(s) hidden by the Intel Combined Display topology.");
-
-            return topologyHiddenIdentifiers;
-        }
-
-        private static bool AddCombinedDisplayEncoderIds(INTEL_DISPLAY_CONFIG displayConfig, HashSet<uint> requiredPhysicalEncoderIds, HashSet<uint> topologyHiddenEncoderIds, bool updateRequiredPhysicalEncoderIds, HashSet<uint>? activeCombinedChildEncoderIds = null)
-        {
-            if (!displayConfig.CombinedDisplayIsInUse)
-                return true;
-
-            List<INTEL_ADAPTER> combinedDisplayAdapters = displayConfig.PhysicalAdapters?.Values
-                .Where(adapter => adapter.IsCombinedDisplay)
-                .ToList() ?? new List<INTEL_ADAPTER>();
-
-            if (combinedDisplayAdapters.Count == 0)
-            {
-                SharedLogger.logger.Warn("IntelLibrary/AddCombinedDisplayEncoderIds: The Intel combined display configuration did not contain a combined display adapter.");
-                return false;
-            }
-
-            foreach (INTEL_ADAPTER adapter in combinedDisplayAdapters)
-            {
-                if (adapter.CombinedDisplay.ChildInfos == null || adapter.CombinedDisplay.ChildInfos.Count == 0)
-                {
-                    SharedLogger.logger.Warn($"IntelLibrary/AddCombinedDisplayEncoderIds: The Intel combined display on adapter {adapter.Name} did not contain component display outputs.");
-                    return false;
-                }
-
-                uint combinedDisplayEncoderId = adapter.CombinedDisplay.CombinedDisplayOutputWindowsDisplayEncoderId;
-                topologyHiddenEncoderIds.Add(combinedDisplayEncoderId);
-                if (updateRequiredPhysicalEncoderIds)
-                    requiredPhysicalEncoderIds.Remove(combinedDisplayEncoderId);
-
-                foreach (CombinedDisplayChildInfoDto childInfo in adapter.CombinedDisplay.ChildInfos)
-                {
-                    uint childDisplayEncoderId = childInfo.DisplayOutputWindowsDisplayEncoderId;
-                    topologyHiddenEncoderIds.Add(childDisplayEncoderId);
-                    activeCombinedChildEncoderIds?.Add(childDisplayEncoderId);
-                    if (updateRequiredPhysicalEncoderIds)
-                        requiredPhysicalEncoderIds.Add(childDisplayEncoderId);
-                }
-            }
-
-            return true;
-        }
-
-        private static bool TryGetWindowsDisplayEncoderId(string displayIdentifier, out uint displayEncoderId)
-        {
-            displayEncoderId = 0;
-            if (String.IsNullOrWhiteSpace(displayIdentifier))
-                return false;
-
-            if (displayIdentifier.StartsWith("WINAPI|", StringComparison.OrdinalIgnoreCase))
-            {
-                string[] windowsIdentifierParts = displayIdentifier.Split('|');
-                return windowsIdentifierParts.Length > 3 && UInt32.TryParse(windowsIdentifierParts[3], out displayEncoderId);
-            }
-
-            if (displayIdentifier.StartsWith("IntelIGCL#", StringComparison.OrdinalIgnoreCase))
-            {
-                int finalSeparatorIndex = displayIdentifier.LastIndexOf('#');
-                return finalSeparatorIndex >= 0 && UInt32.TryParse(displayIdentifier.Substring(finalSeparatorIndex + 1), out displayEncoderId);
-            }
-
-            return false;
-        }
+            => !_initialised ? new List<string>() : IntelDisplayTopology.GetHiddenIdentifiers(
+                displayConfig, ActiveDisplayConfig, _allConnectedDisplayIdentifiers, candidateIdentifiers);
 
         public List<string> GetCurrentDisplayIdentifiers(out bool failure)
         {

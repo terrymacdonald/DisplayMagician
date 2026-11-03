@@ -32,7 +32,8 @@ namespace DisplayMagician.UIForms
         private int _notifyMenuRefreshVersion;
         private Guid? _completedWindowPlacementOperationId;
         private readonly ControlServicePipeClient _controlServiceClient;
-        private readonly Func<CancellationToken, Task<bool>> _refreshTrayProfiles;
+        private readonly Func<bool, CancellationToken, Task<bool>> _refreshTrayProfiles;
+        private bool _refreshDisplaySnapshotRequested;
         private readonly CancellationTokenSource _trayLifetimeSource = new CancellationTokenSource();
         private readonly CancellationToken _trayLifetimeToken;
         private bool _trayLifetimeDisposed;
@@ -84,7 +85,9 @@ namespace DisplayMagician.UIForms
         private MainForm(Form formToOpen, ControlServicePipeClient client, Func<CancellationToken, Task<bool>> refreshProfiles, bool initializeApplication)
         {
             _controlServiceClient = client ?? throw new ArgumentNullException(nameof(client));
-            _refreshTrayProfiles = refreshProfiles ?? (token => DesktopProfileViewCache.RefreshAsync(_controlServiceClient, token));
+            _refreshTrayProfiles = refreshProfiles != null
+                ? (_, token) => refreshProfiles(token)
+                : (refresh, token) => DesktopProfileViewCache.RefreshAsync(_controlServiceClient, token, refresh);
             _trayLifetimeToken = _trayLifetimeSource.Token;
             InitializeComponent();
             mainContextMenuStrip.Opening += (_, _) => RefreshNotifyIconMenus();
@@ -511,16 +514,17 @@ namespace DisplayMagician.UIForms
         }
 
 
-        public void RefreshNotifyIconMenus(Guid? completedShortcutOperationId = null)
+        public void RefreshNotifyIconMenus(Guid? completedShortcutOperationId = null, bool refreshCurrentLayout = false)
         {
             if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
             if (Environment.CurrentManagedThreadId != _uiThreadId)
             {
                 if (!IsHandleCreated) return; // HandleCreated requests a refresh on the owning UI thread.
-                try { BeginInvoke((System.Windows.Forms.MethodInvoker)(() => RefreshNotifyIconMenus(completedShortcutOperationId))); }
+                try { BeginInvoke((System.Windows.Forms.MethodInvoker)(() => RefreshNotifyIconMenus(completedShortcutOperationId, refreshCurrentLayout))); }
                 catch (InvalidOperationException) { /* The window closed before refresh could be queued. */ }
                 return;
             }
+            _refreshDisplaySnapshotRequested |= refreshCurrentLayout;
             ++_notifyMenuRefreshVersion;
             if (completedShortcutOperationId.HasValue)
             {
@@ -552,9 +556,13 @@ namespace DisplayMagician.UIForms
                         ControlResponse response = await _controlServiceClient.GetActiveWindowPlacementSessionAsync(timeout.Token);
                         if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
                         if (refreshVersion != _notifyMenuRefreshVersion) continue;
-                        await _refreshTrayProfiles(_trayLifetimeToken);
+                        bool refreshDisplaySnapshot = _refreshDisplaySnapshotRequested;
+                        _refreshDisplaySnapshotRequested = false;
+                        await _refreshTrayProfiles(refreshDisplaySnapshot, _trayLifetimeToken);
                         if (IsDisposed || _trayLifetimeToken.IsCancellationRequested) return;
                         if (refreshVersion != _notifyMenuRefreshVersion) continue;
+                        if (refreshDisplaySnapshot && DisplayProfileWindow != null && !DisplayProfileWindow.IsDisposed)
+                            DisplayProfileWindow.RefreshCurrentView();
                         WindowPlacementSessionView session = response.WindowPlacementSession;
                         _cachedWindowPlacementSession = response.IsSuccessful && session?.CanSave == true && session.OperationId != _completedWindowPlacementOperationId
                             ? session : null;
@@ -1027,7 +1035,7 @@ namespace DisplayMagician.UIForms
 
                 RepositionDisplayMagician();
 
-                RefreshNotifyIconMenus();
+                RefreshNotifyIconMenus(refreshCurrentLayout: true);
 
                 // If the DisplayProfileForm is open, refresh its view too
                 if (DisplayProfileWindow != null && !DisplayProfileWindow.IsDisposed)

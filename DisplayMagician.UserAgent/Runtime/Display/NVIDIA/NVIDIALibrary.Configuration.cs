@@ -8,18 +8,17 @@ namespace DisplayMagician.UserAgent.Runtime.NVIDIA;
 
 public partial class NVIDIALibrary
 {
-    internal static bool ApplyMosaicConfiguration(NVIDIA_MOSAIC_CONFIG desired, NVIDIA_MOSAIC_CONFIG cached,
+    internal static bool ApplyMosaicConfiguration(NVIDIA_MOSAIC_CONFIG desired, NVIDIA_MOSAIC_CONFIG current,
         Func<NVAPIMosaicGridTopologiesDto, bool> setGrids,
         Func<bool> prepare, Func<bool> disable, Action<int> wait, int delayInMs, DisplayConfigurationDiagnostics diagnostics)
     {
-        // Display-change refresh and operation capture own this cache. Avoid another native
-        // query merely to decide whether to apply the requested topology.
+        // The caller supplies live topology read within the serialized hardware phase.
         if (desired.IsMosaicEnabled)
         {
-            if (cached.MosaicGridTopologies.Grids?.Length > 0 && desired.Equals(cached)) return true;
+            if (current.MosaicGridTopologies.Grids?.Length > 0 && desired.Equals(current)) return true;
             // Preserve the established 1x1 wake-up step. Its failure must not prevent
             // the actual creation attempt, which can still succeed on affected drivers.
-            if (!cached.IsMosaicEnabled)
+            if (!current.IsMosaicEnabled)
             {
                 try { prepare(); }
                 catch (Exception ex) { diagnostics.Add("SurroundPreparation", "NVIDIA", "The preparatory 1x1 step failed; attempting the requested layout: " + ex.Message, exception: ex); }
@@ -32,7 +31,7 @@ public partial class NVIDIALibrary
             }, DisplayConfigurationSeverity.Fatal);
         }
 
-        return !cached.IsMosaicEnabled ||
+        return !current.IsMosaicEnabled ||
             diagnostics.Run("Surround", "NVIDIA", disable, DisplayConfigurationSeverity.Fatal);
     }
 

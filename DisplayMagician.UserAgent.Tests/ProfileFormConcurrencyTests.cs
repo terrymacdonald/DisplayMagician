@@ -208,8 +208,30 @@ public sealed class ProfileFormConcurrencyTests
         Assert.Single(client.Pending);
     });
 
+    [Fact]
+    public void ExplicitCurrentViewRequestsFreshHardwareState() => RunSta(async () =>
+    {
+        FakeClient client = new();
+        using DisplayProfileForm form = (DisplayProfileForm)CreateForm(false, client, new List<string>());
+        form.GetType().GetMethod("btn_view_current_Click", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(form, new object[] { form, EventArgs.Empty });
+        await WaitUntil(() => client.Pending.Count == 1);
+        using JsonDocument payload = JsonDocument.Parse(client.Pending[0].Envelope.Payload);
+        Assert.True(payload.RootElement.GetProperty("RefreshCurrentLayout").GetBoolean());
+        client.Pending[0].Completion.SetResult(new ControlResponse { IsSuccessful = true,
+            ProfileList = new ProfileListResult { CurrentLayout = new DisplayProfileView { Id = "fresh", Name = "Fresh capture" } } });
+        await WaitUntil(() => !Field<bool>(form, "_commandInProgress"));
+        Assert.Equal("fresh", SelectedId(form, false));
+    });
+
     private static Task InvokeTask(Form form, string method, params object[] arguments)
-        => (Task)form.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(form, arguments)!;
+    {
+        MethodInfo target = form.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!;
+        ParameterInfo[] parameters = target.GetParameters();
+        object[] supplied = new object[parameters.Length];
+        for (int i = 0; i < supplied.Length; i++) supplied[i] = i < arguments.Length ? arguments[i] : parameters[i].DefaultValue!;
+        return (Task)target.Invoke(form, supplied)!;
+    }
 
     private static T Field<T>(Form form, string name) => (T)form.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(form)!;
     private static string? SelectedId(Form form, bool audio) => audio ? Field<AudioProfileView?>(form, "_selectedAudioProfile")?.Id : Field<DisplayProfileView?>(form, "_selectedProfile")?.Id;

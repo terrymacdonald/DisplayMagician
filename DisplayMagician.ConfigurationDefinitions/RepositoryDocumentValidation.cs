@@ -8,6 +8,7 @@ namespace DisplayMagician.ConfigurationDefinitions;
 /// <summary>Validates the portable repository envelope without loading hardware or discarding unknown fields.</summary>
 public static class RepositoryDocumentValidation
 {
+    public const int CurrentDisplayProfileFileVersion = 5;
     public static void Validate(string json, RepositoryKind repository)
     {
         string collectionName = repository switch
@@ -24,6 +25,7 @@ public static class RepositoryDocumentValidation
 
         HashSet<string> identities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (repository == RepositoryKind.Shortcuts) ValidateShortcutFileVersion(document.RootElement);
+        if (repository == RepositoryKind.DisplayProfiles) ValidateDisplayProfileFileVersion(document.RootElement);
         foreach (JsonElement item in items.EnumerateArray())
         {
             if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("UUID", out JsonElement id) ||
@@ -50,6 +52,14 @@ public static class RepositoryDocumentValidation
                 }
             }
         }
+    }
+
+    public static void ValidateDisplayProfileFileVersion(JsonElement root)
+    {
+        if (!root.TryGetProperty("ProfileFileVersion", out JsonElement version) || version.ValueKind == JsonValueKind.Null) return;
+        if (version.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(version.GetString())) return;
+        if (version.ValueKind != JsonValueKind.String || !int.TryParse(version.GetString(), out int number) || number < 1 || number > CurrentDisplayProfileFileVersion)
+            throw new JsonException($"Unsupported display-profile file version. Supported versions are 1 to {CurrentDisplayProfileFileVersion}; the file must be preserved.");
     }
 
     public static void ValidateShortcutFileVersion(JsonElement root)

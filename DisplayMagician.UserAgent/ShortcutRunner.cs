@@ -143,16 +143,15 @@ public sealed class ShortcutRunner
             return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
         }
 
-        UserProfileOperationState originalState = _profileOperationService.CaptureCurrentProfileState();
+        UserProfileOperationState originalState = _profileOperationService.CaptureCurrentProfileState(
+            captureDisplaySnapshot: !string.IsNullOrWhiteSpace(shortcut.ProfileId) && shortcut.DisplayPermanence == ShortcutDefinitionPermanence.Temporary,
+            captureAudioSnapshot: !string.IsNullOrWhiteSpace(shortcut.AudioProfileId) && shortcut.AudioPermanence == ShortcutDefinitionPermanence.Temporary);
         bool shouldApplyDisplayProfile = !string.IsNullOrWhiteSpace(shortcut.ProfileId) && !string.Equals(shortcut.ProfileId, originalState.DisplayProfileId, StringComparison.OrdinalIgnoreCase);
         bool shouldApplyAudioProfile = !string.IsNullOrWhiteSpace(shortcut.AudioProfileId) && !string.Equals(shortcut.AudioProfileId, originalState.AudioProfileId, StringComparison.OrdinalIgnoreCase);
         ShortcutRecoveryRecord? recoveryRecord = null;
         if ((shouldApplyDisplayProfile && shortcut.DisplayPermanence == ShortcutDefinitionPermanence.Temporary) ||
             (shouldApplyAudioProfile && shortcut.AudioPermanence == ShortcutDefinitionPermanence.Temporary))
         {
-            originalState = _profileOperationService.CaptureCurrentProfileState(
-                captureDisplaySnapshot: shouldApplyDisplayProfile && shortcut.DisplayPermanence == ShortcutDefinitionPermanence.Temporary,
-                captureAudioSnapshot: shouldApplyAudioProfile && shortcut.AudioPermanence == ShortcutDefinitionPermanence.Temporary);
             recoveryRecord = new ShortcutRecoveryRecord
             {
                 SchemaVersion = 2,

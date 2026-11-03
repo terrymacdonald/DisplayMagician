@@ -26,6 +26,9 @@
     <Reference Include="ImageListViewCore">
       <HintPath>..\DisplayMagician\DLL\ImageListViewCore.dll</HintPath>
     </Reference>
+    <Reference Include="IGCLWrapper">
+      <HintPath>..\DisplayMagician.UserAgent\DLL\IGCLWrapper.dll</HintPath>
+    </Reference>
     <Reference Include="ADLXWrapper">
       <HintPath>..\DisplayMagician.UserAgent\DLL\ADLXWrapper.dll</HintPath>
     </Reference>

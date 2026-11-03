@@ -37,19 +37,20 @@ internal sealed class DisplayConfigurationDiagnostics
             Result.ProfileId, Result.Attempt, stage, component, severity, displayId, issue.NativeErrorCode, message);
     }
 
-    internal bool Run(string stage, string component, Func<bool> action, DisplayConfigurationSeverity severity)
+    internal bool Run(string stage, string component, Func<bool> action, DisplayConfigurationSeverity severity, string displayId = "")
     {
         int previousCount = Result.Issues.Length;
         try
         {
-            if (action()) return true;
+            if (action())
+                return !Result.Issues.Skip(previousCount).Any(issue => issue.Severity == DisplayConfigurationSeverity.Fatal);
             // A native stage may already have recorded a more specific failure and code.
             if (!Result.Issues.Skip(previousCount).Any(issue => issue.Severity == severity))
-                Add(stage, component, "The requested display settings could not be applied.", severity);
+                Add(stage, component, "The requested display settings could not be applied.", severity, displayId: displayId);
         }
         catch (Exception ex)
         {
-            Add(stage, component, ex.Message, severity, exception: ex);
+            Add(stage, component, ex.Message, severity, displayId: displayId, exception: ex);
         }
         return false;
     }

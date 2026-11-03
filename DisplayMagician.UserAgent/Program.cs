@@ -58,6 +58,13 @@ internal static class Program
             Task logging = RunLoggingAsync(serviceClient, cancellationTokenSource.Token);
             backgroundTasks.Add(logging);
             await profileCommandHandler.RestorePendingShortcutRecoveryAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+            // Establish the first completed client snapshot independently of WinForms.
+            // A capture failure is logged by the existing capture boundary; commands remain available.
+            await Task.Run(() =>
+            {
+                Runtime.ProfileRepository.InitialiseRepository();
+                Runtime.ProfileRepository.TryUpdateActiveProfile(out _);
+            }, cancellationTokenSource.Token).ConfigureAwait(false);
             registration.IsReady = true;
             ControlResponse readyResponse = await serviceClient.UpdateRegistrationAsync(registration, cancellationTokenSource.Token).ConfigureAwait(false);
             if (!readyResponse.IsSuccessful)

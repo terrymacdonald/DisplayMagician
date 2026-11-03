@@ -40,12 +40,12 @@ internal static class DesktopProfileViewCache
 
     public static bool Refresh() => RefreshAsync(new ControlServicePipeClient(), CancellationToken.None).GetAwaiter().GetResult();
 
-    internal static async Task<bool> RefreshAsync(ControlServicePipeClient client, CancellationToken cancellationToken)
+    internal static async Task<bool> RefreshAsync(ControlServicePipeClient client, CancellationToken cancellationToken, bool refreshCurrentLayout = false)
     {
         long refreshVersion = Interlocked.Increment(ref _refreshVersion);
         try
         {
-            ProfileListResult profiles = await client.ListProfilesAsync(cancellationToken).ConfigureAwait(false);
+            ProfileListResult profiles = await client.ListProfilesAsync(cancellationToken, refreshCurrentLayout: refreshCurrentLayout).ConfigureAwait(false);
             lock (_syncRoot)
             {
                 if (cancellationToken.IsCancellationRequested || refreshVersion != Interlocked.Read(ref _refreshVersion)) return false;

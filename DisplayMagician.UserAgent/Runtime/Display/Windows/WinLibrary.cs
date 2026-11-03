@@ -404,9 +404,11 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         }
 
         public Dictionary<ulong, ulong> GetAdapterIdMap(WINDOWS_DISPLAY_CONFIG savedDisplayConfig)
+            => GetAdapterIdMap(savedDisplayConfig, GetAllAdapterIDs());
+
+        internal static Dictionary<ulong, ulong> GetAdapterIdMap(WINDOWS_DISPLAY_CONFIG savedDisplayConfig, IReadOnlyDictionary<ulong, string> currentAdapterMap)
         {
             Dictionary<ulong, ulong> adapterOldToNewMap = new Dictionary<ulong, ulong>();
-            Dictionary<ulong, string> currentAdapterMap = GetAllAdapterIDs();
             try
             {
                 SharedLogger.logger.Trace("WinLibrary/PatchWindowsDisplayConfig: Going through the list of adapters we stored in the config to figure out the old adapterIDs");
@@ -446,8 +448,11 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
         }
 
         public void PatchWindowsDisplayConfig(ref WINDOWS_DISPLAY_CONFIG savedDisplayConfig, Dictionary<ulong, ulong> adapterOldToNewMap)
+            => PatchWindowsDisplayConfig(ref savedDisplayConfig, adapterOldToNewMap, GetAllAdapterIDs());
+
+        internal static void PatchWindowsDisplayConfig(ref WINDOWS_DISPLAY_CONFIG savedDisplayConfig, Dictionary<ulong, ulong> adapterOldToNewMap,
+            IReadOnlyDictionary<ulong, string> currentAdapterMap)
         {
-            Dictionary<ulong, string> currentAdapterMap = GetAllAdapterIDs();
 
             ulong fallbackAdapterId = 0;
             bool hasFallbackAdapter = currentAdapterMap.Count > 0;
@@ -1436,7 +1441,7 @@ namespace DisplayMagician.UserAgent.Runtime.Windows
             return DisplaySources;
         }
 
-        private LUID AdapterValueToLUID(ulong adapterValue)
+        private static LUID AdapterValueToLUID(ulong adapterValue)
         {
             LUID luid = new LUID();
             luid.LowPart = (uint)(adapterValue & uint.MaxValue);

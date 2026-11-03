@@ -347,6 +347,7 @@ public sealed class AgentReliabilityTests : IDisposable
 
         ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("test", 0, CancellationToken.None);
 
+        Assert.Equal(1, profiles.CaptureCalls);
         Assert.Equal(2, profiles.RestoreCalls);
         Assert.Equal(audioRestores ? ShortcutRunOutcome.Completed : ShortcutRunOutcome.Failed, result.Outcome);
         Assert.Equal(!audioRestores, result.RequiresRecovery);
@@ -675,11 +676,15 @@ public sealed class AgentReliabilityTests : IDisposable
         public bool BlockAudio { get; init; }
         public bool FailAudio { get; init; }
         public int RestoreCalls { get; private set; }
+        public int CaptureCalls { get; private set; }
         public TaskCompletionSource<bool> AudioStarted { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         public ManualResetEventSlim ReleaseAudio { get; } = new ManualResetEventSlim();
         internal override UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot)
-            => new UserProfileOperationState("original-display", "original-audio")
+        {
+            CaptureCalls++;
+            return new UserProfileOperationState("original-display", "original-audio")
             { DisplayProfileSnapshotJson = captureDisplaySnapshot ? "{}" : "", AudioProfileSnapshotJson = captureAudioSnapshot ? "{}" : "" };
+        }
         internal override Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string profileId, CancellationToken cancellationToken, string? snapshotJson)
         {
             if (snapshotJson != null) RestoreCalls++;

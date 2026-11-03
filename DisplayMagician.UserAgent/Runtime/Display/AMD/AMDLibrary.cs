@@ -1014,7 +1014,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
         public AMD_GAMMA_RAMP(GammaRampDto gammaRampDto)
         {
-            Gamma = new List<ushort>(gammaRampDto.Values);
+            Gamma = gammaRampDto.Values == null ? new List<ushort>() : new List<ushort>(gammaRampDto.Values);
         }
 
         public GammaRampDto ToGammaRampDto()
@@ -2262,8 +2262,15 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
             SharedLogger.logger.Trace($"AMDLibrary/UpdateActiveConfig: Updating the currently active config");
             try
             {
-                _activeDisplayConfig = GetActiveConfig();
-                _allConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers(out bool failure);
+                AMD_DISPLAY_CONFIG captured = GetActiveConfig();
+                List<string> connected = GetAllConnectedDisplayIdentifiers(out bool failure);
+                if (failure)
+                {
+                    diagnostics.Add("Capture", "AMD", "Connected display enumeration failed; current library state was not published.", DisplayConfigurationSeverity.Fatal);
+                    return false;
+                }
+                _activeDisplayConfig = captured;
+                _allConnectedDisplayIdentifiers = connected;
             }
             catch (Exception ex)
             {
@@ -2625,6 +2632,7 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
                 // Get the display identifiers                
                 myDisplayConfig.DisplayIdentifiers = GetCurrentDisplayIdentifiers(out bool failure);
+                if (failure) throw new AMDLibraryException("Current AMD displays could not be enumerated.");
 
                 // Now try to get the AMD Eyefinity layout using ADL2 (the older standard) as it is more configurable
                 if (_initialisedADL2)
@@ -3563,6 +3571,9 @@ namespace DisplayMagician.UserAgent.Runtime.AMD
 
             if (_initialised && _adlxSystem != null)
             {
+                // Preparation can change grouping; use a live read for this apply phase.
+                if (!UpdateActiveConfig(diagnostics)) return false;
+
                 // This is how we control the various desktops. 
                 // - A single desktop is associated with one display.
                 // - A duplicate desktop is associated with two or more displays.

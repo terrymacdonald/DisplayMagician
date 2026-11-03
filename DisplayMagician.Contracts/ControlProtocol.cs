@@ -843,6 +843,7 @@ public sealed class ProfileListResult
 
 public sealed class ProfileListRequest
 {
+    public bool RefreshCurrentLayout { get; set; }
     public string DetailedProfileId { get; set; } = string.Empty;
     public bool IncludeActiveProfileDetail { get; set; }
     public bool IncludeCurrentLayoutDetail { get; set; }

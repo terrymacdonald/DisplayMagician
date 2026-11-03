@@ -196,47 +196,12 @@ namespace DisplayMagician.UserAgent.Runtime
             WallpaperConfiguration = new WallpaperConfig { WallpaperMode = Wallpaper.Mode.DoNothing };
 
 
-            // Fill out a new NVIDIA and AMD object when a profile is being created
-            // so that it will save correctly. Json.NET will save null references by default
-            // unless we fill them up first, and that in turn causes NullReference errors when
-            // loading the DisplayProfiles_2.0.json into DisplayMagician next time.
-            // We cannot make the structs themselves create the default entry, so instead, we 
-            // make each library create the default.
-            try
-            {
-                _nvidiaDisplayConfig = NVIDIALibrary.GetLibrary().CreateDefaultConfig();
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex,$"ProfileItem/ProfileItem: Exception getting the default configuration from NVIDIALibrary - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-            }
-
-            try
-            {
-                _amdDisplayConfig = AMDLibrary.GetLibrary().CreateDefaultConfig();
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, $"ProfileItem/ProfileItem: Exception getting the default configuration from AMDLibrary - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-            }
-
-            try 
-            {
-                _intelDisplayConfig = IntelLibrary.GetLibrary().CreateDefaultConfig();
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, $"ProfileItem/ProfileItem: Exception getting the default configuration from IntelLibrary - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-            }
-
-            try 
-            {
-                _windowsDisplayConfig = WinLibrary.GetLibrary().CreateDefaultConfig();
-            }
-            catch (Exception ex)
-            {
-                SharedLogger.logger.Error(ex, $"ProfileItem/ProfileItem: Exception getting the default configuration from WinLibrary - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
-            }            
+            // Portable defaults must not initialize hardware libraries during metadata
+            // deserialization or client preview rendering. Struct constructors own defaults.
+            _nvidiaDisplayConfig = new NVIDIA_DISPLAY_CONFIG();
+            _amdDisplayConfig = new AMD_DISPLAY_CONFIG();
+            _intelDisplayConfig = new INTEL_DISPLAY_CONFIG();
+            _windowsDisplayConfig = new WINDOWS_DISPLAY_CONFIG();
         }
 
         public static Version Version = new Version(2, 1);
@@ -392,14 +357,8 @@ namespace DisplayMagician.UserAgent.Runtime
         [DefaultValue(default(List<string>))]
         public virtual List<string> ProfileDisplayIdentifiers
         {
-            get
-            {
-                if (_profileDisplayIdentifiers.Count == 0)
-                {
-                    _profileDisplayIdentifiers = ProfileRepository.GetCurrentDisplayIdentifiers(); 
-                }
-                return _profileDisplayIdentifiers;
-            }
+            // Capture fills this explicitly; reading a saved definition must never acquire hardware access.
+            get => _profileDisplayIdentifiers;
             [param: AllowNull]
             set => _profileDisplayIdentifiers = value ?? new List<string>();
         }
@@ -560,37 +519,33 @@ namespace DisplayMagician.UserAgent.Runtime
                 return false;
             }
 
+            if (IntelAdapterIdentity.RequiresRecapture(_intelDisplayConfig))
+            {
+                errorMessage = IntelAdapterIdentity.RecaptureMessage;
+                return false;
+            }
             return true;
         }
 
         public virtual List<string> GetUndetectedDisplayIdentifiers()
+            => GetUndetectedDisplayIdentifiers(ProfileRepository.GetDisplaySnapshot());
+
+        private List<string> GetUndetectedDisplayIdentifiers(DisplayDetectionSnapshot snapshot)
         {
-            List<string> connectedDisplayIdentifiers = ProfileRepository.ConnectedDisplayIdentifiers;
-
-            List<string> undetectedDisplayIdentifiers = ProfileDisplayIdentifiers
+            List<string> undetected = ProfileDisplayIdentifiers
                 .Where(identifier => !String.IsNullOrWhiteSpace(identifier))
-                .Where(identifier => !connectedDisplayIdentifiers.Contains(identifier, StringComparer.OrdinalIgnoreCase))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
-            if (intelLibrary.IsInstalled && undetectedDisplayIdentifiers.Count > 0)
-            {
-                List<string> topologyHiddenIdentifiers = intelLibrary.GetCombinedDisplayTopologyHiddenIdentifiers(IntelDisplayConfig, undetectedDisplayIdentifiers);
-                undetectedDisplayIdentifiers = undetectedDisplayIdentifiers
-                    .Except(topologyHiddenIdentifiers, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-            }
-
-            return undetectedDisplayIdentifiers;
+                .Where(identifier => !snapshot.ConnectedIdentifiers.Contains(identifier, StringComparer.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            List<string> hidden = IntelDisplayTopology.GetHiddenIdentifiers(IntelDisplayConfig,
+                snapshot.Profile?.IntelDisplayConfig ?? new INTEL_DISPLAY_CONFIG(), snapshot.IntelConnectedIdentifiers, undetected);
+            return undetected.Except(hidden, StringComparer.OrdinalIgnoreCase).ToList();
         }
 
         public virtual List<string> GetUndetectedDisplayDescriptions()
-        {
-            return GetUndetectedDisplayIdentifiers()
-                .Select(GetDisplayDescription)
-                .ToList();
-        }
+            => GetUndetectedDisplayIdentifiers().Select(GetDisplayDescription).ToList();
+
+        internal List<string> GetUndetectedDisplayDescriptions(DisplayDetectionSnapshot snapshot)
+            => GetUndetectedDisplayIdentifiers(snapshot).Select(GetDisplayDescription).ToList();
 
         private string GetDisplayDescription(string displayIdentifier)
         {
@@ -719,6 +674,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         internal bool CreateProfileFromCurrentDisplaySettings(bool captureWallpaper, DisplayConfigurationDiagnostics diagnostics)
         {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
             // Calling the 3 different libraries automatically gets the different configs from each of the 3 video libraries.
             // If the video library isn't in use then it also fills in the defaults so that the JSON file can save properly
             // (C# Structs populate with default values which mean that arrays start with null)
@@ -731,21 +687,7 @@ namespace DisplayMagician.UserAgent.Runtime
                 IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
                 WinLibrary winLibrary = WinLibrary.GetLibrary();
 
-                if (nvidiaLibrary.IsInstalled)
-                {
-                    if (!diagnostics.Run("Capture", "NVIDIA", () => nvidiaLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
-                }
-                if (amdLibrary.IsInstalled)
-                {
-                    if (!diagnostics.Run("Capture", "AMD", () => amdLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
-                }
-                if (intelLibrary.IsInstalled)
-                {
-                    if (!diagnostics.Run("Capture", "Intel", () => intelLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
-                }
-
-                // Always update Windows display settings
-                if (!diagnostics.Run("Capture", "Windows", () => winLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
+                if (!RefreshDisplayLibraries(diagnostics)) return false;
 
                 // Grab the profile data from the current stored config (that we just updated)
                 _nvidiaDisplayConfig = nvidiaLibrary.ActiveDisplayConfig;
@@ -851,12 +793,44 @@ namespace DisplayMagician.UserAgent.Runtime
             return shortcutFileName != null && System.IO.File.Exists(shortcutFileName);
         }
 
+        internal static bool RefreshDisplayLibraries(DisplayConfigurationDiagnostics diagnostics)
+        {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
+            NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
+            AMDLibrary amdLibrary = AMDLibrary.GetLibrary();
+            IntelLibrary intelLibrary = IntelLibrary.GetLibrary();
+            WinLibrary winLibrary = WinLibrary.GetLibrary();
+            if (nvidiaLibrary.IsInstalled)
+            {
+                if (!diagnostics.Run("Capture", "NVIDIA", () => nvidiaLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
+            }
+            if (amdLibrary.IsInstalled)
+            {
+                if (!diagnostics.Run("Capture", "AMD", () => amdLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
+            }
+            if (intelLibrary.IsInstalled)
+            {
+                if (!diagnostics.Run("Capture", "Intel", () => intelLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
+            }
+
+            // Always update Windows display settings
+            if (!diagnostics.Run("Capture", "Windows", () => winLibrary.UpdateActiveConfig(diagnostics), DisplayConfigurationSeverity.Fatal)) return false;
+
+            return ProfileRepository.TryRefreshDisplayDetectionState(diagnostics);
+        }
+
         // Actually set this profile active
         public bool SetActive(bool useADLEyefinity = false, int delayInMs = 500)
-            => SetActiveWithDiagnostics(new DisplayConfigurationDiagnostics(), useADLEyefinity, delayInMs);
+        {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
+            DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
+            return RefreshDisplayLibraries(diagnostics) && SetActiveWithDiagnostics(diagnostics, useADLEyefinity, delayInMs);
+        }
 
         internal bool SetActiveWithDiagnostics(DisplayConfigurationDiagnostics diagnostics, bool useADLEyefinity = false, int delayInMs = 500)
         {
+            if (!IntelAdapterIdentity.ValidateForApply(IntelDisplayConfig, diagnostics)) return false;
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
             try
             {
                 NVIDIALibrary nvidiaLibrary = NVIDIALibrary.GetLibrary();
@@ -1241,7 +1215,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
             try
             {
-                if (NVIDIALibrary.GetLibrary().IsInstalled)
+                if (_nvidiaDisplayConfig.IsInUse)
                 {
                     nvidiaScreens.AddRange(GetNVIDIAScreenPositions());
 
@@ -1259,7 +1233,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 List<ScreenPosition> amdScreens = new List<ScreenPosition>() { };
 
-                if (AMDLibrary.GetLibrary().IsInstalled)
+                if (_amdDisplayConfig.IsInUse)
                 {
                     amdScreens.AddRange(GetAMDScreenPositions());
 
@@ -1278,7 +1252,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 List<ScreenPosition> intelScreens = new List<ScreenPosition>() { };
 
-                if (IntelLibrary.GetLibrary().IsInstalled)
+                if (_intelDisplayConfig.IsInUse)
                 {
                     intelScreens.AddRange(GetIntelScreenPositions());
                     // Ignore any windows screens that already exist from AMD and NVIDIA
@@ -1378,8 +1352,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
         private List<ScreenPosition> GetNVIDIAScreenPositions()
         {
-            // If NVIDIA is not installed or not in use, then we can't get the screen positions so return an empty list
-            if (!NVIDIALibrary.GetLibrary().IsInstalled || !_nvidiaDisplayConfig.IsInUse)
+            // If the saved configuration does not use NVIDIA, return an empty list.
+            if (!_nvidiaDisplayConfig.IsInUse)
             {
                 return new List<ScreenPosition>() { };
             }
@@ -1735,8 +1709,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
         private List<ScreenPosition> GetAMDScreenPositions()
         {
-            // If AMD is not installed or not in use, then we can't get the screen positions so return an empty list
-            if (!AMDLibrary.GetLibrary().IsInstalled || !_amdDisplayConfig.IsInUse)
+            // If the saved configuration does not use AMD, return an empty list.
+            if (!_amdDisplayConfig.IsInUse)
             {
                 return new List<ScreenPosition>() { };
             }
@@ -1944,8 +1918,8 @@ namespace DisplayMagician.UserAgent.Runtime
 
         private List<ScreenPosition> GetIntelScreenPositions()
         {
-            // If Intel is not installed or not in use, then we can't get the screen positions so return an empty list
-            if (!IntelLibrary.GetLibrary().IsInstalled || !_intelDisplayConfig.IsInUse)
+            // If the saved configuration does not use Intel, return an empty list.
+            if (!_intelDisplayConfig.IsInUse)
             {
                 return new List<ScreenPosition>() { };
             }

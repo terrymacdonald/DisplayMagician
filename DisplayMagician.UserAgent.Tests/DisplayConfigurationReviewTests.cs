@@ -49,6 +49,27 @@ public sealed class DisplayConfigurationReviewTests
     }
 
     [Fact]
+    public void NewlyReportedFatalCannotBeHiddenByASuccessReturn()
+    {
+        DisplayConfigurationDiagnostics diagnostics = new();
+        Assert.False(diagnostics.Run("Capture", "Display", () =>
+        {
+            diagnostics.Add("Enumeration", "Intel", "Failed read.", DisplayConfigurationSeverity.Fatal);
+            return true;
+        }, DisplayConfigurationSeverity.Fatal));
+        Assert.Single(diagnostics.Result.Issues);
+    }
+
+    [Fact]
+    public void EarlierFatalDoesNotPreventAFallbackStageFromReportingSuccess()
+    {
+        DisplayConfigurationDiagnostics diagnostics = new();
+        diagnostics.Add("FirstAttempt", "Windows", "Failed.", DisplayConfigurationSeverity.Fatal);
+        Assert.True(diagnostics.Run("Fallback", "Windows", () => true, DisplayConfigurationSeverity.Fatal));
+        Assert.False(diagnostics.Result.IsSuccessful);
+    }
+
+    [Fact]
     public void ReadbackAcceptsEquivalentRefreshFractionsAndPackedVirtualIndices()
     {
         WINDOWS_DISPLAY_CONFIG saved = Configuration();

@@ -29,6 +29,7 @@ public sealed class ProfileCommandHandler
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     private readonly Func<bool> _loadGames;
+    private readonly Func<bool> _refreshDisplaySnapshot;
     private readonly AgentRegistration _registration;
     private readonly string _userDataPath;
     private readonly ShortcutStore _shortcutStore;
@@ -43,6 +44,8 @@ public sealed class ProfileCommandHandler
     private readonly ControlServiceClient _controlServiceClient;
     private readonly OperationStatusOutbox _operationStatusOutbox;
     private readonly SemaphoreSlim _statusDeliveryLock = new SemaphoreSlim(1, 1);
+    // Leave one existing pipe slot available for cancellation/status while native reads wait.
+    private readonly SemaphoreSlim _displayRequestSlots = new SemaphoreSlim(AgentCommandServer.MaximumConnectedCommandClients - 1, AgentCommandServer.MaximumConnectedCommandClients - 1);
     private readonly object _operationsLock = new object();
     private readonly Dictionary<Guid, (CancellationTokenSource Source, DisplayOperationType Type, TaskCompletionSource<bool> Completion)> _operations = new();
     private bool _stopRequested;
@@ -58,9 +61,10 @@ public sealed class ProfileCommandHandler
     {
     }
 
-    internal ProfileCommandHandler(AgentRegistration registration, ControlServiceClient controlServiceClient, IInteractiveSessionStateProvider? interactiveSessionStateProvider, string userDataPath, UserProfileOperationService profileOperationService, Func<bool>? loadGames = null)
+    internal ProfileCommandHandler(AgentRegistration registration, ControlServiceClient controlServiceClient, IInteractiveSessionStateProvider? interactiveSessionStateProvider, string userDataPath, UserProfileOperationService profileOperationService, Func<bool>? loadGames = null, Func<bool>? refreshDisplaySnapshot = null)
     {
         _loadGames = loadGames ?? GameLibrary.LoadGamesInBackground;
+        _refreshDisplaySnapshot = refreshDisplaySnapshot ?? (() => ProfileRepository.TryUpdateActiveProfile(out _));
         _registration = registration ?? throw new ArgumentNullException(nameof(registration));
         _controlServiceClient = controlServiceClient ?? throw new ArgumentNullException(nameof(controlServiceClient));
         _interactiveSessionStateProvider = interactiveSessionStateProvider ?? new WtsInteractiveSessionStateProvider();
@@ -232,23 +236,32 @@ public sealed class ProfileCommandHandler
                     return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.InvalidRequest, Message = "The profile list request is invalid." };
                 }
             }
-            ProfileRepository.RefreshDisplayDetectionState();
-            ProfileRepository.UpdateActiveProfile();
-            ProfileItem? detailedProfile = ProfileRepository.AllProfiles.FirstOrDefault(profile =>
+            if (listRequest.RefreshCurrentLayout)
+            {
+                bool? captured = await RunDisplayCaptureRequestAsync(_refreshDisplaySnapshot, cancellationToken).ConfigureAwait(false);
+                if (!captured.HasValue)
+                    return new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The display capture queue is full. Please try again shortly." };
+                if (!captured.Value)
+                    return new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current display configuration could not be captured. The previous snapshot has been retained." };
+            }
+            ProfileItem[] savedProfiles = ProfileRepository.GetProfilesForClientSnapshot();
+            DisplayDetectionSnapshot displaySnapshot = ProfileRepository.GetDisplaySnapshot();
+            ProfileItem? activeProfile = displaySnapshot.Profile;
+            ProfileItem? detailedProfile = savedProfiles.FirstOrDefault(profile =>
                 !string.IsNullOrWhiteSpace(listRequest.DetailedProfileId) && string.Equals(profile.UUID, listRequest.DetailedProfileId, StringComparison.OrdinalIgnoreCase));
             if (detailedProfile == null && listRequest.IncludeActiveProfileDetail)
-                detailedProfile = ProfileRepository.AllProfiles.FirstOrDefault(ProfileRepository.IsActiveProfile);
+                detailedProfile = savedProfiles.FirstOrDefault(profile => activeProfile != null && profile.Equals(activeProfile));
             return new ControlResponse
             {
                 IsSuccessful = true,
                 Message = "Profiles returned.",
                 ProfileList = new ProfileListResult
                 {
-                    SavedProfiles = ProfileRepository.AllProfiles.Select(profile => CreateDisplayProfileView(profile,
+                    SavedProfiles = savedProfiles.Select(profile => CreateDisplayProfileView(profile,
                         includeDetailedLayout: ReferenceEquals(profile, detailedProfile),
-                        includeDesktopIcon: ReferenceEquals(profile, detailedProfile))).ToArray(),
-                    CurrentLayout = ProfileRepository.CurrentProfile == null ? null : CreateDisplayProfileView(ProfileRepository.CurrentProfile, false,
-                        listRequest.IncludeCurrentLayoutDetail || (listRequest.IncludeActiveProfileDetail && detailedProfile == null))
+                        includeDesktopIcon: ReferenceEquals(profile, detailedProfile), activeProfile: activeProfile, displaySnapshot: displaySnapshot)).ToArray(),
+                    CurrentLayout = activeProfile == null ? null : CreateDisplayProfileView(activeProfile, false,
+                        listRequest.IncludeCurrentLayoutDetail || (listRequest.IncludeActiveProfileDetail && detailedProfile == null), displaySnapshot: displaySnapshot)
                 }
             };
         }
@@ -759,16 +772,16 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The display profile name is invalid or already in use." };
             }
 
-            ProfileRepository.RefreshDisplayDetectionState();
-            ProfileRepository.UpdateActiveProfile();
-            ProfileItem? profile = ProfileRepository.CurrentProfile;
-            if (profile == null)
+            ProfileItem profile = new ProfileItem { Name = createRequest.Name };
+            bool? saved = await RunDisplayCaptureRequestAsync(() =>
             {
-                return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current display configuration could not be captured." };
-            }
-
-            profile.Name = createRequest.Name;
-            return ProfileRepository.AddProfile(profile)
+                if (!profile.CreateProfileFromCurrentDisplaySettings() || !ProfileRepository.AddProfile(profile)) return false;
+                ProfileRepository.PublishCapturedProfile(profile);
+                return true;
+            }, cancellationToken).ConfigureAwait(false);
+            if (!saved.HasValue)
+                return new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The display capture queue is full. Please try again shortly." };
+            return saved.Value
                 ? SuccessfulResourceChange("Display profile created.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be saved." };
         }
@@ -813,7 +826,10 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ProfileNotFound, Message = "The requested display profile does not exist." };
             }
 
-            return ProfileRepository.CopyCurrentLayoutToProfile(profile)
+            bool? updated = await RunDisplayCaptureRequestAsync(() => ProfileRepository.CopyCurrentLayoutToProfile(profile), cancellationToken).ConfigureAwait(false);
+            if (!updated.HasValue)
+                return new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The display capture queue is full. Please try again shortly." };
+            return updated.Value
                 ? SuccessfulResourceChange("Display profile updated.", RepositoryKind.DisplayProfiles, profile.UUID, SavedResourceChangeAction.Upsert)
                 : new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The display profile could not be updated." };
         }
@@ -992,6 +1008,20 @@ public sealed class ProfileCommandHandler
         };
     }
 
+    private async Task<bool?> RunDisplayCaptureRequestAsync(Func<bool> capture, CancellationToken cancellationToken)
+    {
+        if (!_displayRequestSlots.Wait(0, cancellationToken)) return null;
+        try
+        {
+            return await Task.Run(() =>
+            {
+                using IDisposable displayAccess = DisplayHardwareAccess.Enter(cancellationToken);
+                return capture();
+            }, cancellationToken).ConfigureAwait(false);
+        }
+        finally { _displayRequestSlots.Release(); }
+    }
+
     private bool TryBeginOperation(Guid operationId, CancellationTokenSource operationCancellationSource, DisplayOperationType operationType = DisplayOperationType.StartShortcut)
     {
         lock (_operationsLock)
@@ -1162,10 +1192,10 @@ public sealed class ProfileCommandHandler
         }
     }
 
-    private static DisplayProfileView CreateDisplayProfileView(ProfileItem profile, bool isSaved = true, bool includeDetailedLayout = false, bool includeDesktopIcon = false)
+    private static DisplayProfileView CreateDisplayProfileView(ProfileItem profile, bool isSaved = true, bool includeDetailedLayout = false, bool includeDesktopIcon = false, ProfileItem? activeProfile = null, DisplayDetectionSnapshot? displaySnapshot = null)
     {
         bool isValid = profile.HasUsableSavedConfiguration(out string diagnosticMessage);
-        string[] undetectedDisplays = isValid ? profile.GetUndetectedDisplayDescriptions().ToArray() : Array.Empty<string>();
+        string[] undetectedDisplays = isValid ? profile.GetUndetectedDisplayDescriptions(displaySnapshot ?? ProfileRepository.GetDisplaySnapshot()).ToArray() : Array.Empty<string>();
         GDI_DISPLAY_SETTING? primaryDisplay = profile.WindowsDisplayConfig.GdiDisplaySettings
             .Select(display => display.Value)
             .FirstOrDefault(display => display.IsPrimary);
@@ -1185,7 +1215,7 @@ public sealed class ProfileCommandHandler
             PrimaryDisplayWidth = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsWidth,
             PrimaryDisplayHeight = primaryDisplay == null ? 0 : (int)primaryDisplay.Value.DeviceMode.PixelsHeight,
             IsSaved = isSaved,
-            IsActive = isSaved && ProfileRepository.IsActiveProfile(profile),
+            IsActive = isSaved && activeProfile != null && profile.Equals(activeProfile),
             IsValid = isValid,
             DiagnosticMessage = diagnosticMessage ?? string.Empty,
             Settings = new DisplayProfileSettings

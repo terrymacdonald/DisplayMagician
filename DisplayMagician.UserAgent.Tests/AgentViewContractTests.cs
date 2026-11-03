@@ -11,6 +11,7 @@ public sealed class AgentViewContractTests
     public void ProfileListRequest_DefaultsToCompactList()
     {
         ProfileListRequest request = new ProfileListRequest();
+        Assert.False(request.RefreshCurrentLayout);
 
         Assert.Equal(string.Empty, request.DetailedProfileId);
         Assert.False(request.IncludeActiveProfileDetail);
@@ -22,6 +23,7 @@ public sealed class AgentViewContractTests
     {
         ProfileListRequest request = new ProfileListRequest
         {
+            RefreshCurrentLayout = true,
             DetailedProfileId = "saved-profile",
             IncludeActiveProfileDetail = true,
             IncludeCurrentLayoutDetail = false
@@ -30,6 +32,7 @@ public sealed class AgentViewContractTests
         ProfileListRequest? roundTripped = JsonSerializer.Deserialize<ProfileListRequest>(JsonSerializer.Serialize(request));
 
         Assert.NotNull(roundTripped);
+        Assert.True(roundTripped.RefreshCurrentLayout);
         Assert.Equal("saved-profile", roundTripped!.DetailedProfileId);
         Assert.True(roundTripped.IncludeActiveProfileDetail);
         Assert.False(roundTripped.IncludeCurrentLayoutDetail);

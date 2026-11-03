@@ -56,6 +56,18 @@
 - Represent operation progress and user decisions with the shared operation contracts. A pending decision must be answerable by any authorised client for that user; where a recovery decision expires, preserve the agreed default of `Continue` unless the user changes that policy.
 - A new remote device may request pairing but is not authorised to approve itself or receive user status. A pairing request for a user may be approved or rejected by that user's local WinForms application or any already-paired authorised client device for that same user; ControlService remains the source of truth for the resulting device/user/capability association.
 
+## Display detection and hardware coordination
+- See [Docs/DISPLAY_DETECTION.md](Docs/DISPLAY_DETECTION.md) for the fresh-read/snapshot boundaries, lock order, migration and validation limits.
+- UserAgent owns runtime display capture, comparison, application and restoration. Enter DisplayHardwareAccess for synchronous hardware phases; when both locks are needed, acquire hardware access before the repository metadata lock. Never hold the monitor across await or for a game's running lifetime.
+- Use fresh reads within the coordinated phase before decisions to skip or apply settings, and before capture/save/recovery. Windows display notifications are refresh hints and do not guarantee coverage of vendor settings. Client snapshots must never become authority for hardware decisions.
+- Publish layout and connectivity together only after a complete successful capture. Retain the previous completed snapshot on failure; enumeration failure must not be interpreted as a valid empty/disconnected topology.
+- Ordinary client lists use completed snapshots. ProfileListRequest.RefreshCurrentLayout explicitly requests fresh capture; keep cancellation/status capacity available when native capture requests queue. Preserve existing competing-apply busy behaviour unless a policy change is approved.
+- Constructors, JSON definition loading, validation for client views and preview rendering must be data-only. Do not call GetLibrary, IsInstalled or another live-library accessor from those paths: even an availability check can initialize native hardware. Use portable model defaults and the supplied completed detection snapshot, including Intel hidden-monitor advisories.
+- Keep native driver order, wake-up steps, fallback techniques and configured delays. Required grouping failures are fatal; optional setting failures are warnings. Honour wrapper bool results and log success only after an accepted operation. Preserve top-level contains-any flags for Eyefinity, Surround and Combined Display.
+- Add regression coverage for coordination, failed/partial captures, snapshot isolation, vendor-only changes and rejected native writes. Use substituted native callbacks for automated write tests; retain real-device/VideoInfo validation on the manual checklist and do not claim unit tests establish compatibility with all drivers.
+
+- Intel persisted identities use the model tuple plus PCI bus/device/function, with per-adapter display keys. Preserve the version-5 migration and original-file backup. Profiles missing saved PCI location must require recapture before display writes; do not reintroduce model-only matching.
+
 ## Logging and error handling
 - Use the project NLog convention: `ClassName/MethodName: descriptive message`.
 - Include useful operational context in logs, such as the affected profile, path, setting, or action. Pass the exception to NLog when one exists.

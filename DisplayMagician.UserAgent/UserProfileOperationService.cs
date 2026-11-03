@@ -22,24 +22,21 @@ public class UserProfileOperationService
 
     internal virtual UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot)
     {
-        // External Windows settings changes do not invalidate the repository caches.
-        // Refresh before deciding whether a shortcut can skip applying its profiles.
-        if (!ProfileRepository.TryUpdateActiveProfile(out DisplayConfigurationResult currentDisplayCapture))
-            throw new DisplayConfigurationCaptureException(currentDisplayCapture);
-        AudioProfileRepository.UpdateActiveAudioProfile();
-        string displayId = ProfileRepository.CurrentProfile?.UUID ?? string.Empty;
-        string audioId = AudioProfileRepository.CurrentAudioProfile?.UUID ?? string.Empty;
+        string displayId;
         string displayJson = string.Empty;
-        string audioJson = string.Empty;
-        if (captureDisplaySnapshot)
+        using (DisplayHardwareAccess.Enter())
         {
-            ProfileItem display = new ProfileItem();
-            DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
-            diagnostics.Result.IsCapture = true;
-            if (!display.CreateProfileFromCurrentDisplaySettings(true, diagnostics))
-                throw new DisplayConfigurationCaptureException(diagnostics.Result);
-            displayJson = SerializeDisplayRecoveryProfile(display);
+            if (!ProfileRepository.TryUpdateActiveProfile(out DisplayConfigurationResult currentDisplayCapture,
+                captureWallpaper: captureDisplaySnapshot))
+                throw new DisplayConfigurationCaptureException(currentDisplayCapture);
+            ProfileItem? display = ProfileRepository.GetActiveProfile();
+            displayId = display?.UUID ?? string.Empty;
+            if (captureDisplaySnapshot && display != null)
+                displayJson = SerializeDisplayRecoveryProfile(display);
         }
+        AudioProfileRepository.UpdateActiveAudioProfile();
+        string audioId = AudioProfileRepository.CurrentAudioProfile?.UUID ?? string.Empty;
+        string audioJson = string.Empty;
         if (captureAudioSnapshot)
         {
             AudioProfileItem audio = new AudioProfileItem();
@@ -71,7 +68,7 @@ public class UserProfileOperationService
         try
         {
             profile = !string.IsNullOrWhiteSpace(snapshotJson)
-                ? Newtonsoft.Json.JsonConvert.DeserializeObject<ProfileItem>(snapshotJson, RecoveryJsonSettings)
+                ? Newtonsoft.Json.JsonConvert.DeserializeObject<ProfileItem>(ConfigMigrationRunner.MigrateDisplayRecoveryJson(snapshotJson), RecoveryJsonSettings)
                 : ProfileRepository.AllProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
         }
         catch (Newtonsoft.Json.JsonException ex)

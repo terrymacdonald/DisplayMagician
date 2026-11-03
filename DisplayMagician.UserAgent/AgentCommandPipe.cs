@@ -30,7 +30,7 @@ public sealed class AgentCommandServer
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
-    private const int MaximumConnectedCommandClients = 4;
+    internal const int MaximumConnectedCommandClients = 4;
     private readonly string _pipeName;
     private readonly Func<NamedPipeServerStream> _createPipe;
     private readonly SemaphoreSlim _connectedClientSlots = new SemaphoreSlim(MaximumConnectedCommandClients, MaximumConnectedCommandClients);

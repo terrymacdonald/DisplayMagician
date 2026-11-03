@@ -45,7 +45,7 @@ public sealed class NvidiaConfigurationReviewTests
     }
 
     [Fact]
-    public void CachedMatchSkipsUnnecessaryTopologyWritesAndPreparation()
+    public void LiveMatchSkipsUnnecessaryTopologyWritesAndPreparation()
     {
         NVIDIA_MOSAIC_CONFIG desired = Mosaic(true);
         Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(desired, desired,
@@ -54,7 +54,7 @@ public sealed class NvidiaConfigurationReviewTests
     }
 
     [Fact]
-    public void MissingCachedGridsCannotJustifySkippingRequestedCreation()
+    public void MissingLiveGridsCannotJustifySkippingRequestedCreation()
     {
         NVIDIA_MOSAIC_CONFIG desired = Mosaic(true);
         NVIDIA_MOSAIC_CONFIG cached = desired;
@@ -68,7 +68,7 @@ public sealed class NvidiaConfigurationReviewTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void CachedAggregateFlagControlsRequiredRemoval(bool enabled)
+    public void LiveAggregateFlagControlsRequiredRemoval(bool enabled)
     {
         int removals = 0;
         Assert.True(NVIDIALibrary.ApplyMosaicConfiguration(Mosaic(false), Mosaic(enabled),

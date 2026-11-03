@@ -70,6 +70,7 @@ namespace DisplayMagician.UserAgent.Runtime
         private static List<ProfileItem> _allProfiles = new List<ProfileItem>();
         private static bool _profilesLoaded = false;
         private static ProfileItem? _currentProfile;
+        private static DisplayDetectionSnapshot _displaySnapshot = new DisplayDetectionSnapshot(null, Array.Empty<string>());
         private static List<string> _connectedDisplayIdentifiers = new List<string>();
 
         private static volatile bool _userChangingProfiles = false;
@@ -81,7 +82,7 @@ namespace DisplayMagician.UserAgent.Runtime
         public static string AppIconPath = System.IO.Path.Combine(AppDataPath, $"Icons");
         public static string AppDisplayMagicianIconFilename = System.IO.Path.Combine(AppIconPath, @"DisplayMagician.ico");
         private static string AppProfileStoragePath = System.IO.Path.Combine(AppDataPath, $"Profiles");
-        private static string _profileFileVersion = "4";
+        private static string _profileFileVersion = ConfigMigrationRunner.DisplayProfileVersion;
         private static readonly string _profileStorageJsonFileName = "DisplayProfiles.json";
         private static string _profileStorageJsonFullFileName = System.IO.Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
 
@@ -140,15 +141,13 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             get
             {
-                if (_currentProfile == null)
-                    UpdateActiveProfile();
-                return _currentProfile;
+                return Volatile.Read(ref _currentProfile);
             }
             set
             {
                 if (value is ProfileItem)
                 {
-                    _currentProfile = value;
+                    PublishDisplayState(value);
                     // And if we have the _originalBitmap we can also save the Bitmap overlay, but only if the ProfileToUse is set
                     //if (_originalBitmap is Bitmap)
                     //    _shortcutBitmap = ToBitmapOverlay(_originalBitmap, ProfileToUse.ProfileTightestBitmap, 256, 256);
@@ -178,12 +177,7 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             get
             {
-                if (_connectedDisplayIdentifiers.Count == 0)
-                    // Load the Profiles from storage if they need to be
-                    _connectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
-
-
-                return _connectedDisplayIdentifiers;
+                return Volatile.Read(ref _connectedDisplayIdentifiers);
             }
             set
             {
@@ -217,7 +211,10 @@ namespace DisplayMagician.UserAgent.Runtime
         internal static RepositorySnapshot GetSnapshot()
         {
             lock (_repositoryLock)
+            {
+                ConfigMigrationRunner.MigrateDisplayProfilesFile(_profileStorageJsonFullFileName);
                 return AtomicFile.GetSnapshot(_profileStorageJsonFullFileName, RepositoryKind.DisplayProfiles);
+            }
         }
 
         internal static RepositoryCommitResult CommitSnapshot(RepositoryCommitRequest request)
@@ -226,6 +223,13 @@ namespace DisplayMagician.UserAgent.Runtime
                 throw new ArgumentException("A display-profile repository is required.", nameof(request));
             lock (_repositoryLock)
             {
+                DisplayMagician.ConfigurationDefinitions.RepositoryDocumentValidation.Validate(request.Json, request.Repository);
+                ConfigMigrationRunner.MigrateDisplayProfilesFile(_profileStorageJsonFullFileName);
+                request = new RepositoryCommitRequest
+                {
+                    Repository = request.Repository, ExpectedRevision = request.ExpectedRevision,
+                    Json = ConfigMigrationRunner.MigrateDisplayProfilesJson(request.Json)
+                };
                 ProfileFile validatedFile = default;
                 RepositoryCommitResult result = AtomicFile.CommitSnapshot(_profileStorageJsonFullFileName, request, json =>
                 {
@@ -244,7 +248,6 @@ namespace DisplayMagician.UserAgent.Runtime
                     // A direct runtime save can precede the next lazy load. Keep the committed
                     // definitions available so that save cannot overwrite them with an empty cache.
                     _allProfiles = validatedFile.Profiles!;
-                    _currentProfile = null;
                     _profilesLoaded = false;
                 }
                 return result;
@@ -266,6 +269,7 @@ namespace DisplayMagician.UserAgent.Runtime
                 _profileStorageJsonFullFileName = Path.Combine(AppProfileStoragePath, _profileStorageJsonFileName);
                 _allProfiles = new List<ProfileItem>();
                 _currentProfile = null;
+                Volatile.Write(ref _displaySnapshot, new DisplayDetectionSnapshot(null, Array.Empty<string>()));
                 _profilesLoaded = false;
                 Directory.CreateDirectory(AppProfileStoragePath);
             }
@@ -344,7 +348,6 @@ namespace DisplayMagician.UserAgent.Runtime
                 }
 
                 // Refresh the profiles to see whats valid
-                RefreshDisplayDetectionState();
 
 
                 //Doublecheck it's been added
@@ -420,8 +423,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
                     DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
-                    RefreshDisplayDetectionState();
-                    UpdateActiveProfile();
+                        UpdateActiveProfile();
                     return true;
                 }
                 else if (numRemoved == 0)
@@ -494,8 +496,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
                     DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
-                    RefreshDisplayDetectionState();
-                    UpdateActiveProfile();
+                        UpdateActiveProfile();
                     return true;
                 }
                 else if (numRemoved == 0)
@@ -569,8 +570,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
 
                     DeleteUnusedProfileWallpapers(wallpaperPathsToRemove);
-                    RefreshDisplayDetectionState();
-                    UpdateActiveProfile();
+                        UpdateActiveProfile();
                     return true;
                 }
                 else if (numRemoved == 0)
@@ -761,7 +761,6 @@ namespace DisplayMagician.UserAgent.Runtime
                 string oldProfileName = profile.Name;
                 profile.Name = GetValidFilename(renamedName);
 
-                RefreshDisplayDetectionState();
 
                 // If it's been added to the list of AllProfiles
                 // then we also need to reproduce the Icons
@@ -788,8 +787,9 @@ namespace DisplayMagician.UserAgent.Runtime
             => TryUpdateActiveProfile(out _);
 
         internal static bool TryUpdateActiveProfile(out DisplayConfigurationResult captureResult,
-            Func<ProfileItem, DisplayConfigurationDiagnostics, bool>? capture = null)
+            Func<ProfileItem, DisplayConfigurationDiagnostics, bool>? capture = null, bool captureWallpaper = false)
         {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
             DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
             captureResult = diagnostics.Result;
             captureResult.IsCapture = true;
@@ -804,7 +804,7 @@ namespace DisplayMagician.UserAgent.Runtime
             // Get the display settings
             try
             {
-                if (!(capture != null ? capture(profile, diagnostics) : profile.CreateProfileFromCurrentDisplaySettings(false, diagnostics))) return false;
+                if (!(capture != null ? capture(profile, diagnostics) : profile.CreateProfileFromCurrentDisplaySettings(captureWallpaper, diagnostics)) || !diagnostics.Result.IsSuccessful) return false;
             }
             catch (Exception ex)
             {
@@ -813,22 +813,53 @@ namespace DisplayMagician.UserAgent.Runtime
                 return false;
             }
 
-            if (_profilesLoaded && _allProfiles.Count > 0)
+            lock (_repositoryLock)
             {
-
                 foreach (ProfileItem loadedProfile in ProfileRepository.AllProfiles)
                 {
-                    if (loadedProfile.Equals(profile))
+                    ProfileItem comparison = loadedProfile;
+                    if (profile.WindowsDisplayConfig.DisplayAdapters.Count > 0 && loadedProfile.WindowsDisplayConfig.DisplayAdapters.Any(adapter =>
+                        !profile.WindowsDisplayConfig.DisplayAdapters.TryGetValue(adapter.Key, out string? name) || !string.Equals(name, adapter.Value, StringComparison.Ordinal)))
                     {
-                        _currentProfile = loadedProfile;
+                        comparison = JsonConvert.DeserializeObject<ProfileItem>(
+                            UserProfileOperationService.SerializeDisplayRecoveryProfile(loadedProfile), UserProfileOperationService.RecoveryJsonSettings)!;
+                        PatchLoadedProfile(comparison, profile.WindowsDisplayConfig.DisplayAdapters);
+                    }
+                    if (comparison.Equals(profile))
+                    {
+                        profile.UUID = loadedProfile.UUID;
+                        profile.Name = loadedProfile.Name;
+                        PublishDisplayState(profile);
                         SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The profile '{loadedProfile.Name}' is currently active (in use now).");
                         return true;
                     }
                 }
             }
             SharedLogger.logger.Debug($"ProfileRepository/UpdateActiveProfile: The current profile is a new profile that doesn't already exist in the Profile Repository.");
-            _currentProfile = profile;
+            PublishDisplayState(profile);
             return true;
+        }
+
+        internal static DisplayDetectionSnapshot GetDisplaySnapshot() => Volatile.Read(ref _displaySnapshot);
+
+        private static void PublishDisplayState(ProfileItem profile)
+        {
+            DisplayDetectionSnapshot snapshot = new DisplayDetectionSnapshot(profile, _connectedDisplayIdentifiers);
+            Volatile.Write(ref _currentProfile, profile);
+            Volatile.Write(ref _displaySnapshot, snapshot);
+        }
+
+        internal static void PublishCapturedProfile(ProfileItem captured)
+        {
+            // Stored definitions can be edited/replaced independently of client snapshots.
+            ProfileItem? snapshot = JsonConvert.DeserializeObject<ProfileItem>(
+                UserProfileOperationService.SerializeDisplayRecoveryProfile(captured), UserProfileOperationService.RecoveryJsonSettings);
+            if (snapshot != null) PublishDisplayState(snapshot);
+        }
+
+        internal static ProfileItem[] GetProfilesForClientSnapshot()
+        {
+            lock (_repositoryLock) return AllProfiles.ToArray();
         }
 
         public static ProfileItem? GetActiveProfile()
@@ -913,6 +944,7 @@ namespace DisplayMagician.UserAgent.Runtime
                     string json = "";
                     try
                     {
+                        ConfigMigrationRunner.MigrateDisplayProfilesFile(_profileStorageJsonFullFileName);
                         json = File.ReadAllText(_profileStorageJsonFullFileName, Encoding.Unicode);
                         if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
                         {
@@ -923,7 +955,8 @@ namespace DisplayMagician.UserAgent.Runtime
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Tried to read the JSON file {_profileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
+                        SharedLogger.logger.Error(ex, $"ProfileRepository/LoadProfiles: Could not read or migrate {_profileStorageJsonFullFileName}; preserving the original file.");
+                        return false;
                     }
 
                     // Temporarily removing as not needed at present. May need this for future format migrations.
@@ -963,7 +996,7 @@ namespace DisplayMagician.UserAgent.Runtime
                             // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                             foreach (ProfileItem profile in _allProfiles)
                             {
-                                PatchLoadedProfile(profile);
+                                DisplayConfigurationNormalizer.Normalize(profile);
                             }
 
                         }
@@ -1012,7 +1045,7 @@ namespace DisplayMagician.UserAgent.Runtime
                                 // We have to patch the adapter IDs after we load a display config because Windows changes them after every reboot :(
                                 foreach (ProfileItem profile in _allProfiles)
                                 {
-                                    PatchLoadedProfile(profile);
+                                    DisplayConfigurationNormalizer.Normalize(profile);
                                 }
 
                             }
@@ -1067,7 +1100,6 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 // Update the current active profile
                 //UpdateActiveProfile();
-                RefreshDisplayDetectionState();
 
                 return true;
             }
@@ -1078,7 +1110,6 @@ namespace DisplayMagician.UserAgent.Runtime
             lock (_repositoryLock)
             {
                 _allProfiles = new List<ProfileItem>();
-                _currentProfile = null;
 
                 if (string.IsNullOrWhiteSpace(json))
                     return;
@@ -1095,13 +1126,13 @@ namespace DisplayMagician.UserAgent.Runtime
                         ObjectCreationHandling = ObjectCreationHandling.Replace
                     };
 
-                    ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(json, serializerSettings);
+                    ProfileFile? profileFile = JsonConvert.DeserializeObject<ProfileFile>(ConfigMigrationRunner.MigrateDisplayProfilesJson(json), serializerSettings);
                     if (profileFile is not ProfileFile loadedProfileFile || loadedProfileFile.Profiles == null)
                         throw new InvalidDataException("The User Agent returned display profiles in an unsupported format.");
 
                     _allProfiles = loadedProfileFile.Profiles;
                     foreach (ProfileItem profile in _allProfiles)
-                        PatchLoadedProfile(profile);
+                        DisplayConfigurationNormalizer.Normalize(profile);
 
                     _allProfiles.Sort();
                 }
@@ -1113,17 +1144,19 @@ namespace DisplayMagician.UserAgent.Runtime
             }
         }
 
-        private static void PatchLoadedProfile(ProfileItem profile)
+        private static void PatchLoadedProfile(ProfileItem profile, IReadOnlyDictionary<ulong, string>? currentAdapters = null)
         {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
             DisplayConfigurationNormalizer.Normalize(profile);
 
             WINDOWS_DISPLAY_CONFIG windowsDisplayConfig = profile.WindowsDisplayConfig;
             NVIDIA_DISPLAY_CONFIG nvidiaDisplayConfig = profile.NVIDIADisplayConfig;
-            WinLibrary winLibrary = WinLibrary.GetLibrary();
-            Dictionary<ulong, ulong> adapterOldToNewMap = winLibrary.GetAdapterIdMap(windowsDisplayConfig);
+            currentAdapters ??= WinLibrary.GetLibrary().GetAllAdapterIDs();
+            Dictionary<ulong, ulong> adapterOldToNewMap = WinLibrary.GetAdapterIdMap(windowsDisplayConfig, currentAdapters);
 
-            NVIDIALibrary.GetLibrary().PatchNVIDADisplayConfig(ref nvidiaDisplayConfig, adapterOldToNewMap);
-            winLibrary.PatchWindowsDisplayConfig(ref windowsDisplayConfig, adapterOldToNewMap);
+            if (nvidiaDisplayConfig.PhysicalAdapters.Count > 0)
+                NVIDIALibrary.GetLibrary().PatchNVIDADisplayConfig(ref nvidiaDisplayConfig, adapterOldToNewMap);
+            WinLibrary.PatchWindowsDisplayConfig(ref windowsDisplayConfig, adapterOldToNewMap, currentAdapters);
 
             profile.NVIDIADisplayConfig = nvidiaDisplayConfig;
             profile.WindowsDisplayConfig = windowsDisplayConfig;
@@ -1137,32 +1170,50 @@ namespace DisplayMagician.UserAgent.Runtime
         }
 
         public static bool CopyCurrentLayoutToProfile(ProfileItem profile)
+            => CaptureLayoutToProfile(profile);
+
+        internal static bool CaptureLayoutToProfile(ProfileItem profile, Func<ProfileItem, bool>? capture = null)
         {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
+            if (profile == null) return false;
+            ProfileItem original;
+            ProfileItem captured;
+            string previousConfiguration;
             lock (_repositoryLock)
             {
-                if (profile == null) return false;
-                string profileId = profile.UUID;
-                ProfileItem? currentProfile = _allProfiles.FirstOrDefault(item => string.Equals(item.UUID, profileId, StringComparison.OrdinalIgnoreCase));
-                // Another client may have replaced or deleted the profile since it was selected.
-                if (currentProfile == null) return false;
-                profile = currentProfile;
+                ProfileItem? current = _allProfiles.FirstOrDefault(item => string.Equals(item.UUID, profile.UUID, StringComparison.OrdinalIgnoreCase));
+                if (current == null) return false;
+                original = current;
+                previousConfiguration = UserProfileOperationService.SerializeDisplayRecoveryProfile(original);
+                captured = JsonConvert.DeserializeObject<ProfileItem>(previousConfiguration, UserProfileOperationService.RecoveryJsonSettings)!;
+                captured.SavedProfileIconCacheFilename = original.SavedProfileIconCacheFilename;
+            }
 
-                SharedLogger.logger.Debug($"ProfileRepository/CopyCurrentLayoutToProfile: Updating the profile {profile.Name} with the layout that is currently active (in use now).");
-
-                List<string> previousWallpaperPaths = profile.WallpaperConfiguration.MonitorWallpapers
-                    .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)).ToList();
-                string previousConfiguration = UserProfileOperationService.SerializeDisplayRecoveryProfile(profile);
-                if (!profile.CreateProfileFromCurrentDisplaySettings() || !profile.PreSave() || !SaveProfiles())
+            // Capture into a private candidate without holding the metadata lock. Lists
+            // can keep showing completed data while this hardware phase is in progress.
+            if (!(capture != null ? capture(captured) : captured.CreateProfileFromCurrentDisplaySettings())) return false;
+            lock (_repositoryLock)
+            {
+                int index = _allProfiles.FindIndex(item => string.Equals(item.UUID, original.UUID, StringComparison.OrdinalIgnoreCase));
+                if (index < 0 || !ReferenceEquals(_allProfiles[index], original) ||
+                    !string.Equals(previousConfiguration, UserProfileOperationService.SerializeDisplayRecoveryProfile(original), StringComparison.Ordinal))
                 {
-                    JsonConvert.PopulateObject(previousConfiguration, profile, UserProfileOperationService.RecoveryJsonSettings);
+                    SharedLogger.logger.Warn("ProfileRepository/CaptureLayoutToProfile: Profile {0} changed during capture; retaining the newer definition.", original.UUID);
                     return false;
                 }
-
-                // The new profile snapshot is durable; old copies can be removed only if
-                // no saved profile still refers to them.
-                DeleteUnusedProfileWallpapers(previousWallpaperPaths);
+                if (!captured.PreSave()) return false;
+                List<ProfileItem> previous = _allProfiles;
+                _allProfiles = new List<ProfileItem>(previous);
+                _allProfiles[index] = captured;
+                if (!SaveProfiles())
+                {
+                    _allProfiles = previous;
+                    return false;
+                }
+                PublishCapturedProfile(captured);
+                DeleteUnusedProfileWallpapers(original.WallpaperConfiguration.MonitorWallpapers
+                    .Select(monitor => monitor.WallpaperFilePath).Where(path => !string.IsNullOrWhiteSpace(path)));
                 return true;
-
             }
         }
 
@@ -1320,6 +1371,9 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 try
                 {
+                    // Refuse an unsupported stored version before replacing it from the runtime cache.
+                    if (_userAgentRepositoryConnection == null)
+                        ConfigMigrationRunner.MigrateDisplayProfilesFile(_profileStorageJsonFullFileName);
                     SharedLogger.logger.Debug($"ProfileRepository/SaveProfiles: Converting the objects to JSON format.");
 
                     JsonSerializerSettings mySerializerSettings = new JsonSerializerSettings
@@ -1475,13 +1529,42 @@ namespace DisplayMagician.UserAgent.Runtime
         }
 
         public static void RefreshDisplayDetectionState()
-        {
-            ConnectedDisplayIdentifiers = GetAllConnectedDisplayIdentifiers();
-        }
+            => TryRefreshDisplayDetectionState(new DisplayConfigurationDiagnostics());
 
+        internal static bool TryRefreshDisplayDetectionState(DisplayConfigurationDiagnostics diagnostics,
+            Func<(List<string> Identifiers, bool Failed)>? read = null)
+        {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
+            try
+            {
+                bool failed;
+                List<string> identifiers;
+                if (read == null) identifiers = ReadConnectedDisplayIdentifiers(out failed);
+                else (identifiers, failed) = read();
+                if (failed)
+                {
+                    diagnostics.Add("Capture", "Display", "Connected displays could not be completely enumerated; retaining the completed snapshot.", DisplayConfigurationSeverity.Fatal);
+                    return false;
+                }
+                ConnectedDisplayIdentifiers = identifiers;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                diagnostics.Add("Capture", "Display", "Could not enumerate connected displays: " + ex.Message, DisplayConfigurationSeverity.Fatal, exception: ex);
+                return false;
+            }
+        }
 
         public static List<string> GetAllConnectedDisplayIdentifiers()
         {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
+            return ReadConnectedDisplayIdentifiers(out _);
+        }
+
+        private static List<string> ReadConnectedDisplayIdentifiers(out bool failed)
+        {
+            failed = false;
             List<string> allConnectedDisplayIdentifiers = new List<string>();
 
             try
@@ -1495,16 +1578,19 @@ namespace DisplayMagician.UserAgent.Runtime
                 if (nvidiaLibrary.IsInstalled)
                 {
                     allConnectedDisplayIdentifiers.AddRange(nvidiaLibrary.GetAllConnectedDisplayIdentifiers(out bool failure));
+                    failed |= failure;
                 }
 
                 if (amdLibrary.IsInstalled)
                 {
                     allConnectedDisplayIdentifiers.AddRange(amdLibrary.GetAllConnectedDisplayIdentifiers(out bool failure));
+                    failed |= failure;
                 }
 
                 if (intelLibrary.IsInstalled) 
                 {
                     allConnectedDisplayIdentifiers.AddRange(intelLibrary.GetAllConnectedDisplayIdentifiers(out bool failure));
+                    failed |= failure;
                 } 
 
                 allConnectedDisplayIdentifiers.AddRange(winLibrary.GetAllConnectedDisplayIdentifiers());
@@ -1514,7 +1600,8 @@ namespace DisplayMagician.UserAgent.Runtime
             }
             catch (Exception ex)
             {
-                SharedLogger.logger.Error(ex, $"ProfileRepository/GetAllConnectedDisplayIdentifiers: Exception within GetAllConnectedDisplayIdentifiers function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
+                failed = true;
+                SharedLogger.logger.Error(ex, $"ProfileRepository/ReadConnectedDisplayIdentifiers: Exception within GetAllConnectedDisplayIdentifiers function - {ex.Message}: {ex.StackTrace} - {ex.InnerException}");
             }
 
             
@@ -1524,6 +1611,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static List<string> GetCurrentDisplayIdentifiers()
         {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
             List<string> currentDisplayIdentifiers = new List<string>();           
 
             try
@@ -1663,13 +1751,21 @@ namespace DisplayMagician.UserAgent.Runtime
             return uncheckedFilename;
         }
 
-        // ApplyProfile lives here so that the UI works.
+        private static bool ApplyFreshProfile(ProfileItem profile, DisplayConfigurationDiagnostics diagnostics)
+        {
+            PatchLoadedProfile(profile);
+            return profile.SetActiveWithDiagnostics(diagnostics);
+        }
+
+        // Display phases run under UserAgent hardware coordination.
         public static ApplyProfileResult ApplyProfile(ProfileItem profile)
             => ApplyProfile(profile, out _);
 
         internal static ApplyProfileResult ApplyProfile(ProfileItem profile, out DisplayConfigurationResult displayResult,
-            Func<DisplayConfigurationDiagnostics, bool>? apply = null, Action<int>? wait = null, Action? refresh = null)
+            Func<DisplayConfigurationDiagnostics, bool>? apply = null, Action<int>? wait = null, Action? refresh = null,
+            Func<DisplayConfigurationDiagnostics, bool>? refreshBeforeApply = null)
         {
+            using IDisposable displayAccess = DisplayHardwareAccess.Enter();
             DisplayConfigurationDiagnostics diagnostics = new DisplayConfigurationDiagnostics();
             displayResult = diagnostics.Result;
             wait ??= Thread.Sleep;
@@ -1702,6 +1798,15 @@ namespace DisplayMagician.UserAgent.Runtime
 
             try
             {
+                if (apply == null)
+                {
+                    // Keep one operation-local copy across configured attempts so recreated
+                    // vendor handles are reused without changing definitions or client snapshots.
+                    profile = JsonConvert.DeserializeObject<ProfileItem>(
+                        UserProfileOperationService.SerializeDisplayRecoveryProfile(profile), UserProfileOperationService.RecoveryJsonSettings)
+                        ?? throw new InvalidDataException("The display configuration could not be copied for application.");
+                }
+
                 // We start the timer just before we attempt the display change
                 stopWatch.Start();
 
@@ -1715,7 +1820,9 @@ namespace DisplayMagician.UserAgent.Runtime
                     displayResult = diagnostics.Result;
                     displayResult.ProfileId = profile.UUID;
                     displayResult.Attempt = profile.ApplyProfileCount - i + 1;
-                    if (!diagnostics.Run("Topology", "Display", () => apply != null ? apply(diagnostics) : profile.SetActiveWithDiagnostics(diagnostics), DisplayConfigurationSeverity.Fatal))
+                    if (!diagnostics.Run("Capture", "Display", () => refreshBeforeApply != null ? refreshBeforeApply(diagnostics) :
+                        apply != null || ProfileItem.RefreshDisplayLibraries(diagnostics), DisplayConfigurationSeverity.Fatal) ||
+                        !diagnostics.Run("Topology", "Display", () => apply != null ? apply(diagnostics) : ApplyFreshProfile(profile, diagnostics), DisplayConfigurationSeverity.Fatal))
                     {
                         SharedLogger.logger.Error($"ProfileRepository/ApplyProfile: Error applying the {profile.Name} Profile!");
                         result = ApplyProfileResult.Error;

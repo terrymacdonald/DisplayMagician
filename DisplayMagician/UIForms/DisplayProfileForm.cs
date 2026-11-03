@@ -96,13 +96,13 @@ namespace DisplayMagician.UIForms
             finally { if (!IsDisposed && !_lifetimeToken.IsCancellationRequested && IsHandleCreated) SetProfileActionsEnabled(true); }
         }
 
-        private async Task RefreshProfilesAsync(string selectedProfileId, CancellationToken cancellationToken, bool showCurrentLayout = false)
+        private async Task RefreshProfilesAsync(string selectedProfileId, CancellationToken cancellationToken, bool showCurrentLayout = false, bool refreshCurrentLayout = false)
         {
             if (IsDisposed || _lifetimeToken.IsCancellationRequested) return;
             int refreshVersion = ++_profileRefreshVersion;
             DisplayMagician.Contracts.ProfileListResult profiles = await _controlServiceClient.ListProfilesAsync(cancellationToken,
                 detailedProfileId: selectedProfileId, includeActiveProfileDetail: !showCurrentLayout && string.IsNullOrWhiteSpace(selectedProfileId),
-                includeCurrentLayoutDetail: showCurrentLayout);
+                includeCurrentLayoutDetail: showCurrentLayout, refreshCurrentLayout: refreshCurrentLayout);
             if (IsDisposed || Disposing || _lifetimeToken.IsCancellationRequested || refreshVersion != _profileRefreshVersion) return;
             _currentLayout = profiles.CurrentLayout;
             DisplayProfileView selected = showCurrentLayout ? _currentLayout : !string.IsNullOrWhiteSpace(selectedProfileId)
@@ -276,7 +276,7 @@ namespace DisplayMagician.UIForms
             });
         }
 
-        private async void btn_view_current_Click(object sender, EventArgs e) { await RunProfileActionAsync(() => RefreshProfilesAsync(null, _lifetimeToken, showCurrentLayout: true)); }
+        private async void btn_view_current_Click(object sender, EventArgs e) { await RunProfileActionAsync(() => RefreshProfilesAsync(null, _lifetimeToken, showCurrentLayout: true, refreshCurrentLayout: true)); }
         public void RefreshCurrentView()
         {
             if (IsDisposed || _lifetimeToken.IsCancellationRequested || !IsHandleCreated) return;
