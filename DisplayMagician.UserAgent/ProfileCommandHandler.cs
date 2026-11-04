@@ -589,7 +589,15 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = _shortcutStore.GetSnapshot() };
             }
 
-            return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = snapshotRequest.Repository == RepositoryKind.DisplayProfiles ? ProfileRepository.GetSnapshot() : AudioProfileRepository.GetSnapshot() };
+            try
+            {
+                return new ControlResponse { IsSuccessful = true, Message = "Repository snapshot returned.", RepositorySnapshot = snapshotRequest.Repository == RepositoryKind.DisplayProfiles ? ProfileRepository.GetSnapshot() : AudioProfileRepository.GetSnapshot() };
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                _logger.Warn(ex, "ProfileCommandHandler/HandleAsync: Saved profile repository {0} has an unsupported version or invalid format; preserving the file.", snapshotRequest.Repository);
+                return new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The saved profile repository has an unsupported version or invalid format; it has been preserved." };
+            }
         }
 
         if (request.MessageType == ControlMessageType.CommitRepositorySnapshot)
@@ -640,21 +648,32 @@ public sealed class ProfileCommandHandler
 
         if (request.MessageType == ControlMessageType.ListAudioProfiles)
         {
-            AudioProfileItem[] savedProfiles = AudioProfileRepository.AllAudioProfiles.ToArray();
-            AudioProfileRepository.UpdateActiveAudioProfile();
-            bool canAccessAudioSettings = AudioProfileRepository.CanAccessAudioSettings;
-            AudioProfileItem? currentProfile = AudioProfileRepository.CurrentAudioProfile;
-            return new ControlResponse
+            ControlResponse? response = null;
+            bool? captured = await RunDisplayCaptureRequestAsync(() =>
             {
-                IsSuccessful = true,
-                Message = "Audio profiles returned.",
-                AudioProfileList = new AudioProfileListResult
+                AudioProfileItem[] savedProfiles = AudioProfileRepository.AllAudioProfiles.ToArray();
+                if (!AudioProfileRepository.AudioProfilesLoaded)
                 {
-                    CanAccessAudioSettings = canAccessAudioSettings,
-                    SavedProfiles = savedProfiles.Select(profile => CreateAudioProfileView(profile, canAccessAudioSettings)).ToArray(),
-                    CurrentLayout = currentProfile == null ? null : CreateAudioProfileView(currentProfile, canAccessAudioSettings, false)
+                    response = new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The saved audio profiles could not be loaded; the file has been preserved." };
+                    return true;
                 }
-            };
+                AudioProfileRepository.UpdateActiveAudioProfile();
+                bool canAccessAudioSettings = AudioProfileRepository.CanAccessAudioSettings;
+                AudioProfileItem? currentProfile = AudioProfileRepository.CurrentAudioProfile;
+                response = new ControlResponse
+                {
+                    IsSuccessful = true,
+                    Message = "Audio profiles returned.",
+                    AudioProfileList = new AudioProfileListResult
+                    {
+                        CanAccessAudioSettings = canAccessAudioSettings,
+                        SavedProfiles = savedProfiles.Select(profile => CreateAudioProfileView(profile, canAccessAudioSettings)).ToArray(),
+                        CurrentLayout = currentProfile == null ? null : CreateAudioProfileView(currentProfile, canAccessAudioSettings, false)
+                    }
+                };
+                return true;
+            }, cancellationToken).ConfigureAwait(false);
+            return captured.HasValue ? response! : new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The hardware capture queue is full. Please try again shortly." };
         }
 
         if (request.MessageType == ControlMessageType.ApplyAudioProfile)
@@ -684,10 +703,19 @@ public sealed class ProfileCommandHandler
                 using IDisposable operationScope = SupportLogScope.BeginOperation(operationId);
                 try
                 {
-                    ControlResponse runningResponse = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Running, cancellationToken).ConfigureAwait(false);
+                    ControlResponse runningResponse = await _controlServiceClient.ReportAgentOperationStateAsync(_registration, AgentOperationState.Running, operationCancellationSource.Token).ConfigureAwait(false);
                     if (!runningResponse.IsSuccessful) throw new InvalidOperationException(runningResponse.Message);
-                    ApplyAudioProfileOperationResult result = _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, deviceWaitMilliseconds);
+                    ApplyAudioProfileOperationResult result = _userProfileOperationService.ApplyAudioProfile(audioApplyRequest.ProfileId, deviceWaitMilliseconds, operationCancellationSource.Token);
                     await PublishShortcutStatusAsync(new OperationStatusUpdate { OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile, Phase = result.IsSuccessful ? OperationPhase.Completed : OperationPhase.Failed, Message = result.IsSuccessful ? "Audio profile applied." : "Audio profile could not be applied.", IsTerminal = true, IsSuccessful = result.IsSuccessful, ErrorCode = result.IsSuccessful ? ControlErrorCode.None : ControlErrorCode.ExecutionFailed }, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (operationCancellationSource.IsCancellationRequested)
+                {
+                    await PublishShortcutStatusAsync(new OperationStatusUpdate
+                    {
+                        OperationId = operationId, OperationType = DisplayOperationType.ApplyAudioProfile,
+                        Phase = OperationPhase.Cancelled, Message = "Audio profile operation cancelled.",
+                        IsTerminal = true, ErrorCode = ControlErrorCode.None
+                    }, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -710,8 +738,14 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ValidationFailed, Message = "The audio profile name is invalid, already exists, or audio settings cannot be read." };
             }
 
+            if (!AudioProfileRepository.AudioProfilesLoaded)
+                return new ControlResponse { ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The saved audio profiles could not be loaded; the file has been preserved." };
             AudioProfileItem profile = new AudioProfileItem { Name = createRequest.Name };
-            if (!profile.CreateProfileFromCurrentAudioSettings() || !AudioProfileRepository.AddAudioProfile(profile))
+            bool? saved = await RunDisplayCaptureRequestAsync(() =>
+                profile.CreateProfileFromCurrentAudioSettings() && AudioProfileRepository.AddAudioProfile(profile), cancellationToken).ConfigureAwait(false);
+            if (!saved.HasValue)
+                return new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The hardware capture queue is full. Please try again shortly." };
+            if (!saved.Value)
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current audio settings could not be saved." };
             }
@@ -756,7 +790,11 @@ public sealed class ProfileCommandHandler
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.AudioProfileNotFound, Message = "The requested audio profile does not exist." };
             }
 
-            if (!AudioProfileRepository.CanAccessAudioSettings || !AudioProfileRepository.CopyCurrentLayoutToProfile(profile))
+            bool? updated = await RunDisplayCaptureRequestAsync(() =>
+                AudioProfileRepository.CanAccessAudioSettings && AudioProfileRepository.CopyCurrentLayoutToProfile(profile), cancellationToken).ConfigureAwait(false);
+            if (!updated.HasValue)
+                return new ControlResponse { ErrorCode = ControlErrorCode.DisplayControlBusy, Message = "The hardware capture queue is full. Please try again shortly." };
+            if (!updated.Value)
             {
                 return new ControlResponse { IsSuccessful = false, ErrorCode = ControlErrorCode.ExecutionFailed, Message = "The current audio settings could not update the audio profile." };
             }

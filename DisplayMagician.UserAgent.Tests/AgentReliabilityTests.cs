@@ -149,6 +149,53 @@ public sealed class AgentReliabilityTests : IDisposable
     }
 
     [Fact]
+    public async Task MatchingOriginalAudioStillWaitsForDisplayCompletionBeforeApplyingAudio()
+    {
+        ShortcutStore store = new(_root);
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = 0,
+            Json = "{\"Shortcuts\":[{\"UUID\":\"test\",\"Category\":2,\"ProfileUUID\":\"target-display\",\"AudioProfileUUID\":\"target-audio\"}]}" });
+        ShortcutRecoveryStore recovery = new(_root);
+        TaskCompletionSource<bool> gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<bool> started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        using FakeProfileOperations profiles = new()
+        {
+            OriginalAudioId = "target-audio", DisplayApplyGate = gate,
+            DisplayApplying = () => { Assert.True(recovery.GetPending()!.RequiresAudioRestore); started.SetResult(true); }
+        };
+        ShortcutRunner runner = new(store, new AutomaticGameDetectionRegistry(), profiles, recovery);
+        Task<ShortcutRunResult> run = runner.ApplyShortcutProfilesAsync("test", 0, CancellationToken.None);
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Empty(profiles.AudioTokens);
+        }
+        finally { gate.TrySetResult(true); }
+        Assert.Equal(ShortcutRunOutcome.Completed, (await run.WaitAsync(TimeSpan.FromSeconds(5))).Outcome);
+        Assert.Equal(2, profiles.AudioTokens.Count); // Selected audio and original audio restoration.
+        Assert.False(recovery.HasPendingRecovery());
+    }
+
+    [Fact]
+    public async Task SuccessfulAudioRecoveryDoesNotRewriteVolumesAlreadyRestoredByTheProfile()
+    {
+        ShortcutRecoveryStore recovery = new(_root);
+        recovery.Save(new ShortcutRecoveryRecord
+        {
+            RequiresAudioRestore = true, RequiresAudioVolumeRestore = true,
+            AudioProfileId = "original-audio", AudioProfileSnapshotJson = "{}",
+            AudioVolumeOverrides = new() { new("synthetic-speaker", 20, 80) }
+        });
+        using FakeProfileOperations profiles = new()
+        {
+            AudioVolumeTargets = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase) { ["synthetic-speaker"] = 50 }
+        };
+        ShortcutRunner runner = new(new ShortcutStore(_root), new AutomaticGameDetectionRegistry(), profiles, recovery);
+        Assert.True(await runner.RestorePendingRecoveryAsync(0, CancellationToken.None));
+        Assert.Equal(1, profiles.RestoreCalls);
+        Assert.False(recovery.HasPendingRecovery()); // No native volume writer is needed for a covered endpoint.
+    }
+
+    [Fact]
     public async Task ShutdownDrainsAnAcceptedDetachedAudioOperation()
     {
         AgentRegistration registration = new() { UserSid = "test-user", SessionId = 1, IsReady = true };
@@ -175,6 +222,52 @@ public sealed class AgentReliabilityTests : IDisposable
         Assert.True(client.IdleReported.Task.IsCompletedSuccessfully);
         Assert.Equal(AgentOperationState.Idle, registration.OperationState);
         Assert.Single(new OperationStatusOutbox(_root).GetPending(), update => update.IsTerminal);
+    }
+
+    [Fact]
+    public async Task ShutdownCancellationReachesAudioAndPublishesCancelledOutcome()
+    {
+        using FakeProfileOperations profiles = new() { WaitForAudioCancellation = true };
+        AgentRegistration registration = new() { UserSid = "test-user", SessionId = 1, IsReady = true };
+        ProfileCommandHandler handler = new(registration, new FakeServiceClient(), new UnlockedSession(), _root, profiles);
+        AgentAudioProfile audio = new() { Name = "Audio target" };
+        AgentAudioRepository.AudioProfilesLoaded = true;
+        AgentAudioRepository.AllAudioProfiles.Add(audio);
+        try
+        {
+            ControlResponse response = await handler.HandleAsync(new ControlEnvelope
+            {
+                MessageType = ControlMessageType.ApplyAudioProfile,
+                Payload = JsonSerializer.Serialize(new ApplyAudioProfileRequest { ProfileId = audio.UUID })
+            }, CancellationToken.None);
+            Assert.True(response.IsSuccessful);
+            await profiles.AudioStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await handler.StopAndRestoreAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            OperationStatusUpdate terminal = Assert.Single(new OperationStatusOutbox(_root).GetPending(), update => update.IsTerminal);
+            Assert.Equal(OperationPhase.Cancelled, terminal.Phase);
+            Assert.True(Assert.Single(profiles.AudioTokens).IsCancellationRequested);
+            Assert.Equal(AgentOperationState.Idle, registration.OperationState);
+        }
+        finally { await handler.StopAndRestoreAsync().WaitAsync(TimeSpan.FromSeconds(5)); }
+    }
+
+    [Fact]
+    public async Task ShortcutAudioCancellationStillRestoresWithAnUncancelledToken()
+    {
+        using CancellationTokenSource cancellation = new();
+        using FakeProfileOperations profiles = new() { AudioApplying = token => { cancellation.Cancel(); token.ThrowIfCancellationRequested(); } };
+        ShortcutStore store = new(_root);
+        store.Commit(new RepositoryCommitRequest { Repository = RepositoryKind.Shortcuts, ExpectedRevision = 0,
+            Json = "{\"Shortcuts\":[{\"UUID\":\"test\",\"Category\":2,\"AudioProfileUUID\":\"target-audio\"}]}" });
+        ShortcutRecoveryStore recovery = new(_root);
+        ShortcutRunner runner = new(store, new AutomaticGameDetectionRegistry(), profiles, recovery);
+        ShortcutRunResult result = await runner.ApplyShortcutProfilesAsync("test", 0, cancellation.Token);
+        Assert.Equal(ShortcutRunOutcome.Cancelled, result.Outcome);
+        Assert.Equal(2, profiles.AudioTokens.Count);
+        Assert.True(profiles.AudioTokens[0].IsCancellationRequested);
+        Assert.False(profiles.AudioTokens[1].CanBeCanceled);
+        Assert.Equal(1, profiles.RestoreCalls);
+        Assert.False(recovery.HasPendingRecovery());
     }
 
     [Fact]
@@ -668,12 +761,107 @@ public sealed class AgentReliabilityTests : IDisposable
         Assert.Equal("Old reference", stale.Name);
     }
 
+    [Theory]
+    [InlineData("\"999\"")]
+    [InlineData("\"0\"")]
+    [InlineData("\"-1\"")]
+    [InlineData("\"bad\"")]
+    [InlineData("\"1.5\"")]
+    [InlineData("1")]
+    [InlineData("false")]
+    public void UnsupportedAudioVersionsCannotBeLoadedImportedOrOverwritten(string version)
+    {
+        string path = Path.Combine(_root, "AudioProfiles", "AudioProfiles.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        string json = "{\"AudioProfileFileVersion\":" + version + ",\"AudioProfiles\":[],\"FutureSetting\":42}";
+        File.WriteAllText(path, json, System.Text.Encoding.Unicode);
+        File.WriteAllText(path + ".bak", "retained backup");
+        byte[] original = File.ReadAllBytes(path);
+        AgentAudioRepository.AudioProfilesLoaded = false;
+        Assert.False(AgentAudioRepository.InitialiseRepository());
+        Assert.False(AgentAudioRepository.SaveAudioProfiles());
+        Assert.Throws<System.Text.Json.JsonException>(() => AgentAudioRepository.GetSnapshot());
+        Assert.Throws<System.Text.Json.JsonException>(() => AgentAudioRepository.CommitSnapshot(new RepositoryCommitRequest
+        {
+            Repository = RepositoryKind.AudioProfiles, ExpectedRevision = 0, Json = "{\"AudioProfiles\":[]}"
+        }));
+        Assert.Throws<System.Text.Json.JsonException>(() => DisplayMagician.ConfigurationDefinitions.RepositoryDocumentValidation.Validate(json, RepositoryKind.AudioProfiles));
+        Assert.Equal(original, File.ReadAllBytes(path));
+        Assert.Equal("retained backup", File.ReadAllText(path + ".bak"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("null")]
+    [InlineData("\"\"")]
+    [InlineData("\"1\"")]
+    public void CurrentAndLegacyAudioVersionsRemainLoadable(string? version)
+    {
+        string path = Path.Combine(_root, "AudioProfiles", "AudioProfiles.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        string json = "{" + (version == null ? "" : "\"AudioProfileFileVersion\":" + version + ",") + "\"AudioProfiles\":[]}";
+        File.WriteAllText(path, json, System.Text.Encoding.Unicode);
+        AgentAudioRepository.AudioProfilesLoaded = false;
+        Assert.True(AgentAudioRepository.InitialiseRepository());
+        Assert.Empty(AgentAudioRepository.AllAudioProfiles);
+        DisplayMagician.ConfigurationDefinitions.RepositoryDocumentValidation.Validate(json, RepositoryKind.AudioProfiles);
+    }
+
+    [Fact]
+    public void AudioRenameRefusesAFileReplacedByANewerVersionAfterLoading()
+    {
+        string path = Path.Combine(_root, "AudioProfiles", "AudioProfiles.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        string id = Guid.NewGuid().ToString();
+        File.WriteAllText(path, "{\"AudioProfileFileVersion\":\"1\",\"AudioProfiles\":[{\"UUID\":\"" + id + "\",\"Name\":\"Original\",\"WindowsAudioConfig\":{}}]}", System.Text.Encoding.Unicode);
+        AgentAudioRepository.AudioProfilesLoaded = false;
+        Assert.True(AgentAudioRepository.InitialiseRepository());
+        AgentAudioProfile profile = Assert.Single(AgentAudioRepository.AllAudioProfiles);
+        byte[] future = System.Text.Encoding.Unicode.GetBytes("{\"AudioProfileFileVersion\":\"999\",\"AudioProfiles\":[],\"FutureSetting\":42}");
+        File.WriteAllBytes(path, future);
+        Assert.False(AgentAudioRepository.RenameAudioProfile(profile, "New name"));
+        Assert.Equal("Original", profile.Name);
+        Assert.Equal(future, File.ReadAllBytes(path));
+    }
+
+    [Theory]
+    [InlineData(ControlMessageType.ListAudioProfiles)]
+    [InlineData(ControlMessageType.CreateAudioProfileFromCurrent)]
+    [InlineData(ControlMessageType.GetRepositorySnapshot)]
+    public async Task UnsupportedAudioRepositoryReturnsFailureWithoutHardwareOrFileChanges(ControlMessageType type)
+    {
+        string path = Path.Combine(_root, "AudioProfiles", "AudioProfiles.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, "{\"AudioProfileFileVersion\":\"999\",\"AudioProfiles\":[]}", System.Text.Encoding.Unicode);
+        byte[] original = File.ReadAllBytes(path);
+        AgentAudioRepository.AudioProfilesLoaded = false;
+        using FakeProfileOperations profiles = new();
+        ProfileCommandHandler handler = new(new AgentRegistration { UserSid = "test", SessionId = 1 }, new FakeServiceClient(), null, _root, profiles);
+        ControlResponse response = await handler.HandleAsync(new ControlEnvelope
+        {
+            MessageType = type,
+            Payload = type == ControlMessageType.CreateAudioProfileFromCurrent
+                ? JsonSerializer.Serialize(new CreateProfileRequest { Name = "New audio" })
+                : JsonSerializer.Serialize(new RepositorySnapshotRequest { Repository = RepositoryKind.AudioProfiles })
+        }, CancellationToken.None);
+        Assert.False(response.IsSuccessful);
+        Assert.Equal(ControlErrorCode.ExecutionFailed, response.ErrorCode);
+        Assert.Equal(original, File.ReadAllBytes(path));
+    }
+
     private sealed class FakeProfileOperations : UserProfileOperationService, IDisposable
     {
+        public string OriginalAudioId { get; init; } = "original-audio";
+        public TaskCompletionSource<bool>? DisplayApplyGate { get; init; }
+        public Action? DisplayApplying { get; init; }
+        public IReadOnlyDictionary<string, decimal> AudioVolumeTargets { get; init; } = new Dictionary<string, decimal>();
         public bool ThrowOnDisplayRestore { get; init; }
         public bool DisplayRestores { get; init; } = true;
         public bool AudioRestores { get; init; } = true;
         public bool BlockAudio { get; init; }
+        public bool WaitForAudioCancellation { get; init; }
+        public Action<CancellationToken>? AudioApplying { get; init; }
+        public List<CancellationToken> AudioTokens { get; } = new();
         public bool FailAudio { get; init; }
         public int RestoreCalls { get; private set; }
         public int CaptureCalls { get; private set; }
@@ -682,21 +870,35 @@ public sealed class AgentReliabilityTests : IDisposable
         internal override UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot, CancellationToken cancellationToken = default)
         {
             CaptureCalls++;
-            return new UserProfileOperationState("original-display", "original-audio")
+            return new UserProfileOperationState("original-display", OriginalAudioId)
             { DisplayProfileSnapshotJson = captureDisplaySnapshot ? "{}" : "", AudioProfileSnapshotJson = captureAudioSnapshot ? "{}" : "" };
         }
-        internal override Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string profileId, CancellationToken cancellationToken, string? snapshotJson)
+        internal override async Task<ApplyDisplayProfileOperationResult> ApplyDisplayProfileAsync(string profileId, CancellationToken cancellationToken, string? snapshotJson)
         {
             if (snapshotJson != null) RestoreCalls++;
             if (snapshotJson != null && ThrowOnDisplayRestore) throw new InvalidOperationException("Simulated display restoration failure.");
-            return Task.FromResult(new ApplyDisplayProfileOperationResult(snapshotJson == null || DisplayRestores, false));
+            if (snapshotJson == null)
+            {
+                DisplayApplying?.Invoke();
+                if (DisplayApplyGate != null) await DisplayApplyGate.Task.WaitAsync(cancellationToken);
+            }
+            return new ApplyDisplayProfileOperationResult(snapshotJson == null || DisplayRestores, false);
         }
-        internal override ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, string? snapshotJson)
+        internal override ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, string? snapshotJson, CancellationToken cancellationToken = default)
         {
+            AudioTokens.Add(cancellationToken);
+            if (snapshotJson == null) AudioApplying?.Invoke(cancellationToken);
+            if (WaitForAudioCancellation)
+            {
+                AudioStarted.TrySetResult(true);
+                if (!cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(10)))
+                    throw new TimeoutException("Audio cancellation did not arrive.");
+                cancellationToken.ThrowIfCancellationRequested();
+            }
             if (snapshotJson != null) RestoreCalls++;
             if (BlockAudio) { AudioStarted.TrySetResult(true); if (!ReleaseAudio.Wait(TimeSpan.FromSeconds(15))) throw new TimeoutException("Test did not release audio operation."); }
             if (FailAudio) throw new InvalidOperationException("Simulated audio execution failure.");
-            return new ApplyAudioProfileOperationResult(snapshotJson == null || AudioRestores, Array.Empty<string>());
+            return new ApplyAudioProfileOperationResult(snapshotJson == null || AudioRestores, Array.Empty<string>()) { VolumeTargets = AudioVolumeTargets };
         }
         public void Dispose() => ReleaseAudio.Dispose();
     }

@@ -208,7 +208,11 @@ namespace DisplayMagician.UserAgent.Runtime
         internal static RepositorySnapshot GetSnapshot()
         {
             lock (_repositoryLock)
-                return AtomicFile.GetSnapshot(_audioProfileStorageJsonFullFileName, RepositoryKind.AudioProfiles);
+            {
+                RepositorySnapshot snapshot = AtomicFile.GetSnapshot(_audioProfileStorageJsonFullFileName, RepositoryKind.AudioProfiles);
+                if (!string.IsNullOrWhiteSpace(snapshot.Json)) EnsureSupportedAudioProfileVersion(snapshot.Json);
+                return snapshot;
+            }
         }
 
         internal static RepositoryCommitResult CommitSnapshot(RepositoryCommitRequest request)
@@ -217,6 +221,8 @@ namespace DisplayMagician.UserAgent.Runtime
                 throw new ArgumentException("An audio-profile repository is required.", nameof(request));
             lock (_repositoryLock)
             {
+                if (File.Exists(_audioProfileStorageJsonFullFileName))
+                    EnsureSupportedAudioProfileVersion(File.ReadAllText(_audioProfileStorageJsonFullFileName, Encoding.Unicode));
                 AudioProfileFile validatedFile = default;
                 RepositoryCommitResult result = AtomicFile.CommitSnapshot(_audioProfileStorageJsonFullFileName, request, json =>
                 {
@@ -278,6 +284,12 @@ namespace DisplayMagician.UserAgent.Runtime
         }
 
         //public static bool InitialiseRepository(FORCED_VIDEO_MODE forcedVideoMode = FORCED_VIDEO_MODE.DETECT)
+        private static void EnsureSupportedAudioProfileVersion(string json)
+        {
+            using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(json);
+            DisplayMagician.ConfigurationDefinitions.RepositoryDocumentValidation.ValidateAudioProfileFileVersion(document.RootElement);
+        }
+
         public static bool InitialiseRepository()
         {
             if (!_audioProfilesLoaded)
@@ -294,6 +306,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool AddAudioProfile(AudioProfileItem audioProfileItem)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             lock (_repositoryLock)
             {
                 if (!(audioProfileItem is AudioProfileItem))
@@ -334,6 +347,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool RemoveAudioProfile(AudioProfileItem audioProfileItem)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             lock (_repositoryLock)
             {
                 if (!(audioProfileItem is AudioProfileItem))
@@ -365,6 +379,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool RemoveAudioProfile(string audioProfileName)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             lock (_repositoryLock)
             {
 
@@ -397,6 +412,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool RemoveAudioProfile(uint audioProfileId)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             lock (_repositoryLock)
             {
                 if (audioProfileId == 0)
@@ -632,6 +648,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static bool CopyCurrentLayoutToProfile(AudioProfileItem profile)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             lock (_repositoryLock)
             {
                 if (profile == null) return false;
@@ -650,41 +667,45 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public static void UpdateActiveAudioProfile()
         {
-
-            SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: Updating the audioProfile currently active (in use now).");
-
-            if (!CanAccessAudioSettings)
-            {
-                SharedLogger.logger.Warn("AudioProfileRepository/UpdateActiveAudioProfile: Windows microphone privacy access is denied, so the current audio profile cannot be read.");
-                _currentAudioProfile = null;
-                return;
-            }
-
-            AudioProfileItem audioProfile;
-            SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: Attempting to access configuration through NVIDIA, then AMD, then Windows CCD interfaces, in that order.");
-            audioProfile = new AudioProfileItem();
-            if (!audioProfile.CreateProfileFromCurrentAudioSettings())
-            {
-                SharedLogger.logger.Warn("AudioProfileRepository/UpdateActiveAudioProfile: Windows audio settings could not be read.");
-                _currentAudioProfile = null;
-                return;
-            }
-
-            if (_audioProfilesLoaded && _allAudioProfiles.Count > 0)
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
+            lock (_repositoryLock)
             {
 
-                foreach (AudioProfileItem loadedAudioProfile in AudioProfileRepository.AllAudioProfiles)
+                SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: Updating the audioProfile currently active (in use now).");
+
+                if (!CanAccessAudioSettings)
                 {
-                    if (loadedAudioProfile.Equals(audioProfile))
+                    SharedLogger.logger.Warn("AudioProfileRepository/UpdateActiveAudioProfile: Windows microphone privacy access is denied, so the current audio profile cannot be read.");
+                    _currentAudioProfile = null;
+                    return;
+                }
+
+                AudioProfileItem audioProfile;
+                SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: Reading current Windows audio endpoints and settings.");
+                audioProfile = new AudioProfileItem();
+                if (!audioProfile.CreateProfileFromCurrentAudioSettings())
+                {
+                    SharedLogger.logger.Warn("AudioProfileRepository/UpdateActiveAudioProfile: Windows audio settings could not be read.");
+                    _currentAudioProfile = null;
+                    return;
+                }
+
+                if (_audioProfilesLoaded && _allAudioProfiles.Count > 0)
+                {
+
+                    foreach (AudioProfileItem loadedAudioProfile in AudioProfileRepository.AllAudioProfiles)
                     {
-                        _currentAudioProfile = loadedAudioProfile;
-                        SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: The Audio Profile '{loadedAudioProfile.Name}' is currently active (in use now).");
-                        return;
+                        if (loadedAudioProfile.Equals(audioProfile))
+                        {
+                            _currentAudioProfile = loadedAudioProfile;
+                            SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: The Audio Profile '{loadedAudioProfile.Name}' is currently active (in use now).");
+                            return;
+                        }
                     }
                 }
+                SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: The current Audio Profile is a new Audio Profile that doesn't already exist in the Audio Profile Repository.");
+                _currentAudioProfile = audioProfile;
             }
-            SharedLogger.logger.Debug($"AudioProfileRepository/UpdateActiveAudioProfile: The current Audio Profile is a new Audio Profile that doesn't already exist in the Audio Profile Repository.");
-            _currentAudioProfile = audioProfile;
         }
 
         public static AudioProfileItem? GetActiveAudioProfile()
@@ -739,6 +760,7 @@ namespace DisplayMagician.UserAgent.Runtime
                     try
                     {
                         json = File.ReadAllText(_audioProfileStorageJsonFullFileName, Encoding.Unicode);
+                        EnsureSupportedAudioProfileVersion(json);
                         if (DisplayMagicianSerializationBinder.TryMigrateLegacyRuntimeTypeNames(json, out string migratedJson))
                         {
                             AtomicFile.WriteAllText(_audioProfileStorageJsonFullFileName, migratedJson, Encoding.Unicode);
@@ -748,7 +770,8 @@ namespace DisplayMagician.UserAgent.Runtime
                     }
                     catch (Exception ex)
                     {
-                        SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: Tried to read the JSON file {_audioProfileStorageJsonFullFileName} to memory but File.ReadAllTextthrew an exception.");
+                        SharedLogger.logger.Error(ex, $"AudioProfileRepository/LoadAudioProfiles: Could not load supported audio profiles from {_audioProfileStorageJsonFullFileName}; preserving the file.");
+                        return false;
                     }
 
                     // Temporarily removing as not needed at present. May need this for future format migrations.
@@ -848,6 +871,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 try
                 {
+                    EnsureSupportedAudioProfileVersion(json);
                     JsonSerializerSettings serializerSettings = new JsonSerializerSettings
                     {
                         MissingMemberHandling = MissingMemberHandling.Ignore,
@@ -877,6 +901,16 @@ namespace DisplayMagician.UserAgent.Runtime
         {
             lock (_repositoryLock)
             {
+                try
+                {
+                    if (_userAgentRepositoryConnection == null && File.Exists(_audioProfileStorageJsonFullFileName))
+                        EnsureSupportedAudioProfileVersion(File.ReadAllText(_audioProfileStorageJsonFullFileName, Encoding.Unicode));
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Text.Json.JsonException)
+                {
+                    SharedLogger.logger.Error(ex, "AudioProfileRepository/SaveAudioProfiles: Existing audio profiles could not be validated; preserving the file and its backup.");
+                    return false;
+                }
                 SharedLogger.logger.Debug($"AudioProfileRepository/SaveAudioProfiles: Attempting to save the Audio Profiles repository to the {AppAudioProfileStoragePath}.");
 
                 if (!Directory.Exists(AppAudioProfileStoragePath))
@@ -1080,6 +1114,7 @@ namespace DisplayMagician.UserAgent.Runtime
         // ApplyAudioProfile lives here so that the UI works.
         public static ApplyAudioProfileResult ApplyAudioProfile(AudioProfileItem audioProfile)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             SharedLogger.logger.Trace($"Program/ApplyAudioProfile: Starting");
             // We try to time the audioProfile display swap
             Stopwatch stopWatch = new Stopwatch();

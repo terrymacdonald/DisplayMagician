@@ -26,6 +26,7 @@ public static class RepositoryDocumentValidation
         HashSet<string> identities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (repository == RepositoryKind.Shortcuts) ValidateShortcutFileVersion(document.RootElement);
         if (repository == RepositoryKind.DisplayProfiles) ValidateDisplayProfileFileVersion(document.RootElement);
+        if (repository == RepositoryKind.AudioProfiles) ValidateAudioProfileFileVersion(document.RootElement);
         foreach (JsonElement item in items.EnumerateArray())
         {
             if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("UUID", out JsonElement id) ||
@@ -60,6 +61,16 @@ public static class RepositoryDocumentValidation
         if (version.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(version.GetString())) return;
         if (version.ValueKind != JsonValueKind.String || !int.TryParse(version.GetString(), out int number) || number < 1 || number > CurrentDisplayProfileFileVersion)
             throw new JsonException($"Unsupported display-profile file version. Supported versions are 1 to {CurrentDisplayProfileFileVersion}; the file must be preserved.");
+    }
+
+    public static void ValidateAudioProfileFileVersion(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object) throw new JsonException("The audio-profile repository must be an object.");
+        // Unversioned/blank audio repositories are supported legacy files.
+        if (!root.TryGetProperty("AudioProfileFileVersion", out JsonElement version) || version.ValueKind == JsonValueKind.Null) return;
+        if (version.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(version.GetString())) return;
+        if (version.ValueKind != JsonValueKind.String || !int.TryParse(version.GetString(), out int number) || number != 1)
+            throw new JsonException("Unsupported audio-profile file version. Supported version is 1; the file must be preserved.");
     }
 
     public static void ValidateShortcutFileVersion(JsonElement root)

@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace DisplayMagician.UserAgent.Runtime;
 
-/// <summary>Serializes synchronous display hardware phases within this UserAgent.</summary>
+/// <summary>Serializes synchronous display and audio hardware phases within this UserAgent.</summary>
 internal static class DisplayHardwareAccess
 {
     // Repository operations that capture or patch native configuration enter here

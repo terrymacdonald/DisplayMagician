@@ -22,6 +22,7 @@ public class UserProfileOperationService
 
     internal virtual UserProfileOperationState CaptureCurrentProfileState(bool captureDisplaySnapshot, bool captureAudioSnapshot, CancellationToken cancellationToken = default)
     {
+        using IDisposable hardwareAccess = DisplayHardwareAccess.Enter(cancellationToken);
         string displayId;
         string displayJson = string.Empty;
         using (DisplayHardwareAccess.Enter(cancellationToken))
@@ -100,10 +101,15 @@ public class UserProfileOperationService
     }
 
     public ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds)
-        => ApplyAudioProfile(profileId, deviceWaitMilliseconds, null);
+        => ApplyAudioProfile(profileId, deviceWaitMilliseconds, null, CancellationToken.None);
 
-    internal virtual ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, string? snapshotJson)
+    public ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, CancellationToken cancellationToken)
+        => ApplyAudioProfile(profileId, deviceWaitMilliseconds, null, cancellationToken);
+
+    internal virtual ApplyAudioProfileOperationResult ApplyAudioProfile(string profileId, int deviceWaitMilliseconds, string? snapshotJson, CancellationToken cancellationToken = default)
     {
+        using IDisposable hardwareAccess = DisplayHardwareAccess.Enter(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         AudioProfileItem? profile;
         try
         {
@@ -118,13 +124,16 @@ public class UserProfileOperationService
         }
         List<string> missingDeviceNames = new List<string>();
         int effectiveDeviceWaitMilliseconds = deviceWaitMilliseconds > 0 ? deviceWaitMilliseconds : ControlProtocol.DefaultAudioDeviceWaitMilliseconds;
-        bool applied = profile != null && profile.TrySetActive(effectiveDeviceWaitMilliseconds, 500, out missingDeviceNames);
+        bool applied = profile != null && profile.TrySetActive(effectiveDeviceWaitMilliseconds, 500, out missingDeviceNames, cancellationToken);
         if (applied)
         {
             AudioProfileRepository.UpdateActiveAudioProfile();
         }
 
-        return new ApplyAudioProfileOperationResult(applied, missingDeviceNames);
+        return new ApplyAudioProfileOperationResult(applied, missingDeviceNames)
+        {
+            VolumeTargets = AudioVolumeOverrideService.GetProfileVolumeTargets(profile?.WindowsAudioConfig)
+        };
     }
 }
 
@@ -140,7 +149,11 @@ internal sealed class DisplayConfigurationCaptureException : InvalidOperationExc
     internal DisplayConfigurationCaptureException(DisplayConfigurationResult details)
         : base("The current display configuration could not be captured reliably.") => Details = details;
 }
-public sealed record ApplyAudioProfileOperationResult(bool IsSuccessful, IReadOnlyList<string> MissingDeviceNames);
+public sealed record ApplyAudioProfileOperationResult(bool IsSuccessful, IReadOnlyList<string> MissingDeviceNames)
+{
+    // Runtime-only: lets recovery avoid overwriting a restored profile's original volumes.
+    public IReadOnlyDictionary<string, decimal> VolumeTargets { get; init; } = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+}
 public sealed record UserProfileOperationState(string DisplayProfileId, string AudioProfileId)
 {
     public string DisplayProfileSnapshotJson { get; init; } = string.Empty;

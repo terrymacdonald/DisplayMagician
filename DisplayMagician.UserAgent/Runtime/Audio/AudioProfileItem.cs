@@ -1,4 +1,6 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using WindowsAudioWrapper.Models;
 using NLog.Targets;
 using System;
 using System.Collections.Generic;
@@ -147,6 +149,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
         public bool CreateProfileFromCurrentAudioSettings()
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             if (!AudioProfileRepository.CanAccessAudioSettings)
             {
                 SharedLogger.logger.Warn("AudioProfileItem/CreateProfileFromCurrentAudioSettings: Windows microphone privacy access is denied, so audio settings cannot be read.");
@@ -174,6 +177,7 @@ namespace DisplayMagician.UserAgent.Runtime
         // Actually set this audioProfile active
         public bool SetActive(int delayInMs = 500)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             if (!AudioProfileRepository.CanAccessAudioSettings)
             {
                 SharedLogger.logger.Warn("AudioProfileItem/SetActive: Windows microphone privacy access is denied, so the audio profile cannot be applied.");
@@ -291,10 +295,7 @@ namespace DisplayMagician.UserAgent.Runtime
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            // Check the object fields
-            // ProfileDisplayIdentifiers may be the same but in different order within the array, so we need to handle
-            // that fact.                        
-            return Equals(WindowsAudioConfig, other.WindowsAudioConfig) &&
+            return JToken.DeepEquals(GetComparableAudioSettings(), other.GetComparableAudioSettings()) &&
                    ApplyProfileDelay.Equals(other.ApplyProfileDelay);
         }
 
@@ -316,8 +317,21 @@ namespace DisplayMagician.UserAgent.Runtime
         public override int GetHashCode()
         {
             // Calculate the hash code for the product.
-            return (WindowsAudioConfig, ApplyProfileDelay).GetHashCode();
+            return HashCode.Combine(new JTokenEqualityComparer().GetHashCode(GetComparableAudioSettings()), ApplyProfileDelay);
 
+        }
+
+        // Compare persisted settings rather than wrapper object identity or transient capability flags.
+        private JToken GetComparableAudioSettings()
+        {
+            JToken settings = WindowsAudioConfig == null ? JValue.CreateNull() : JToken.FromObject(WindowsAudioConfig);
+            if (settings is JObject root && root["EndpointVisibilities"] is JArray endpoints)
+            {
+                settings["EndpointVisibilities"] = new JArray(endpoints
+                    .OrderBy(endpoint => (string?)endpoint["DeviceId"], StringComparer.Ordinal)
+                    .ThenBy(endpoint => (string?)endpoint["Flow"], StringComparer.Ordinal));
+            }
+            return settings;
         }
 
         public static bool operator ==(AudioProfileItem? lhs, AudioProfileItem? rhs)
@@ -382,6 +396,7 @@ namespace DisplayMagician.UserAgent.Runtime
         /// <returns>The friendly names of audio devices that could not be confirmed.</returns>
         public List<string> GetUnavailableAudioDeviceNames(int deviceCheckTimeoutInMs = 100)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter();
             List<string> unavailableAudioDeviceNames = new List<string>();
 
             try
@@ -446,7 +461,16 @@ namespace DisplayMagician.UserAgent.Runtime
         /// <param name="missingDeviceNames">Any audio device names that did not become available before timeout.</param>
         /// <returns>true if profile applied and all devices became available; false if devices were still missing at timeout or if an exception occurs.</returns>
         public bool TrySetActive(int timeoutInMs, int delayInMs, out List<string> missingDeviceNames)
+            => TrySetActive(timeoutInMs, delayInMs, out missingDeviceNames, CancellationToken.None);
+
+        public bool TrySetActive(int timeoutInMs, int delayInMs, out List<string> missingDeviceNames, CancellationToken cancellationToken)
+            => TrySetActive(timeoutInMs, delayInMs, out missingDeviceNames, cancellationToken, () => new WindowsAudioController());
+
+        internal bool TrySetActive(int timeoutInMs, int delayInMs, out List<string> missingDeviceNames,
+            CancellationToken cancellationToken, Func<IWindowsAudioController> createController)
         {
+            using IDisposable hardwareAccess = DisplayHardwareAccess.Enter(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             missingDeviceNames = new List<string>();
 
             AudioProfile? windowsAudioConfig = WindowsAudioConfig;
@@ -463,7 +487,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Waiting for audio devices in profile {Name} to become available (global timeout: {clampedTimeoutInMs}ms, poll slice: {pollSliceMs}ms)...");
 
-                using (WindowsAudioController controller = new WindowsAudioController())
+                using (IWindowsAudioController controller = createController())
                 {
                     // Collect all distinct endpoint references from the profile that have a DeviceId.
                     // HDMI, Display Port and USB audio devices may not be present immediately after a
@@ -506,6 +530,7 @@ namespace DisplayMagician.UserAgent.Runtime
 
                     while (pendingEndpoints.Count > 0 && waitStopwatch.ElapsedMilliseconds < clampedTimeoutInMs)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         if (endpointIndex >= pendingEndpoints.Count)
                             endpointIndex = 0;
 
@@ -543,9 +568,23 @@ namespace DisplayMagician.UserAgent.Runtime
 
                     // Apply the audio profile now that we've waited for the devices
                     SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: Applying Windows audio profile {Name}...");
-                    var applyResult = controller.ApplyProfile(windowsAudioConfig);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    AudioProfileApplyResult applyResult = controller.ApplyProfile(windowsAudioConfig);
+                    if (applyResult?.Messages != null)
+                    {
+                        foreach (AudioOperationMessage message in applyResult.Messages)
+                        {
+                            NLog.LogLevel level = message.Severity == AudioMessageSeverity.Error ? NLog.LogLevel.Error :
+                                message.Severity == AudioMessageSeverity.Warning ? NLog.LogLevel.Warn : NLog.LogLevel.Info;
+                            // Driver messages may contain newlines; preserve one physical support-log line.
+                            string detail = (message.Message ?? string.Empty).Replace("\r", " ").Replace("\n", " ");
+                            string deviceId = (message.DeviceId ?? string.Empty).Replace("\r", " ").Replace("\n", " ");
+                            SharedLogger.logger.Log(level, "AudioProfileItem/TrySetActive: Profile {0}, code {1}, device {2}: {3}", UUID, message.Code, deviceId, detail);
+                        }
+                    }
                     bool profileAppliedSuccessfully = applyResult != null && applyResult.Successful;
-                    Thread.Sleep(delayInMs);
+                    if (cancellationToken.WaitHandle.WaitOne(delayInMs))
+                        cancellationToken.ThrowIfCancellationRequested();
 
                     if (!profileAppliedSuccessfully)
                     {
@@ -562,6 +601,10 @@ namespace DisplayMagician.UserAgent.Runtime
 
                 SharedLogger.logger.Trace($"AudioProfileItem/TrySetActive: The Windows Audio Profile {Name} was successfully applied.");
                 return true;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

@@ -148,7 +148,9 @@ public sealed class ShortcutRunner
             captureAudioSnapshot: !string.IsNullOrWhiteSpace(shortcut.AudioProfileId) && shortcut.AudioPermanence == ShortcutDefinitionPermanence.Temporary,
             cancellationToken: cancellationToken);
         bool shouldApplyDisplayProfile = !string.IsNullOrWhiteSpace(shortcut.ProfileId) && !string.Equals(shortcut.ProfileId, originalState.DisplayProfileId, StringComparison.OrdinalIgnoreCase);
-        bool shouldApplyAudioProfile = !string.IsNullOrWhiteSpace(shortcut.AudioProfileId) && !string.Equals(shortcut.AudioProfileId, originalState.AudioProfileId, StringComparison.OrdinalIgnoreCase);
+        // Display switching can change endpoints/default roles after the original recovery capture.
+        // Always discover/wait/apply selected audio after display application completes.
+        bool shouldApplyAudioProfile = !string.IsNullOrWhiteSpace(shortcut.AudioProfileId);
         ShortcutRecoveryRecord? recoveryRecord = null;
         if ((shouldApplyDisplayProfile && shortcut.DisplayPermanence == ShortcutDefinitionPermanence.Temporary) ||
             (shouldApplyAudioProfile && shortcut.AudioPermanence == ShortcutDefinitionPermanence.Temporary))
@@ -217,7 +219,7 @@ public sealed class ShortcutRunner
             if (shouldApplyAudioProfile)
             {
                 await PublishStatusAsync(publishStatusAsync, preparedRun.OperationId, OperationPhase.ApplyingAudioProfile, "Applying audio profile.", cancellationToken).ConfigureAwait(false);
-                if (!_profileOperationService.ApplyAudioProfile(shortcut.AudioProfileId, audioDeviceWaitMilliseconds).IsSuccessful &&
+                if (!_profileOperationService.ApplyAudioProfile(shortcut.AudioProfileId, audioDeviceWaitMilliseconds, cancellationToken).IsSuccessful &&
                     !await ShouldContinueAfterFailureAsync(requestDecisionAsync, preparedRun.OperationId, "Audio profile could not be applied", "Continue starting the shortcut without applying its audio profile?", cancellationToken).ConfigureAwait(false))
                 {
                     return new ShortcutRunResult(preparedRun.OperationId, ShortcutRunOutcome.Failed, shortcut);
@@ -828,6 +830,7 @@ public sealed class ShortcutRunner
         Func<OperationStatusUpdate, CancellationToken, Task>? publishStatusAsync = null, Guid operationId = default)
     {
         bool recoveryRestored = true;
+        ApplyAudioProfileOperationResult? audioRestoreResult = null;
         if (recoveryRecord.RequiresDisplayRestore)
         {
             await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringDisplayProfile, "Restoring display profile.", cancellationToken).ConfigureAwait(false);
@@ -862,7 +865,8 @@ public sealed class ShortcutRunner
             await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringAudioProfile, "Restoring audio profile.", cancellationToken).ConfigureAwait(false);
             try
             {
-                recoveryRestored = _profileOperationService.ApplyAudioProfile(recoveryRecord.AudioProfileId, audioDeviceWaitMilliseconds, recoveryRecord.AudioProfileSnapshotJson).IsSuccessful && recoveryRestored;
+                audioRestoreResult = _profileOperationService.ApplyAudioProfile(recoveryRecord.AudioProfileId, audioDeviceWaitMilliseconds, recoveryRecord.AudioProfileSnapshotJson);
+                recoveryRestored = audioRestoreResult.IsSuccessful && recoveryRestored;
             }
             catch (Exception ex)
             {
@@ -875,7 +879,7 @@ public sealed class ShortcutRunner
             await PublishRecoveryStatusAsync(publishStatusAsync, operationId, OperationPhase.RestoringAudioProfile, "Restoring audio volume overrides.", cancellationToken).ConfigureAwait(false);
             try
             {
-                recoveryRestored = _audioVolumeOverrideService.Restore(recoveryRecord.AudioVolumeOverrides) && recoveryRestored;
+                recoveryRestored = _audioVolumeOverrideService.Restore(recoveryRecord.AudioVolumeOverrides, audioRestoreResult) && recoveryRestored;
             }
             catch (Exception ex)
             {

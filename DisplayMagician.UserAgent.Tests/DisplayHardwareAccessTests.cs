@@ -379,6 +379,79 @@ public sealed class DisplayHardwareAccessTests : IDisposable
     }
 
     [Fact]
+    public async Task AudioListCaptureQueueIsBoundedAndKeepsCancellationResponsive()
+    {
+        AudioProfileRepository.ConfigureStoragePath(_root);
+        AudioProfileRepository.AudioProfilesLoaded = true;
+        AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Denied;
+        ProfileCommandHandler handler = Handler(() => true);
+        using ManualResetEventSlim entered = new();
+        using ManualResetEventSlim release = new();
+        Task hardware = Task.Run(() =>
+        {
+            using IDisposable scope = DisplayHardwareAccess.Enter();
+            entered.Set();
+            Assert.True(release.Wait(TimeSpan.FromSeconds(10)));
+        });
+        Task<ControlResponse>[] queued = Array.Empty<Task<ControlResponse>>();
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+            queued = Enumerable.Range(0, AgentCommandServer.MaximumConnectedCommandClients - 1)
+                .Select(_ => handler.HandleAsync(new ControlEnvelope { MessageType = ControlMessageType.ListAudioProfiles }, CancellationToken.None)).ToArray();
+            Assert.All(queued, task => Assert.False(task.IsCompleted));
+            ControlResponse busy = await handler.HandleAsync(new ControlEnvelope { MessageType = ControlMessageType.ListAudioProfiles }, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Equal(ControlErrorCode.DisplayControlBusy, busy.ErrorCode);
+            ControlResponse cancellation = await handler.HandleAsync(new ControlEnvelope
+            {
+                MessageType = ControlMessageType.CancelOperation,
+                Payload = JsonSerializer.Serialize(new CancelOperationRequest { OperationId = Guid.NewGuid() })
+            }, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Equal(ControlErrorCode.InvalidRequest, cancellation.ErrorCode);
+        }
+        finally { release.Set(); }
+        await hardware;
+        Assert.All(await Task.WhenAll(queued).WaitAsync(TimeSpan.FromSeconds(10)), result => Assert.True(result.IsSuccessful));
+    }
+
+    [Theory]
+    [InlineData(ControlMessageType.ListAudioProfiles)]
+    [InlineData(ControlMessageType.CreateAudioProfileFromCurrent)]
+    [InlineData(ControlMessageType.UpdateAudioProfileFromCurrent)]
+    public async Task QueuedAudioCaptureCancelsBeforeAnyNativeRead(ControlMessageType type)
+    {
+        ProfileCommandHandler handler = Handler(() => true);
+        AudioProfileRepository.AudioProfilesLoaded = true;
+        AudioProfileRepository.AudioAccessStatus = AudioAccessStatus.Unknown;
+        AudioProfileItem profile = new() { Name = "Existing" };
+        AudioProfileRepository.AllAudioProfiles.Add(profile);
+        using CancellationTokenSource cancellation = new();
+        using ManualResetEventSlim entered = new();
+        using ManualResetEventSlim release = new();
+        Task hardware = Task.Run(() =>
+        {
+            using IDisposable scope = DisplayHardwareAccess.Enter();
+            entered.Set();
+            Assert.True(release.Wait(TimeSpan.FromSeconds(10)));
+        });
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+            Task<ControlResponse> pending = handler.HandleAsync(new ControlEnvelope
+            {
+                MessageType = type,
+                Payload = type == ControlMessageType.CreateAudioProfileFromCurrent
+                    ? JsonSerializer.Serialize(new CreateProfileRequest { Name = "New audio" })
+                    : JsonSerializer.Serialize(new DeleteProfileRequest { ProfileId = profile.UUID })
+            }, cancellation.Token);
+            Assert.False(pending.IsCompleted);
+            cancellation.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending.WaitAsync(TimeSpan.FromSeconds(5)));
+        }
+        finally { release.Set(); await hardware; }
+    }
+
+    [Fact]
     public void UnsupportedGammaDefaultDoesNotFailDisplayCaptureConversion()
     {
         AMD_GAMMA_INFO unsupported = new(default(ADLXWrapper.GammaDto));
