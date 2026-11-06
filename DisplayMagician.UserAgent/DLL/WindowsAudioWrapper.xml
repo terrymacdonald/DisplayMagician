@@ -15,10 +15,75 @@
             Internal event broker that translates unmanaged Windows Audio Service notifications into clean .NET events.
             </summary>
         </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.EDataFlow">
+            <summary>Identifies the direction of an audio endpoint.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.EDataFlow.eRender">
+            <summary>Playback endpoints.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.EDataFlow.eCapture">
+            <summary>Recording endpoints.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.EDataFlow.eAll">
+            <summary>Playback and recording endpoints.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.ERole">
+            <summary>Identifies the role assigned to a default audio endpoint.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.ERole.eConsole">
+            <summary>The console role.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.ERole.eMultimedia">
+            <summary>The multimedia role.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.ERole.eCommunications">
+            <summary>The communications role.</summary>
+        </member>
         <member name="T:WindowsAudioWrapper.Internal.CoreAudio.AudioEffectState">
             <summary>
             Describes whether a Windows audio effect is currently off or on.
             </summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.AudioEffectState.Off">
+            <summary>The effect is disabled.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.AudioEffectState.On">
+            <summary>The effect is enabled.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.PROPERTYKEY">
+            <summary>Identifies a property in a Windows property store.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPERTYKEY.fmtid">
+            <summary>The property set identifier.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPERTYKEY.pid">
+            <summary>The property identifier within the set.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.PROPERTYKEY.#ctor(System.Guid,System.UInt32)">
+            <summary>Initializes a property key from its set and property identifiers.</summary>
+            <param name="fmtid">The property set identifier.</param>
+            <param name="pid">The property identifier within the set.</param>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT">
+            <summary>Holds a property value returned by a Windows property store.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.vt">
+            <summary>The variant type describing the stored value.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.p">
+            <summary>A pointer to a string or GUID value, depending on <see cref="F:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.vt"/>.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.blobSize">
+            <summary>The number of elements in a vector value.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.blobData">
+            <summary>A pointer to the vector elements.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.uintValue">
+            <summary>An unsigned integer value, when the variant type is VT_UI4.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.boolValue">
+            <summary>A Boolean value, when the variant type is VT_BOOL.</summary>
         </member>
         <member name="M:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.GetString">
             <summary>Returns a string value from a string PROPVARIANT.</summary>
@@ -38,10 +103,217 @@
         <member name="M:WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT.GetBoolean">
             <summary>Returns a bool value from a BOOL or UI4 PROPVARIANT.</summary>
         </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX">
+            <summary>Describes the basic format of an audio stream.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX.wFormatTag">
+            <summary>The audio format tag.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX.nChannels">
+            <summary>The number of audio channels.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX.nSamplesPerSec">
+            <summary>The number of samples per second.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX.nAvgBytesPerSec">
+            <summary>The average number of bytes per second.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX.nBlockAlign">
+            <summary>The size of one audio block in bytes.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX.wBitsPerSample">
+            <summary>The number of bits per sample.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEX.cbSize">
+            <summary>The size in bytes of additional format information.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEXTENSIBLE">
+            <summary>Describes a multichannel audio format with extended format fields.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEXTENSIBLE.Format">
+            <summary>The basic audio format information.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEXTENSIBLE.wValidBitsPerSample">
+            <summary>The number of valid bits in each sample.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEXTENSIBLE.dwChannelMask">
+            <summary>The channel positions present in the stream.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.WAVEFORMATEXTENSIBLE.SubFormat">
+            <summary>The format subtype identifier.</summary>
+        </member>
         <member name="T:WindowsAudioWrapper.Internal.CoreAudio.AUDIO_EFFECT">
             <summary>
             Describes a Windows audio effect and its current mutable state.
             </summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.AUDIO_EFFECT.id">
+            <summary>The effect identifier.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.AUDIO_EFFECT.canSetState">
+            <summary>Whether the effect state can be changed.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Internal.CoreAudio.AUDIO_EFFECT.state">
+            <summary>The current effect state.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceEnumerator">
+            <summary>Enumerates audio endpoints and tracks default endpoints.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceEnumerator.EnumAudioEndpoints(WindowsAudioWrapper.Internal.CoreAudio.EDataFlow,System.Int32,WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceCollection@)">
+            <summary>Gets endpoints matching a direction and device state mask.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceEnumerator.GetDefaultAudioEndpoint(WindowsAudioWrapper.Internal.CoreAudio.EDataFlow,WindowsAudioWrapper.Internal.CoreAudio.ERole,WindowsAudioWrapper.Internal.CoreAudio.IMMDevice@)">
+            <summary>Gets the default endpoint for a direction and role.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceEnumerator.GetDevice(System.String,WindowsAudioWrapper.Internal.CoreAudio.IMMDevice@)">
+            <summary>Gets an endpoint by its device identifier.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceEnumerator.RegisterEndpointNotificationCallback(System.IntPtr)">
+            <summary>Registers a client for endpoint notifications.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceEnumerator.UnregisterEndpointNotificationCallback(System.IntPtr)">
+            <summary>Unregisters a client from endpoint notifications.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceCollection">
+            <summary>Provides indexed access to a collection of audio endpoints.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceCollection.GetCount(System.UInt32@)">
+            <summary>Gets the number of endpoints in the collection.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDeviceCollection.Item(System.UInt32,WindowsAudioWrapper.Internal.CoreAudio.IMMDevice@)">
+            <summary>Gets an endpoint by its index in the collection.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.IMMDevice">
+            <summary>Represents an audio endpoint device.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDevice.Activate(System.Guid@,System.Int32,System.IntPtr,System.Object@)">
+            <summary>Activates a requested interface on the endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDevice.OpenPropertyStore(System.Int32,WindowsAudioWrapper.Internal.CoreAudio.IPropertyStore@)">
+            <summary>Opens the endpoint's property store with the requested access.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDevice.GetId(System.String@)">
+            <summary>Gets the endpoint's device identifier.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IMMDevice.GetState(System.Int32@)">
+            <summary>Gets the endpoint's current device state.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.IPropertyStore">
+            <summary>Reads and writes named values in a Windows property store.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IPropertyStore.GetCount(System.UInt32@)">
+            <summary>Gets the number of properties in the store.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IPropertyStore.GetAt(System.UInt32,WindowsAudioWrapper.Internal.CoreAudio.PROPERTYKEY@)">
+            <summary>Gets a property key by index.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IPropertyStore.GetValue(WindowsAudioWrapper.Internal.CoreAudio.PROPERTYKEY@,WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT@)">
+            <summary>Gets the value associated with a property key.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IPropertyStore.SetValue(WindowsAudioWrapper.Internal.CoreAudio.PROPERTYKEY@,WindowsAudioWrapper.Internal.CoreAudio.PROPVARIANT@)">
+            <summary>Sets the value associated with a property key.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IPropertyStore.Commit">
+            <summary>Commits property changes to the store.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume">
+            <summary>Controls and reads the volume and mute state of an audio endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.RegisterControlChangeNotify(System.IntPtr)">
+            <summary>Registers a callback for endpoint volume changes.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.UnregisterControlChangeNotify(System.IntPtr)">
+            <summary>Unregisters a callback for endpoint volume changes.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetChannelCount(System.UInt32@)">
+            <summary>Gets the number of endpoint channels.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.SetMasterVolumeLevel(System.Single,System.Guid@)">
+            <summary>Sets the master volume level in decibels.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.SetMasterVolumeLevelScalar(System.Single,System.Guid@)">
+            <summary>Sets the master volume level on a normalized scale.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetMasterVolumeLevel(System.Single@)">
+            <summary>Gets the master volume level in decibels.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetMasterVolumeLevelScalar(System.Single@)">
+            <summary>Gets the master volume level on a normalized scale.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.SetChannelVolumeLevel(System.UInt32,System.Single,System.Guid@)">
+            <summary>Sets a channel volume level in decibels.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.SetChannelVolumeLevelScalar(System.UInt32,System.Single,System.Guid@)">
+            <summary>Sets a channel volume level on a normalized scale.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetChannelVolumeLevel(System.UInt32,System.Single@)">
+            <summary>Gets a channel volume level in decibels.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetChannelVolumeLevelScalar(System.UInt32,System.Single@)">
+            <summary>Gets a channel volume level on a normalized scale.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.SetMute(System.Boolean,System.Guid@)">
+            <summary>Sets the endpoint mute state.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetMute(System.Boolean@)">
+            <summary>Gets the endpoint mute state.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetVolumeStepInfo(System.UInt32@,System.UInt32@)">
+            <summary>Gets the current volume step and total step count.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.VolumeStepUp(System.Guid@)">
+            <summary>Increases the endpoint volume by one step.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.VolumeStepDown(System.Guid@)">
+            <summary>Decreases the endpoint volume by one step.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.QueryHardwareSupport(System.UInt32@)">
+            <summary>Gets the endpoint's volume control hardware support flags.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEndpointVolume.GetVolumeRange(System.Single@,System.Single@,System.Single@)">
+            <summary>Gets the minimum, maximum, and increment of the volume range in decibels.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient">
+            <summary>Initializes and manages an audio stream for an endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.Initialize(System.Int32,System.UInt32,System.Int64,System.Int64,System.IntPtr,System.Guid@)">
+            <summary>Initializes an audio stream with the requested format and buffering settings.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.GetBufferSize(System.UInt32@)">
+            <summary>Gets the stream buffer size in frames.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.GetStreamLatency(System.Int64@)">
+            <summary>Gets the stream latency in 100-nanosecond units.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.GetCurrentPadding(System.UInt32@)">
+            <summary>Gets the number of frames currently queued in the buffer.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.IsFormatSupported(System.Int32,System.IntPtr,System.IntPtr@)">
+            <summary>Checks whether the endpoint supports an audio format.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.GetMixFormat(System.IntPtr@)">
+            <summary>Gets the endpoint's shared-mode mix format.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.GetDevicePeriod(System.Int64@,System.Int64@)">
+            <summary>Gets the default and minimum endpoint device periods.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.Start">
+            <summary>Starts the audio stream.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.Stop">
+            <summary>Stops the audio stream.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.Reset">
+            <summary>Resets the audio stream.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.SetEventHandle(System.IntPtr)">
+            <summary>Sets the event handle used for event-driven buffering.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioClient.GetService(System.Guid@,System.Object@)">
+            <summary>Gets a service interface for the audio stream.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Internal.CoreAudio.IAudioEffectsManager">
+            <summary>Enumerates and controls effects attached to an audio stream.</summary>
         </member>
         <member name="M:WindowsAudioWrapper.Internal.CoreAudio.IAudioEffectsManager.RegisterAudioEffectsChangedNotificationCallback(System.IntPtr)">
             <summary>Registers a notification callback for audio effect list or state changes.</summary>
@@ -75,11 +347,49 @@
             Public entry point for reading and applying Windows audio profiles.
             </summary>
         </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetPlaybackDevices(WindowsAudioWrapper.Models.AudioDeviceState)">
+            <summary>Gets playback endpoints in the requested device states.</summary>
+            <param name="states">The device states to include.</param>
+            <returns>The matching playback endpoints.</returns>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetRecordingDevices(WindowsAudioWrapper.Models.AudioDeviceState)">
+            <summary>Gets recording endpoints in the requested device states.</summary>
+            <param name="states">The device states to include.</param>
+            <returns>The matching recording endpoints.</returns>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetDefaultPlaybackDevice">
+            <summary>Gets the default multimedia playback endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetDefaultConsolePlaybackDevice">
+            <summary>Gets the default console playback endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetDefaultRecordingDevice">
+            <summary>Gets the default multimedia recording endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetDefaultConsoleRecordingDevice">
+            <summary>Gets the default console recording endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetDefaultCommunicationsPlaybackDevice">
+            <summary>Gets the default communications playback endpoint.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetDefaultCommunicationsRecordingDevice">
+            <summary>Gets the default communications recording endpoint.</summary>
+        </member>
         <member name="M:WindowsAudioWrapper.IWindowsAudioController.GetCurrentProfile">
             <summary>
             Captures every setting WindowsAudioWrapper can currently read into a normal AudioProfile.
             The returned profile can be saved, edited, or applied later.
             </summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.ValidateProfile(WindowsAudioWrapper.Models.AudioProfile)">
+            <summary>Checks whether the settings in a profile can be applied.</summary>
+            <param name="profile">The profile to validate.</param>
+            <returns>Validation results for the profile.</returns>
+        </member>
+        <member name="M:WindowsAudioWrapper.IWindowsAudioController.ApplyProfile(WindowsAudioWrapper.Models.AudioProfile)">
+            <summary>Applies the enabled settings in an audio profile.</summary>
+            <param name="profile">The profile to apply.</param>
+            <returns>The result of applying the profile.</returns>
         </member>
         <member name="M:WindowsAudioWrapper.IWindowsAudioController.WaitForAudioDeviceToAppear(WindowsAudioWrapper.Models.AudioEndpointReference,System.Int32)">
             <summary>
@@ -88,7 +398,7 @@
             </summary>
             <param name="device">The search criteria target containing target identifiers (DeviceId, ContainerId, etc.).</param>
             <param name="timeoutMilliseconds">The maximum block window length in milliseconds.</param>
-            <returns>True if the matching hardware device arrives before the timeout expires; otherwise, false.</returns>
+            <returns>True when a uniquely resolved endpoint in the requested direction is active. Nonpositive timeouts perform an immediate availability check.</returns>
         </member>
         <member name="M:WindowsAudioWrapper.IWindowsAudioController.WaitForAudioDeviceToAppearAsync(WindowsAudioWrapper.Models.AudioEndpointReference,System.Int32,System.Threading.CancellationToken)">
             <summary>
@@ -97,7 +407,7 @@
             <param name="device">The search criteria target containing target identifiers (DeviceId, ContainerId, etc.).</param>
             <param name="timeoutMilliseconds">The maximum wait duration length in milliseconds.</param>
             <param name="cancellationToken">An optional token to cooperatively cancel the asynchronous monitoring task.</param>
-            <returns>A task containing true if the hardware becomes active before the timeout; otherwise, false.</returns>
+            <returns>A task containing true when a uniquely resolved endpoint is active before the timeout; false on timeout, cancellation or controller disposal. Nonpositive timeouts perform an immediate availability check.</returns>
         </member>
         <member name="M:WindowsAudioWrapper.IWindowsAudioController.RegisterTargetDevice(WindowsAudioWrapper.Models.AudioEndpointReference)">
             <summary>
@@ -152,6 +462,33 @@
             Gets or sets the system data flow direction (Render or Capture).
             </summary>
         </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioEndpointCapabilities">
+            <summary>Indicates which settings can be read or changed for an audio endpoint.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsDefaultDeviceSupported">
+            <summary>Gets or sets whether the default multimedia device can be changed.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsDefaultCommunicationsDeviceSupported">
+            <summary>Gets or sets whether the default communications device can be changed.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsVolumeSupported">
+            <summary>Gets or sets whether endpoint volume can be changed.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsMuteSupported">
+            <summary>Gets or sets whether endpoint mute can be changed.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsFormatReadSupported">
+            <summary>Gets or sets whether the endpoint format can be read.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsFormatSetSupported">
+            <summary>Gets or sets whether the endpoint format can be changed.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsAudioEnhancementsReadSupported">
+            <summary>Gets or sets whether audio enhancement settings can be read.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointCapabilities.IsAudioEnhancementsSetSupported">
+            <summary>Gets or sets whether audio enhancement settings can be changed.</summary>
+        </member>
         <member name="T:WindowsAudioWrapper.Models.AudioEndpointInfo">
             <summary>
             Contains detailed information and current state for a specific Windows audio endpoint.
@@ -192,6 +529,12 @@
         </member>
         <member name="P:WindowsAudioWrapper.Models.AudioEndpointInfo.Capabilities">
             <summary>Gets or sets the capabilities supported by this specific endpoint.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointInfo.HardwareDetails">
+            <summary>Gets or sets the endpoint's hardware details.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEndpointInfo.AudioEnhancements">
+            <summary>Gets or sets the endpoint's audio enhancement settings.</summary>
         </member>
         <member name="P:WindowsAudioWrapper.Models.AudioEndpointInfo.IsAvailable">
             <summary>Gets a value indicating whether the device is present and active.</summary>
@@ -256,6 +599,132 @@
         <member name="M:WindowsAudioWrapper.Models.AudioEndpointVisibility.FromEndpointInfo(WindowsAudioWrapper.Models.AudioEndpointInfo)">
             <summary>Creates a serializable visibility record from a live endpoint.</summary>
         </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioEnhancementProfile">
+            <summary>Contains the audio enhancement settings for an endpoint.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEnhancementProfile.AreEnhancementsSupported">
+            <summary>Gets or sets whether the endpoint supports audio enhancements.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEnhancementProfile.DisableAllEnhancements">
+            <summary>Gets or sets whether all audio enhancements should be disabled.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioEnhancementProfile.ActiveEffectsGuidsList">
+            <summary>Gets or sets the identifiers of active audio effects.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioDeviceState">
+            <summary>Identifies the connection and enablement state of an audio endpoint.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioDeviceState.Unknown">
+            <summary>The endpoint state is unknown.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioDeviceState.Active">
+            <summary>The endpoint is active.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioDeviceState.Disabled">
+            <summary>The endpoint is disabled.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioDeviceState.NotPresent">
+            <summary>The endpoint is not present.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioDeviceState.Unplugged">
+            <summary>The endpoint is unplugged.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioDeviceState.All">
+            <summary>Includes every defined endpoint state except unknown.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioFlow">
+            <summary>Identifies whether an audio endpoint renders or captures audio.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioFlow.Unknown">
+            <summary>The endpoint direction is unknown.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioFlow.Render">
+            <summary>The endpoint renders playback audio.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioFlow.Capture">
+            <summary>The endpoint captures recording audio.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioSampleFormat">
+            <summary>Identifies the encoding used for audio samples.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioSampleFormat.Unknown">
+            <summary>The sample format is unknown.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioSampleFormat.Pcm">
+            <summary>Samples use pulse-code modulation.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioSampleFormat.IeeeFloat">
+            <summary>Samples use IEEE floating-point encoding.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioFormatMode">
+            <summary>Identifies the audio stream mode represented by a format.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioFormatMode.Unknown">
+            <summary>The format mode is unknown.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioFormatMode.Shared">
+            <summary>The format uses shared mode.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioMessageSeverity">
+            <summary>Identifies the severity of a profile operation message.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageSeverity.Info">
+            <summary>The message is informational.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageSeverity.Warning">
+            <summary>The message reports a warning.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageSeverity.Error">
+            <summary>The message reports an error.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioValidationSeverity">
+            <summary>Identifies the severity of a profile validation result.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioValidationSeverity.Valid">
+            <summary>The profile setting is valid.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioValidationSeverity.Warning">
+            <summary>The profile setting has a warning.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioValidationSeverity.Error">
+            <summary>The profile setting has an error.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Models.AudioMessageCode">
+            <summary>Identifies the reason for a profile operation message.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.None">
+            <summary>No specific message code applies.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.ProfileApplied">
+            <summary>The profile was applied.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.DeviceMissing">
+            <summary>The profile does not specify a required device.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.DeviceNotFound">
+            <summary>The requested device was not found.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.DeviceUnavailable">
+            <summary>The requested device is unavailable.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.InvalidAudioFlow">
+            <summary>The requested audio direction is invalid.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.InvalidVolume">
+            <summary>The requested volume is invalid.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.UnsupportedSetting">
+            <summary>The requested setting is unsupported.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.NoEnabledSettings">
+            <summary>The profile has no enabled settings to apply.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.AmbiguousEndpoint">
+            <summary>Multiple endpoints match fallback criteria; no endpoint was selected.</summary>
+        </member>
+        <member name="F:WindowsAudioWrapper.Models.AudioMessageCode.UnexpectedError">
+            <summary>An unexpected error occurred.</summary>
+        </member>
         <member name="T:WindowsAudioWrapper.Models.AudioFormatProfile">
             <summary>
             Represents the default format of the audio stream for a given endpoint.
@@ -299,6 +768,24 @@
         <member name="P:WindowsAudioWrapper.Models.AudioOperationMessage.DeviceName">
             <summary>Gets or sets the name of the device associated with this message, if applicable.</summary>
         </member>
+        <member name="M:WindowsAudioWrapper.Models.AudioOperationMessage.Info(WindowsAudioWrapper.Models.AudioMessageCode,System.String)">
+            <summary>Creates an informational operation message.</summary>
+            <param name="code">The message code.</param>
+            <param name="message">The message text.</param>
+            <returns>An informational operation message.</returns>
+        </member>
+        <member name="M:WindowsAudioWrapper.Models.AudioOperationMessage.Warning(WindowsAudioWrapper.Models.AudioMessageCode,System.String)">
+            <summary>Creates a warning operation message.</summary>
+            <param name="code">The message code.</param>
+            <param name="message">The message text.</param>
+            <returns>A warning operation message.</returns>
+        </member>
+        <member name="M:WindowsAudioWrapper.Models.AudioOperationMessage.Error(WindowsAudioWrapper.Models.AudioMessageCode,System.String)">
+            <summary>Creates an error operation message.</summary>
+            <param name="code">The message code.</param>
+            <param name="message">The message text.</param>
+            <returns>An error operation message.</returns>
+        </member>
         <member name="T:WindowsAudioWrapper.Models.AudioProfile">
             <summary>
             The only profile/state object used by WindowsAudioWrapper.
@@ -340,8 +827,17 @@
         <member name="P:WindowsAudioWrapper.Models.AudioProfileApplyResult.Messages">
             <summary>Gets or sets a list of informational, warning, and error messages generated during application.</summary>
         </member>
+        <member name="P:WindowsAudioWrapper.Models.AudioProfileApplyResult.ResolvedDeviceIds">
+            <summary>Maps requested nonempty endpoint IDs to the actual IDs resolved for this apply; it contains no native handles.</summary>
+        </member>
         <member name="M:WindowsAudioWrapper.Models.AudioProfileApplyResult.RecalculateSuccess">
             <summary>Recalculates the <see cref="P:WindowsAudioWrapper.Models.AudioProfileApplyResult.Successful"/> property based on the presence of Error messages.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Models.AudioProfileApplyResult.Success">
+            <summary>Creates an empty successful apply result.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Models.AudioProfileApplyResult.Error(WindowsAudioWrapper.Models.AudioMessageCode,System.String)">
+            <summary>Creates a failed apply result with one diagnostic error.</summary>
         </member>
         <member name="T:WindowsAudioWrapper.Models.AudioProfileValidationResult">
             <summary>
@@ -365,6 +861,24 @@
             Contains extended, low-level unmanaged property telemetry mapping for hardware endpoints.
             Strictly respects zero-null constraints for integration stability.
             </summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.HardwareDetails.DeviceDescription">
+            <summary>Gets or sets the device description reported by Windows.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.HardwareDetails.FormFactorCode">
+            <summary>Gets or sets the numeric endpoint form factor.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.HardwareDetails.PhysicalSpeakersMask">
+            <summary>Gets or sets the speaker positions reported by the endpoint.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.HardwareDetails.FullRangeSpeakersMask">
+            <summary>Gets or sets the speaker positions supporting full range audio.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.HardwareDetails.EndpointGuid">
+            <summary>Gets or sets the endpoint GUID as a string.</summary>
+        </member>
+        <member name="P:WindowsAudioWrapper.Models.HardwareDetails.DeviceFormatSummary">
+            <summary>Gets or sets a summary of the endpoint's device format.</summary>
         </member>
         <member name="P:WindowsAudioWrapper.Models.HardwareDetails.SupportsEventDrivenMode">
             <summary>Gets or sets a value indicating whether the endpoint supports WASAPI low-latency event-driven buffer loops.</summary>
@@ -516,6 +1030,24 @@
         <member name="P:WindowsAudioWrapper.Models.SpeakerConfigurationProfile.IsConfigured">
             <summary>Gets whether the profile contains a speaker configuration.</summary>
         </member>
+        <member name="T:WindowsAudioWrapper.Providers.AudioEndpointResolver">
+            <summary>Selects an endpoint consistently without touching Windows or mutating saved criteria.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Providers.AudioEndpointResolver.Resolve(WindowsAudioWrapper.Models.AudioEndpointReference,WindowsAudioWrapper.Models.AudioFlow,System.Collections.Generic.IEnumerable{WindowsAudioWrapper.Models.AudioEndpointInfo})">
+            <summary>Resolves exact identity first, then unique fallback identity within the requested direction.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Providers.AudioEndpointResolver.Same(System.String,System.String)">
+            <summary>Compares endpoint identifiers without culture-sensitive casing.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Providers.AudioEndpointResolver.Missing(WindowsAudioWrapper.Models.AudioEndpointReference,WindowsAudioWrapper.Models.AudioFlow)">
+            <summary>Creates a non-present result retaining the requested identity for diagnostics.</summary>
+        </member>
+        <member name="T:WindowsAudioWrapper.Providers.AmbiguousAudioEndpointException">
+            <summary>Identifies an unsafe ambiguous fallback without exposing a new public exception contract.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.Providers.AmbiguousAudioEndpointException.#ctor(System.String)">
+            <summary>Identifies an unsafe ambiguous fallback without exposing a new public exception contract.</summary>
+        </member>
         <member name="M:WindowsAudioWrapper.Providers.SystemAudioProvider.SetMonoAudio(System.Boolean)">
             <summary>
             Sets the mono audio state in the registry and notifies running applications of the setting change.
@@ -623,11 +1155,38 @@
         <member name="M:WindowsAudioWrapper.WindowsAudioController.Dispose">
             <inheritdoc/>
         </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioController.OnDeviceNotificationReceived(System.String)">
+            <summary>Offloads native notification processing so the COM callback returns promptly.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioController.ProcessDeviceNotification(System.String)">
+            <summary>Processes a notification using live inventory; invokes subscribers outside all internal locks.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioController.EnsureNotificationRegistration">
+            <summary>Attempts notification registration; failed attempts remain retryable and waits retain polling.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioController.CheckIfDeviceAlreadyActive(WindowsAudioWrapper.Models.AudioEndpointReference)">
+            <summary>Checks unique live identity and active state while protecting provider lifetime.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioController.ResolveReferenceForApply(WindowsAudioWrapper.Models.AudioEndpointReference,WindowsAudioWrapper.Models.AudioFlow,WindowsAudioWrapper.Models.AudioProfileApplyResult)">
+            <summary>Copies saved per-role settings onto a resolved live identity without modifying the saved reference.</summary>
+        </member>
         <member name="T:WindowsAudioWrapper.WindowsAudioWrapperException">
             <summary>
             Base exception type for unexpected WindowsAudioWrapper failures.
             Normal validation and capability problems should be returned in result objects instead.
             </summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioWrapperException.#ctor">
+            <summary>Initializes a new exception without a message.</summary>
+        </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioWrapperException.#ctor(System.String)">
+            <summary>Initializes a new exception with an error message.</summary>
+            <param name="message">The error message.</param>
+        </member>
+        <member name="M:WindowsAudioWrapper.WindowsAudioWrapperException.#ctor(System.String,System.Exception)">
+            <summary>Initializes a new exception with an error message and an underlying exception.</summary>
+            <param name="message">The error message.</param>
+            <param name="innerException">The exception that caused this error.</param>
         </member>
     </members>
 </doc>
