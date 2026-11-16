@@ -117,7 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autoupdater.NET.Official">
-      <Version>1.9.2</Version>
+      <Version>1.9.3</Version>
     </PackageReference>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils">
       <Version>5.1.0</Version>
