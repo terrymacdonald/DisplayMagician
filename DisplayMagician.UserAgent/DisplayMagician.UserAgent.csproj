@@ -24,7 +24,7 @@
     <PackageReference Include="NLog" Version="6.2.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="protobuf-net" Version="3.4.40" />
-    <PackageReference Include="System.Management" Version="10.0.7" />
+    <PackageReference Include="System.Management" Version="11.0.0" />
     <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
     <PackageReference Include="YamlDotNet" Version="17.1.0" />
   </ItemGroup>

@@ -139,7 +139,7 @@
     <PackageReference Include="protobuf-net">
       <Version>3.4.40</Version>
     </PackageReference>
-    <PackageReference Include="System.Management" Version="10.0.7" />
+    <PackageReference Include="System.Management" Version="11.0.0" />
     <PackageReference Include="ValveKeyValue">
       <Version>0.70.0.499</Version>
     </PackageReference>
