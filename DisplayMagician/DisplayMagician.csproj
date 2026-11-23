@@ -152,7 +152,7 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Markdig" Version="1.6.0" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4370.26" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="10.1.0" />
     <PackageReference Include="System.ServiceModel.Http" Version="10.1.0" />
     <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
