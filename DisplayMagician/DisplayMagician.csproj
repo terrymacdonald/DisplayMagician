@@ -137,7 +137,7 @@
     </PackageReference>
     <PackageReference Include="QRCoder" Version="1.9.0" />
     <PackageReference Include="protobuf-net">
-      <Version>3.4.40</Version>
+      <Version>3.4.51</Version>
     </PackageReference>
     <PackageReference Include="System.Management" Version="11.0.0" />
     <PackageReference Include="ValveKeyValue">
